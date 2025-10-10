@@ -2,6 +2,7 @@ package com.example.acessolivre.controller;
 
 import com.example.acessolivre.dto.UsuarioRequestDTO;
 import com.example.acessolivre.dto.UsuarioResponseDTO;
+import com.example.acessolivre.mapper.UsuarioMapper;
 import com.example.acessolivre.model.Usuario;
 import com.example.acessolivre.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -21,34 +22,6 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
 
     /**
-     * Converte UsuarioRequestDTO para Usuario
-     */
-    private Usuario toUsuario(UsuarioRequestDTO dto) {
-        return Usuario.builder()
-                .nome(dto.getNome())
-                .email(dto.getEmail())
-                .cpf(dto.getCpf())
-                .role(dto.getRole())
-                .imagemPerfil(dto.getImagemPerfil())
-                .build();
-    }
-
-    /**
-     * Converte Usuario para UsuarioResponseDTO
-     */
-    private UsuarioResponseDTO toResponseDTO(Usuario usuario) {
-        return new UsuarioResponseDTO(
-                usuario.getIdUsuario(),
-                usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getCpf(),
-                usuario.getRole(),
-                usuario.getDataCadastro(),
-                usuario.getImagemPerfil()
-        );
-    }
-
-    /**
      * Lista todos os usuários
      * @return ResponseEntity com lista de usuários
      */
@@ -56,7 +29,7 @@ public class UsuarioController {
     public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
         List<Usuario> usuarios = usuarioService.listarTodos();
         List<UsuarioResponseDTO> responseDTOs = usuarios.stream()
-                .map(this::toResponseDTO)
+                .map(UsuarioMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responseDTOs);
     }
@@ -69,7 +42,7 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Integer id) {
         Optional<Usuario> usuario = usuarioService.buscarPorId(id);
-        return usuario.map(u -> ResponseEntity.ok(toResponseDTO(u)))
+        return usuario.map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -80,9 +53,9 @@ public class UsuarioController {
      */
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> salvar(@RequestBody UsuarioRequestDTO requestDTO) {
-        Usuario usuario = toUsuario(requestDTO);
+        Usuario usuario = UsuarioMapper.toEntity(requestDTO);
         Usuario usuarioSalvo = usuarioService.salvar(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDTO(usuarioSalvo));
+        return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioMapper.toResponse(usuarioSalvo));
     }
 
     /**
@@ -99,10 +72,10 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
         
-        Usuario usuario = toUsuario(requestDTO);
-        usuario.setIdUsuario(id);
+        Usuario usuario = usuarioExistente.get();
+        UsuarioMapper.updateEntity(usuario, requestDTO);
         Usuario usuarioAtualizado = usuarioService.atualizar(usuario);
-        return ResponseEntity.ok(toResponseDTO(usuarioAtualizado));
+        return ResponseEntity.ok(UsuarioMapper.toResponse(usuarioAtualizado));
     }
 
     /**
