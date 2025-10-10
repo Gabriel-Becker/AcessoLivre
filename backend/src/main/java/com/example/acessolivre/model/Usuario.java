@@ -1,5 +1,6 @@
 package com.example.acessolivre.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -34,12 +35,14 @@ public class Usuario {
     private String imagemPerfil;
 
     @NotBlank(message = "Role é obrigatório")
-    private String role;
+    @Builder.Default
+    private String role = "usuario";
 
     @Column(name = "token_atual")
     private String tokenAtual;
 
     @NotBlank(message = "CPF é obrigatório")
+    @Column(unique = true)
     private String cpf;
 
     @CreationTimestamp
@@ -47,21 +50,28 @@ public class Usuario {
     private LocalDateTime dataCadastro;
 
     // Relacionamentos
+    
     // @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private UsuarioAutenticar usuarioAutenticar;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private List<Avaliacao> avaliacoes;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private List<Local> locais;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private List<TwoFactorRecoveryCode> twoFactorRecoveryCodes;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private List<PasswordResetCode> passwordResetCodes;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
     // private List<TokenRevogado> tokensRevogados;
 }
