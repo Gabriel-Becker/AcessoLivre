@@ -14,5 +14,5 @@ public class TokenRevogadoResponseDTO {
     private Long id;
     private LocalDateTime dataRevogacao;
     private String token;
-    private Long idUsuario;
+    private Long usuarioId;
 }
