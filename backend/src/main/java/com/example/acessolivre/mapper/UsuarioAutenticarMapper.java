@@ -19,7 +19,7 @@ public class UsuarioAutenticarMapper {
         
         // Cria um objeto Usuario com apenas o ID para o relacionamento
         Usuario usuario = Usuario.builder()
-                .idUsuario(dto.getUsuarioId())
+                .idUsuario(dto.getUsuarioId().intValue())
                 .build();
         
         return UsuarioAutenticar.builder()
@@ -42,7 +42,7 @@ public class UsuarioAutenticarMapper {
         
         return UsuarioAutenticarResponseDTO.builder()
                 .idUsuarioAutenticar(entity.getIdUsuarioAutenticar())
-                .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
+                .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null)
                 .tokenJwt(entity.getTokenJwt())
                 .dataExpiracao(entity.getDataExpiracao())
                 .build();
