@@ -5,6 +5,9 @@ import com.example.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
 import com.example.acessolivre.model.TwoFactorRecoveryCode;
 import com.example.acessolivre.model.Usuario;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class TwoFactorRecoveryCodeMapper {
 
     /**
@@ -19,7 +22,7 @@ public class TwoFactorRecoveryCodeMapper {
         }
         
         return TwoFactorRecoveryCode.builder()
-                .code(dto.getCode())
+                .code(dto.getCode().trim())
                 .createdAt(dto.getCreatedAt())
                 .expiresAt(dto.getExpiresAt())
                 .used(dto.getUsed())
@@ -43,8 +46,23 @@ public class TwoFactorRecoveryCodeMapper {
                 entity.getCreatedAt(),
                 entity.getExpiresAt(),
                 entity.getUsed(),
-                entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null
+                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
         );
+    }
+
+    /**
+     * Converte lista de entidades TwoFactorRecoveryCode para lista de ResponseDTOs
+     * @param entities Lista de entidades
+     * @return Lista de DTOs de resposta
+     */
+    public static List<TwoFactorRecoveryCodeResponseDTO> fromEntityList(List<TwoFactorRecoveryCode> entities) {
+        if (entities == null) {
+            return null;
+        }
+        
+        return entities.stream()
+                .map(TwoFactorRecoveryCodeMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -59,7 +77,7 @@ public class TwoFactorRecoveryCodeMapper {
             return entity;
         }
         
-        entity.setCode(dto.getCode());
+        entity.setCode(dto.getCode().trim());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setExpiresAt(dto.getExpiresAt());
         entity.setUsed(dto.getUsed());

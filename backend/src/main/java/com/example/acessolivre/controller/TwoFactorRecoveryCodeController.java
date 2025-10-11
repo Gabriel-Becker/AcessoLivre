@@ -5,6 +5,7 @@ import com.example.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
 import com.example.acessolivre.mapper.TwoFactorRecoveryCodeMapper;
 import com.example.acessolivre.model.TwoFactorRecoveryCode;
 import com.example.acessolivre.service.TwoFactorRecoveryCodeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,11 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/twofactor")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j
 public class TwoFactorRecoveryCodeController {
@@ -32,14 +34,13 @@ public class TwoFactorRecoveryCodeController {
         try {
             log.info("Recebida requisição para listar todos os códigos de recuperação 2FA");
             List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeService.listarTodos();
-            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = codigos.stream()
-                    .map(TwoFactorRecoveryCodeMapper::toResponse)
-                    .collect(Collectors.toList());
+            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = TwoFactorRecoveryCodeMapper.fromEntityList(codigos);
             log.info("Retornando {} códigos de recuperação", responseDTOs.size());
             return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao listar códigos de recuperação: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of());
         }
     }
 
@@ -73,7 +74,7 @@ public class TwoFactorRecoveryCodeController {
      * @return ResponseEntity com código salvo
      */
     @PostMapping
-    public ResponseEntity<TwoFactorRecoveryCodeResponseDTO> salvar(@RequestBody TwoFactorRecoveryCodeRequestDTO requestDTO) {
+    public ResponseEntity<?> salvar(@Valid @RequestBody TwoFactorRecoveryCodeRequestDTO requestDTO) {
         try {
             log.info("Recebida requisição para salvar novo código de recuperação");
             TwoFactorRecoveryCode codigo = twoFactorRecoveryCodeService.salvar(requestDTO);
@@ -82,10 +83,12 @@ public class TwoFactorRecoveryCodeController {
                     .body(TwoFactorRecoveryCodeMapper.toResponse(codigo));
         } catch (IllegalArgumentException e) {
             log.warn("Erro de validação ao salvar código de recuperação: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao salvar código de recuperação: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro interno do servidor"));
         }
     }
 
@@ -95,21 +98,20 @@ public class TwoFactorRecoveryCodeController {
      * @return ResponseEntity com status 204 (No Content) se deletado ou 404 se não encontrado
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
         try {
             log.info("Recebida requisição para deletar código de recuperação com ID: {}", id);
-            boolean deletado = twoFactorRecoveryCodeService.deletar(id);
-            
-            if (deletado) {
-                log.info("Código de recuperação deletado com sucesso. ID: {}", id);
-                return ResponseEntity.noContent().build();
-            } else {
-                log.warn("Código de recuperação não encontrado para deletar. ID: {}", id);
-                return ResponseEntity.notFound().build();
-            }
+            twoFactorRecoveryCodeService.deletar(id);
+            log.info("Código de recuperação deletado com sucesso. ID: {}", id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Código de recuperação não encontrado para deletar. ID: {}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao deletar código de recuperação com ID {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro interno do servidor"));
         }
     }
 
@@ -118,8 +120,8 @@ public class TwoFactorRecoveryCodeController {
      * @param code Código a ser verificado
      * @return ResponseEntity com boolean indicando se o código é válido
      */
-    @GetMapping("/verificar/{code}")
-    public ResponseEntity<Boolean> verificarCodigo(@PathVariable String code) {
+    @GetMapping("/verificar")
+    public ResponseEntity<Boolean> verificarCodigo(@RequestParam String code) {
         try {
             log.info("Recebida requisição para verificar código de recuperação");
             boolean isValid = twoFactorRecoveryCodeService.isCodigoValido(code);
@@ -127,7 +129,7 @@ public class TwoFactorRecoveryCodeController {
             return ResponseEntity.ok(isValid);
         } catch (Exception e) {
             log.error("Erro ao verificar código de recuperação: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
         }
     }
 
@@ -137,16 +139,21 @@ public class TwoFactorRecoveryCodeController {
      * @param idUsuario ID do usuário
      * @return ResponseEntity com boolean indicando sucesso
      */
-    @PostMapping("/usar/{code}")
-    public ResponseEntity<Boolean> marcarComoUsado(@PathVariable String code, @RequestParam Long idUsuario) {
+    @PostMapping("/usar")
+    public ResponseEntity<?> marcarComoUsado(@RequestParam String code, @RequestParam Long idUsuario) {
         try {
             log.info("Recebida requisição para marcar código como utilizado: {}", code);
             boolean sucesso = twoFactorRecoveryCodeService.marcarComoUsado(code, idUsuario);
             log.info("Código marcado como utilizado: {}", sucesso);
-            return ResponseEntity.ok(sucesso);
+            return ResponseEntity.ok(Map.of("success", sucesso));
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao marcar código como utilizado: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Erro ao marcar código como utilizado: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro interno do servidor"));
         }
     }
 
@@ -160,14 +167,13 @@ public class TwoFactorRecoveryCodeController {
         try {
             log.info("Recebida requisição para buscar códigos válidos do usuário ID: {}", idUsuario);
             List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeService.buscarCodigosValidosPorUsuario(idUsuario);
-            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = codigos.stream()
-                    .map(TwoFactorRecoveryCodeMapper::toResponse)
-                    .collect(Collectors.toList());
+            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = TwoFactorRecoveryCodeMapper.fromEntityList(codigos);
             log.info("Retornando {} códigos válidos para usuário ID: {}", responseDTOs.size(), idUsuario);
             return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao buscar códigos válidos por usuário ID {}: {}", idUsuario, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of());
         }
     }
 
@@ -181,14 +187,13 @@ public class TwoFactorRecoveryCodeController {
         try {
             log.info("Recebida requisição para buscar códigos do usuário ID: {}", idUsuario);
             List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeService.buscarPorUsuario(idUsuario);
-            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = codigos.stream()
-                    .map(TwoFactorRecoveryCodeMapper::toResponse)
-                    .collect(Collectors.toList());
+            List<TwoFactorRecoveryCodeResponseDTO> responseDTOs = TwoFactorRecoveryCodeMapper.fromEntityList(codigos);
             log.info("Retornando {} códigos para usuário ID: {}", responseDTOs.size(), idUsuario);
             return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao buscar códigos por usuário ID {}: {}", idUsuario, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(List.of());
         }
     }
 
@@ -197,15 +202,16 @@ public class TwoFactorRecoveryCodeController {
      * @return ResponseEntity com número de códigos removidos
      */
     @DeleteMapping("/limpar-expirados")
-    public ResponseEntity<Integer> limparCodigosExpirados() {
+    public ResponseEntity<Map<String, Integer>> limparCodigosExpirados() {
         try {
             log.info("Recebida requisição para limpar códigos expirados");
             int removidos = twoFactorRecoveryCodeService.limparCodigosExpirados();
             log.info("Códigos expirados removidos: {}", removidos);
-            return ResponseEntity.ok(removidos);
+            return ResponseEntity.ok(Map.of("removidos", removidos));
         } catch (Exception e) {
             log.error("Erro ao limpar códigos expirados: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", 0));
         }
     }
 }
