@@ -1,4 +1,4 @@
-package com.example.acessolivre.dto;
+package com.example.acessolivre.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

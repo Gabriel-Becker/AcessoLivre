@@ -1,21 +1,17 @@
-package com.example.acessolivre.dto;
+package com.example.acessolivre.dto.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioResponseDTO {
+public class UsuarioRequestDTO {
 
-    private Integer idUsuario;
     private String nome;
     private String email;
     private String cpf;
     private String role;
-    private LocalDateTime dataCadastro;
     private String imagemPerfil;
 }

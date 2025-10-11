@@ -1,20 +1,18 @@
-package com.example.acessolivre.dto;
+package com.example.acessolivre.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioAutenticarResponseDTO {
+public class UsuarioAutenticarRequestDTO {
 
-    private Long idUsuarioAutenticar;
     private Long usuarioId;
+    private String senhaHash;
     private String tokenJwt;
     private LocalDateTime dataExpiracao;
 }
