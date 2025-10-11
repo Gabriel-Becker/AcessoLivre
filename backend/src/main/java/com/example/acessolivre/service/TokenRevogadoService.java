@@ -55,19 +55,19 @@ public class TokenRevogadoService {
      * @return Token revogado salvo
      */
     public TokenRevogado salvar(TokenRevogadoRequestDTO dto) {
-        log.info("Salvando novo token revogado para usuário ID: {}", dto.getIdUsuario());
+        log.info("Salvando novo token revogado para usuário ID: {}", dto.getUsuarioId());
         
         // Busca o usuário
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getIdUsuario().intValue());
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId().intValue());
         if (usuarioOpt.isEmpty()) {
-            log.error("Usuário não encontrado com ID: {}", dto.getIdUsuario());
-            throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getIdUsuario());
+            log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
+            throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
         }
         
         Usuario usuario = usuarioOpt.get();
         
         // Verifica se o token já foi revogado
-        if (tokenRevogadoRepository.existsByToken(dto.getToken())) {
+        if (tokenRevogadoRepository.existsByToken(dto.getToken().trim())) {
             log.warn("Token já foi revogado: {}", dto.getToken());
             throw new IllegalArgumentException("Token já foi revogado");
         }
@@ -86,20 +86,19 @@ public class TokenRevogadoService {
     /**
      * Deleta um token revogado pelo ID
      * @param id ID do token revogado a ser deletado
-     * @return true se deletado com sucesso, false se não encontrado
+     * @throws IllegalArgumentException se o token não for encontrado
      */
-    public boolean deletar(Long id) {
+    public void deletar(Long id) {
         log.info("Tentando deletar token revogado com ID: {}", id);
         
         if (!tokenRevogadoRepository.existsById(id)) {
             log.warn("Token revogado não encontrado para deletar. ID: {}", id);
-            return false;
+            throw new IllegalArgumentException("Token revogado não encontrado com ID: " + id);
         }
         
         try {
             tokenRevogadoRepository.deleteById(id);
             log.info("Token revogado deletado com sucesso. ID: {}", id);
-            return true;
         } catch (Exception e) {
             log.error("Erro ao deletar token revogado com ID {}: {}", id, e.getMessage(), e);
             throw new RuntimeException("Erro ao deletar token revogado", e);
@@ -113,7 +112,7 @@ public class TokenRevogadoService {
      */
     public boolean isTokenRevogado(String token) {
         log.debug("Verificando se token foi revogado: {}", token);
-        return tokenRevogadoRepository.existsByToken(token);
+        return tokenRevogadoRepository.existsByToken(token.trim());
     }
 
     /**

@@ -5,6 +5,7 @@ import com.example.acessolivre.dto.response.TokenRevogadoResponseDTO;
 import com.example.acessolivre.mapper.TokenRevogadoMapper;
 import com.example.acessolivre.model.TokenRevogado;
 import com.example.acessolivre.service.TokenRevogadoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/tokenrevogado")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j
 public class TokenRevogadoController {
@@ -73,7 +75,7 @@ public class TokenRevogadoController {
      * @return ResponseEntity com token revogado salvo
      */
     @PostMapping
-    public ResponseEntity<TokenRevogadoResponseDTO> salvar(@RequestBody TokenRevogadoRequestDTO requestDTO) {
+    public ResponseEntity<TokenRevogadoResponseDTO> salvar(@Valid @RequestBody TokenRevogadoRequestDTO requestDTO) {
         try {
             log.info("Recebida requisição para salvar novo token revogado");
             TokenRevogado tokenRevogado = tokenRevogadoService.salvar(requestDTO);
@@ -82,7 +84,7 @@ public class TokenRevogadoController {
                     .body(TokenRevogadoMapper.toResponse(tokenRevogado));
         } catch (IllegalArgumentException e) {
             log.warn("Erro de validação ao salvar token revogado: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
             log.error("Erro ao salvar token revogado: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -98,15 +100,12 @@ public class TokenRevogadoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         try {
             log.info("Recebida requisição para deletar token revogado com ID: {}", id);
-            boolean deletado = tokenRevogadoService.deletar(id);
-            
-            if (deletado) {
-                log.info("Token revogado deletado com sucesso. ID: {}", id);
-                return ResponseEntity.noContent().build();
-            } else {
-                log.warn("Token revogado não encontrado para deletar. ID: {}", id);
-                return ResponseEntity.notFound().build();
-            }
+            tokenRevogadoService.deletar(id);
+            log.info("Token revogado deletado com sucesso. ID: {}", id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Token revogado não encontrado para deletar. ID: {}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             log.error("Erro ao deletar token revogado com ID {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -118,8 +117,8 @@ public class TokenRevogadoController {
      * @param token Token a ser verificado
      * @return ResponseEntity com boolean indicando se o token foi revogado
      */
-    @GetMapping("/verificar/{token}")
-    public ResponseEntity<Boolean> verificarTokenRevogado(@PathVariable String token) {
+    @GetMapping("/verificar")
+    public ResponseEntity<Boolean> verificarTokenRevogado(@RequestParam String token) {
         try {
             log.info("Recebida requisição para verificar se token foi revogado");
             boolean isRevogado = tokenRevogadoService.isTokenRevogado(token);

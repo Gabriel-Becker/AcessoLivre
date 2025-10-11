@@ -2,6 +2,8 @@ package com.example.acessolivre.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,14 +21,17 @@ public class TokenRevogado {
     @Column(name = "id")
     private Long id;
 
+    @NotNull(message = "Data de revogação é obrigatória")
     @Column(name = "data_revogacao", nullable = false)
     private LocalDateTime dataRevogacao;
 
+    @NotBlank(message = "Token é obrigatório")
     @Column(name = "token", nullable = false)
     private String token;
 
+    @NotNull(message = "Usuário é obrigatório")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario", referencedColumnName = "idusuario")
+    @JoinColumn(name = "id_usuario", referencedColumnName = "idusuario", nullable = false)
     @JsonIgnore
     private Usuario usuario;
 }

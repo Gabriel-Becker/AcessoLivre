@@ -20,7 +20,7 @@ public class TokenRevogadoMapper {
         
         return TokenRevogado.builder()
                 .dataRevogacao(dto.getDataRevogacao())
-                .token(dto.getToken())
+                .token(dto.getToken().trim())
                 .usuario(usuario)
                 .build();
     }
@@ -39,7 +39,7 @@ public class TokenRevogadoMapper {
                 entity.getId(),
                 entity.getDataRevogacao(),
                 entity.getToken(),
-                entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null
+                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
         );
     }
 
@@ -56,7 +56,7 @@ public class TokenRevogadoMapper {
         }
         
         entity.setDataRevogacao(dto.getDataRevogacao());
-        entity.setToken(dto.getToken());
+        entity.setToken(dto.getToken().trim());
         entity.setUsuario(usuario);
         
         return entity;
