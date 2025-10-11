@@ -14,5 +14,5 @@ public interface UsuarioAutenticarRepository extends JpaRepository<UsuarioAutent
      * @param idUsuario ID do usuário
      * @return Optional contendo os dados de autenticação se encontrados
      */
-    Optional<UsuarioAutenticar> findByUsuarioId(Long idUsuario);
+    Optional<UsuarioAutenticar> findByUsuario_IdUsuario(Long idUsuario);
 }
