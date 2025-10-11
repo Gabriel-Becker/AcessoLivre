@@ -22,7 +22,7 @@ public class UsuarioAutenticar {
     @JoinColumn(name = "idusuario", referencedColumnName = "idusuario")
     private Usuario usuario;
 
-    @Column(name = "senha_hash", nullable = false, length = 255)
+    @Column(name = "senha_hash", nullable = false)
     private String senhaHash;
 
     @Column(name = "token_jwt")

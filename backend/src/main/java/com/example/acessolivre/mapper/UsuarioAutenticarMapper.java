@@ -1,7 +1,7 @@
 package com.example.acessolivre.mapper;
 
-import com.example.acessolivre.dto.UsuarioAutenticarRequestDTO;
-import com.example.acessolivre.dto.UsuarioAutenticarResponseDTO;
+import com.example.acessolivre.dto.request.UsuarioAutenticarRequestDTO;
+import com.example.acessolivre.dto.response.UsuarioAutenticarResponseDTO;
 import com.example.acessolivre.model.Usuario;
 import com.example.acessolivre.model.UsuarioAutenticar;
 

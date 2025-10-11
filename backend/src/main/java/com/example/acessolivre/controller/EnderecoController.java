@@ -1,7 +1,7 @@
 package com.example.acessolivre.controller;
 
-import com.example.acessolivre.dto.EnderecoRequestDTO;
-import com.example.acessolivre.dto.EnderecoResponseDTO;
+import com.example.acessolivre.dto.request.EnderecoRequestDTO;
+import com.example.acessolivre.dto.response.EnderecoResponseDTO;
 import com.example.acessolivre.mapper.EnderecoMapper;
 import com.example.acessolivre.model.Endereco;
 import com.example.acessolivre.service.EnderecoService;

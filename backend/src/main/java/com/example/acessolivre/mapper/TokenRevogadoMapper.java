@@ -1,0 +1,64 @@
+package com.example.acessolivre.mapper;
+
+import com.example.acessolivre.dto.request.TokenRevogadoRequestDTO;
+import com.example.acessolivre.dto.response.TokenRevogadoResponseDTO;
+import com.example.acessolivre.model.TokenRevogado;
+import com.example.acessolivre.model.Usuario;
+
+public class TokenRevogadoMapper {
+
+    /**
+     * Converte TokenRevogadoRequestDTO para entidade TokenRevogado
+     * @param dto DTO de requisição
+     * @param usuario Usuário associado ao token
+     * @return Entidade TokenRevogado
+     */
+    public static TokenRevogado toEntity(TokenRevogadoRequestDTO dto, Usuario usuario) {
+        if (dto == null) {
+            return null;
+        }
+        
+        return TokenRevogado.builder()
+                .dataRevogacao(dto.getDataRevogacao())
+                .token(dto.getToken())
+                .usuario(usuario)
+                .build();
+    }
+
+    /**
+     * Converte entidade TokenRevogado para TokenRevogadoResponseDTO
+     * @param entity Entidade TokenRevogado
+     * @return DTO de resposta
+     */
+    public static TokenRevogadoResponseDTO toResponse(TokenRevogado entity) {
+        if (entity == null) {
+            return null;
+        }
+        
+        return new TokenRevogadoResponseDTO(
+                entity.getId(),
+                entity.getDataRevogacao(),
+                entity.getToken(),
+                entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null
+        );
+    }
+
+    /**
+     * Atualiza uma entidade TokenRevogado existente com dados do TokenRevogadoRequestDTO
+     * @param entity Entidade TokenRevogado a ser atualizada
+     * @param dto DTO com os novos dados
+     * @param usuario Usuário associado ao token
+     * @return Entidade TokenRevogado atualizada
+     */
+    public static TokenRevogado updateEntity(TokenRevogado entity, TokenRevogadoRequestDTO dto, Usuario usuario) {
+        if (entity == null || dto == null) {
+            return entity;
+        }
+        
+        entity.setDataRevogacao(dto.getDataRevogacao());
+        entity.setToken(dto.getToken());
+        entity.setUsuario(usuario);
+        
+        return entity;
+    }
+}

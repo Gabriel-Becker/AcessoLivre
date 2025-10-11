@@ -1,7 +1,7 @@
 package com.example.acessolivre.mapper;
 
-import com.example.acessolivre.dto.UsuarioRequestDTO;
-import com.example.acessolivre.dto.UsuarioResponseDTO;
+import com.example.acessolivre.dto.request.UsuarioRequestDTO;
+import com.example.acessolivre.dto.response.UsuarioResponseDTO;
 import com.example.acessolivre.model.Usuario;
 
 public class UsuarioMapper {
