@@ -1,0 +1,14 @@
+.git
+.gitignore
+target/
+*.iml
+.idea
+*.log
+*.jar
+*.war
+*.ear
+*.class
+.DS_Store
+docker-compose*.yml
+**/node_modules/
+.env
