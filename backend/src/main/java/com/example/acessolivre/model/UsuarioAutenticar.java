@@ -22,12 +22,12 @@ public class UsuarioAutenticar {
     @JoinColumn(name = "idusuario", referencedColumnName = "idusuario")
     private Usuario usuario;
 
-    @Column(name = "senha_hash")
+    @Column(name = "senha_hash", nullable = false, length = 255)
     private String senhaHash;
 
     @Column(name = "token_jwt")
     private String tokenJwt;
 
-    @Column(name = "data_expiracao")
+    @Column(name = "data_expiracao", nullable = false)
     private LocalDateTime dataExpiracao;
 }
