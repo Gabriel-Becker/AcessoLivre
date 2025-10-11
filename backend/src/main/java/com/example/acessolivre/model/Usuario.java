@@ -51,9 +51,9 @@ public class Usuario {
 
     // Relacionamentos
     
-    // @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private UsuarioAutenticar usuarioAutenticar;
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private UsuarioAutenticar usuarioAutenticar;
 
     // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     // @JsonIgnore
