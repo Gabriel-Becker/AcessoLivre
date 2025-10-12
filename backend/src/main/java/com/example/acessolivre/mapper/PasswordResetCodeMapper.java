@@ -5,6 +5,9 @@ import com.example.acessolivre.dto.response.PasswordResetCodeResponseDTO;
 import com.example.acessolivre.model.PasswordResetCode;
 import com.example.acessolivre.model.Usuario;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class PasswordResetCodeMapper {
 
     /**
@@ -19,8 +22,8 @@ public class PasswordResetCodeMapper {
         }
         
         return PasswordResetCode.builder()
-                .code(dto.getCode())
-                .cpf(dto.getCpf())
+                .code(dto.getCode().trim())
+                .cpf(dto.getCpf().trim())
                 .createdAt(dto.getCreatedAt())
                 .expiresAt(dto.getExpiresAt())
                 .used(dto.getUsed())
@@ -45,8 +48,23 @@ public class PasswordResetCodeMapper {
                 entity.getCreatedAt(),
                 entity.getExpiresAt(),
                 entity.getUsed(),
-                entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null
+                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
         );
+    }
+
+    /**
+     * Converte lista de entidades PasswordResetCode para lista de ResponseDTOs
+     * @param entities Lista de entidades
+     * @return Lista de DTOs de resposta
+     */
+    public static List<PasswordResetCodeResponseDTO> fromEntityList(List<PasswordResetCode> entities) {
+        if (entities == null) {
+            return null;
+        }
+        
+        return entities.stream()
+                .map(PasswordResetCodeMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -61,8 +79,8 @@ public class PasswordResetCodeMapper {
             return entity;
         }
         
-        entity.setCode(dto.getCode());
-        entity.setCpf(dto.getCpf());
+        entity.setCode(dto.getCode().trim());
+        entity.setCpf(dto.getCpf().trim());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setExpiresAt(dto.getExpiresAt());
         entity.setUsed(dto.getUsed());

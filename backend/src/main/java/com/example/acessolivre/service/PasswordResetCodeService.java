@@ -8,6 +8,7 @@ import com.example.acessolivre.repository.PasswordResetCodeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,28 +55,30 @@ public class PasswordResetCodeService {
      * Salva um novo código de reset de senha
      * @param dto DTO com dados do código de reset
      * @return Código de reset salvo
+     * @throws IllegalArgumentException se usuário não encontrado, CPF não corresponde ou código duplicado
      */
+    @Transactional
     public PasswordResetCode salvar(PasswordResetCodeRequestDTO dto) {
-        log.info("Salvando novo código de reset para usuário ID: {}", dto.getIdUsuario());
+        log.info("Salvando novo código de reset para usuário ID: {}", dto.getUsuarioId());
         
         // Busca o usuário
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getIdUsuario().intValue());
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId().intValue());
         if (usuarioOpt.isEmpty()) {
-            log.error("Usuário não encontrado com ID: {}", dto.getIdUsuario());
-            throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getIdUsuario());
+            log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
+            throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
         }
         
         Usuario usuario = usuarioOpt.get();
         
         // Verifica se o CPF corresponde ao usuário
-        if (!usuario.getCpf().equals(dto.getCpf())) {
+        if (!usuario.getCpf().equals(dto.getCpf().trim())) {
             log.error("CPF não corresponde ao usuário. CPF informado: {}, CPF do usuário: {}", 
                      dto.getCpf(), usuario.getCpf());
             throw new IllegalArgumentException("CPF não corresponde ao usuário");
         }
         
         // Verifica se já existe código válido para este usuário
-        if (passwordResetCodeRepository.existsByCpfAndUsedFalseAndExpiresAtAfter(dto.getCpf(), LocalDateTime.now())) {
+        if (passwordResetCodeRepository.existsByCpfAndUsedFalseAndExpiresAtAfter(dto.getCpf().trim(), LocalDateTime.now())) {
             log.warn("Já existe código válido para este usuário com CPF: {}", dto.getCpf());
             throw new IllegalArgumentException("Já existe código válido para este usuário");
         }
@@ -94,20 +97,20 @@ public class PasswordResetCodeService {
     /**
      * Deleta um código de reset pelo ID
      * @param id ID do código a ser deletado
-     * @return true se deletado com sucesso, false se não encontrado
+     * @throws IllegalArgumentException se o código não for encontrado
      */
-    public boolean deletar(Long id) {
+    @Transactional
+    public void deletar(Long id) {
         log.info("Tentando deletar código de reset com ID: {}", id);
         
         if (!passwordResetCodeRepository.existsById(id)) {
             log.warn("Código de reset não encontrado para deletar. ID: {}", id);
-            return false;
+            throw new IllegalArgumentException("Código de reset não encontrado com ID: " + id);
         }
         
         try {
             passwordResetCodeRepository.deleteById(id);
             log.info("Código de reset deletado com sucesso. ID: {}", id);
-            return true;
         } catch (Exception e) {
             log.error("Erro ao deletar código de reset com ID {}: {}", id, e.getMessage(), e);
             throw new RuntimeException("Erro ao deletar código de reset", e);
@@ -141,27 +144,29 @@ public class PasswordResetCodeService {
      * Marca um código como utilizado
      * @param code Código a ser marcado como utilizado
      * @param cpf CPF do usuário
-     * @return true se marcado com sucesso, false se não encontrado
+     * @return true se marcado com sucesso
+     * @throws IllegalArgumentException se código não encontrado, já usado ou expirado
      */
+    @Transactional
     public boolean marcarComoUsado(String code, String cpf) {
         log.info("Marcando código como utilizado: {} para CPF: {}", code, cpf);
         
-        Optional<PasswordResetCode> codigoOpt = passwordResetCodeRepository.findByCpfAndCode(cpf, code);
+        Optional<PasswordResetCode> codigoOpt = passwordResetCodeRepository.findByCpfAndCode(cpf.trim(), code.trim());
         
         if (codigoOpt.isEmpty()) {
             log.warn("Código não encontrado: {} para CPF: {}", code, cpf);
-            return false;
+            throw new IllegalArgumentException("Código não encontrado para este CPF");
         }
         
         PasswordResetCode codigo = codigoOpt.get();
         if (codigo.getUsed()) {
             log.warn("Código já foi utilizado: {}", code);
-            return false;
+            throw new IllegalArgumentException("Código já foi utilizado");
         }
         
         if (codigo.getExpiresAt().isBefore(LocalDateTime.now())) {
             log.warn("Código expirado: {}", code);
-            return false;
+            throw new IllegalArgumentException("Código expirado");
         }
         
         try {
@@ -217,6 +222,7 @@ public class PasswordResetCodeService {
      * Limpa códigos expirados
      * @return Número de códigos removidos
      */
+    @Transactional
     public int limparCodigosExpirados() {
         log.info("Limpando códigos de reset expirados");
         List<PasswordResetCode> codigosExpirados = passwordResetCodeRepository
