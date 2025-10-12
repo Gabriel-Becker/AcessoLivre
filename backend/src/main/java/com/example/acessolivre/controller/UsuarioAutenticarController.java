@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/usuarioautenticar")
+@RequestMapping("/api/usuario-autenticar")
 @RequiredArgsConstructor
 @Slf4j
 public class UsuarioAutenticarController {

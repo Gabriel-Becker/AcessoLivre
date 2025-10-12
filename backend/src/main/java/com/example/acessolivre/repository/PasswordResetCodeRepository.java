@@ -16,14 +16,14 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      * @param idUsuario ID do usuário
      * @return Lista de códigos de reset do usuário
      */
-    List<PasswordResetCode> findByUsuarioIdUsuario(Long idUsuario);
+    List<PasswordResetCode> findByUsuario_IdUsuario(Long idUsuario);
 
     /**
      * Busca códigos não utilizados por usuário
      * @param idUsuario ID do usuário
      * @return Lista de códigos não utilizados do usuário
      */
-    List<PasswordResetCode> findByUsuarioIdUsuarioAndUsedFalse(Long idUsuario);
+    List<PasswordResetCode> findByUsuario_IdUsuarioAndUsedFalse(Long idUsuario);
 
     /**
      * Busca códigos válidos (não expirados e não utilizados) por usuário
@@ -31,7 +31,7 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      * @param now Data atual
      * @return Lista de códigos válidos do usuário
      */
-    List<PasswordResetCode> findByUsuarioIdUsuarioAndUsedFalseAndExpiresAtAfter(Long idUsuario, LocalDateTime now);
+    List<PasswordResetCode> findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(Long idUsuario, LocalDateTime now);
 
     /**
      * Verifica se um código específico existe e está válido
@@ -47,7 +47,7 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      * @param idUsuario ID do usuário
      * @return Optional contendo o código se encontrado
      */
-    Optional<PasswordResetCode> findByCodeAndUsuarioIdUsuario(String code, Long idUsuario);
+    Optional<PasswordResetCode> findByCodeAndUsuario_IdUsuario(String code, Long idUsuario);
 
     /**
      * Busca um código pelo CPF e código

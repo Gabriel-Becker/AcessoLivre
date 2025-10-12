@@ -5,6 +5,7 @@ import com.example.acessolivre.repository.EnderecoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +51,7 @@ public class EnderecoService {
      * @param endereco Endereço a ser salvo
      * @return Endereço salvo
      */
+    @Transactional
     public Endereco salvar(Endereco endereco) {
         log.info("Salvando novo endereço para usuário ID: {}", 
                 endereco.getUsuario() != null ? endereco.getUsuario().getIdUsuario() : "null");
@@ -69,6 +71,7 @@ public class EnderecoService {
      * @param id ID do endereço a ser deletado
      * @return true se deletado com sucesso, false se não encontrado
      */
+    @Transactional
     public boolean deletar(Long id) {
         log.info("Tentando deletar endereço com ID: {}", id);
         

@@ -41,15 +41,15 @@ public class PasswordResetCodeMapper {
             return null;
         }
         
-        return new PasswordResetCodeResponseDTO(
-                entity.getId(),
-                entity.getCode(),
-                entity.getCpf(),
-                entity.getCreatedAt(),
-                entity.getExpiresAt(),
-                entity.getUsed(),
-                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
-        );
+        return PasswordResetCodeResponseDTO.builder()
+                .id(entity.getId())
+                .code(entity.getCode())
+                .cpf(entity.getCpf())
+                .createdAt(entity.getCreatedAt())
+                .expiresAt(entity.getExpiresAt())
+                .used(entity.getUsed())
+                .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
+                .build();
     }
 
     /**

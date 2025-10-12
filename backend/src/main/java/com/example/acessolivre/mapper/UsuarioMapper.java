@@ -35,15 +35,15 @@ public class UsuarioMapper {
             return null;
         }
         
-        return new UsuarioResponseDTO(
-                entity.getIdUsuario(),
-                entity.getNome(),
-                entity.getEmail(),
-                entity.getCpf(),
-                entity.getRole(),
-                entity.getDataCadastro(),
-                entity.getImagemPerfil()
-        );
+        return UsuarioResponseDTO.builder()
+                .idUsuario(entity.getIdUsuario())
+                .nome(entity.getNome())
+                .email(entity.getEmail())
+                .cpf(entity.getCpf())
+                .role(entity.getRole())
+                .dataCadastro(entity.getDataCadastro())
+                .imagemPerfil(entity.getImagemPerfil())
+                .build();
     }
 
     /**

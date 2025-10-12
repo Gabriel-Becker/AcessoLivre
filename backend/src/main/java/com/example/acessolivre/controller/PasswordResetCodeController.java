@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/passwordreset")
+@RequestMapping("/api/password-reset-codes")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j

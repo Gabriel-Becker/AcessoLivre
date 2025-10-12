@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/tokenrevogado")
+@RequestMapping("/api/token-revogado")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j

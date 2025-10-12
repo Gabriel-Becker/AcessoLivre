@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/twofactor")
+@RequestMapping("/api/two-factor-recovery-codes")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j

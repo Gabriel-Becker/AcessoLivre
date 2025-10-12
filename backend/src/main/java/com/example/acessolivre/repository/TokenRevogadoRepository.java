@@ -15,7 +15,7 @@ public interface TokenRevogadoRepository extends JpaRepository<TokenRevogado, Lo
      * @param idUsuario ID do usuário
      * @return Lista de tokens revogados do usuário
      */
-    List<TokenRevogado> findByUsuarioIdUsuario(Long idUsuario);
+    List<TokenRevogado> findByUsuario_IdUsuario(Long idUsuario);
 
     /**
      * Verifica se um token específico foi revogado

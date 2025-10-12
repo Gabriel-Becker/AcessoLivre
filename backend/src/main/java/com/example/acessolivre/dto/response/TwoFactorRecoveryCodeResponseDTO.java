@@ -1,12 +1,11 @@
 package com.example.acessolivre.dto.response;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TwoFactorRecoveryCodeResponseDTO {

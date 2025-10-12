@@ -62,7 +62,7 @@ public class PasswordResetCodeService {
         log.info("Salvando novo código de reset para usuário ID: {}", dto.getUsuarioId());
         
         // Busca o usuário
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId().intValue());
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId());
         if (usuarioOpt.isEmpty()) {
             log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
@@ -188,7 +188,7 @@ public class PasswordResetCodeService {
     public List<PasswordResetCode> buscarCodigosValidosPorUsuario(Long idUsuario) {
         log.info("Buscando códigos válidos para usuário ID: {}", idUsuario);
         List<PasswordResetCode> codigos = passwordResetCodeRepository
-                .findByUsuarioIdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
+                .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
         log.info("Encontrados {} códigos válidos para usuário ID: {}", codigos.size(), idUsuario);
         return codigos;
     }
@@ -213,7 +213,7 @@ public class PasswordResetCodeService {
      */
     public List<PasswordResetCode> buscarPorUsuario(Long idUsuario) {
         log.info("Buscando códigos de reset para usuário ID: {}", idUsuario);
-        List<PasswordResetCode> codigos = passwordResetCodeRepository.findByUsuarioIdUsuario(idUsuario);
+        List<PasswordResetCode> codigos = passwordResetCodeRepository.findByUsuario_IdUsuario(idUsuario);
         log.info("Encontrados {} códigos para usuário ID: {}", codigos.size(), idUsuario);
         return codigos;
     }

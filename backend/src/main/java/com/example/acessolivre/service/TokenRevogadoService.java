@@ -58,7 +58,7 @@ public class TokenRevogadoService {
         log.info("Salvando novo token revogado para usuário ID: {}", dto.getUsuarioId());
         
         // Busca o usuário
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId().intValue());
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId());
         if (usuarioOpt.isEmpty()) {
             log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
@@ -122,7 +122,7 @@ public class TokenRevogadoService {
      */
     public List<TokenRevogado> buscarPorUsuario(Long idUsuario) {
         log.info("Buscando tokens revogados para usuário ID: {}", idUsuario);
-        List<TokenRevogado> tokensRevogados = tokenRevogadoRepository.findByUsuarioIdUsuario(idUsuario);
+        List<TokenRevogado> tokensRevogados = tokenRevogadoRepository.findByUsuario_IdUsuario(idUsuario);
         log.info("Encontrados {} tokens revogados para usuário ID: {}", tokensRevogados.size(), idUsuario);
         return tokensRevogados;
     }

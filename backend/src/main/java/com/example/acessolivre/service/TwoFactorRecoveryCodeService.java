@@ -62,7 +62,7 @@ public class TwoFactorRecoveryCodeService {
         log.info("Salvando novo código de recuperação para usuário ID: {}", dto.getUsuarioId());
         
         // Busca o usuário
-        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId().intValue());
+        Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId());
         if (usuarioOpt.isEmpty()) {
             log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
@@ -71,7 +71,7 @@ public class TwoFactorRecoveryCodeService {
         Usuario usuario = usuarioOpt.get();
         
         // Verifica se o código já existe
-        if (twoFactorRecoveryCodeRepository.findByCodeAndUsuarioIdUsuario(dto.getCode().trim(), dto.getUsuarioId()).isPresent()) {
+        if (twoFactorRecoveryCodeRepository.findByCodeAndUsuario_IdUsuario(dto.getCode().trim(), dto.getUsuarioId()).isPresent()) {
             log.warn("Código de recuperação já existe para este usuário: {}", dto.getCode());
             throw new IllegalArgumentException("Código de recuperação já existe para este usuário");
         }
@@ -132,7 +132,7 @@ public class TwoFactorRecoveryCodeService {
         log.info("Marcando código como utilizado: {} para usuário ID: {}", code, idUsuario);
         
         Optional<TwoFactorRecoveryCode> codigoOpt = twoFactorRecoveryCodeRepository
-                .findByCodeAndUsuarioIdUsuario(code.trim(), idUsuario);
+                .findByCodeAndUsuario_IdUsuario(code.trim(), idUsuario);
         
         if (codigoOpt.isEmpty()) {
             log.warn("Código não encontrado: {} para usuário ID: {}", code, idUsuario);
@@ -169,7 +169,7 @@ public class TwoFactorRecoveryCodeService {
     public List<TwoFactorRecoveryCode> buscarCodigosValidosPorUsuario(Long idUsuario) {
         log.info("Buscando códigos válidos para usuário ID: {}", idUsuario);
         List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository
-                .findByUsuarioIdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
+                .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
         log.info("Encontrados {} códigos válidos para usuário ID: {}", codigos.size(), idUsuario);
         return codigos;
     }
@@ -181,7 +181,7 @@ public class TwoFactorRecoveryCodeService {
      */
     public List<TwoFactorRecoveryCode> buscarPorUsuario(Long idUsuario) {
         log.info("Buscando códigos de recuperação para usuário ID: {}", idUsuario);
-        List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository.findByUsuarioIdUsuario(idUsuario);
+        List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository.findByUsuario_IdUsuario(idUsuario);
         log.info("Encontrados {} códigos para usuário ID: {}", codigos.size(), idUsuario);
         return codigos;
     }

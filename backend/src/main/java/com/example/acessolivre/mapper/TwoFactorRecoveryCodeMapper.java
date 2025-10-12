@@ -40,14 +40,14 @@ public class TwoFactorRecoveryCodeMapper {
             return null;
         }
         
-        return new TwoFactorRecoveryCodeResponseDTO(
-                entity.getId(),
-                entity.getCode(),
-                entity.getCreatedAt(),
-                entity.getExpiresAt(),
-                entity.getUsed(),
-                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
-        );
+        return TwoFactorRecoveryCodeResponseDTO.builder()
+                .id(entity.getId())
+                .code(entity.getCode())
+                .createdAt(entity.getCreatedAt())
+                .expiresAt(entity.getExpiresAt())
+                .used(entity.getUsed())
+                .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
+                .build();
     }
 
     /**

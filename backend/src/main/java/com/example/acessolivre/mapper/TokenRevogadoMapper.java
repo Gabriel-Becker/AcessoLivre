@@ -35,12 +35,12 @@ public class TokenRevogadoMapper {
             return null;
         }
         
-        return new TokenRevogadoResponseDTO(
-                entity.getId(),
-                entity.getDataRevogacao(),
-                entity.getToken(),
-                entity.getUsuario() != null ? Long.valueOf(entity.getUsuario().getIdUsuario()) : null
-        );
+        return TokenRevogadoResponseDTO.builder()
+                .id(entity.getId())
+                .dataRevogacao(entity.getDataRevogacao())
+                .token(entity.getToken())
+                .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
+                .build();
     }
 
     /**

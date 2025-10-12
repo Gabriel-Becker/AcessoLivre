@@ -21,7 +21,7 @@ public class Usuario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idusuario")
-    private Integer idUsuario;
+    private Long idUsuario;
 
     @NotBlank(message = "Nome é obrigatório")
     private String nome;
@@ -55,23 +55,19 @@ public class Usuario {
     @JsonIgnore
     private UsuarioAutenticar usuarioAutenticar;
 
-    // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<Avaliacao> avaliacoes;
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<TwoFactorRecoveryCode> twoFactorRecoveryCodes;
 
-    // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<Local> locais;
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<PasswordResetCode> passwordResetCodes;
 
-    // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<TwoFactorRecoveryCode> twoFactorRecoveryCodes;
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<TokenRevogado> tokensRevogados;
 
-    // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<PasswordResetCode> passwordResetCodes;
-
-    // @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<TokenRevogado> tokensRevogados;
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Endereco> enderecos;
 }

@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/endereco")
+@RequestMapping("/api/enderecos")
 @RequiredArgsConstructor
 @Slf4j
 public class EnderecoController {
@@ -30,7 +30,7 @@ public class EnderecoController {
      */
     @GetMapping
     public ResponseEntity<List<EnderecoResponseDTO>> listarTodos() {
-        log.info("Endpoint GET /endereco - Listando todos os endereços");
+        log.info("Endpoint GET /api/enderecos - Listando todos os endereços");
         try {
             List<Endereco> enderecos = enderecoService.listarTodos();
             List<EnderecoResponseDTO> responseDTOs = enderecos.stream()
@@ -51,7 +51,7 @@ public class EnderecoController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<EnderecoResponseDTO> buscarPorId(@PathVariable Long id) {
-        log.info("Endpoint GET /endereco/{} - Buscando endereço por ID", id);
+        log.info("Endpoint GET /api/enderecos/{} - Buscando endereço por ID", id);
         try {
             Optional<Endereco> endereco = enderecoService.buscarPorId(id);
             
@@ -76,7 +76,7 @@ public class EnderecoController {
      */
     @PostMapping
     public ResponseEntity<EnderecoResponseDTO> salvar(@Valid @RequestBody EnderecoRequestDTO requestDTO) {
-        log.info("Endpoint POST /endereco - Salvando novo endereço");
+        log.info("Endpoint POST /api/enderecos - Salvando novo endereço");
         try {
             Endereco endereco = EnderecoMapper.toEntity(requestDTO);
             Endereco enderecoSalvo = enderecoService.salvar(endereco);
@@ -98,7 +98,7 @@ public class EnderecoController {
     @PutMapping("/{id}")
     public ResponseEntity<EnderecoResponseDTO> atualizar(@PathVariable Long id, 
                                                          @Valid @RequestBody EnderecoRequestDTO requestDTO) {
-        log.info("Endpoint PUT /endereco/{} - Atualizando endereço", id);
+        log.info("Endpoint PUT /api/enderecos/{} - Atualizando endereço", id);
         try {
             // Verifica se o endereço existe
             Optional<Endereco> enderecoExistente = enderecoService.buscarPorId(id);
@@ -131,7 +131,7 @@ public class EnderecoController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        log.info("Endpoint DELETE /endereco/{} - Deletando endereço", id);
+        log.info("Endpoint DELETE /api/enderecos/{} - Deletando endereço", id);
         try {
             boolean deletado = enderecoService.deletar(id);
             

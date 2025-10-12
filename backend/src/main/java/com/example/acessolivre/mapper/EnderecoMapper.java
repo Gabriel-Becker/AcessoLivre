@@ -19,7 +19,7 @@ public class EnderecoMapper {
         
         // Cria um objeto Usuario com apenas o ID para o relacionamento
         Usuario usuario = Usuario.builder()
-                .idUsuario(dto.getIdUsuario().intValue())
+                .idUsuario(dto.getIdUsuario())
                 .build();
         
         return Endereco.builder()
@@ -46,7 +46,7 @@ public class EnderecoMapper {
         
         return EnderecoResponseDTO.builder()
                 .idEndereco(entity.getIdEndereco())
-                .idUsuario(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario().longValue() : null)
+                .idUsuario(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
                 .cep(entity.getCep())
                 .logradouro(entity.getLogradouro())
                 .numero(entity.getNumero())
