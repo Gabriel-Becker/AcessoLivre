@@ -17,5 +17,5 @@ public class PasswordResetCodeResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Boolean used;
-    private Long idUsuario;
+    private Long usuarioId;
 }
