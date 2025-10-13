@@ -1,10 +1,10 @@
-package com.example.acessolivre.controller;
+package com.acessolivre.controller;
 
-import com.example.acessolivre.dto.request.UsuarioRequestDTO;
-import com.example.acessolivre.dto.response.UsuarioResponseDTO;
-import com.example.acessolivre.mapper.UsuarioMapper;
-import com.example.acessolivre.model.Usuario;
-import com.example.acessolivre.service.UsuarioService;
+import com.acessolivre.dto.request.UsuarioRequestDTO;
+import com.acessolivre.dto.response.UsuarioResponseDTO;
+import com.acessolivre.mapper.UsuarioMapper;
+import com.acessolivre.model.Usuario;
+import com.acessolivre.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

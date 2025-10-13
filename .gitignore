@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Github ###
+.github\copilot-instructions.md
+
 # Arquivos de chaves e propriedades sensíveis
 backend/src/main/resources/app.pub
 backend/src/main/resources/app.key

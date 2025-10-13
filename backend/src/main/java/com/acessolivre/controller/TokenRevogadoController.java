@@ -1,10 +1,10 @@
-package com.example.acessolivre.controller;
+package com.acessolivre.controller;
 
-import com.example.acessolivre.dto.request.TokenRevogadoRequestDTO;
-import com.example.acessolivre.dto.response.TokenRevogadoResponseDTO;
-import com.example.acessolivre.mapper.TokenRevogadoMapper;
-import com.example.acessolivre.model.TokenRevogado;
-import com.example.acessolivre.service.TokenRevogadoService;
+import com.acessolivre.dto.request.TokenRevogadoRequestDTO;
+import com.acessolivre.dto.response.TokenRevogadoResponseDTO;
+import com.acessolivre.mapper.TokenRevogadoMapper;
+import com.acessolivre.model.TokenRevogado;
+import com.acessolivre.service.TokenRevogadoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

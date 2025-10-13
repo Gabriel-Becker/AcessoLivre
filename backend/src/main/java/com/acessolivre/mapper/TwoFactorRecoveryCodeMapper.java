@@ -1,9 +1,9 @@
-package com.example.acessolivre.mapper;
+package com.acessolivre.mapper;
 
-import com.example.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
-import com.example.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
-import com.example.acessolivre.model.TwoFactorRecoveryCode;
-import com.example.acessolivre.model.Usuario;
+import com.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
+import com.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
+import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.model.Usuario;
 
 import java.util.List;
 import java.util.stream.Collectors;

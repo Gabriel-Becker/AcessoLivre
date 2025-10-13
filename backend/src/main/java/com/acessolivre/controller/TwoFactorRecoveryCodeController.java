@@ -1,10 +1,10 @@
-package com.example.acessolivre.controller;
+package com.acessolivre.controller;
 
-import com.example.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
-import com.example.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
-import com.example.acessolivre.mapper.TwoFactorRecoveryCodeMapper;
-import com.example.acessolivre.model.TwoFactorRecoveryCode;
-import com.example.acessolivre.service.TwoFactorRecoveryCodeService;
+import com.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
+import com.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
+import com.acessolivre.mapper.TwoFactorRecoveryCodeMapper;
+import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.service.TwoFactorRecoveryCodeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,10 +1,10 @@
-package com.example.acessolivre.controller;
+package com.acessolivre.controller;
 
-import com.example.acessolivre.dto.request.PasswordResetCodeRequestDTO;
-import com.example.acessolivre.dto.response.PasswordResetCodeResponseDTO;
-import com.example.acessolivre.mapper.PasswordResetCodeMapper;
-import com.example.acessolivre.model.PasswordResetCode;
-import com.example.acessolivre.service.PasswordResetCodeService;
+import com.acessolivre.dto.request.PasswordResetCodeRequestDTO;
+import com.acessolivre.dto.response.PasswordResetCodeResponseDTO;
+import com.acessolivre.mapper.PasswordResetCodeMapper;
+import com.acessolivre.model.PasswordResetCode;
+import com.acessolivre.service.PasswordResetCodeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.example.acessolivre.dto.request;
+package com.acessolivre.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
