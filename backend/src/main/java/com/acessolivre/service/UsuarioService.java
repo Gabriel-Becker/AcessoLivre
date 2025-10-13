@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +16,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UsuarioService {
+public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
 
@@ -93,5 +96,22 @@ public class UsuarioService {
         log.info("Deletando usuário ID: {}", id);
         usuarioRepository.deleteById(id);
         log.info("Usuário deletado com sucesso. ID: {}", id);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+
+        String role = "USER";
+        if (usuario.getRole() != null && (usuario.getRole().equalsIgnoreCase("admin") || usuario.getRole().equalsIgnoreCase("ADMIN"))) {
+            role = "ADMIN";
+        }
+
+    return org.springframework.security.core.userdetails.User.builder()
+        .username(usuario.getEmail())
+        .password(usuario.getUsuarioAutenticar() != null ? usuario.getUsuarioAutenticar().getSenhaHash() : "")
+        .roles(role)
+        .build();
     }
 }
