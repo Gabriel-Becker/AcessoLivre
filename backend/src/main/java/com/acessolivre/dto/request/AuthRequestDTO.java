@@ -1,18 +1,22 @@
 package com.acessolivre.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * DTO para requisição de login (email + senha)
+ * DTO para autenticação do usuário
  */
 @Data
 public class AuthRequestDTO {
-    @Email(message = "Email deve ter formato válido")
-    @NotBlank(message = "Email é obrigatório")
-    private String email;
+    @NotBlank(message = "Por favor, informe seu CPF")
+    private String cpf;
 
-    @NotBlank(message = "Senha é obrigatória")
+    @NotBlank(message = "Por favor, informe sua senha")
     private String senha;
+
+    // remember-me opcional
+    private Boolean rememberMe;
+
+    // código 2FA opcional (se disponível)
+    private String twoFactorCode;
 }

@@ -22,4 +22,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return true se o CPF já existe, false caso contrário
      */
     boolean existsByCpf(String cpf);
+
+    /**
+     * Busca um usuário pelo CPF
+     * @param cpf CPF do usuário
+     * @return Optional contendo o usuário se encontrado
+     */
+    Optional<Usuario> findByCpf(String cpf);
 }

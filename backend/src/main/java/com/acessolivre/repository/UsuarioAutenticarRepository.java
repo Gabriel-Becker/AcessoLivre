@@ -15,4 +15,11 @@ public interface UsuarioAutenticarRepository extends JpaRepository<UsuarioAutent
      * @return Optional contendo os dados de autenticação se encontrados
      */
     Optional<UsuarioAutenticar> findByUsuario_IdUsuario(Long idUsuario);
+
+    /**
+     * Busca dados de autenticação pelo CPF do usuário
+     * @param cpf CPF do usuário
+     * @return Optional contendo os dados de autenticação se encontrados
+     */
+    Optional<UsuarioAutenticar> findByUsuario_Cpf(String cpf);
 }

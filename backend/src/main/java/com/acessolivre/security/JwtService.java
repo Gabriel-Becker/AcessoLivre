@@ -1,74 +1,113 @@
 package com.acessolivre.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.acessolivre.model.Usuario;
+import com.acessolivre.repository.TokenRevogadoRepository;
+import com.acessolivre.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
-/**
- * Serviço responsável por gerar e validar tokens JWT.
- */
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.stream.Collectors;
+
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY = "chave_super_segura_para_o_tcc_2026_acessolivre_1234567890";
+    private final JwtEncoder encoder;
+    private final JwtDecoder jwtDecoder;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
+    private final UsuarioRepository usuarioRepository;
 
+    @Value("${jwt.token.expiration.default:720}")
+    private long defaultTokenExpirationMinutes;
+
+    @Value("${jwt.token.expiration.remember-me:43200}")
+    private long rememberMeTokenExpirationMinutes;
+
+    public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, UsuarioRepository usuarioRepository) {
+        this.encoder = encoder;
+        this.jwtDecoder = jwtDecoder;
+        this.tokenRevogadoRepository = tokenRevogadoRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    public String generateToken(Authentication authentication) {
+        return generateToken(authentication, null);
+    }
+
+    public String generateToken(Authentication authentication, Boolean rememberMe) {
+        Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
+        long expiry = (rememberMe != null && rememberMe) ? rememberMeTokenExpirationMinutes * 60 : defaultTokenExpirationMinutes * 60;
+
+        String scope = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(" "));
+
+        String cpf = authentication.getName();
+        Long userId = null;
+        try {
+            Usuario usuario = usuarioRepository.findByCpf(cpf).orElse(null);
+            if (usuario != null) userId = usuario.getIdUsuario();
+        } catch (Exception ignored) {}
+
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
+                .issuer("acessolivre")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(expiry))
+                .subject(authentication.getName())
+                .claim("scope", scope);
+
+        if (userId != null) claimsBuilder.claim("userId", userId);
+
+        return encoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Jwt jwt = jwtDecoder.decode(token);
+        return jwt.getClaim("userId");
+    }
+
+    public boolean isTokenRevogado(String token) {
+        return tokenRevogadoRepository.existsByToken(token);
+    }
+
+    // Compatibility helper: extract username (subject) from token
     public String extractUsername(String token) {
         try {
-            return extractClaim(token, Claims::getSubject);
+            Jwt jwt = jwtDecoder.decode(token);
+            return jwt.getSubject();
         } catch (Exception e) {
             return null;
         }
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24h
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
+    // Compatibility helper: validate token against a UserDetails
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        if (token == null) return false;
-        final String username = extractUsername(token);
-        return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    private Key getSignInKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        if (token == null || userDetails == null) return false;
+        String username = extractUsername(token);
+        if (username == null || !username.equals(userDetails.getUsername())) return false;
+        try {
+            Jwt jwt = jwtDecoder.decode(token);
+            Instant exp = jwt.getExpiresAt();
+            if (exp == null) return false;
+            if (exp.isBefore(Instant.now())) return false;
+        } catch (Exception e) {
+            return false;
+        }
+        if (isTokenRevogado(token)) return false;
+        return true;
     }
 }
+
