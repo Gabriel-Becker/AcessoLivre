@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,7 +48,7 @@ public class AuthController {
         String auth = request.getHeader("Authorization");
         if (auth == null || !auth.startsWith("Bearer ")) return ResponseEntity.badRequest().build();
         String token = auth.substring(7);
-        Long userId = jwtService.getUserIdFromToken(token);
+        Long userId = jwtService.obterIdUsuarioDoToken(token);
         authenticationService.logout(token, userId);
         return ResponseEntity.ok().build();
     }
@@ -60,7 +59,7 @@ public class AuthController {
         if (auth == null || !auth.startsWith("Bearer ")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         String token = auth.substring(7);
         if (authenticationService.isTokenRevoked(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        Long userId = jwtService.getUserIdFromToken(token);
+        Long userId = jwtService.obterIdUsuarioDoToken(token);
         return usuarioRepository.findById(userId)
                 .map(u -> ResponseEntity.ok(u))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());

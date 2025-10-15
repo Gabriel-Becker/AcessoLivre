@@ -22,10 +22,10 @@ public class TwoFactorRecoveryCodeMapper {
         }
         
         return TwoFactorRecoveryCode.builder()
-                .code(dto.getCode().trim())
-                .createdAt(dto.getCreatedAt())
-                .expiresAt(dto.getExpiresAt())
-                .used(dto.getUsed())
+                .codigo(dto.getCodigo().trim())
+                .dataCriacao(dto.getDataCriacao())
+                .dataExpiracao(dto.getDataExpiracao())
+                .utilizado(dto.getUtilizado())
                 .usuario(usuario)
                 .build();
     }
@@ -42,10 +42,10 @@ public class TwoFactorRecoveryCodeMapper {
         
         return TwoFactorRecoveryCodeResponseDTO.builder()
                 .id(entity.getId())
-                .code(entity.getCode())
-                .createdAt(entity.getCreatedAt())
-                .expiresAt(entity.getExpiresAt())
-                .used(entity.getUsed())
+                .codigo(entity.getCodigo())
+                .dataCriacao(entity.getDataCriacao())
+                .dataExpiracao(entity.getDataExpiracao())
+                .utilizado(entity.getUtilizado())
                 .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
                 .build();
     }
@@ -77,10 +77,10 @@ public class TwoFactorRecoveryCodeMapper {
             return entity;
         }
         
-        entity.setCode(dto.getCode().trim());
-        entity.setCreatedAt(dto.getCreatedAt());
-        entity.setExpiresAt(dto.getExpiresAt());
-        entity.setUsed(dto.getUsed());
+        entity.setCodigo(dto.getCodigo().trim());
+        entity.setDataCriacao(dto.getDataCriacao());
+        entity.setDataExpiracao(dto.getDataExpiracao());
+        entity.setUtilizado(dto.getUtilizado());
         entity.setUsuario(usuario);
         
         return entity;

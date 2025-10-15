@@ -23,26 +23,25 @@ public class TwoFactorRecoveryCode {
     private Long id;
 
     @NotBlank(message = "Código é obrigatório")
-    @Size(max = 150, message = "Código deve ter no máximo 150 caracteres")
-    @Column(name = "code", nullable = false, length = 150)
-    private String code;
+    @Size(min = 6, max = 20, message = "Código deve ter entre 6 e 20 caracteres")
+    @Column(name = "codigo")
+    private String codigo;
 
     @NotNull(message = "Data de criação é obrigatória")
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao;
 
     @NotNull(message = "Data de expiração é obrigatória")
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(name = "data_expiracao")
+    private LocalDateTime dataExpiracao;
 
-    @NotNull(message = "Status de uso é obrigatório")
-    @Column(name = "used", nullable = false)
+    @NotNull(message = "Status de utilização é obrigatório")
+    @Column(name = "utilizado")
     @Builder.Default
-    private Boolean used = false;
+    private Boolean utilizado = false;
 
-    @NotNull(message = "Usuário é obrigatório")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_usuario", referencedColumnName = "idusuario", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario")
     @JsonIgnore
     private Usuario usuario;
 }

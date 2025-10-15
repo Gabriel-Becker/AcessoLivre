@@ -50,7 +50,6 @@ public class Usuario {
     private LocalDateTime dataCadastro;
 
     // Relacionamentos
-    
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private UsuarioAutenticar usuarioAutenticar;

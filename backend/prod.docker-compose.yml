@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: back-prod
+    build:
+      context: .
+      dockerfile: prod.dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Xmx512m -XX:+UseContainerSupport

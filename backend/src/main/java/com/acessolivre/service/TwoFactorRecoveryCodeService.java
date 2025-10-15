@@ -71,8 +71,8 @@ public class TwoFactorRecoveryCodeService {
         Usuario usuario = usuarioOpt.get();
         
         // Verifica se o código já existe
-        if (twoFactorRecoveryCodeRepository.findByCodeAndUsuario_IdUsuario(dto.getCode().trim(), dto.getUsuarioId()).isPresent()) {
-            log.warn("Código de recuperação já existe para este usuário: {}", dto.getCode());
+        if (twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario(dto.getCodigo().trim(), dto.getUsuarioId()).isPresent()) {
+            log.warn("Código de recuperação já existe para este usuário: {}", dto.getCodigo());
             throw new IllegalArgumentException("Código de recuperação já existe para este usuário");
         }
         
@@ -117,7 +117,7 @@ public class TwoFactorRecoveryCodeService {
      */
     public boolean isCodigoValido(String code) {
         log.debug("Verificando se código de recuperação é válido: {}", code);
-        return twoFactorRecoveryCodeRepository.existsByCodeAndUsedFalseAndExpiresAtAfter(code, LocalDateTime.now());
+        return twoFactorRecoveryCodeRepository.existsByCodigoAndUtilizadoFalseAndDataExpiracaoAfter(code, LocalDateTime.now());
     }
 
     /**
@@ -132,7 +132,7 @@ public class TwoFactorRecoveryCodeService {
         log.info("Marcando código como utilizado: {} para usuário ID: {}", code, idUsuario);
         
         Optional<TwoFactorRecoveryCode> codigoOpt = twoFactorRecoveryCodeRepository
-                .findByCodeAndUsuario_IdUsuario(code.trim(), idUsuario);
+                .findByCodigoAndUsuario_IdUsuario(code.trim(), idUsuario);
         
         if (codigoOpt.isEmpty()) {
             log.warn("Código não encontrado: {} para usuário ID: {}", code, idUsuario);
@@ -140,18 +140,18 @@ public class TwoFactorRecoveryCodeService {
         }
         
         TwoFactorRecoveryCode codigo = codigoOpt.get();
-        if (codigo.getUsed()) {
+        if (codigo.getUtilizado()) {
             log.warn("Código já foi utilizado: {}", code);
             throw new IllegalArgumentException("Código já foi utilizado");
         }
         
-        if (codigo.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (codigo.getDataExpiracao().isBefore(LocalDateTime.now())) {
             log.warn("Código expirado: {}", code);
             throw new IllegalArgumentException("Código expirado");
         }
         
         try {
-            codigo.setUsed(true);
+            codigo.setUtilizado(true);
             twoFactorRecoveryCodeRepository.save(codigo);
             log.info("Código marcado como utilizado com sucesso: {}", code);
             return true;
@@ -169,7 +169,7 @@ public class TwoFactorRecoveryCodeService {
     public List<TwoFactorRecoveryCode> buscarCodigosValidosPorUsuario(Long idUsuario) {
         log.info("Buscando códigos válidos para usuário ID: {}", idUsuario);
         List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository
-                .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
+                .findByUsuario_IdUsuarioAndUtilizadoFalseAndDataExpiracaoAfter(idUsuario, LocalDateTime.now());
         log.info("Encontrados {} códigos válidos para usuário ID: {}", codigos.size(), idUsuario);
         return codigos;
     }
@@ -194,7 +194,7 @@ public class TwoFactorRecoveryCodeService {
     public int limparCodigosExpirados() {
         log.info("Limpando códigos de recuperação expirados");
         List<TwoFactorRecoveryCode> codigosExpirados = twoFactorRecoveryCodeRepository
-                .findByExpiresAtBefore(LocalDateTime.now());
+                .findByDataExpiracaoBefore(LocalDateTime.now());
         
         if (!codigosExpirados.isEmpty()) {
             twoFactorRecoveryCodeRepository.deleteAll(codigosExpirados);

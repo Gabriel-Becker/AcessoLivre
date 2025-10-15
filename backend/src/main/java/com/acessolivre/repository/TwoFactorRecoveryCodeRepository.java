@@ -23,7 +23,7 @@ public interface TwoFactorRecoveryCodeRepository extends JpaRepository<TwoFactor
      * @param idUsuario ID do usuário
      * @return Lista de códigos não utilizados do usuário
      */
-    List<TwoFactorRecoveryCode> findByUsuario_IdUsuarioAndUsedFalse(Long idUsuario);
+    List<TwoFactorRecoveryCode> findByUsuario_IdUsuarioAndUtilizadoFalse(Long idUsuario);
 
     /**
      * Busca códigos válidos (não expirados e não utilizados) por usuário
@@ -31,28 +31,28 @@ public interface TwoFactorRecoveryCodeRepository extends JpaRepository<TwoFactor
      * @param now Data atual
      * @return Lista de códigos válidos do usuário
      */
-    List<TwoFactorRecoveryCode> findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(Long idUsuario, LocalDateTime now);
+    List<TwoFactorRecoveryCode> findByUsuario_IdUsuarioAndUtilizadoFalseAndDataExpiracaoAfter(Long idUsuario, LocalDateTime now);
 
     /**
      * Verifica se um código específico existe e está válido
-     * @param code Código a ser verificado
+     * @param codigo Código a ser verificado
      * @param now Data atual
      * @return true se o código existe e está válido, false caso contrário
      */
-    boolean existsByCodeAndUsedFalseAndExpiresAtAfter(String code, LocalDateTime now);
+    boolean existsByCodigoAndUtilizadoFalseAndDataExpiracaoAfter(String codigo, LocalDateTime now);
 
     /**
      * Busca um código pelo código e usuário
-     * @param code Código a ser buscado
+     * @param codigo Código a ser buscado
      * @param idUsuario ID do usuário
      * @return Optional contendo o código se encontrado
      */
-    Optional<TwoFactorRecoveryCode> findByCodeAndUsuario_IdUsuario(String code, Long idUsuario);
+    Optional<TwoFactorRecoveryCode> findByCodigoAndUsuario_IdUsuario(String codigo, Long idUsuario);
 
     /**
      * Busca códigos expirados
      * @param now Data atual
      * @return Lista de códigos expirados
      */
-    List<TwoFactorRecoveryCode> findByExpiresAtBefore(LocalDateTime now);
+    List<TwoFactorRecoveryCode> findByDataExpiracaoBefore(LocalDateTime now);
 }

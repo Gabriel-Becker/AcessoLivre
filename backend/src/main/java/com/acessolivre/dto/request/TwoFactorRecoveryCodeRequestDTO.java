@@ -17,18 +17,18 @@ public class TwoFactorRecoveryCodeRequestDTO {
 
     @NotBlank(message = "Código é obrigatório")
     @Size(max = 150, message = "Código deve ter no máximo 150 caracteres")
-    private String code;
+    private String codigo;
 
     @NotNull(message = "Data de criação é obrigatória")
     @PastOrPresent(message = "Data de criação deve ser no passado ou presente")
-    private LocalDateTime createdAt;
+    private LocalDateTime dataCriacao;
 
     @NotNull(message = "Data de expiração é obrigatória")
     @Future(message = "Data de expiração deve ser no futuro")
-    private LocalDateTime expiresAt;
+    private LocalDateTime dataExpiracao;
 
     @NotNull(message = "Status de uso é obrigatório")
-    private Boolean used;
+    private Boolean utilizado;
 
     @NotNull(message = "ID do usuário é obrigatório")
     private Long usuarioId;

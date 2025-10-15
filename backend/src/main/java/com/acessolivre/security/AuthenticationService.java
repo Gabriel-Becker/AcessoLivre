@@ -26,7 +26,7 @@ public class AuthenticationService {
                 new UsernamePasswordAuthenticationToken(cpf, senha)
         );
 
-        String token = jwtService.generateToken(authentication, rememberMe);
+        String token = jwtService.gerarToken(authentication, rememberMe);
 
         // salva token atual no usuário
         Usuario usuario = usuarioRepository.findByCpf(cpf).orElse(null);

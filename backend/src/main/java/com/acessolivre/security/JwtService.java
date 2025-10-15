@@ -14,9 +14,6 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Date;
-import java.util.function.Function;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -43,11 +40,11 @@ public class JwtService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public String generateToken(Authentication authentication) {
-        return generateToken(authentication, null);
+    public String gerarToken(Authentication authentication) {
+        return gerarToken(authentication, false);
     }
 
-    public String generateToken(Authentication authentication, Boolean rememberMe) {
+    public String gerarToken(Authentication authentication, Boolean rememberMe) {
         Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
         long expiry = (rememberMe != null && rememberMe) ? rememberMeTokenExpirationMinutes * 60 : defaultTokenExpirationMinutes * 60;
 
@@ -74,7 +71,7 @@ public class JwtService {
         return encoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
     }
 
-    public Long getUserIdFromToken(String token) {
+    public Long obterIdUsuarioDoToken(String token) {
         Jwt jwt = jwtDecoder.decode(token);
         return jwt.getClaim("userId");
     }
@@ -84,7 +81,7 @@ public class JwtService {
     }
 
     // Compatibility helper: extract username (subject) from token
-    public String extractUsername(String token) {
+    public String extrairNomeUsuario(String token) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
             return jwt.getSubject();
@@ -96,7 +93,7 @@ public class JwtService {
     // Compatibility helper: validate token against a UserDetails
     public boolean isTokenValid(String token, UserDetails userDetails) {
         if (token == null || userDetails == null) return false;
-        String username = extractUsername(token);
+        String username = extrairNomeUsuario(token);
         if (username == null || !username.equals(userDetails.getUsername())) return false;
         try {
             Jwt jwt = jwtDecoder.decode(token);

@@ -1,4 +1,4 @@
-package com.example.acessolivre;
+package com.acessolivre;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
