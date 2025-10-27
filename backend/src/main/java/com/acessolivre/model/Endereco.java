@@ -20,7 +20,7 @@ public class Endereco {
     private Long idEndereco;
 
     @NotBlank(message = "CEP é obrigatório")
-    @Size(max = 9, message = "CEP deve ter no máximo 9 caracteres")
+    @Size(max = 10, message = "CEP deve ter no máximo 10 caracteres")
     private String cep;
 
     @NotBlank(message = "Logradouro é obrigatório")
@@ -28,14 +28,14 @@ public class Endereco {
     private String logradouro;
 
     @NotBlank(message = "Número é obrigatório")
-    @Size(max = 10, message = "Número deve ter no máximo 10 caracteres")
+    @Size(max = 45, message = "Número deve ter no máximo 45 caracteres")
     private String numero;
 
     @Size(max = 100, message = "Complemento deve ter no máximo 100 caracteres")
     private String complemento;
 
     @NotBlank(message = "Bairro é obrigatório")
-    @Size(max = 100, message = "Bairro deve ter no máximo 100 caracteres")
+    @Size(max = 150, message = "Bairro deve ter no máximo 150 caracteres")
     private String bairro;
 
     @NotBlank(message = "Cidade é obrigatória")
@@ -43,7 +43,7 @@ public class Endereco {
     private String cidade;
 
     @NotBlank(message = "Estado é obrigatório")
-    @Size(max = 2, message = "Estado deve ter no máximo 2 caracteres")
+    @Column(length = 1)
     private String estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
