@@ -33,6 +33,7 @@ build/
 .vscode/
 
 ### Github ###
+/.github
 
 # Arquivos de chaves e propriedades sensíveis
 backend/src/main/resources/app.pub
