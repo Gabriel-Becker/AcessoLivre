@@ -2,6 +2,8 @@ package com.acessolivre.repository;
 
 import com.acessolivre.model.Avaliacao;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,7 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
     List<Avaliacao> findByUsuarioIdUsuario(Long idUsuario);
 
     List<Avaliacao> findByModerado(Boolean moderado);
+
+    @Query("SELECT AVG(a.notaGeral) FROM Avaliacao a WHERE a.local.idLocal = :idLocal")
+    Double calcularMediaPorLocal(@Param("idLocal") Long idLocal);
 }

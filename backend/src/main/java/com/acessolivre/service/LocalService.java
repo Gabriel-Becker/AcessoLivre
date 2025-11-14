@@ -21,6 +21,7 @@ public class LocalService {
     private final CategoriaRepository categoriaRepository;
     private final TipoAcessibilidadeRepository tipoAcessibilidadeRepository;
     private final EnderecoRepository enderecoRepository;
+    private final AvaliacaoRepository avaliacaoRepository;
 
     public List<Local> listarTodos() {
         log.info("Listando todos os locais");
@@ -99,5 +100,21 @@ public class LocalService {
 
         localRepository.deleteById(id);
         return true;
+    }
+
+    @Transactional
+    public void recalcularMediaAvaliacoes(Long idLocal) {
+        log.info("Recalculando média de avaliações para local ID: {}", idLocal);
+        
+        Local local = localRepository.findById(idLocal)
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
+
+        Double media = avaliacaoRepository.calcularMediaPorLocal(idLocal);
+        
+        // Define média como 0.0 se não houver avaliações, caso contrário usa a média calculada
+        local.setAvaliacaoMedia(media != null ? media : 0.0);
+        
+        localRepository.save(local);
+        log.info("Média de avaliações atualizada para local ID {}: {}", idLocal, local.getAvaliacaoMedia());
     }
 }

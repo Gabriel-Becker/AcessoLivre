@@ -24,6 +24,7 @@ public class AvaliacaoService {
     private final AvaliacaoRepository avaliacaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final LocalRepository localRepository;
+    private final LocalService localService;
 
     public List<Avaliacao> listarTodos() {
         log.info("Listando todas as avaliações");
@@ -77,16 +78,30 @@ public class AvaliacaoService {
 
         Avaliacao avaliacao = AvaliacaoMapper.toEntity(dto, usuario, local, media, moderado);
 
-        return avaliacaoRepository.save(avaliacao);
+        Avaliacao avaliacaoSalva = avaliacaoRepository.save(avaliacao);
+        
+        // Recalcula a média do local automaticamente
+        localService.recalcularMediaAvaliacoes(dto.getIdLocal());
+        
+        return avaliacaoSalva;
     }
 
     @Transactional
     public boolean deletar(Long id) {
         log.info("Deletando avaliação ID: {}", id);
-        if (!avaliacaoRepository.existsById(id)) {
+        
+        Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(id);
+        if (avaliacaoOpt.isEmpty()) {
             return false;
         }
+        
+        Long idLocal = avaliacaoOpt.get().getLocal().getIdLocal();
+        
         avaliacaoRepository.deleteById(id);
+        
+        // Recalcula a média do local automaticamente após deletar
+        localService.recalcularMediaAvaliacoes(idLocal);
+        
         return true;
     }
 }
