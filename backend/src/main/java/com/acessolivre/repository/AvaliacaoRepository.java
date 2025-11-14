@@ -13,6 +13,8 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
 
     List<Avaliacao> findByLocalIdLocal(Long idLocal);
 
+    List<Avaliacao> findByLocalIdLocalAndModerado(Long idLocal, Boolean moderado);
+
     List<Avaliacao> findByUsuarioIdUsuario(Long idUsuario);
 
     List<Avaliacao> findByModerado(Boolean moderado);

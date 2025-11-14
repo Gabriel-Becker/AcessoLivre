@@ -45,6 +45,16 @@ public class AvaliacaoService {
         return avaliacaoRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
+    public List<Avaliacao> listarPublicas() {
+        log.info("Listando avaliações públicas (moderadas)");
+        return avaliacaoRepository.findByModerado(true);
+    }
+
+    public List<Avaliacao> buscarPublicasPorLocal(Long idLocal) {
+        log.info("Buscando avaliações públicas por local ID: {}", idLocal);
+        return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);
+    }
+
     @Transactional
     public Avaliacao salvar(AvaliacaoRequestDTO dto) {
         log.info("Salvando nova avaliação para local ID: {} por usuário ID: {}", dto.getIdLocal(), dto.getIdUsuario());
