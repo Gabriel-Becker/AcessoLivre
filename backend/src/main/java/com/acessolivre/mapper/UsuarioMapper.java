@@ -15,12 +15,17 @@ public class UsuarioMapper {
         if (dto == null) {
             return null;
         }
-        
+        // Garante role padrão "usuario" quando não for informada
+        String role = dto.getRole();
+        if (role == null || role.isBlank()) {
+            role = "usuario";
+        }
+
         return Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
                 .cpf(dto.getCpf())
-                .role(dto.getRole())
+                .role(role)
                 .imagemPerfil(dto.getImagemPerfil())
                 .build();
     }
@@ -56,11 +61,14 @@ public class UsuarioMapper {
         if (entity == null || dto == null) {
             return entity;
         }
-        
+        // Mantém role atual caso não venha no DTO; se vier em branco, usa padrão "usuario"
+        if (dto.getRole() != null) {
+            entity.setRole(dto.getRole().isBlank() ? "usuario" : dto.getRole());
+        }
+
         entity.setNome(dto.getNome());
         entity.setEmail(dto.getEmail());
         entity.setCpf(dto.getCpf());
-        entity.setRole(dto.getRole());
         entity.setImagemPerfil(dto.getImagemPerfil());
         
         return entity;

@@ -16,7 +16,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UsuarioService implements UserDetailsService {
+public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
@@ -98,20 +98,4 @@ public class UsuarioService implements UserDetailsService {
         log.info("Usuário deletado com sucesso. ID: {}", id);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
-
-        String role = "USER";
-        if (usuario.getRole() != null && (usuario.getRole().equalsIgnoreCase("admin") || usuario.getRole().equalsIgnoreCase("ADMIN"))) {
-            role = "ADMIN";
-        }
-
-    return org.springframework.security.core.userdetails.User.builder()
-        .username(usuario.getEmail())
-        .password(usuario.getUsuarioAutenticar() != null ? usuario.getUsuarioAutenticar().getSenhaHash() : "")
-        .roles(role)
-        .build();
-    }
 }
