@@ -1,0 +1,121 @@
+package com.acessolivre.controller;
+
+import com.acessolivre.dto.request.AlterarRoleRequestDTO;
+import com.acessolivre.dto.response.AvaliacaoResponseDTO;
+import com.acessolivre.dto.response.UsuarioAdminResponseDTO;
+import com.acessolivre.mapper.AvaliacaoMapper;
+import com.acessolivre.model.Usuario;
+import com.acessolivre.service.AdminService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/admin")
+@RequiredArgsConstructor
+@Slf4j
+@PreAuthorize("hasRole('ADMIN')")
+public class AdminController {
+
+    private final AdminService adminService;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    // ===== GERENCIAMENTO DE USUÁRIOS =====
+
+    @GetMapping("/usuarios")
+    public ResponseEntity<List<UsuarioAdminResponseDTO>> listarUsuarios() {
+        List<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios()
+                .stream()
+                .map(this::toUsuarioAdminResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/usuarios/{id}")
+    public ResponseEntity<UsuarioAdminResponseDTO> buscarUsuario(@PathVariable Long id) {
+        return adminService.buscarUsuarioPorId(id)
+                .map(this::toUsuarioAdminResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/usuarios/{id}/role")
+    public ResponseEntity<Void> alterarRole(
+            @PathVariable Long id,
+            @Valid @RequestBody AlterarRoleRequestDTO dto) {
+        boolean alterado = adminService.alterarRoleUsuario(id, dto.getNovaRole());
+        return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/usuarios/{id}")
+    public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
+        boolean deletado = adminService.deletarUsuario(id);
+        return deletado ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    // ===== MODERAÇÃO DE AVALIAÇÕES =====
+
+    @GetMapping("/moderacao/avaliacoes/pendentes")
+    public ResponseEntity<List<AvaliacaoResponseDTO>> listarAvaliacoesPendentes() {
+        List<AvaliacaoResponseDTO> avaliacoes = adminService.listarAvaliacoesPendentes()
+                .stream()
+                .map(AvaliacaoMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(avaliacoes);
+    }
+
+    @PutMapping("/moderacao/avaliacoes/{id}/aprovar")
+    public ResponseEntity<Void> aprovarAvaliacao(@PathVariable Long id) {
+        boolean aprovada = adminService.aprovarAvaliacao(id);
+        return aprovada ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/moderacao/avaliacoes/{id}/rejeitar")
+    public ResponseEntity<Void> rejeitarAvaliacao(@PathVariable Long id) {
+        boolean rejeitada = adminService.rejeitarAvaliacao(id);
+        return rejeitada ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    // ===== ESTATÍSTICAS E RELATÓRIOS =====
+
+    @GetMapping("/relatorios/estatisticas-gerais")
+    public ResponseEntity<Map<String, Object>> obterEstatisticasGerais() {
+        return ResponseEntity.ok(adminService.obterEstatisticasGerais());
+    }
+
+    @GetMapping("/relatorios/locais-por-estado")
+    public ResponseEntity<Map<String, Long>> obterLocaisPorEstado() {
+        return ResponseEntity.ok(adminService.obterEstatisticasPorEstado());
+    }
+
+    @GetMapping("/relatorios/locais-por-categoria")
+    public ResponseEntity<Map<String, Long>> obterLocaisPorCategoria() {
+        return ResponseEntity.ok(adminService.obterEstatisticasPorCategoria());
+    }
+
+    @GetMapping("/relatorios/locais-por-tipo-acessibilidade")
+    public ResponseEntity<Map<String, Long>> obterLocaisPorTipoAcessibilidade() {
+        return ResponseEntity.ok(adminService.obterEstatisticasPorTipoAcessibilidade());
+    }
+
+    // Helper para conversão
+    private UsuarioAdminResponseDTO toUsuarioAdminResponse(Usuario usuario) {
+        return UsuarioAdminResponseDTO.builder()
+                .idUsuario(usuario.getIdUsuario())
+                .nome(usuario.getNome())
+                .email(usuario.getEmail())
+                .cpf(usuario.getCpf())
+                .role(usuario.getRole())
+                .dataCadastro(usuario.getDataCadastro() != null ? 
+                        usuario.getDataCadastro().format(FORMATTER) : null)
+                .build();
+    }
+}
