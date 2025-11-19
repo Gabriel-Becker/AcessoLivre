@@ -4,13 +4,10 @@ import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
-import com.acessolivre.service.UsuarioAutenticarService;
 import com.acessolivre.service.UsuarioService;
-import com.acessolivre.mapper.UsuarioMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,11 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 /**
- * Controller responsável por autenticação (login) e emissão de tokens JWT.
+ * Controller responsável por autenticação (login, registro) e emissão de tokens JWT.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -35,45 +31,25 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
-    private final UsuarioAutenticarService usuarioAutenticarService;
-    private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Registro de novo usuário com criação do registro de autenticação (senha hash).
-     * Aberto ao público.
-     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
         try {
-            log.info("Registro de novo usuário (email={} cpf={})", request.getEmail(), request.getCpf());
-
-            // Salva usuário básico
-            Usuario usuario = UsuarioMapper.toEntity(
-                    com.acessolivre.dto.request.UsuarioRequestDTO.builder()
-                            .nome(request.getNome())
-                            .email(request.getEmail())
-                            .cpf(request.getCpf())
-                            .role(null) // usa padrão "usuario"
-                            .imagemPerfil(null)
-                            .build()
+            log.info("Tentativa de registro para email: {}", request.getEmail());
+            Usuario usuario = usuarioService.registrar(
+                request.getNome(),
+                request.getEmail(),
+                request.getCpf(),
+                request.getSenha()
             );
-            Usuario salvo = usuarioService.salvar(usuario);
-
-            // Cria registro de autenticação com senha codificada (BCrypt)
-            UsuarioAutenticar ua = UsuarioAutenticar.builder()
-                    .usuario(salvo)
-                    .senhaHash(passwordEncoder.encode(request.getSenha()))
-                    .dataExpiracao(java.time.LocalDateTime.now().plusYears(1))
-                    .build();
-            usuarioAutenticarService.salvar(ua);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioMapper.toResponse(salvo));
+            log.info("Usuário registrado com sucesso. ID: {}, Email: {}", usuario.getIdUsuario(), usuario.getEmail());
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
         } catch (IllegalArgumentException e) {
-            log.warn("Falha no registro: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+            log.warn("Erro ao registrar usuário: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            log.error("Erro ao registrar usuário: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            log.error("Erro inesperado ao registrar usuário", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao registrar usuário");
         }
     }
 

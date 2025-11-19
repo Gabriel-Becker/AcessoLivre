@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO para registro de novo usuário
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,19 +18,19 @@ import lombok.NoArgsConstructor;
 public class RegisterRequestDTO {
 
     @NotBlank(message = "Nome é obrigatório")
-    @Size(max = 255)
+    @Size(max = 255, message = "Nome deve ter no máximo 255 caracteres")
     private String nome;
 
-    @Email
+    @Email(message = "Email deve ter formato válido")
     @NotBlank(message = "Email é obrigatório")
-    @Size(max = 255)
+    @Size(max = 255, message = "Email deve ter no máximo 255 caracteres")
     private String email;
 
     @NotBlank(message = "CPF é obrigatório")
-    @Size(max = 14)
+    @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
     private String cpf;
 
     @NotBlank(message = "Senha é obrigatória")
-    @Size(min = 6, max = 100, message = "Senha deve ter entre 6 e 100 caracteres")
+    @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")
     private String senha;
 }
