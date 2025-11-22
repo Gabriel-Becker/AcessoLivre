@@ -29,4 +29,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return Optional contendo o usuário se encontrado
      */
     Optional<Usuario> findByCpf(String cpf);
+
+    /**
+     * Verifica se existe pelo menos um usuário com a role informada.
+     * A role deve ser armazenada preferencialmente já com prefixo (ex: ROLE_ADMIN).
+     * @param role valor da role a pesquisar
+     * @return true se existir ao menos um registro, false caso contrário
+     */
+    boolean existsByRole(String role);
 }

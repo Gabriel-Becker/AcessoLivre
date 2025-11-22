@@ -8,6 +8,7 @@ import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
 import com.acessolivre.service.UsuarioService;
+import com.acessolivre.service.RegistroUsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,13 +31,14 @@ public class AuthController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
-    private final UsuarioService usuarioService;
+    private final UsuarioService usuarioService; // permanece para outros usos
+    private final RegistroUsuarioService registroUsuarioService; // novo serviço dedicado ao registro
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
-            Usuario usuario = usuarioService.registrar(
+            Usuario usuario = registroUsuarioService.registrarUsuario(
                 request.getNome(),
                 request.getEmail(),
                 request.getCpf(),

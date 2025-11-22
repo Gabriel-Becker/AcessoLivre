@@ -57,6 +57,8 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                // Endpoint público somente para bootstrap inicial do ADMIN (controlado por segredo interno)
+                .requestMatchers("/api/admin/bootstrap").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

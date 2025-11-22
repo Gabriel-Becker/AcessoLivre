@@ -40,3 +40,6 @@ backend/src/main/resources/app.pub
 backend/src/main/resources/app.key
 backend/.env
 frontend/.env
+
+# Postman - arquivos de teste e ambiente locais
+backend/postman/
