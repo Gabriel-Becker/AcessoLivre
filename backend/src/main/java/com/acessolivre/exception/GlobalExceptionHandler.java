@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
@@ -54,6 +55,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGenericException(Exception ex, WebRequest request) {
+        // Se for ResponseStatusException delegamos para o status correto, mantendo padrão da aplicação
+        if (ex instanceof ResponseStatusException rse) {
+            Map<String, Object> body = new HashMap<>();
+            HttpStatus status = (HttpStatus) rse.getStatusCode();
+            body.put("status", status.value());
+            body.put("mensagem", rse.getReason() != null ? rse.getReason() : status.getReasonPhrase());
+            body.put("timestamp", getTimestamp());
+            return ResponseEntity.status(status).body(body);
+        }
         Map<String, Object> body = new HashMap<>();
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         body.put("mensagem", "Erro interno inesperado");

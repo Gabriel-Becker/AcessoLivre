@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Endpoint público para criação inicial do primeiro usuário ADMIN.
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/bootstrap")
 @RequiredArgsConstructor
 @Tag(name = "Admin Bootstrap", description = "Endpoint para criação inicial do usuário administrador")
+@Slf4j
 public class AdminBootstrapController {
 
     private final AdminBootstrapService adminBootstrapService;
@@ -51,9 +53,16 @@ public class AdminBootstrapController {
     })
     public ResponseEntity<UsuarioAdminResponseDTO> bootstrap(
             @Parameter(description = "Segredo de bootstrap configurado via variável de ambiente ADMIN_BOOTSTRAP_SECRET", required = true)
-            @RequestHeader(name = "X-Admin-Bootstrap-Secret", required = false) String secret,
+            @RequestHeader(name = "X-Admin-Bootstrap-Secret", required = false) String secretHeader,
+            @RequestParam(name = "secret", required = false) String secretQuery,
             @Valid @RequestBody AdminBootstrapRequestDTO dto) {
-        UsuarioAdminResponseDTO resp = adminBootstrapService.criarAdminSeInexistente(secret, dto);
+        String efetivo = secretHeader != null ? secretHeader : secretQuery; // fallback para diagnóstico
+        log.info("[AdminBootstrapController] Recebido header? {} query? {} lengthHeader={} lengthQuery={} lengthUsado={}",
+                secretHeader != null, secretQuery != null,
+                secretHeader != null ? secretHeader.length() : 0,
+                secretQuery != null ? secretQuery.length() : 0,
+                efetivo != null ? efetivo.length() : 0);
+        UsuarioAdminResponseDTO resp = adminBootstrapService.criarAdminSeInexistente(efetivo, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 }
