@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import jakarta.annotation.PostConstruct;
 
 /**
  * Serviço responsável pelo bootstrap do primeiro usuário ADMIN.
@@ -33,11 +32,6 @@ public class AdminBootstrapService {
     @Value("${admin.bootstrap.secret:}")
     private String bootstrapSecret;
 
-    @PostConstruct
-    void logBootstrapSecretInfo() {
-        String interno = bootstrapSecret != null ? bootstrapSecret.trim() : null;
-        log.info("[AdminBootstrap] Segredo configurado? {} length={} (não exibido)", interno != null && !interno.isBlank(), interno != null ? interno.length() : 0);
-    }
 
     /**
      * Cria o usuário ADMIN se ainda não existir nenhum e se o segredo fornecido for válido.
@@ -59,8 +53,7 @@ public class AdminBootstrapService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Segredo de bootstrap não configurado");
         }
         if (recebido == null || !recebido.equals(interno)) {
-            log.warn("Tentativa de bootstrap ADMIN com segredo ausente ou incorreto. presente={} lengthRecebido={} lengthInterno={}",
-                    recebido != null, recebido != null ? recebido.length() : 0, interno.length());
+            log.warn("Tentativa de bootstrap ADMIN rejeitada: segredo inválido ou ausente.");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Segredo inválido ou ausente");
         }
 
