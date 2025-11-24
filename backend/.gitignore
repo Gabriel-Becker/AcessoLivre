@@ -32,5 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
-### Application Properties ###
-src/main/resources/application.properties
+### Environment Variables ###
+# Nunca commitar arquivos .env com senhas reais
+.env
+.env.local
+.env.dev
+.env.prod
+# Manter apenas .env.example no repositório

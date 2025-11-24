@@ -1,15 +1,51 @@
-version: '3.8'
-
 services:
-  app:
-    container_name: back-prod
+  acessolivre-app:
+    container_name: acessolivre-app-prod
     build:
       context: .
       dockerfile: prod.dockerfile
     ports:
-      - "8080:8080"
-    env_file:
-      - .env
+      - "${SERVER_PORT}:8080"
     environment:
+      # Override para garantir que o app use o hostname correto do DB no Docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Xmx512m -XX:+UseContainerSupport
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - acessolivre-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    container_name: acessolivre-db-prod
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      - postgres_data_prod:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acessolivre-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+
+networks:
+  acessolivre-network:
+    driver: bridge
