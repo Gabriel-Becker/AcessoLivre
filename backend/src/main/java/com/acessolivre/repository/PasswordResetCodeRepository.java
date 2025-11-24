@@ -72,11 +72,7 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      */
     List<PasswordResetCode> findByExpiresAtBefore(LocalDateTime now);
 
-    /**
-     * Verifica se existe código válido para o CPF
-     * @param cpf CPF do usuário
-     * @param now Data atual
-     * @return true se existe código válido, false caso contrário
-     */
     boolean existsByCpfAndUsedFalseAndExpiresAtAfter(String cpf, LocalDateTime now);
+
+    int deleteByExpiresAtBefore(LocalDateTime dataExpiracao);
 }
