@@ -29,19 +29,23 @@ public class CategoriaService {
 
     @Transactional
     public Categoria salvar(Categoria categoria) {
-        log.info("Salvando nova categoria: {}", categoria.getNome());
-        return categoriaRepository.save(categoria);
+        log.info("Salvando categoria: nome={}", categoria.getNome());
+        Categoria salva = categoriaRepository.save(categoria);
+        log.info("Categoria salva: id={}", salva.getIdCategoria());
+        return salva;
     }
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando categoria ID: {}", id);
+        log.info("Deletando categoria: id={}", id);
         
         if (!categoriaRepository.existsById(id)) {
+            log.warn("Categoria não encontrada para deletar: id={}", id);
             return false;
         }
 
         categoriaRepository.deleteById(id);
+        log.info("Categoria deletada: id={}", id);
         return true;
     }
 }

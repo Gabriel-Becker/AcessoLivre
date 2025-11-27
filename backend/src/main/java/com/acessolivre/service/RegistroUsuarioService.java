@@ -12,10 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-/**
- * Serviço dedicado ao fluxo de registro de usuário (isolado para contornar problema de compilação em UsuarioService).
- * Responsável por criar Usuario e seu respectivo UsuarioAutenticar com senha hash.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,22 +23,37 @@ public class RegistroUsuarioService {
 
     @Transactional
     public Usuario registrarUsuario(String nome, String email, String cpf, String senha) {
-        log.info("[RegistroUsuarioService] Registrando novo usuário: {}", email);
+        log.info("Registrando novo usuário: email={}", email);
+        
         if (usuarioRepository.findByEmail(email).isPresent()) {
+            log.warn("Email já cadastrado: {}", email);
             throw new IllegalArgumentException("Email já cadastrado");
         }
+        
         if (usuarioRepository.existsByCpf(cpf)) {
+            log.warn("CPF já cadastrado");
             throw new IllegalArgumentException("CPF já cadastrado");
         }
-    Usuario usuario = Usuario.builder().nome(nome).email(email).cpf(cpf).role(com.acessolivre.enums.Role.ROLE_USER).build();
+        
+        Usuario usuario = Usuario.builder()
+                .nome(nome)
+                .email(email)
+                .cpf(cpf)
+                .role(com.acessolivre.enums.Role.ROLE_USER)
+                .build();
+        
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
+        
         String senhaHash = passwordEncoder.encode(senha);
         UsuarioAutenticar ua = UsuarioAutenticar.builder()
                 .usuario(usuarioSalvo)
                 .senhaHash(senhaHash)
                 .dataExpiracao(LocalDateTime.now().plusYears(1))
                 .build();
+        
         usuarioAutenticarRepository.save(ua);
+        log.info("Usuário registrado: id={}", usuarioSalvo.getIdUsuario());
+        
         return usuarioSalvo;
     }
 }

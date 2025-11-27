@@ -50,7 +50,7 @@ public class LocalService {
 
     @Transactional
     public Local salvar(LocalRequestDTO dto) {
-        log.info("Salvando novo local com nome: {}", dto.getNome());
+        log.info("Salvando novo local: nome={}", dto.getNome());
 
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -65,12 +65,14 @@ public class LocalService {
                 .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
 
         Local local = com.acessolivre.mapper.LocalMapper.toEntity(dto, usuario, categoria, tipoAcessibilidade, endereco);
-        return localRepository.save(local);
+        Local salvo = localRepository.save(local);
+        log.info("Local salvo: id={}", salvo.getIdLocal());
+        return salvo;
     }
 
     @Transactional
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
-        log.info("Atualizando local ID: {}", id);
+        log.info("Atualizando local: id={}", id);
 
         return localRepository.findById(id).map(local -> {
             Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
@@ -86,13 +88,15 @@ public class LocalService {
                     .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
 
             com.acessolivre.mapper.LocalMapper.updateEntity(local, dto, usuario, categoria, tipoAcessibilidade, endereco);
-            return localRepository.save(local);
+            Local atualizado = localRepository.save(local);
+            log.info("Local atualizado: id={}", atualizado.getIdLocal());
+            return atualizado;
         });
     }
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando local ID: {}", id);
+        log.info("Deletando local: id={}", id);
         
         if (!localRepository.existsById(id)) {
             return false;

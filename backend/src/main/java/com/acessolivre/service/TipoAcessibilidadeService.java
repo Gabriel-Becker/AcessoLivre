@@ -29,19 +29,23 @@ public class TipoAcessibilidadeService {
 
     @Transactional
     public TipoAcessibilidade salvar(TipoAcessibilidade tipoAcessibilidade) {
-        log.info("Salvando novo tipo de acessibilidade: {}", tipoAcessibilidade.getNome());
-        return tipoAcessibilidadeRepository.save(tipoAcessibilidade);
+        log.info("Salvando tipo de acessibilidade: nome={}", tipoAcessibilidade.getNome());
+        TipoAcessibilidade salvo = tipoAcessibilidadeRepository.save(tipoAcessibilidade);
+        log.info("Tipo de acessibilidade salvo: id={}", salvo.getIdTipoAcessibilidade());
+        return salvo;
     }
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando tipo de acessibilidade ID: {}", id);
+        log.info("Deletando tipo de acessibilidade: id={}", id);
         
         if (!tipoAcessibilidadeRepository.existsById(id)) {
+            log.warn("Tipo de acessibilidade não encontrado para deletar: id={}", id);
             return false;
         }
 
         tipoAcessibilidadeRepository.deleteById(id);
+        log.info("Tipo de acessibilidade deletado: id={}", id);
         return true;
     }
 }

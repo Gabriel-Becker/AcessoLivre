@@ -39,37 +39,43 @@ public class ImagemService {
 
     @Transactional
     public Imagem salvar(ImagemRequestDTO dto) {
-        log.info("Salvando nova imagem para local ID: {}", dto.getIdLocal());
+        log.info("Salvando imagem: localId={}", dto.getIdLocal());
 
         Local local = localRepository.findById(dto.getIdLocal())
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
 
         Imagem imagem = ImagemMapper.toEntity(dto, local);
-        return imagemRepository.save(imagem);
+        Imagem salva = imagemRepository.save(imagem);
+        log.info("Imagem salva: id={}", salva.getIdImagem());
+        return salva;
     }
 
     @Transactional
     public Optional<Imagem> atualizar(Long id, ImagemRequestDTO dto) {
-        log.info("Atualizando imagem ID: {}", id);
+        log.info("Atualizando imagem: id={}", id);
 
         return imagemRepository.findById(id).map(imagem -> {
             Local local = localRepository.findById(dto.getIdLocal())
                     .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
 
             ImagemMapper.updateEntity(imagem, dto, local);
-            return imagemRepository.save(imagem);
+            Imagem atualizada = imagemRepository.save(imagem);
+            log.info("Imagem atualizada: id={}", atualizada.getIdImagem());
+            return atualizada;
         });
     }
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando imagem ID: {}", id);
+        log.info("Deletando imagem: id={}", id);
         
         if (!imagemRepository.existsById(id)) {
+            log.warn("Imagem não encontrada para deletar: id={}", id);
             return false;
         }
 
         imagemRepository.deleteById(id);
+        log.info("Imagem deletada: id={}", id);
         return true;
     }
 }

@@ -25,24 +25,23 @@ public class AdminService {
     private final AvaliacaoRepository avaliacaoRepository;
     private final LocalRepository localRepository;
 
-    // ===== GERENCIAMENTO DE USUÁRIOS =====
-
     public List<Usuario> listarTodosUsuarios() {
-        log.info("Admin: Listando todos os usuários");
+        log.info("Listando todos os usuários");
         return usuarioRepository.findAll();
     }
 
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
-        log.info("Admin: Buscando usuário por ID: {}", id);
+        log.info("Buscando usuário: id={}", id);
         return usuarioRepository.findById(id);
     }
 
     @Transactional
     public boolean alterarRoleUsuario(Long idUsuario, String novaRole) {
-        log.info("Admin: Alterando role do usuário ID: {} para {}", idUsuario, novaRole);
+        log.info("Alterando role do usuário: id={}, novaRole={}", idUsuario, novaRole);
         
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
         if (usuarioOpt.isEmpty()) {
+            log.warn("Usuário não encontrado para alteração de role: id={}", idUsuario);
             return false;
         }
         
@@ -53,67 +52,68 @@ public class AdminService {
         }
         usuario.setRole(com.acessolivre.enums.Role.valueOf(normalized));
         usuarioRepository.save(usuario);
+        log.info("Role alterada: id={}, role={}", idUsuario, normalized);
         
         return true;
     }
 
     @Transactional
     public boolean deletarUsuario(Long idUsuario) {
-        log.info("Admin: Deletando usuário ID: {}", idUsuario);
+        log.info("Deletando usuário: id={}", idUsuario);
         
         if (!usuarioRepository.existsById(idUsuario)) {
+            log.warn("Usuário não encontrado para deletar: id={}", idUsuario);
             return false;
         }
         
         usuarioRepository.deleteById(idUsuario);
+        log.info("Usuário deletado: id={}", idUsuario);
         return true;
     }
 
-    // ===== MODERAÇÃO DE AVALIAÇÕES =====
-
     public List<Avaliacao> listarAvaliacoesPendentes() {
-        log.info("Admin: Listando avaliações pendentes de moderação");
+        log.info("Listando avaliações pendentes");
         return avaliacaoRepository.findByModerado(false);
     }
 
     @Transactional
     public boolean aprovarAvaliacao(Long idAvaliacao) {
-        log.info("Admin: Aprovando avaliação ID: {}", idAvaliacao);
+        log.info("Aprovando avaliação: id={}", idAvaliacao);
         
         Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(idAvaliacao);
         if (avaliacaoOpt.isEmpty()) {
+            log.warn("Avaliação não encontrada para aprovar: id={}", idAvaliacao);
             return false;
         }
         
         Avaliacao avaliacao = avaliacaoOpt.get();
         avaliacao.setModerado(true);
         avaliacaoRepository.save(avaliacao);
+        log.info("Avaliação aprovada: id={}", idAvaliacao);
         
         return true;
     }
 
     @Transactional
     public boolean rejeitarAvaliacao(Long idAvaliacao) {
-        log.info("Admin: Rejeitando e deletando avaliação ID: {}", idAvaliacao);
+        log.info("Rejeitando avaliação: id={}", idAvaliacao);
         
         Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(idAvaliacao);
         if (avaliacaoOpt.isEmpty()) {
+            log.warn("Avaliação não encontrada para rejeitar: id={}", idAvaliacao);
             return false;
         }
         
         Long idLocal = avaliacaoOpt.get().getLocal().getIdLocal();
         avaliacaoRepository.deleteById(idAvaliacao);
-        
-        // Recalcula média do local após deletar avaliação rejeitada
         recalcularMediaLocal(idLocal);
+        log.info("Avaliação rejeitada: id={}", idAvaliacao);
         
         return true;
     }
 
-    // ===== ESTATÍSTICAS =====
-
     public Map<String, Object> obterEstatisticasGerais() {
-        log.info("Admin: Obtendo estatísticas gerais");
+        log.info("Obtendo estatísticas gerais");
         
         Map<String, Object> stats = new HashMap<>();
         
@@ -131,7 +131,7 @@ public class AdminService {
     }
 
     public Map<String, Long> obterEstatisticasPorEstado() {
-        log.info("Admin: Obtendo estatísticas de locais por estado");
+        log.info("Obtendo estatísticas por estado");
         
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
@@ -145,7 +145,7 @@ public class AdminService {
     }
 
     public Map<String, Long> obterEstatisticasPorCategoria() {
-        log.info("Admin: Obtendo estatísticas de locais por categoria");
+        log.info("Obtendo estatísticas por categoria");
         
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
@@ -159,7 +159,7 @@ public class AdminService {
     }
 
     public Map<String, Long> obterEstatisticasPorTipoAcessibilidade() {
-        log.info("Admin: Obtendo estatísticas de locais por tipo de acessibilidade");
+        log.info("Obtendo estatísticas por tipo de acessibilidade");
         
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
@@ -172,7 +172,6 @@ public class AdminService {
         return estatisticas;
     }
 
-    // Helper privado para recalcular média
     private void recalcularMediaLocal(Long idLocal) {
         Optional<Local> localOpt = localRepository.findById(idLocal);
         if (localOpt.isPresent()) {

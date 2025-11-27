@@ -22,185 +22,105 @@ public class TwoFactorRecoveryCodeService {
     private final TwoFactorRecoveryCodeRepository twoFactorRecoveryCodeRepository;
     private final UsuarioService usuarioService;
 
-    /**
-     * Lista todos os códigos de recuperação
-     * @return Lista de todos os códigos de recuperação
-     */
     public List<TwoFactorRecoveryCode> listarTodos() {
         log.info("Listando todos os códigos de recuperação 2FA");
-        List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository.findAll();
-        log.info("Encontrados {} códigos de recuperação", codigos.size());
-        return codigos;
+        return twoFactorRecoveryCodeRepository.findAll();
     }
 
-    /**
-     * Busca um código de recuperação pelo ID
-     * @param id ID do código de recuperação
-     * @return Optional contendo o código se encontrado
-     */
     public Optional<TwoFactorRecoveryCode> buscarPorId(Long id) {
-        log.info("Buscando código de recuperação por ID: {}", id);
-        Optional<TwoFactorRecoveryCode> codigo = twoFactorRecoveryCodeRepository.findById(id);
-        
-        if (codigo.isPresent()) {
-            log.info("Código de recuperação encontrado com ID: {}", id);
-        } else {
-            log.warn("Código de recuperação não encontrado com ID: {}", id);
-        }
-        
-        return codigo;
+        log.info("Buscando código de recuperação 2FA: id={}", id);
+        return twoFactorRecoveryCodeRepository.findById(id);
     }
 
-    /**
-     * Salva um novo código de recuperação
-     * @param dto DTO com dados do código de recuperação
-     * @return Código de recuperação salvo
-     * @throws IllegalArgumentException se usuário não encontrado ou código duplicado
-     */
     @Transactional
     public TwoFactorRecoveryCode salvar(TwoFactorRecoveryCodeRequestDTO dto) {
-        log.info("Salvando novo código de recuperação para usuário ID: {}", dto.getUsuarioId());
+        log.info("Salvando código de recuperação 2FA: usuarioId={}", dto.getUsuarioId());
         
-        // Busca o usuário
         Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(dto.getUsuarioId());
         if (usuarioOpt.isEmpty()) {
-            log.error("Usuário não encontrado com ID: {}", dto.getUsuarioId());
-            throw new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getUsuarioId());
+            log.warn("Usuário não encontrado: id={}", dto.getUsuarioId());
+            throw new IllegalArgumentException("Usuário não encontrado");
         }
         
         Usuario usuario = usuarioOpt.get();
         
-        // Verifica se o código já existe
         if (twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario(dto.getCodigo().trim(), dto.getUsuarioId()).isPresent()) {
-            log.warn("Código de recuperação já existe para este usuário: {}", dto.getCodigo());
+            log.warn("Código de recuperação já existe");
             throw new IllegalArgumentException("Código de recuperação já existe para este usuário");
         }
         
-        try {
-            TwoFactorRecoveryCode codigo = TwoFactorRecoveryCodeMapper.toEntity(dto, usuario);
-            TwoFactorRecoveryCode codigoSalvo = twoFactorRecoveryCodeRepository.save(codigo);
-            log.info("Código de recuperação salvo com sucesso. ID: {}", codigoSalvo.getId());
-            return codigoSalvo;
-        } catch (Exception e) {
-            log.error("Erro ao salvar código de recuperação: {}", e.getMessage(), e);
-            throw new RuntimeException("Erro ao salvar código de recuperação", e);
-        }
+        TwoFactorRecoveryCode codigo = TwoFactorRecoveryCodeMapper.toEntity(dto, usuario);
+        TwoFactorRecoveryCode salvo = twoFactorRecoveryCodeRepository.save(codigo);
+        log.info("Código de recuperação 2FA salvo: id={}", salvo.getId());
+        return salvo;
     }
 
-    /**
-     * Deleta um código de recuperação pelo ID
-     * @param id ID do código a ser deletado
-     * @throws IllegalArgumentException se o código não for encontrado
-     */
     @Transactional
     public void deletar(Long id) {
-        log.info("Tentando deletar código de recuperação com ID: {}", id);
+        log.info("Deletando código de recuperação 2FA: id={}", id);
         
         if (!twoFactorRecoveryCodeRepository.existsById(id)) {
-            log.warn("Código de recuperação não encontrado para deletar. ID: {}", id);
-            throw new IllegalArgumentException("Código de recuperação não encontrado com ID: " + id);
+            log.warn("Código de recuperação 2FA não encontrado: id={}", id);
+            throw new IllegalArgumentException("Código de recuperação não encontrado");
         }
         
-        try {
-            twoFactorRecoveryCodeRepository.deleteById(id);
-            log.info("Código de recuperação deletado com sucesso. ID: {}", id);
-        } catch (Exception e) {
-            log.error("Erro ao deletar código de recuperação com ID {}: {}", id, e.getMessage(), e);
-            throw new RuntimeException("Erro ao deletar código de recuperação", e);
-        }
+        twoFactorRecoveryCodeRepository.deleteById(id);
+        log.info("Código de recuperação 2FA deletado: id={}", id);
     }
 
-    /**
-     * Verifica se um código de recuperação é válido
-     * @param code Código a ser verificado
-     * @return true se o código é válido, false caso contrário
-     */
     public boolean isCodigoValido(String code) {
-        log.debug("Verificando se código de recuperação é válido: {}", code);
         return twoFactorRecoveryCodeRepository.existsByCodigoAndUtilizadoFalseAndDataExpiracaoAfter(code, LocalDateTime.now());
     }
 
-    /**
-     * Marca um código como utilizado
-     * @param code Código a ser marcado como utilizado
-     * @param idUsuario ID do usuário
-     * @return true se marcado com sucesso, false se não encontrado
-     * @throws IllegalArgumentException se código não encontrado, já usado ou expirado
-     */
     @Transactional
     public boolean marcarComoUsado(String code, Long idUsuario) {
-        log.info("Marcando código como utilizado: {} para usuário ID: {}", code, idUsuario);
+        log.info("Marcando código 2FA como usado: usuarioId={}", idUsuario);
         
         Optional<TwoFactorRecoveryCode> codigoOpt = twoFactorRecoveryCodeRepository
                 .findByCodigoAndUsuario_IdUsuario(code.trim(), idUsuario);
         
         if (codigoOpt.isEmpty()) {
-            log.warn("Código não encontrado: {} para usuário ID: {}", code, idUsuario);
+            log.warn("Código 2FA não encontrado para usuário");
             throw new IllegalArgumentException("Código não encontrado para este usuário");
         }
         
         TwoFactorRecoveryCode codigo = codigoOpt.get();
         if (codigo.getUtilizado()) {
-            log.warn("Código já foi utilizado: {}", code);
+            log.warn("Código 2FA já utilizado");
             throw new IllegalArgumentException("Código já foi utilizado");
         }
         
         if (codigo.getDataExpiracao().isBefore(LocalDateTime.now())) {
-            log.warn("Código expirado: {}", code);
+            log.warn("Código 2FA expirado");
             throw new IllegalArgumentException("Código expirado");
         }
         
-        try {
-            codigo.setUtilizado(true);
-            twoFactorRecoveryCodeRepository.save(codigo);
-            log.info("Código marcado como utilizado com sucesso: {}", code);
-            return true;
-        } catch (Exception e) {
-            log.error("Erro ao marcar código como utilizado: {}", e.getMessage(), e);
-            throw new RuntimeException("Erro ao marcar código como utilizado", e);
-        }
+        codigo.setUtilizado(true);
+        twoFactorRecoveryCodeRepository.save(codigo);
+        log.info("Código 2FA marcado como usado: id={}", codigo.getId());
+        return true;
     }
 
-    /**
-     * Lista códigos válidos por usuário
-     * @param idUsuario ID do usuário
-     * @return Lista de códigos válidos do usuário
-     */
     public List<TwoFactorRecoveryCode> buscarCodigosValidosPorUsuario(Long idUsuario) {
-        log.info("Buscando códigos válidos para usuário ID: {}", idUsuario);
-        List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository
+        log.info("Buscando códigos 2FA válidos: usuarioId={}", idUsuario);
+        return twoFactorRecoveryCodeRepository
                 .findByUsuario_IdUsuarioAndUtilizadoFalseAndDataExpiracaoAfter(idUsuario, LocalDateTime.now());
-        log.info("Encontrados {} códigos válidos para usuário ID: {}", codigos.size(), idUsuario);
-        return codigos;
     }
 
-    /**
-     * Lista códigos por usuário
-     * @param idUsuario ID do usuário
-     * @return Lista de códigos do usuário
-     */
     public List<TwoFactorRecoveryCode> buscarPorUsuario(Long idUsuario) {
-        log.info("Buscando códigos de recuperação para usuário ID: {}", idUsuario);
-        List<TwoFactorRecoveryCode> codigos = twoFactorRecoveryCodeRepository.findByUsuario_IdUsuario(idUsuario);
-        log.info("Encontrados {} códigos para usuário ID: {}", codigos.size(), idUsuario);
-        return codigos;
+        log.info("Buscando códigos 2FA: usuarioId={}", idUsuario);
+        return twoFactorRecoveryCodeRepository.findByUsuario_IdUsuario(idUsuario);
     }
 
-    /**
-     * Limpa códigos expirados
-     * @return Número de códigos removidos
-     */
     @Transactional
     public int limparCodigosExpirados() {
-        log.info("Limpando códigos de recuperação expirados");
+        log.info("Limpando códigos 2FA expirados");
         List<TwoFactorRecoveryCode> codigosExpirados = twoFactorRecoveryCodeRepository
                 .findByDataExpiracaoBefore(LocalDateTime.now());
         
         if (!codigosExpirados.isEmpty()) {
             twoFactorRecoveryCodeRepository.deleteAll(codigosExpirados);
-            log.info("Removidos {} códigos expirados", codigosExpirados.size());
-        } else {
-            log.info("Nenhum código expirado encontrado");
+            log.info("Códigos 2FA expirados removidos: {}", codigosExpirados.size());
         }
         
         return codigosExpirados.size();

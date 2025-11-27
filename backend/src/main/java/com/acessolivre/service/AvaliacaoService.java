@@ -58,9 +58,10 @@ public class AvaliacaoService {
 
     @Transactional
     public Avaliacao salvar(AvaliacaoRequestDTO dto) {
-        log.info("Salvando nova avaliação para local ID: {} por usuário ID: {}", dto.getIdLocal(), dto.getIdUsuario());
+        log.info("Salvando avaliação: localId={}, usuarioId={}", dto.getIdLocal(), dto.getIdUsuario());
 
         if (avaliacaoRepository.existsByUsuarioIdUsuarioAndLocalIdLocal(dto.getIdUsuario(), dto.getIdLocal())) {
+            log.warn("Usuário já avaliou este local: usuarioId={}, localId={}", dto.getIdUsuario(), dto.getIdLocal());
             throw new IllegalArgumentException("Usuário já avaliou este local");
         }
 
@@ -77,30 +78,28 @@ public class AvaliacaoService {
         boolean moderado = (dto.getComentario() == null || dto.getComentario().isBlank());
 
         Avaliacao avaliacao = AvaliacaoMapper.toEntity(dto, usuario, local, media, moderado);
-
         Avaliacao avaliacaoSalva = avaliacaoRepository.save(avaliacao);
         
-        // Recalcula a média do local automaticamente
         localService.recalcularMediaAvaliacoes(dto.getIdLocal());
+        log.info("Avaliação salva: id={}", avaliacaoSalva.getIdAvaliacao());
         
         return avaliacaoSalva;
     }
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando avaliação ID: {}", id);
+        log.info("Deletando avaliação: id={}", id);
         
         Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(id);
         if (avaliacaoOpt.isEmpty()) {
+            log.warn("Avaliação não encontrada para deletar: id={}", id);
             return false;
         }
         
         Long idLocal = avaliacaoOpt.get().getLocal().getIdLocal();
-        
         avaliacaoRepository.deleteById(id);
-        
-        // Recalcula a média do local automaticamente após deletar
         localService.recalcularMediaAvaliacoes(idLocal);
+        log.info("Avaliação deletada: id={}", id);
         
         return true;
     }

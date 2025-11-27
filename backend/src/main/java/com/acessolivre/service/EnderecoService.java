@@ -17,76 +17,37 @@ public class EnderecoService {
 
     private final EnderecoRepository enderecoRepository;
 
-    /**
-     * Lista todos os endereços
-     * @return Lista de todos os endereços
-     */
     public List<Endereco> listarTodos() {
         log.info("Listando todos os endereços");
-        List<Endereco> enderecos = enderecoRepository.findAll();
-        log.info("Encontrados {} endereços", enderecos.size());
-        return enderecos;
+        return enderecoRepository.findAll();
     }
 
-    /**
-     * Busca um endereço pelo ID
-     * @param id ID do endereço
-     * @return Optional contendo o endereço se encontrado
-     */
     public Optional<Endereco> buscarPorId(Long id) {
-        log.info("Buscando endereço por ID: {}", id);
-        Optional<Endereco> endereco = enderecoRepository.findById(id);
-        
-        if (endereco.isPresent()) {
-            log.info("Endereço encontrado com ID: {}", id);
-        } else {
-            log.warn("Endereço não encontrado com ID: {}", id);
-        }
-        
-        return endereco;
+        log.info("Buscando endereço: id={}", id);
+        return enderecoRepository.findById(id);
     }
 
-    /**
-     * Salva um novo endereço
-     * @param endereco Endereço a ser salvo
-     * @return Endereço salvo
-     */
     @Transactional
     public Endereco salvar(Endereco endereco) {
-        log.info("Salvando novo endereço para usuário ID: {}", 
+        log.info("Salvando endereço: usuarioId={}", 
                 endereco.getUsuario() != null ? endereco.getUsuario().getIdUsuario() : "null");
         
-        try {
-            Endereco enderecoSalvo = enderecoRepository.save(endereco);
-            log.info("Endereço salvo com sucesso. ID: {}", enderecoSalvo.getIdEndereco());
-            return enderecoSalvo;
-        } catch (Exception e) {
-            log.error("Erro ao salvar endereço: {}", e.getMessage(), e);
-            throw new RuntimeException("Erro ao salvar endereço", e);
-        }
+        Endereco salvo = enderecoRepository.save(endereco);
+        log.info("Endereço salvo: id={}", salvo.getIdEndereco());
+        return salvo;
     }
 
-    /**
-     * Deleta um endereço pelo ID
-     * @param id ID do endereço a ser deletado
-     * @return true se deletado com sucesso, false se não encontrado
-     */
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Tentando deletar endereço com ID: {}", id);
+        log.info("Deletando endereço: id={}", id);
         
         if (!enderecoRepository.existsById(id)) {
-            log.warn("Endereço não encontrado para deletar. ID: {}", id);
+            log.warn("Endereço não encontrado para deletar: id={}", id);
             return false;
         }
         
-        try {
-            enderecoRepository.deleteById(id);
-            log.info("Endereço deletado com sucesso. ID: {}", id);
-            return true;
-        } catch (Exception e) {
-            log.error("Erro ao deletar endereço com ID {}: {}", id, e.getMessage(), e);
-            throw new RuntimeException("Erro ao deletar endereço", e);
-        }
+        enderecoRepository.deleteById(id);
+        log.info("Endereço deletado: id={}", id);
+        return true;
     }
 }
