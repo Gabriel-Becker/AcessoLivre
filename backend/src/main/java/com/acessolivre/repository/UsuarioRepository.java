@@ -1,5 +1,6 @@
 package com.acessolivre.repository;
 
+import com.acessolivre.enums.Role;
 import com.acessolivre.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -36,5 +37,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @param role valor da role a pesquisar
      * @return true se existir ao menos um registro, false caso contrário
      */
-    boolean existsByRole(String role);
+    boolean existsByRole(Role role);
 }

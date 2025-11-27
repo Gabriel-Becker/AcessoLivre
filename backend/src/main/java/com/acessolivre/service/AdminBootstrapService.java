@@ -2,6 +2,7 @@ package com.acessolivre.service;
 
 import com.acessolivre.dto.request.AdminBootstrapRequestDTO;
 import com.acessolivre.dto.response.UsuarioAdminResponseDTO;
+import com.acessolivre.enums.Role;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
@@ -41,7 +42,7 @@ public class AdminBootstrapService {
      */
     @Transactional
     public UsuarioAdminResponseDTO criarAdminSeInexistente(String secretFornecido, AdminBootstrapRequestDTO dto) {
-        if (usuarioRepository.existsByRole("ROLE_ADMIN")) {
+        if (usuarioRepository.existsByRole(Role.ROLE_ADMIN)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um administrador cadastrado");
         }
         // Normalizamos ambos (trim) para evitar erros por espaços acidentais
@@ -63,11 +64,11 @@ public class AdminBootstrapService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado");
         }
 
-        Usuario usuario = Usuario.builder()
+    Usuario usuario = Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
                 .cpf(cpfLimpo)
-                .role("ROLE_ADMIN")
+        .role(Role.ROLE_ADMIN)
                 .build();
         usuario = usuarioRepository.save(usuario);
 
@@ -85,7 +86,7 @@ public class AdminBootstrapService {
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .cpf(usuario.getCpf())
-                .role(usuario.getRole())
+                .role(usuario.getRole() != null ? usuario.getRole().name() : null)
                 .dataCadastro(usuario.getDataCadastro() != null ? usuario.getDataCadastro().toString() : null)
                 .build();
     }

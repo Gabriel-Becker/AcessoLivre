@@ -1,5 +1,6 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.validation.CpfValido;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,6 +23,7 @@ public class UsuarioRequestDTO {
 
     @NotBlank(message = "CPF é obrigatório")
     @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
+    @CpfValido
     private String cpf;
 
     @Size(max = 50, message = "Role deve ter no máximo 50 caracteres")

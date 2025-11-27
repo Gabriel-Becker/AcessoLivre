@@ -1,22 +1,21 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.validation.CpfValido;
+import com.acessolivre.validation.SenhaForte;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-/**
- * DTO para autenticação do usuário
- */
 @Data
 public class AuthRequestDTO {
     @NotBlank(message = "Por favor, informe seu CPF")
+    @CpfValido
     private String cpf;
 
     @NotBlank(message = "Por favor, informe sua senha")
+    @SenhaForte
     private String senha;
 
-    // remember-me opcional
     private Boolean rememberMe;
 
-    // código 2FA opcional (se disponível)
     private String twoFactorCode;
 }

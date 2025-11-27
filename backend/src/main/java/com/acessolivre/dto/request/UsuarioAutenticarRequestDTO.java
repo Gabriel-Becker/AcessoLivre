@@ -1,5 +1,6 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.validation.SenhaForte;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -18,6 +19,7 @@ public class UsuarioAutenticarRequestDTO {
 
     @NotBlank(message = "Hash da senha é obrigatório")
     @Size(max = 255, message = "Hash da senha deve ter no máximo 255 caracteres")
+    @SenhaForte
     private String senhaHash;
 
     @Size(max = 500, message = "Token JWT deve ter no máximo 500 caracteres")

@@ -1,5 +1,6 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.validation.CpfValido;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,7 @@ public class PasswordResetCodeRequestDTO {
 
     @NotBlank(message = "CPF é obrigatório")
     @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
+    @CpfValido
     private String cpf;
 
     @NotNull(message = "Data de criação é obrigatória")

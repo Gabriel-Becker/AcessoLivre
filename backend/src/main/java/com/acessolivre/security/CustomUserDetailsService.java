@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Usamos a senha já armazenada (hash) e a role do usuário
         String role = "USER";
         if (ua.getUsuario() != null && ua.getUsuario().getRole() != null) {
-            role = ua.getUsuario().getRole().replace("ROLE_", "");
+            role = ua.getUsuario().getRole().name().replace("ROLE_", "");
         }
 
         return User.builder()

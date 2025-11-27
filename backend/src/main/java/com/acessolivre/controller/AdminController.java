@@ -108,12 +108,12 @@ public class AdminController {
 
     // Helper para conversão
     private UsuarioAdminResponseDTO toUsuarioAdminResponse(Usuario usuario) {
-        return UsuarioAdminResponseDTO.builder()
+    return UsuarioAdminResponseDTO.builder()
                 .idUsuario(usuario.getIdUsuario())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .cpf(usuario.getCpf())
-                .role(usuario.getRole())
+        .role(usuario.getRole() != null ? usuario.getRole().name() : null)
                 .dataCadastro(usuario.getDataCadastro() != null ? 
                         usuario.getDataCadastro().format(FORMATTER) : null)
                 .build();

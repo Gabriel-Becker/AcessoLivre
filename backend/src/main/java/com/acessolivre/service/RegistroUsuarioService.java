@@ -34,7 +34,7 @@ public class RegistroUsuarioService {
         if (usuarioRepository.existsByCpf(cpf)) {
             throw new IllegalArgumentException("CPF já cadastrado");
         }
-        Usuario usuario = Usuario.builder().nome(nome).email(email).cpf(cpf).role("USER").build();
+    Usuario usuario = Usuario.builder().nome(nome).email(email).cpf(cpf).role(com.acessolivre.enums.Role.ROLE_USER).build();
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
         String senhaHash = passwordEncoder.encode(senha);
         UsuarioAutenticar ua = UsuarioAutenticar.builder()

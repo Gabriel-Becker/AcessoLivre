@@ -1,5 +1,7 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.validation.CpfValido;
+import com.acessolivre.validation.SenhaForte;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,9 +10,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * DTO para registro de novo usuário
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -28,9 +27,11 @@ public class RegisterRequestDTO {
 
     @NotBlank(message = "CPF é obrigatório")
     @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
+    @CpfValido
     private String cpf;
 
     @NotBlank(message = "Senha é obrigatória")
     @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")
+    @SenhaForte
     private String senha;
 }

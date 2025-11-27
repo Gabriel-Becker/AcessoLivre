@@ -47,7 +47,11 @@ public class AdminService {
         }
         
         Usuario usuario = usuarioOpt.get();
-        usuario.setRole(novaRole);
+        String normalized = (novaRole != null ? novaRole.trim().toUpperCase() : "USER");
+        if (!normalized.startsWith("ROLE_")) {
+            normalized = "ROLE_" + normalized;
+        }
+        usuario.setRole(com.acessolivre.enums.Role.valueOf(normalized));
         usuarioRepository.save(usuario);
         
         return true;

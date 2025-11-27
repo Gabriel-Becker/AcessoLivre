@@ -1,5 +1,6 @@
 package com.acessolivre.model;
 
+import com.acessolivre.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -34,9 +35,10 @@ public class Usuario {
     @Column(name = "imagem_perfil")
     private String imagemPerfil;
 
-    @NotBlank(message = "Role é obrigatório")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     @Builder.Default
-    private String role = "usuario";
+    private Role role = Role.ROLE_USER;
 
     @Column(name = "token_atual")
     private String tokenAtual;
