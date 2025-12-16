@@ -1,12 +1,3 @@
-/**
- * Instância configurada do Axios para comunicação com backend
- * 
- * Cria uma instância do Axios com configurações base:
- * - URL base do backend
- * - Timeout padrão
- * - Headers JSON
- */
-
 import axios from 'axios';
 import { API_CONFIG } from '../config/apiConfig';
 

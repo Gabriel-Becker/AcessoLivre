@@ -1,6 +1,3 @@
-// AuthContext - Gerenciamento global do estado de autenticação
-// Baseado no Inkspiration, adaptado para AcessoLivre
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import AuthService from '../services/AuthService';
@@ -13,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Carrega sessão ao montar o componente
   useEffect(() => {
     carregarSessao();
   }, []);
@@ -38,7 +34,6 @@ export const AuthProvider = ({ children }) => {
         setUsuario(usuarioData);
         setIsAuthenticated(true);
       } else {
-        // Token inválido, limpar
         await AuthService.removeToken();
         await AuthService.setUserData(null);
         setIsAuthenticated(false);
@@ -47,7 +42,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (erro) {
       console.error('Erro ao carregar sessão:', erro);
-      // Em caso de erro, limpar sessão
       await AuthService.removeToken();
       await AuthService.setUserData(null);
       setIsAuthenticated(false);
@@ -129,7 +123,6 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (erro) {
       console.error('Erro ao fazer logout:', erro);
-      // Mesmo com erro, limpar estado local
       setToken(null);
       setUsuario(null);
       setIsAuthenticated(false);
@@ -154,7 +147,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado para usar o contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   
