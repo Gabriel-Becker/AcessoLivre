@@ -1,6 +1,7 @@
 // Button - Componente de botão reutilizável com suporte a temas
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import theme from '../../config/theme';
 
 export default function Button({
@@ -13,6 +14,11 @@ export default function Button({
   children,
   style,
   textStyle,
+  iconLeft,
+  iconRight,
+  iconSize = 20,
+  iconColor,
+  align = 'center',
   ...props
 }) {
   const isDisabled = disabled || loading;
@@ -93,6 +99,8 @@ export default function Button({
 
   const variantStyles = getVariantStyles();
   const sizeStyles = getSizeStyles();
+  const contentAlign = align === 'left' ? styles.alignLeft : styles.alignCenter;
+  const effectiveIconColor = iconColor || variantStyles.text.color;
 
   return (
     <TouchableOpacity
@@ -100,6 +108,7 @@ export default function Button({
         styles.container,
         variantStyles.container,
         sizeStyles.container,
+        contentAlign,
         fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
         style,
@@ -112,9 +121,27 @@ export default function Button({
       {loading ? (
         <ActivityIndicator color={variantStyles.text.color} size="small" />
       ) : (
-        <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
-          {children}
-        </Text>
+        <>
+          {iconLeft && (
+            <Ionicons
+              name={iconLeft}
+              size={iconSize}
+              color={effectiveIconColor}
+              style={styles.iconLeft}
+            />
+          )}
+          <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
+            {children}
+          </Text>
+          {iconRight && (
+            <Ionicons
+              name={iconRight}
+              size={iconSize}
+              color={effectiveIconColor}
+              style={styles.iconRight}
+            />
+          )}
+        </>
       )}
     </TouchableOpacity>
   );
@@ -127,6 +154,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
+  alignLeft: {
+    justifyContent: 'flex-start',
+  },
+  alignCenter: {
+    justifyContent: 'center',
+  },
   fullWidth: {
     width: '100%',
   },
@@ -136,5 +169,11 @@ const styles = StyleSheet.create({
   text: {
     fontWeight: theme.typography.fontWeight.semibold,
     textAlign: 'center',
+  },
+  iconLeft: {
+    marginRight: theme.spacing.xs,
+  },
+  iconRight: {
+    marginLeft: theme.spacing.xs,
   },
 });
