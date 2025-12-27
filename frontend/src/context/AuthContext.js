@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import AuthService from '../services/AuthService';
+import { setLogoutHandler } from '../utils/SessionManager';
 
 const AuthContext = createContext({});
 
@@ -12,6 +13,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     carregarSessao();
+    // Registra o handler de logout para uso pelos interceptors (401)
+    setLogoutHandler(() => logout);
   }, []);
 
   const carregarSessao = async () => {

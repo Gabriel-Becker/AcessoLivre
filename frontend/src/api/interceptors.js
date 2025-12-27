@@ -1,5 +1,7 @@
 import api from './axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { triggerLogout } from '../utils/SessionManager';
+import { resetToAuth } from '../navigation/navigationRef';
 
 const TOKEN_KEY = 'jwtToken';
 
@@ -29,6 +31,9 @@ api.interceptors.response.use(
       
       try {
         await AsyncStorage.removeItem(TOKEN_KEY);
+        // Força logout global e volta para a tela de autenticação
+        await triggerLogout();
+        resetToAuth();
       } catch (asyncError) {
         console.error('Erro ao remover token:', asyncError);
       }
