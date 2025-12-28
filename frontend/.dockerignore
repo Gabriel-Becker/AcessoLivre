@@ -1,0 +1,17 @@
+node_modules
+.expo
+.expo-shared
+.git
+.gitignore
+.vscode
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.log
+.DS_Store
+dist
+build
+coverage
+.env.local
+.env.*.local

@@ -31,7 +31,6 @@ api.interceptors.response.use(
       
       try {
         await AsyncStorage.removeItem(TOKEN_KEY);
-        // Força logout global e volta para a tela de autenticação
         await triggerLogout();
         resetToAuth();
       } catch (asyncError) {

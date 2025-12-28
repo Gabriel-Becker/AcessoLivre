@@ -1,4 +1,3 @@
-// Gerencia eventos de sessão (ex.: logout forçado em 401)
 let logoutHandler = null;
 
 export function setLogoutHandler(handler) {
