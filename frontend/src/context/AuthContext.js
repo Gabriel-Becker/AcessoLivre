@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     carregarSessao();
-    // Registra o handler de logout para uso pelos interceptors (401)
     setLogoutHandler(() => logout);
   }, []);
 
@@ -55,9 +54,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ cpf, senha }) => {
+  const login = async ({ email, senha }) => {
     try {
-      const { token: novoToken, usuario: usuarioData } = await AuthService.login({ cpf, senha });
+      const { token: novoToken, usuario: usuarioData } = await AuthService.login({ email, senha });
       
       if (novoToken && usuarioData) {
         setToken(novoToken);
@@ -87,9 +86,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async ({ nome, email, cpf, senha }) => {
+  const register = async ({ nome, email, senha }) => {
     try {
-      await AuthService.register({ nome, email, cpf, senha });
+      await AuthService.register({ nome, email, senha });
       
       Toast.show({
         type: 'success',

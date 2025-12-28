@@ -46,9 +46,9 @@ const AuthService = {
     return !!token;
   },
 
-  async login({ cpf, senha }) {
-    // O backend espera { cpf, senha }
-    const response = await api.post('/auth/login', { cpf, senha });
+  async login({ email, senha }) {
+    // O backend passa a receber { email, senha }
+    const response = await api.post('/auth/login', { email, senha });
     const { token, usuario } = response.data || {};
 
     if (token) {
@@ -61,8 +61,8 @@ const AuthService = {
     return { token, usuario };
   },
 
-  async register({ nome, email, cpf, senha }) {
-    const response = await api.post('/auth/register', { nome, email, cpf, senha });
+  async register({ nome, email, senha }) {
+    const response = await api.post('/auth/register', { nome, email, senha });
     return response.data;
   },
 
