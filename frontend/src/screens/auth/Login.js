@@ -3,11 +3,12 @@ import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } fr
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import { useAuth } from '../../context/AuthContext';
+import AuthHeader from './components/AuthHeader';
+import AuthActions from './components/AuthActions';
 import theme from '../../config/theme';
 
 const schema = z.object({
@@ -47,21 +48,8 @@ export default function Login({ navigation }) {
         style={{ flex: 1 }}
       >
         <View style={styles.wrapper}>
-          <View style={styles.header}>
-            <Ionicons name="accessibility-outline" size={48} color={theme.colors.primary} />
-            <Spacer size="sm" />
-            <ThemedText variant="h2" align="center" weight="bold">
-              AcessoLivre
-            </ThemedText>
-            <ThemedText color="textSecondary" align="center">
-              Acessibilidade para todos
-            </ThemedText>
-          </View>
-
           <Card style={styles.card} variant="default">
-            <ThemedText variant="h2" weight="bold" align="center">
-              Bem-vindo de volta
-            </ThemedText>
+            <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" />
             <Spacer size="sm" />
             <ThemedText color="textSecondary" align="center">
               Entre na sua conta para continuar
@@ -118,16 +106,11 @@ export default function Login({ navigation }) {
               Entrar
             </Button>
 
-            <Spacer size="lg" />
-
-            <View style={styles.footerText}>
-              <ThemedText color="textSecondary">Não possui conta?</ThemedText>
-              <TouchableOpacity onPress={() => navigation?.navigate?.('Register')}>
-                <ThemedText color="primary" weight="semibold">
-                  {' '}Cadastre-se
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
+            <AuthActions
+              text="Não possui conta?"
+              actionLabel="Cadastre-se"
+              onPress={() => navigation?.navigate?.('Register')}
+            />
           </Card>
         </View>
       </KeyboardAvoidingView>
@@ -142,10 +125,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.lg,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-  },
   card: {
     width: '100%',
     maxWidth: 420,
@@ -159,10 +138,5 @@ const styles = StyleSheet.create({
   forgot: {
     alignSelf: 'flex-end',
     marginBottom: theme.spacing.md,
-  },
-  footerText: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

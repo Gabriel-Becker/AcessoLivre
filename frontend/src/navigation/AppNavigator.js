@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Container } from '../components/layout';
 import { ThemedText, Spacer } from '../components/commons';
 import Login from '../screens/auth/Login';
+import Register from '../screens/auth/Register';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,7 +24,10 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isAuthenticated ? (
-        <Stack.Screen name="Login" component={Login} />
+        <>
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Register" component={Register} />
+        </>
       ) : (
         <Stack.Screen name="Main" component={MainGate} />
       )}
