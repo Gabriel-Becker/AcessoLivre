@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setUsuario(null);
         setToken(null);
+        setLoading(false);
         return;
       }
 

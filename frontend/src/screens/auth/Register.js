@@ -78,7 +78,7 @@ export default function Register({ navigation }) {
           <Card style={styles.card} variant="default">
             <AuthHeader title="Criar Conta" subtitle="Acessibilidade para todos" />
 
-            <Spacer size="xl" />
+            <Spacer size="md" />
 
             <Controller
               control={control}
@@ -169,7 +169,7 @@ export default function Register({ navigation }) {
               </ThemedText>
             ) : null}
 
-            <Spacer size="md" />
+            <Spacer size="sm" />
 
             <Button
               variant="primary"
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.lg,
   },
   cardWrapper: {
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 520,
-    padding: theme.spacing.xl,
+    padding: theme.spacing.lg,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
   },
   checkbox: {
     width: 18,

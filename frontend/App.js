@@ -7,12 +7,23 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import navigationRef from './src/navigation/navigationRef';
 
+const linking = {
+  prefixes: ['http://localhost:8081', 'frontend://'],
+  config: {
+    screens: {
+      Login: 'login',
+      Register: 'register',
+      Main: 'home',
+    },
+  },
+};
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <NavigationContainer ref={navigationRef}>
+          <NavigationContainer ref={navigationRef} linking={linking} fallback={null}>
             <AppNavigator />
           </NavigationContainer>
           <Toast />
