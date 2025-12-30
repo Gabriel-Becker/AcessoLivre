@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../../config/theme';
 import SafeArea from '../SafeArea';
 import { Spacer, ThemedText } from '../../commons';
@@ -20,7 +21,9 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
   return (
     <SafeArea background="surface" style={[styles.sidebar, { borderRightColor: t.colors.borderLight }]}>
       <View style={styles.header}>
-        <View style={[styles.logo, { backgroundColor: t.colors.primary }]} />
+        <View style={styles.logoContainer}>
+          <Ionicons name="accessibility-outline" size={32} color={t.colors.primary} />
+        </View>
         <ThemedText variant="h3" weight="bold">AcessoLivre</ThemedText>
         <ThemedText color="textSecondary">Acessibilidade para todos</ThemedText>
       </View>
@@ -58,10 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 4,
   },
-  logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  logoContainer: {
     marginBottom: theme.spacing.xs,
   },
   menu: {
