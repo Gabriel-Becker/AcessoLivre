@@ -1,24 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { Container } from '../components/layout';
+import { Container, DesktopLayout } from '../components/layout';
 import { ThemedText, Spacer } from '../components/commons';
 import Login from '../screens/auth/Login';
 import Register from '../screens/auth/Register';
+import Home from '../screens/home/Home';
+import Buscar from '../screens/buscar/Buscar';
+import AdicionarLocal from '../screens/locais/AdicionarLocal';
+import Sobre from '../screens/sobre/Sobre';
 import theme from '../config/theme';
 
 const Stack = createNativeStackNavigator();
-
-function MainGate() {
-  return (
-    <Container center>
-      <ThemedText variant="h2">Bem-vindo</ThemedText>
-      <Spacer size="md" />
-      <ThemedText color="textSecondary">Navegação pronta</ThemedText>
-    </Container>
-  );
-}
 
 function LoadingScreen() {
   return (
@@ -27,6 +21,35 @@ function LoadingScreen() {
       <Spacer size="md" />
       <ThemedText color="textSecondary">Carregando...</ThemedText>
     </Container>
+  );
+}
+
+function MainApp() {
+  const [currentScreen, setCurrentScreen] = useState('Inicio');
+
+  const handleNavigate = (screen) => {
+    setCurrentScreen(screen);
+  };
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'Inicio':
+        return <Home />;
+      case 'Buscar':
+        return <Buscar />;
+      case 'Adicionar':
+        return <AdicionarLocal />;
+      case 'Sobre':
+        return <Sobre />;
+      default:
+        return <Home />;
+    }
+  };
+
+  return (
+    <DesktopLayout current={currentScreen} onNavigate={handleNavigate}>
+      {renderScreen()}
+    </DesktopLayout>
   );
 }
 
@@ -45,7 +68,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Register" component={Register} />
         </>
       ) : (
-        <Stack.Screen name="Main" component={MainGate} />
+        <Stack.Screen name="Main" component={MainApp} />
       )}
     </Stack.Navigator>
   );
