@@ -6,22 +6,72 @@ const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
 
 const AuthService = {
+  /**
+   * Obtém token do AsyncStorage ou Cookie (web)
+   */
   async getToken() {
     try {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
-      return token || null;
+      // Tentar obter do AsyncStorage (mobile)
+      const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
+      if (tokenFromStorage) {
+        return tokenFromStorage;
+      }
+      
+      // Tentar obter de cookie (web)
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === TOKEN_KEY) {
+            return value;
+          }
+        }
+      }
+      
+      return null;
     } catch (e) {
+      console.error('[AuthService] Erro ao recuperar token:', e);
       return null;
     }
   },
 
+  /**
+   * Armazena token no AsyncStorage e Cookie (web)
+   */
   async setToken(token) {
     if (!token) return;
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    
+    try {
+      // Salvar no AsyncStorage (para mobile)
+      await AsyncStorage.setItem(TOKEN_KEY, token);
+      
+      // Salvar em cookie (para web)
+      if (typeof document !== 'undefined') {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 30); // Cookie expira em 30 dias
+        document.cookie = `${TOKEN_KEY}=${token}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      }
+    } catch (error) {
+      console.error('[AuthService] Erro ao armazenar token:', error);
+      throw error;
+    }
   },
 
+  /**
+   * Remove token do AsyncStorage e Cookie (web)
+   */
   async removeToken() {
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    try {
+      // Remover do AsyncStorage
+      await AsyncStorage.removeItem(TOKEN_KEY);
+      
+      // Remover de cookie (web)
+      if (typeof document !== 'undefined') {
+        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      }
+    } catch (error) {
+      console.error('[AuthService] Erro ao remover token:', error);
+    }
   },
 
   async getUserData() {
@@ -41,24 +91,185 @@ const AuthService = {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(usuario));
   },
 
-  async isAuthenticated() {
-    const token = await this.getToken();
-    return !!token;
+  /**
+   * Decodifica JWT sem validação de assinatura
+   * @param {string} token - JWT token
+   * @returns {object|null} Payload decodificado ou null
+   */
+  parseJwt(token) {
+    try {
+      if (!token || typeof token !== 'string') {
+        console.error('[AuthService] Token inválido: não é uma string válida');
+        return null;
+      }
+      
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('[AuthService] Token inválido: não possui 3 partes separadas por ponto');
+        return null;
+      }
+      
+      const base64Url = parts[1];
+      if (!base64Url) {
+        console.error('[AuthService] Token inválido: payload vazio');
+        return null;
+      }
+      
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
+      const parsedPayload = JSON.parse(jsonPayload);
+      
+      if (!parsedPayload || typeof parsedPayload !== 'object') {
+        console.error('[AuthService] Token inválido: payload não é um objeto válido');
+        return null;
+      }
+      
+      return parsedPayload;
+    } catch (error) {
+      console.error('[AuthService] Erro ao decodificar token:', error);
+      return null;
+    }
   },
 
-  async login({ email, senha }) {
-    // O backend passa a receber { email, senha }
-    const response = await api.post('/auth/login', { email, senha });
-    const { token, usuario } = response.data || {};
+  /**
+   * Verifica se usuário está autenticado e token é válido
+   */
+  async isAuthenticated() {
+    try {
+      const token = await this.getToken();
+      
+      if (!token) {
+        return false;
+      }
+      
+      // Verificar se o token tem formato válido
+      const tokenData = this.parseJwt(token);
+      if (!tokenData) {
+        console.log('[AuthService] Token com formato inválido detectado, fazendo logout automático');
+        await this.logout();
+        return false;
+      }
+      
+      // Verificar se o token está expirado
+      if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
+        console.log('[AuthService] Token expirado, fazendo logout automático');
+        await this.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('[AuthService] Erro ao verificar autenticação:', error);
+      // Em caso de erro crítico, fazer logout por segurança
+      await this.logout();
+      return false;
+    }
+  },
 
-    if (token) {
+  /**
+   * Realiza login do usuário
+   */
+  async login({ email, senha, twoFactorCode = null, rememberMe = false }) {
+    try {
+      // Limpar qualquer token anterior
+      await this.logout();
+      
+      const loginData = { email, senha, rememberMe };
+      if (twoFactorCode) {
+        loginData.twoFactorCode = parseInt(twoFactorCode);
+      }
+      
+      const response = await api.post('/auth/login', loginData);
+      const responseData = response.data;
+
+      // Verificar se requer 2FA
+      if (responseData.success === false && responseData.requiresTwoFactor) {
+        return {
+          success: false,
+          requiresTwoFactor: true,
+          message: responseData.message || 'Código de autenticação obrigatório'
+        };
+      }
+
+      const { token, usuario } = responseData;
+
+      if (!token) {
+        throw new Error('Servidor retornou um token vazio');
+      }
+      
+      // Verificar se o token é válido
+      const tokenData = this.parseJwt(token);
+      if (!tokenData) {
+        throw new Error('Token inválido retornado pelo servidor');
+      }
+      
       await this.setToken(token);
-    }
-    if (usuario) {
-      await this.setUserData(usuario);
-    }
+      
+      // Verificar se token foi armazenado corretamente
+      const storedToken = await this.getToken();
+      if (!storedToken) {
+        console.error('[AuthService] Falha ao armazenar token após login');
+        throw new Error('Falha ao armazenar token de autenticação');
+      }
+      
+      if (usuario) {
+        await this.setUserData(usuario);
+      }
 
-    return { token, usuario };
+      return { 
+        success: true,
+        token, 
+        usuario,
+        message: responseData.message || 'Login realizado com sucesso'
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro no login:', error);
+      
+      // Tratamento de erro 428 (2FA obrigatório)
+      if (error.response && error.response.status === 428) {
+        const responseData = error.response.data;
+        return {
+          success: false,
+          requiresTwoFactor: true,
+          message: responseData.message || 'Código de autenticação de dois fatores é obrigatório'
+        };
+      }
+      
+      // Tratamento de erro 401 (credenciais inválidas ou 2FA inválido)
+      if (error.response && error.response.status === 401) {
+        const responseData = error.response.data;
+        if (responseData && responseData.requiresTwoFactor) {
+          return {
+            success: false,
+            requiresTwoFactor: true,
+            message: responseData.message || 'Código de autenticação de dois fatores inválido'
+          };
+        }
+        throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
+      }
+      
+      // Tratamento de outros erros HTTP
+      if (error.response && error.response.data) {
+        const responseData = error.response.data;
+        throw new Error(responseData?.error || responseData?.message || 'Erro no login');
+      }
+      
+      // Tratamento de erro de rede
+      if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('timeout') ||
+          error.message?.toLowerCase().includes('connection')) {
+        throw new Error('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
+      }
+      
+      throw error;
+    }
   },
 
   async register({ nome, email, senha }) {
@@ -68,11 +279,21 @@ const AuthService = {
 
   async logout() {
     try {
-      await api.post('/auth/logout');
+      const token = await this.getToken();
+      if (token) {
+        try {
+          await api.post('/auth/logout');
+        } catch (e) {
+          // Ignorar erro de logout no backend
+          console.log('[AuthService] Erro ao fazer logout no backend:', e.message);
+        }
+      }
     } catch (e) {
+      console.error('[AuthService] Erro durante logout:', e);
+    } finally {
+      await this.removeToken();
+      await this.setUserData(null);
     }
-    await this.removeToken();
-    await this.setUserData(null);
   },
 
   async carregarSessao() {
@@ -81,12 +302,20 @@ const AuthService = {
       await this.setUserData(null);
       return { autenticado: false, usuario: null };
     }
+    
+    // Verificar validade do token antes de chamar o backend
+    const isValid = await this.isAuthenticated();
+    if (!isValid) {
+      return { autenticado: false, usuario: null };
+    }
+    
     try {
       const response = await api.get('/auth/me');
       const usuario = response.data?.usuario || response.data || null;
       await this.setUserData(usuario);
       return { autenticado: !!usuario, usuario };
     } catch (e) {
+      console.error('[AuthService] Erro ao carregar sessão:', e);
       // Se 401 ou erro, limpa sessão
       await this.removeToken();
       await this.setUserData(null);
