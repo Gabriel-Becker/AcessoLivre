@@ -1,7 +1,7 @@
 // Card - Container de conteúdo com suporte a temas
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import theme from '../../config/theme';
+import theme, { getTheme } from '../../config/theme';
 
 export default function Card({
   variant = 'default',
@@ -9,31 +9,34 @@ export default function Card({
   onPress,
   children,
   style,
+  altoContraste = false,
   ...props
 }) {
+  const t = altoContraste ? getTheme(true) : theme;
+
   // Estilos baseados na variante
   const getVariantStyles = () => {
     switch (variant) {
       case 'elevated':
         return {
-          ...theme.shadows.md,
-          backgroundColor: theme.colors.surface,
+          ...t.shadows.md,
+          backgroundColor: t.colors.surface,
           borderWidth: 0,
         };
       case 'outlined':
         return {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: t.colors.surface,
           borderWidth: 2,
-          borderColor: theme.colors.border,
-          ...theme.shadows.none,
+          borderColor: t.colors.border,
+          ...t.shadows.none,
         };
       case 'default':
       default:
         return {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: t.colors.surface,
           borderWidth: 1,
-          borderColor: theme.colors.borderLight,
-          ...theme.shadows.sm,
+          borderColor: t.colors.borderLight,
+          ...t.shadows.sm,
         };
     }
   };

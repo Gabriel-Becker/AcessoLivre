@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import theme from '../../config/theme';
+import theme, { getTheme } from '../../config/theme';
 
 export default function Input({
   label,
@@ -19,28 +19,30 @@ export default function Input({
   disabled = false,
   style,
   containerStyle,
+  altoContraste = false,
   ...props
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  const t = altoContraste ? getTheme(true) : theme;
   const hasError = !!error;
   const isPassword = secureTextEntry;
 
   const getBorderColor = () => {
-    if (hasError) return theme.colors.error;
-    if (isFocused) return theme.colors.primary;
-    return theme.colors.border;
+    if (hasError) return t.colors.error;
+    if (isFocused) return t.colors.primary;
+    return t.colors.border;
   };
 
   const getBackgroundColor = () => {
-    if (disabled) return theme.colors.backgroundTertiary;
-    return theme.colors.surface;
+    if (disabled) return t.colors.backgroundTertiary;
+    return t.colors.surface;
   };
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: t.colors.textPrimary }]}>{label}</Text>}
       
       <View
         style={[
@@ -56,7 +58,7 @@ export default function Input({
           <Ionicons
             name={leftIcon}
             size={20}
-            color={theme.colors.textSecondary}
+            color={t.colors.textSecondary}
             style={styles.leftIcon}
           />
         )}
@@ -67,13 +69,13 @@ export default function Input({
             leftIcon && styles.inputWithLeftIcon,
             (rightIcon || isPassword) && styles.inputWithRightIcon,
             multiline && styles.inputMultiline,
-            { color: theme.colors.textPrimary },
+            { color: t.colors.textPrimary },
             style,
           ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={theme.colors.textTertiary}
+          placeholderTextColor={t.colors.textTertiary}
           secureTextEntry={isPassword && !isPasswordVisible}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -92,7 +94,7 @@ export default function Input({
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color={theme.colors.textSecondary}
+              color={t.colors.textSecondary}
             />
           </TouchableOpacity>
         )}
@@ -106,7 +108,7 @@ export default function Input({
             <Ionicons
               name={rightIcon}
               size={20}
-              color={theme.colors.textSecondary}
+              color={t.colors.textSecondary}
             />
           </TouchableOpacity>
         )}
@@ -114,8 +116,8 @@ export default function Input({
       
       {hasError && (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={14} color={theme.colors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Ionicons name="alert-circle" size={14} color={t.colors.error} />
+          <Text style={[styles.errorText, { color: t.colors.error }]}>{error}</Text>
         </View>
       )}
     </View>
@@ -129,7 +131,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
   },
   inputContainer: {
@@ -173,7 +174,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.error,
     marginLeft: theme.spacing.xs,
     flex: 1,
   },

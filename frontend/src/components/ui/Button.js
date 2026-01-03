@@ -2,7 +2,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import theme from '../../config/theme';
+import theme, { getTheme } from '../../config/theme';
 
 export default function Button({
   variant = 'primary',
@@ -19,9 +19,11 @@ export default function Button({
   iconSize = 20,
   iconColor,
   align = 'center',
+  altoContraste = false,
   ...props
 }) {
   const isDisabled = disabled || loading;
+  const t = altoContraste ? getTheme(true) : theme;
 
   // Estilos baseados na variante
   const getVariantStyles = () => {
@@ -29,35 +31,35 @@ export default function Button({
       case 'primary':
         return {
           container: {
-            backgroundColor: isDisabled ? theme.colors.textTertiary : theme.colors.primary,
+            backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.primary,
             borderWidth: 0,
           },
-          text: { color: theme.colors.textOnPrimary },
+          text: { color: t.colors.textOnPrimary },
         };
       case 'secondary':
         return {
           container: {
-            backgroundColor: isDisabled ? theme.colors.textTertiary : theme.colors.secondary,
+            backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.secondary,
             borderWidth: 0,
           },
-          text: { color: theme.colors.textOnSecondary },
+          text: { color: t.colors.textOnSecondary },
         };
       case 'outline':
         return {
           container: {
             backgroundColor: 'transparent',
             borderWidth: 2,
-            borderColor: isDisabled ? theme.colors.borderLight : theme.colors.primary,
+            borderColor: isDisabled ? t.colors.borderLight : t.colors.primary,
           },
-          text: { color: isDisabled ? theme.colors.textTertiary : theme.colors.primary },
+          text: { color: isDisabled ? t.colors.textTertiary : t.colors.primary },
         };
       case 'danger':
         return {
           container: {
-            backgroundColor: isDisabled ? theme.colors.textTertiary : theme.colors.error,
+            backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.error,
             borderWidth: 0,
           },
-          text: { color: theme.colors.textOnPrimary },
+          text: { color: t.colors.textOnPrimary },
         };
       case 'ghost':
         return {
@@ -65,12 +67,12 @@ export default function Button({
             backgroundColor: 'transparent',
             borderWidth: 0,
           },
-          text: { color: isDisabled ? theme.colors.textTertiary : theme.colors.primary },
+          text: { color: isDisabled ? t.colors.textTertiary : t.colors.primary },
         };
       default:
         return {
-          container: { backgroundColor: theme.colors.primary, borderWidth: 0 },
-          text: { color: theme.colors.textOnPrimary },
+          container: { backgroundColor: t.colors.primary, borderWidth: 0 },
+          text: { color: t.colors.textOnPrimary },
         };
     }
   };

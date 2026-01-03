@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,50 +10,150 @@ import { Spacer, ThemedText } from '../../components/commons';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
-import theme from '../../config/theme';
+import authMessages from '../../utils/authMessages';
+import toastHelper from '../../utils/toastHelper';
+import { useThemeContext } from '../../context/ThemeContext';
 
-const schema = z.object({
-  email: z.string().email('Informe um e-mail válido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-});
+const schema = z
+  .object({
+    email: z.string().email(authMessages.loginErrors.invalidEmail),
+    password: z.string().min(6, authMessages.validation.passwordTooShort),
+    twoFactorCode: z.string().optional(),
+    rememberMe: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.twoFactorCode && data.twoFactorCode.trim() !== '' && !/^\d{6}$/.test(data.twoFactorCode.trim())) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['twoFactorCode'],
+        message: authMessages.loginErrors.invalidTwoFactor || 'Código deve ter 6 dígitos',
+      });
+    }
+  });
 
 export default function Login({ navigation }) {
   const { login } = useAuth();
+  const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   const {
     control,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       email: '',
       password: '',
+      twoFactorCode: '',
+      rememberMe: false,
     },
   });
 
-  const onSubmit = async (values) => {
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrapper: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: t.spacing.lg,
+        },
+        card: {
+          width: '100%',
+          maxWidth: 440,
+          padding: t.spacing.xl,
+          backgroundColor: t.colors.surface,
+          borderColor: t.colors.borderLight,
+          borderWidth: isHighContrast ? 2 : 1,
+          borderRadius: t.borderRadius.lg,
+          ...(isHighContrast ? t.shadows.none : t.shadows.md),
+        },
+        forgot: {
+          alignSelf: 'flex-end',
+          marginBottom: t.spacing.md,
+        },
+        rememberRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: t.spacing.lg,
+        },
+        rememberLabel: {
+          marginLeft: t.spacing.sm,
+        },
+        checkbox: {
+          width: 22,
+          height: 22,
+          borderRadius: t.borderRadius.sm,
+          borderWidth: 2,
+          borderColor: t.colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isHighContrast ? t.colors.backgroundSecondary : t.colors.surface,
+        },
+        helperText: {
+          marginTop: -t.spacing.sm,
+          marginBottom: t.spacing.md,
+        },
+      }),
+    [isHighContrast, t]
+  );
+
+  const handleSubmitLogin = async (values) => {
+    const sanitized2FA = values.twoFactorCode?.replace(/\D/g, '').slice(0, 6) || '';
+
+    if (showTwoFactor && sanitized2FA.length !== 6) {
+      setError('twoFactorCode', { message: authMessages.loginErrors.twoFactorRequired });
+      toastHelper.showError(authMessages.loginErrors.twoFactorRequired);
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await login({ email: values.email, senha: values.password });
+      const result = await login({
+        email: values.email.trim(),
+        senha: values.password,
+        twoFactorCode: sanitized2FA || null,
+        rememberMe: !!values.rememberMe,
+      });
+
+      if (!result?.sucesso) {
+        if (result?.requiresTwoFactor) {
+          setShowTwoFactor(true);
+          setError('twoFactorCode', { message: result?.mensagem || authMessages.loginErrors.twoFactorPrompt });
+          toastHelper.showError(result?.mensagem || authMessages.loginErrors.twoFactorPrompt);
+          return;
+        }
+
+        toastHelper.showError(result?.erro || authMessages.loginErrors.loginFailed);
+        return;
+      }
+
+      clearErrors();
+      setShowTwoFactor(false);
+      toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
+    } catch (erro) {
+      toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Container background="backgroundSecondary">
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <View style={styles.wrapper}>
-          <Card style={styles.card} variant="default">
-            <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" />
+          <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
+            <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
             <Spacer size="sm" />
-            <ThemedText color="textSecondary" align="center">
-              Entre na sua conta para continuar
+            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+              Entre com seu e-mail para continuar
             </ThemedText>
 
             <Spacer size="xl" />
@@ -65,11 +166,12 @@ export default function Login({ navigation }) {
                   label="E-mail"
                   placeholder="seu@email.com"
                   value={value}
-                  onChangeText={onChange}
+                  onChangeText={(text) => onChange(text.trimStart())}
                   leftIcon="mail-outline"
                   error={errors.email?.message}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  altoContraste={isHighContrast}
                 />
               )}
             />
@@ -86,12 +188,62 @@ export default function Login({ navigation }) {
                   secureTextEntry
                   leftIcon="lock-closed-outline"
                   error={errors.password?.message}
+                  altoContraste={isHighContrast}
                 />
               )}
             />
 
-            <TouchableOpacity style={styles.forgot} onPress={() => {}}>
-              <ThemedText color="primary" weight="semibold">
+            {showTwoFactor && (
+              <Controller
+                control={control}
+                name="twoFactorCode"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Código 2FA"
+                    placeholder="123456"
+                    value={value}
+                    onChangeText={(text) => {
+                      const digits = text.replace(/\D/g, '').slice(0, 6);
+                      onChange(digits);
+                      if (digits.length === 6 && errors.twoFactorCode) clearErrors('twoFactorCode');
+                    }}
+                    keyboardType="numeric"
+                    maxLength={6}
+                    leftIcon="keypad-outline"
+                    error={errors.twoFactorCode?.message}
+                    altoContraste={isHighContrast}
+                  />
+                )}
+              />
+            )}
+
+            <Controller
+              control={control}
+              name="rememberMe"
+              render={({ field: { value, onChange } }) => (
+                <Pressable
+                  style={styles.rememberRow}
+                  onPress={() => onChange(!value)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: value }}
+                >
+                  <View style={[styles.checkbox, value && { backgroundColor: t.colors.primary }]}>
+                    {value && <Ionicons name="checkmark" size={16} color={t.colors.textOnPrimary} />}
+                  </View>
+                  <ThemedText
+                    color="textSecondary"
+                    weight="medium"
+                    altoContraste={isHighContrast}
+                    style={styles.rememberLabel}
+                  >
+                    Lembrar de mim neste dispositivo
+                  </ThemedText>
+                </Pressable>
+              )}
+            />
+
+            <TouchableOpacity style={styles.forgot} onPress={() => navigation?.navigate?.('ForgotPassword')}>
+              <ThemedText color="primary" weight="semibold" altoContraste={isHighContrast}>
                 Esqueceu a senha?
               </ThemedText>
             </TouchableOpacity>
@@ -100,11 +252,15 @@ export default function Login({ navigation }) {
               variant="primary"
               size="large"
               fullWidth
-              onPress={handleSubmit(onSubmit)}
+              onPress={handleSubmit(handleSubmitLogin)}
               loading={submitting}
+              disabled={submitting}
+              altoContraste={isHighContrast}
             >
               Entrar
             </Button>
+
+            <Spacer size="md" />
 
             <AuthActions
               text="Não possui conta?"
@@ -117,26 +273,3 @@ export default function Login({ navigation }) {
     </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    padding: theme.spacing.xl,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  forgot: {
-    alignSelf: 'flex-end',
-    marginBottom: theme.spacing.md,
-  },
-});
