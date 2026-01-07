@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,25 +10,32 @@ import { Spacer, ThemedText } from '../../components/commons';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
-import theme from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
+import authMessages from '../../utils/authMessages';
+import toastHelper from '../../utils/toastHelper';
 
 const schema = z
   .object({
-    nome: z.string().min(3, 'Informe seu nome completo'),
-    email: z.string().email('Informe um e-mail válido'),
-    password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-    confirmPassword: z.string().min(6, 'Confirme sua senha'),
+    nome: z
+      .string()
+      .trim()
+      .min(2, authMessages.validation.nameTooShort)
+      .max(120, authMessages.validation.maxLength),
+    email: z.string().trim().email(authMessages.validation.invalidEmail),
+    password: z.string().min(8, authMessages.validation.passwordTooShort),
+    confirmPassword: z.string().min(8, authMessages.validation.passwordTooShort),
     terms: z.boolean().refine((val) => val === true, {
-      message: 'Você precisa aceitar os termos para continuar',
+      message: authMessages.registerErrors.termsNotAccepted,
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'As senhas não conferem',
+    message: authMessages.validation.passwordMismatch,
   });
 
 export default function Register({ navigation }) {
   const { register: registerUser } = useAuth();
+  const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -50,33 +57,90 @@ export default function Register({ navigation }) {
 
   const terms = watch('terms');
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        scroll: {
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingVertical: t.spacing.lg,
+          paddingHorizontal: t.spacing.lg,
+        },
+        cardWrapper: {
+          width: '100%',
+          alignItems: 'center',
+        },
+        card: {
+          width: '100%',
+          maxWidth: 520,
+          padding: t.spacing.xl,
+          borderWidth: isHighContrast ? 2 : 1,
+          borderColor: isHighContrast ? t.colors.border : t.colors.borderLight,
+          borderRadius: t.borderRadius.lg,
+          backgroundColor: t.colors.surface,
+          ...(isHighContrast ? t.shadows.none : t.shadows.md),
+        },
+        checkboxRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: t.spacing.xs,
+        },
+        checkbox: {
+          width: 22,
+          height: 22,
+          borderRadius: t.borderRadius.sm,
+          borderWidth: 2,
+          borderColor: t.colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isHighContrast ? t.colors.backgroundSecondary : t.colors.surface,
+        },
+        checkboxChecked: {
+          backgroundColor: t.colors.primary,
+          borderColor: t.colors.primary,
+        },
+        checkboxLabel: {
+          marginLeft: t.spacing.sm,
+        },
+        errorText: {
+          marginTop: t.spacing.xs,
+        },
+      }),
+    [isHighContrast, t]
+  );
+
   const onSubmit = async (values) => {
     try {
       setSubmitting(true);
       const resultado = await registerUser({
-        nome: values.nome,
-        email: values.email,
+        nome: values.nome.trim(),
+        email: values.email.trim().toLowerCase(),
         senha: values.password,
       });
 
-      if (resultado?.sucesso) {
-        navigation?.navigate?.('Login');
+      if (!resultado?.sucesso) {
+        toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
+        return;
       }
+
+      toastHelper.showSuccess(authMessages.success.registerSuccess);
+      navigation?.navigate?.('Login');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Container background="backgroundSecondary">
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.cardWrapper}>
-          <Card style={styles.card} variant="default">
-            <AuthHeader title="Criar Conta" subtitle="Acessibilidade para todos" />
+          <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
+            <AuthHeader title="Criar Conta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
 
             <Spacer size="md" />
 
@@ -92,6 +156,7 @@ export default function Register({ navigation }) {
                   leftIcon="person-outline"
                   error={errors.nome?.message}
                   autoCapitalize="words"
+                  altoContraste={isHighContrast}
                 />
               )}
             />
@@ -109,6 +174,7 @@ export default function Register({ navigation }) {
                   error={errors.email?.message}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  altoContraste={isHighContrast}
                 />
               )}
             />
@@ -125,6 +191,7 @@ export default function Register({ navigation }) {
                   secureTextEntry
                   leftIcon="lock-closed-outline"
                   error={errors.password?.message}
+                  altoContraste={isHighContrast}
                 />
               )}
             />
@@ -141,6 +208,7 @@ export default function Register({ navigation }) {
                   secureTextEntry
                   leftIcon="lock-closed-outline"
                   error={errors.confirmPassword?.message}
+                  altoContraste={isHighContrast}
                 />
               )}
             />
@@ -149,22 +217,32 @@ export default function Register({ navigation }) {
               control={control}
               name="terms"
               render={({ field: { value } }) => (
-                <TouchableOpacity
+                <Pressable
                   style={styles.checkboxRow}
                   onPress={() => setValue('terms', !value, { shouldValidate: true })}
-                  activeOpacity={0.8}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: value }}
                 >
-                  <View style={[styles.checkbox, value && styles.checkboxChecked]}>
-                    {value ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+                  <View
+                    style={[
+                      styles.checkbox,
+                      value && styles.checkboxChecked,
+                    ]}
+                  >
+                    {value ? <Ionicons name="checkmark" size={14} color={t.colors.textOnPrimary} /> : null}
                   </View>
-                  <ThemedText color="textSecondary">
+                  <ThemedText
+                    color="textSecondary"
+                    altoContraste={isHighContrast}
+                    style={styles.checkboxLabel}
+                  >
                     Aceito os termos de uso e política de privacidade
                   </ThemedText>
-                </TouchableOpacity>
+                </Pressable>
               )}
             />
             {errors.terms?.message ? (
-              <ThemedText color="error" style={styles.errorText}>
+              <ThemedText color="error" style={styles.errorText} altoContraste={isHighContrast}>
                 {errors.terms.message}
               </ThemedText>
             ) : null}
@@ -177,6 +255,8 @@ export default function Register({ navigation }) {
               fullWidth
               onPress={handleSubmit(onSubmit)}
               loading={submitting}
+              disabled={submitting}
+              altoContraste={isHighContrast}
             >
               Cadastrar
             </Button>
@@ -192,50 +272,3 @@ export default function Register({ navigation }) {
     </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  cardWrapper: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  card: {
-    width: '100%',
-    maxWidth: 520,
-    padding: theme.spacing.lg,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 6,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.xs,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.sm,
-  },
-  checkboxChecked: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  errorText: {
-    marginTop: theme.spacing.xs,
-  },
-});
