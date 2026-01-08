@@ -22,6 +22,12 @@ import java.util.Optional;
 
 /**
  * Controller responsável por autenticação (login, registro) e emissão de tokens JWT.
+ * 
+ * TODO: Implementar autenticação de dois fatores (2FA)
+ * - Adicionar endpoint para habilitar/desabilitar 2FA
+ * - Adicionar endpoint para validar código 2FA no login
+ * - Implementar geração de QR code para Google Authenticator
+ * - Adicionar códigos de recuperação
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -59,13 +65,25 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
         try {
-            String token = authenticationService.login(request.getCpf(), request.getSenha(), request.getRememberMe());
-            Optional<Usuario> u = usuarioRepository.findByCpf(request.getCpf());
-            Long userId = u.map(Usuario::getIdUsuario).orElse(null);
-            log.info("Usuário autenticado (CPF={}): id={}", request.getCpf(), userId);
-            return ResponseEntity.ok(new AuthResponseDTO(token, request.getCpf(), userId));
+            String token = authenticationService.login(request.getEmail(), request.getSenha(), request.getRememberMe());
+            Optional<Usuario> u = usuarioRepository.findByEmail(request.getEmail());
+            
+            if (u.isEmpty()) {
+                log.warn("Usuário não encontrado após autenticação: {}", request.getEmail());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            Usuario usuario = u.get();
+            UsuarioResponseDTO usuarioDTO = UsuarioMapper.toResponse(usuario);
+            AuthResponseDTO response = AuthResponseDTO.builder()
+                .token(token)
+                .usuario(usuarioDTO)
+                .build();
+            
+            log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.warn("Falha no login para CPF={}: {}", request.getCpf(), e.getMessage());
+            log.warn("Falha no login para email={}: {}", request.getEmail(), e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

@@ -110,19 +110,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ email, senha, twoFactorCode = null, rememberMe = false }) => {
+  const login = async ({ email, senha, rememberMe = false }) => {
     try {
       setLoading(true);
-      const result = await AuthService.login({ email, senha, twoFactorCode, rememberMe });
+      const result = await AuthService.login({ email, senha, rememberMe });
       
-      // Se requer 2FA, retornar informação sem fazer login
-      if (!result.success && result.requiresTwoFactor) {
-        return {
-          sucesso: false,
-          requiresTwoFactor: true,
-          mensagem: result.message
-        };
-      }
+      // TODO: Tratamento de 2FA quando implementado
+      // if (!result.success && result.requiresTwoFactor) {
+      //   return {
+      //     sucesso: false,
+      //     requiresTwoFactor: true,
+      //     mensagem: result.message
+      //   };
+      // }
       
       // Se não foi sucesso por outro motivo
       if (!result.success) {

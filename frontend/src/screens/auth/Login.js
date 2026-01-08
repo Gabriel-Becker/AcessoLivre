@@ -17,25 +17,17 @@ import { useThemeContext } from '../../context/ThemeContext';
 const schema = z
   .object({
     email: z.string().email(authMessages.loginErrors.invalidEmail),
-    password: z.string().min(6, authMessages.validation.passwordTooShort),
-    twoFactorCode: z.string().optional(),
+    password: z.string().min(8, authMessages.validation.passwordTooShort),
     rememberMe: z.boolean().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.twoFactorCode && data.twoFactorCode.trim() !== '' && !/^\d{6}$/.test(data.twoFactorCode.trim())) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['twoFactorCode'],
-        message: authMessages.loginErrors.invalidTwoFactor || 'Código deve ter 6 dígitos',
-      });
-    }
   });
 
 export default function Login({ navigation }) {
   const { login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
-  const [showTwoFactor, setShowTwoFactor] = useState(false);
+
+  // TODO: Implementar autenticação de dois fatores (2FA)
+  // const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   const {
     control,
@@ -48,7 +40,6 @@ export default function Login({ navigation }) {
     defaultValues: {
       email: '',
       password: '',
-      twoFactorCode: '',
       rememberMe: false,
     },
   });
@@ -104,37 +95,20 @@ export default function Login({ navigation }) {
   );
 
   const handleSubmitLogin = async (values) => {
-    const sanitized2FA = values.twoFactorCode?.replace(/\D/g, '').slice(0, 6) || '';
-
-    if (showTwoFactor && sanitized2FA.length !== 6) {
-      setError('twoFactorCode', { message: authMessages.loginErrors.twoFactorRequired });
-      toastHelper.showError(authMessages.loginErrors.twoFactorRequired);
-      return;
-    }
-
     try {
       setSubmitting(true);
       const result = await login({
         email: values.email.trim(),
         senha: values.password,
-        twoFactorCode: sanitized2FA || null,
         rememberMe: !!values.rememberMe,
       });
 
       if (!result?.sucesso) {
-        if (result?.requiresTwoFactor) {
-          setShowTwoFactor(true);
-          setError('twoFactorCode', { message: result?.mensagem || authMessages.loginErrors.twoFactorPrompt });
-          toastHelper.showError(result?.mensagem || authMessages.loginErrors.twoFactorPrompt);
-          return;
-        }
-
         toastHelper.showError(result?.erro || authMessages.loginErrors.loginFailed);
         return;
       }
 
       clearErrors();
-      setShowTwoFactor(false);
       toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);
@@ -194,29 +168,7 @@ export default function Login({ navigation }) {
               )}
             />
 
-            {showTwoFactor && (
-              <Controller
-                control={control}
-                name="twoFactorCode"
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Código 2FA"
-                    placeholder="123456"
-                    value={value}
-                    onChangeText={(text) => {
-                      const digits = text.replace(/\D/g, '').slice(0, 6);
-                      onChange(digits);
-                      if (digits.length === 6 && errors.twoFactorCode) clearErrors('twoFactorCode');
-                    }}
-                    keyboardType="numeric"
-                    maxLength={6}
-                    leftIcon="keypad-outline"
-                    error={errors.twoFactorCode?.message}
-                    altoContraste={isHighContrast}
-                  />
-                )}
-              />
-            )}
+            {/* TODO: Implementar autenticação de dois fatores (2FA) */}
 
             <Controller
               control={control}

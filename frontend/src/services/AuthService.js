@@ -92,7 +92,7 @@ const AuthService = {
   },
 
   /**
-   * Decodifica JWT sem validação de assinatura
+   * Decodifica JWT sem validação de assinatura (compatível com React Native)
    * @param {string} token - JWT token
    * @returns {object|null} Payload decodificado ou null
    */
@@ -115,13 +115,12 @@ const AuthService = {
         return null;
       }
       
+      // Converter base64url para base64 padrão
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
+      
+      // Usar Buffer.from para compatibilidade com React Native
+      // Buffer está disponível via polyfill do Expo
+      const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
       
       const parsedPayload = JSON.parse(jsonPayload);
       
@@ -175,27 +174,19 @@ const AuthService = {
   /**
    * Realiza login do usuário
    */
-  async login({ email, senha, twoFactorCode = null, rememberMe = false }) {
+  async login({ email, senha, rememberMe = false }) {
     try {
       // Limpar qualquer token anterior
       await this.logout();
       
       const loginData = { email, senha, rememberMe };
-      if (twoFactorCode) {
-        loginData.twoFactorCode = parseInt(twoFactorCode);
-      }
+      // TODO: Implementar autenticação de dois fatores (2FA)
+      // if (twoFactorCode) {
+      //   loginData.twoFactorCode = parseInt(twoFactorCode);
+      // }
       
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
-
-      // Verificar se requer 2FA
-      if (responseData.success === false && responseData.requiresTwoFactor) {
-        return {
-          success: false,
-          requiresTwoFactor: true,
-          message: responseData.message || 'Código de autenticação obrigatório'
-        };
-      }
 
       const { token, usuario } = responseData;
 
@@ -231,26 +222,19 @@ const AuthService = {
     } catch (error) {
       console.error('[AuthService] Erro no login:', error);
       
-      // Tratamento de erro 428 (2FA obrigatório)
-      if (error.response && error.response.status === 428) {
-        const responseData = error.response.data;
-        return {
-          success: false,
-          requiresTwoFactor: true,
-          message: responseData.message || 'Código de autenticação de dois fatores é obrigatório'
-        };
-      }
+      // TODO: Tratamento de erro 428 para 2FA quando implementado
+      // if (error.response && error.response.status === 428) {
+      //   const responseData = error.response.data;
+      //   return {
+      //     success: false,
+      //     requiresTwoFactor: true,
+      //     message: responseData.message || 'Código de autenticação de dois fatores é obrigatório'
+      //   };
+      // }
       
-      // Tratamento de erro 401 (credenciais inválidas ou 2FA inválido)
+      // Tratamento de erro 401 (credenciais inválidas)
       if (error.response && error.response.status === 401) {
         const responseData = error.response.data;
-        if (responseData && responseData.requiresTwoFactor) {
-          return {
-            success: false,
-            requiresTwoFactor: true,
-            message: responseData.message || 'Código de autenticação de dois fatores inválido'
-          };
-        }
         throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
       }
       

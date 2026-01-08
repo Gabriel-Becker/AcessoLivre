@@ -12,6 +12,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/**
+ * Serviço de autenticação responsável por login e logout.
+ * 
+ * TODO: Implementar autenticação de dois fatores (2FA)
+ * - Adicionar método para validar código 2FA
+ * - Adicionar método para gerar secret 2FA
+ * - Adicionar método para gerar códigos de recuperação
+ * - Modificar método login para suportar 2FA
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -21,15 +30,15 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
 
-    public String login(String cpf, String senha, Boolean rememberMe) {
+    public String login(String email, String senha, Boolean rememberMe) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(cpf, senha)
+                new UsernamePasswordAuthenticationToken(email, senha)
         );
 
         String token = jwtService.gerarToken(authentication, rememberMe);
 
         // salva token atual no usuário
-        Usuario usuario = usuarioRepository.findByCpf(cpf).orElse(null);
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
         if (usuario != null) {
             usuario.setTokenAtual(token);
             usuarioRepository.save(usuario);

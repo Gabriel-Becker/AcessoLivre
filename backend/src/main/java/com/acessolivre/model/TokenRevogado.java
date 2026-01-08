@@ -25,6 +25,10 @@ public class TokenRevogado {
     @Column(name = "data_revogacao", nullable = false)
     private LocalDateTime dataRevogacao;
 
+    @NotNull(message = "Data de expiração é obrigatória")
+    @Column(name = "data_expiracao", nullable = false)
+    private LocalDateTime expiracao;
+
     @NotBlank(message = "Token é obrigatório")
     @Column(name = "token", nullable = false)
     private String token;

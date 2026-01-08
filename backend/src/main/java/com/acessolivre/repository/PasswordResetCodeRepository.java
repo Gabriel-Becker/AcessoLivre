@@ -2,7 +2,9 @@ package com.acessolivre.repository;
 
 import com.acessolivre.model.PasswordResetCode;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -74,5 +76,7 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
 
     boolean existsByCpfAndUsedFalseAndExpiresAtAfter(String cpf, LocalDateTime now);
 
+    @Modifying
+    @Transactional
     int deleteByExpiresAtBefore(LocalDateTime dataExpiracao);
 }
