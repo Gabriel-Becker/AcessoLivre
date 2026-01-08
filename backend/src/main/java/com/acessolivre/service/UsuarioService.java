@@ -55,12 +55,6 @@ public class UsuarioService {
             throw new IllegalArgumentException("Email já cadastrado: " + usuario.getEmail());
         }
         
-        // Verifica se CPF já existe
-        if (usuarioRepository.existsByCpf(usuario.getCpf())) {
-            log.warn("Tentativa de cadastro com CPF já existente: {}", usuario.getCpf());
-            throw new IllegalArgumentException("CPF já cadastrado: " + usuario.getCpf());
-        }
-        
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
         log.info("Usuário salvo com sucesso. ID: {}", usuarioSalvo.getIdUsuario());
         return usuarioSalvo;

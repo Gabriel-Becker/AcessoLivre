@@ -1,6 +1,5 @@
 package com.acessolivre.dto.request;
 
-import com.acessolivre.validation.CpfValido;
 import com.acessolivre.validation.SenhaForte;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,11 +23,6 @@ public class RegisterRequestDTO {
     @NotBlank(message = "Email é obrigatório")
     @Size(max = 255, message = "Email deve ter no máximo 255 caracteres")
     private String email;
-
-    @NotBlank(message = "CPF é obrigatório")
-    @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
-    @CpfValido
-    private String cpf;
 
     @NotBlank(message = "Senha é obrigatória")
     @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")

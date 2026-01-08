@@ -27,11 +27,6 @@ public class PasswordResetCode {
     @Column(name = "code", nullable = false, length = 150)
     private String code;
 
-    @NotBlank(message = "CPF é obrigatório")
-    @Size(max = 14, message = "CPF deve ter no máximo 14 caracteres")
-    @Column(name = "cpf", nullable = false, length = 14)
-    private String cpf;
-
     @NotNull(message = "Data de criação é obrigatória")
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

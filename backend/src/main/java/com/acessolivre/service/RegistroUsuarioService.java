@@ -22,7 +22,7 @@ public class RegistroUsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public Usuario registrarUsuario(String nome, String email, String cpf, String senha) {
+    public Usuario registrarUsuario(String nome, String email, String senha) {
         log.info("Registrando novo usuário: email={}", email);
         
         if (usuarioRepository.findByEmail(email).isPresent()) {
@@ -30,15 +30,9 @@ public class RegistroUsuarioService {
             throw new IllegalArgumentException("Email já cadastrado");
         }
         
-        if (usuarioRepository.existsByCpf(cpf)) {
-            log.warn("CPF já cadastrado");
-            throw new IllegalArgumentException("CPF já cadastrado");
-        }
-        
         Usuario usuario = Usuario.builder()
                 .nome(nome)
                 .email(email)
-                .cpf(cpf)
                 .role(com.acessolivre.enums.Role.ROLE_USER)
                 .build();
         

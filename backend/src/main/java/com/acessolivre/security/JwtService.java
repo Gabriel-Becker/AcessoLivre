@@ -52,10 +52,10 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
 
-        String cpf = authentication.getName();
+        String email = authentication.getName();
         Long userId = null;
         try {
-            Usuario usuario = usuarioRepository.findByCpf(cpf).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
             if (usuario != null) userId = usuario.getIdUsuario();
         } catch (Exception ignored) {}
 

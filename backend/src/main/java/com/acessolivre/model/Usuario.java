@@ -43,8 +43,7 @@ public class Usuario {
     @Column(name = "token_atual")
     private String tokenAtual;
 
-    @NotBlank(message = "CPF é obrigatório")
-    @Column(unique = true)
+    @Column(unique = true, nullable = true)
     private String cpf;
 
     @CreationTimestamp

@@ -44,14 +44,12 @@ public class PasswordResetCodeService {
         
         Usuario usuario = usuarioOpt.get();
         
-        if (!usuario.getCpf().equals(dto.getCpf().trim())) {
-            log.warn("CPF não corresponde ao usuário: usuarioId={}", dto.getUsuarioId());
-            throw new IllegalArgumentException("CPF não corresponde ao usuário");
-        }
+        List<PasswordResetCode> codigosValidos = passwordResetCodeRepository
+            .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(dto.getUsuarioId(), LocalDateTime.now());
         
-        if (passwordResetCodeRepository.existsByCpfAndUsedFalseAndExpiresAtAfter(dto.getCpf().trim(), LocalDateTime.now())) {
-            log.warn("Já existe código válido para este usuário");
-            throw new IllegalArgumentException("Já existe código válido para este usuário");
+        if (!codigosValidos.isEmpty()) {
+            log.warn("Já existe código válido para este usuário: usuarioId={}", dto.getUsuarioId());
+            throw new IllegalArgumentException("Já existe código válido para este usuário. Use o código existente ou aguarde expirar.");
         }
         
         PasswordResetCode codigo = PasswordResetCodeMapper.toEntity(dto, usuario);
@@ -77,21 +75,15 @@ public class PasswordResetCodeService {
         return passwordResetCodeRepository.existsByCodeAndUsedFalseAndExpiresAtAfter(code, LocalDateTime.now());
     }
 
-    public boolean isCodigoValidoParaCpf(String code, String cpf) {
-        return passwordResetCodeRepository.findByCpfAndUsedFalseAndExpiresAtAfter(cpf, LocalDateTime.now())
-                .stream()
-                .anyMatch(codigo -> codigo.getCode().equals(code));
-    }
-
     @Transactional
-    public boolean marcarComoUsado(String code, String cpf) {
-        log.info("Marcando código como usado: cpf={}", cpf);
+    public boolean marcarComoUsado(String code, Long usuarioId) {
+        log.info("Marcando código como usado: usuarioId={}", usuarioId);
         
-        Optional<PasswordResetCode> codigoOpt = passwordResetCodeRepository.findByCpfAndCode(cpf.trim(), code.trim());
+        Optional<PasswordResetCode> codigoOpt = passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario(code.trim(), usuarioId);
         
         if (codigoOpt.isEmpty()) {
-            log.warn("Código não encontrado para CPF");
-            throw new IllegalArgumentException("Código não encontrado para este CPF");
+            log.warn("Código não encontrado para usuário");
+            throw new IllegalArgumentException("Código não encontrado para este usuário");
         }
         
         PasswordResetCode codigo = codigoOpt.get();
@@ -115,12 +107,6 @@ public class PasswordResetCodeService {
         log.info("Buscando códigos válidos: usuarioId={}", idUsuario);
         return passwordResetCodeRepository
                 .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(idUsuario, LocalDateTime.now());
-    }
-
-    public List<PasswordResetCode> buscarCodigosValidosPorCpf(String cpf) {
-        log.info("Buscando códigos válidos por CPF");
-        return passwordResetCodeRepository
-                .findByCpfAndUsedFalseAndExpiresAtAfter(cpf, LocalDateTime.now());
     }
 
     public List<PasswordResetCode> buscarPorUsuario(Long idUsuario) {

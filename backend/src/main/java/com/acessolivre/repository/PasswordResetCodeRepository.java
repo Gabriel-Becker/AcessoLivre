@@ -52,29 +52,11 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
     Optional<PasswordResetCode> findByCodeAndUsuario_IdUsuario(String code, Long idUsuario);
 
     /**
-     * Busca um código pelo CPF e código
-     * @param cpf CPF do usuário
-     * @param code Código a ser buscado
-     * @return Optional contendo o código se encontrado
-     */
-    Optional<PasswordResetCode> findByCpfAndCode(String cpf, String code);
-
-    /**
-     * Busca códigos válidos por CPF
-     * @param cpf CPF do usuário
-     * @param now Data atual
-     * @return Lista de códigos válidos para o CPF
-     */
-    List<PasswordResetCode> findByCpfAndUsedFalseAndExpiresAtAfter(String cpf, LocalDateTime now);
-
-    /**
      * Busca códigos expirados
      * @param now Data atual
      * @return Lista de códigos expirados
      */
     List<PasswordResetCode> findByExpiresAtBefore(LocalDateTime now);
-
-    boolean existsByCpfAndUsedFalseAndExpiresAtAfter(String cpf, LocalDateTime now);
 
     @Modifying
     @Transactional

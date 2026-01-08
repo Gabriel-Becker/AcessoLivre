@@ -47,7 +47,6 @@ public class AuthController {
             Usuario usuario = registroUsuarioService.registrarUsuario(
                 request.getNome(),
                 request.getEmail(),
-                request.getCpf(),
                 request.getSenha()
             );
             log.info("Usuário registrado com sucesso. ID: {}, Email: {}", usuario.getIdUsuario(), usuario.getEmail());

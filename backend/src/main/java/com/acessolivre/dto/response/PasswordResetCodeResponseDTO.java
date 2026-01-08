@@ -12,7 +12,6 @@ public class PasswordResetCodeResponseDTO {
 
     private Long id;
     private String code;
-    private String cpf;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
     private Boolean used;

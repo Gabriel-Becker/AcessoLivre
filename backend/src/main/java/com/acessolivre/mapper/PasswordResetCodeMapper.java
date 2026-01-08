@@ -23,7 +23,6 @@ public class PasswordResetCodeMapper {
         
         return PasswordResetCode.builder()
                 .code(dto.getCode().trim())
-                .cpf(dto.getCpf().trim())
                 .createdAt(dto.getCreatedAt())
                 .expiresAt(dto.getExpiresAt())
                 .used(dto.getUsed())
@@ -44,7 +43,6 @@ public class PasswordResetCodeMapper {
         return PasswordResetCodeResponseDTO.builder()
                 .id(entity.getId())
                 .code(entity.getCode())
-                .cpf(entity.getCpf())
                 .createdAt(entity.getCreatedAt())
                 .expiresAt(entity.getExpiresAt())
                 .used(entity.getUsed())
@@ -80,7 +78,6 @@ public class PasswordResetCodeMapper {
         }
         
         entity.setCode(dto.getCode().trim());
-        entity.setCpf(dto.getCpf().trim());
         entity.setCreatedAt(dto.getCreatedAt());
         entity.setExpiresAt(dto.getExpiresAt());
         entity.setUsed(dto.getUsed());
