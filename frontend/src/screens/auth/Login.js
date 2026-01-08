@@ -73,12 +73,13 @@ export default function Login({ navigation }) {
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
         forgot: {
-          alignSelf: 'flex-end',
+          alignSelf: 'center',
           marginBottom: t.spacing.md,
         },
         rememberRow: {
           flexDirection: 'row',
           alignItems: 'center',
+          alignSelf: 'center',
           marginBottom: t.spacing.lg,
         },
         rememberLabel: {
@@ -143,7 +144,7 @@ export default function Login({ navigation }) {
   };
 
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}

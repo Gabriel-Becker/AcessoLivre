@@ -18,7 +18,8 @@ public class TokenLimpezaScheduler {
         this.tokenRevogadoRepository = tokenRevogadoRepository;
     }
 
-    @Scheduled(cron = "0 0 3 * * ?")
+    // TODO: Descomentar após correção do deleteByExpiracaoBefore
+    // @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
     public void limparTokensExpirados() {
         try {

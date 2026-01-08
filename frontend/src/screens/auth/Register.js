@@ -84,6 +84,7 @@ export default function Register({ navigation }) {
         checkboxRow: {
           flexDirection: 'row',
           alignItems: 'center',
+          alignSelf: 'center',
           marginTop: t.spacing.xs,
         },
         checkbox: {
@@ -105,6 +106,9 @@ export default function Register({ navigation }) {
         },
         errorText: {
           marginTop: t.spacing.xs,
+          textAlign: 'center',
+          alignSelf: 'center',
+          width: '100%',
         },
       }),
     [isHighContrast, t]
@@ -132,7 +136,7 @@ export default function Register({ navigation }) {
   };
 
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"

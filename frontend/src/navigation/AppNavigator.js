@@ -4,8 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { Container, DesktopLayout } from '../components/layout';
 import { ThemedText, Spacer } from '../components/commons';
-import Login from '../screens/auth/Login';
-import Register from '../screens/auth/Register';
+import { Login, Register, ForgotPassword } from '../screens/auth';
 import Home from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
@@ -66,6 +65,7 @@ export default function AppNavigator() {
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Register" component={Register} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         </>
       ) : (
         <Stack.Screen name="Main" component={MainApp} />

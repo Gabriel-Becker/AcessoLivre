@@ -170,11 +170,14 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    width: '100%',
     marginTop: theme.spacing.xs,
   },
   errorText: {
     fontSize: theme.typography.fontSize.sm,
     marginLeft: theme.spacing.xs,
-    flex: 1,
+    textAlign: 'center',
   },
 });
