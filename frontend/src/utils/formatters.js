@@ -4,20 +4,6 @@
  */
 
 /**
- * Formata CPF com pontos e hífen
- * @param {string} value - CPF sem formatação
- * @returns {string} CPF formatado (000.000.000-00)
- */
-export const formatCPF = (value) => {
-  const numbers = value.replace(/\D/g, '');
-  
-  if (numbers.length <= 3) return numbers;
-  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
-};
-
-/**
  * Formata CEP com hífen
  * @param {string} value - CEP sem formatação
  * @returns {string} CEP formatado (00000-000)
@@ -76,36 +62,6 @@ export const formatBirthDate = (value) => {
 export const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
-};
-
-/**
- * Valida CPF com dígitos verificadores
- * @param {string} cpf - CPF formatado ou não
- * @returns {boolean} True se válido
- */
-export const validateCPF = (cpf) => {
-  const numbers = cpf.replace(/\D/g, '');
-
-  if (numbers.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(numbers)) return false;
-  
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(numbers.charAt(i)) * (10 - i);
-  }
-  let remainder = 11 - (sum % 11);
-  let digit = remainder > 9 ? 0 : remainder;
-  if (digit !== parseInt(numbers.charAt(9))) return false;
-  
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(numbers.charAt(i)) * (11 - i);
-  }
-  remainder = 11 - (sum % 11);
-  digit = remainder > 9 ? 0 : remainder;
-  if (digit !== parseInt(numbers.charAt(10))) return false;
-  
-  return true;
 };
 
 /**

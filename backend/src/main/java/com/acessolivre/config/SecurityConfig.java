@@ -100,7 +100,7 @@ public class SecurityConfig {
 
     /**
      * Declara explicitamente o UserDetailsService para evitar ambiguidade.
-     * Retorna o CustomUserDetailsService que usa CPF para autenticação.
+     * Retorna o CustomUserDetailsService que usa email para autenticação.
      */
     @Bean
     public UserDetailsService userDetailsService() {

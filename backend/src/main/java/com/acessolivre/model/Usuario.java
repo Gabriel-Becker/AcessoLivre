@@ -43,9 +43,6 @@ public class Usuario {
     @Column(name = "token_atual")
     private String tokenAtual;
 
-    @Column(unique = true, nullable = true)
-    private String cpf;
-
     @CreationTimestamp
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;

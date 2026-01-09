@@ -51,16 +51,9 @@ public class AdminBootstrapService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Segredo inválido ou ausente");
         }
 
-        String cpfLimpo = dto.getCpf().replaceAll("[^0-9]", "");
-        if (usuarioRepository.existsByCpf(cpfLimpo)) {
-            log.warn("CPF já cadastrado no bootstrap");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já cadastrado");
-        }
-
         Usuario usuario = Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
-                .cpf(cpfLimpo)
                 .role(Role.ROLE_ADMIN)
                 .build();
         usuario = usuarioRepository.save(usuario);
@@ -78,7 +71,6 @@ public class AdminBootstrapService {
                 .idUsuario(usuario.getIdUsuario())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
-                .cpf(usuario.getCpf())
                 .role(usuario.getRole() != null ? usuario.getRole().name() : null)
                 .dataCadastro(usuario.getDataCadastro() != null ? usuario.getDataCadastro().toString() : null)
                 .build();

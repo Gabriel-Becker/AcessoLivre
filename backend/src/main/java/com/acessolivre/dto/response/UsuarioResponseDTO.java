@@ -13,7 +13,6 @@ public class UsuarioResponseDTO {
     private Long idUsuario;
     private String nome;
     private String email;
-    private String cpf;
     private String role;
     private LocalDateTime dataCadastro;
     private String imagemPerfil;

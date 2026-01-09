@@ -19,7 +19,6 @@ export const authMessages = {
   loginErrors: {
     requiredFields: 'Email e senha são obrigatórios',
     invalidEmail: 'Email inválido',
-    invalidCpf: 'CPF inválido',
     loginFailed: 'Credenciais inválidas',
     twoFactorRequired: 'Código de autenticação obrigatório',
     twoFactorPrompt: 'Digite o código do Google Authenticator',
@@ -33,14 +32,12 @@ export const authMessages = {
     requiredFields: 'Todos os campos obrigatórios devem ser preenchidos',
     invalidName: 'Nome inválido',
     invalidEmail: 'Email inválido',
-    invalidCpf: 'CPF inválido',
     invalidPhone: 'Telefone inválido',
     invalidBirthDate: 'Data de nascimento inválida',
     invalidPassword: 'Senha não atende aos requisitos',
     passwordMismatch: 'As senhas não coincidem',
     invalidCep: 'CEP inválido',
     emailAlreadyExists: 'Email já cadastrado',
-    cpfAlreadyExists: 'CPF já cadastrado',
     termsNotAccepted: 'Você deve aceitar os termos de uso',
     networkError: 'Falha na conexão. Verifique sua internet.',
     serverError: 'Erro no servidor. Tente novamente mais tarde.',
@@ -48,9 +45,7 @@ export const authMessages = {
 
   // Erros de recuperação de senha
   forgotPasswordErrors: {
-    requiredCpf: 'CPF é obrigatório',
     requiredEmail: 'Email é obrigatório',
-    invalidCpf: 'CPF inválido',
     invalidEmail: 'Email inválido',
     userNotFound: 'Usuário não encontrado',
     networkError: 'Falha na conexão. Verifique sua internet.',
@@ -71,7 +66,6 @@ export const authMessages = {
   validation: {
     required: 'Campo obrigatório',
     invalidEmail: 'Email inválido',
-    invalidCpf: 'CPF inválido',
     invalidPhone: 'Telefone inválido',
     invalidCep: 'CEP inválido',
     passwordTooShort: 'Senha deve ter no mínimo 8 caracteres',

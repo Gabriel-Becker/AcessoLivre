@@ -112,7 +112,6 @@ public class AdminController {
                 .idUsuario(usuario.getIdUsuario())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
-                .cpf(usuario.getCpf())
         .role(usuario.getRole() != null ? usuario.getRole().name() : null)
                 .dataCadastro(usuario.getDataCadastro() != null ? 
                         usuario.getDataCadastro().format(FORMATTER) : null)

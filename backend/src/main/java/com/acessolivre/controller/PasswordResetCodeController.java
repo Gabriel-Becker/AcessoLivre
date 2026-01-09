@@ -134,35 +134,16 @@ public class PasswordResetCodeController {
     }
 
     /**
-     * Verifica se um código é válido para um CPF específico
-     * @param code Código a ser verificado
-     * @param cpf CPF do usuário
-     * @return ResponseEntity com boolean indicando se o código é válido para o CPF
-     */
-    @GetMapping("/verificar/{code}/cpf/{cpf}")
-    public ResponseEntity<Boolean> verificarCodigoParaCpf(@PathVariable String code, @PathVariable String cpf) {
-        try {
-            log.info("Recebida requisição para verificar código de reset para CPF: {}", cpf);
-            boolean isValid = passwordResetCodeService.isCodigoValidoParaCpf(code, cpf);
-            log.info("Código válido para CPF {}: {}", cpf, isValid);
-            return ResponseEntity.ok(isValid);
-        } catch (Exception e) {
-            log.error("Erro ao verificar código de reset para CPF {}: {}", cpf, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
      * Marca um código como utilizado
      * @param code Código a ser marcado como utilizado
-     * @param cpf CPF do usuário
+     * @param usuarioId ID do usuário
      * @return ResponseEntity com boolean indicando sucesso
      */
     @PostMapping("/usar")
-    public ResponseEntity<?> marcarComoUsado(@RequestParam String code, @RequestParam String cpf) {
+    public ResponseEntity<?> marcarComoUsado(@RequestParam String code, @RequestParam Long usuarioId) {
         try {
-            log.info("Recebida requisição para marcar código como utilizado: {}", code);
-            boolean sucesso = passwordResetCodeService.marcarComoUsado(code, cpf);
+            log.info("Recebida requisição para marcar código como utilizado: {} para usuarioId={} ", code, usuarioId);
+            boolean sucesso = passwordResetCodeService.marcarComoUsado(code, usuarioId);
             log.info("Código marcado como utilizado: {}", sucesso);
             return ResponseEntity.ok(Map.of("success", sucesso));
         } catch (IllegalArgumentException e) {
@@ -191,26 +172,6 @@ public class PasswordResetCodeController {
             return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao buscar códigos válidos por usuário ID {}: {}", idUsuario, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
-    }
-
-    /**
-     * Lista códigos válidos por CPF
-     * @param cpf CPF do usuário
-     * @return ResponseEntity com lista de códigos válidos
-     */
-    @GetMapping("/cpf/{cpf}/validos")
-    public ResponseEntity<List<PasswordResetCodeResponseDTO>> buscarCodigosValidosPorCpf(@PathVariable String cpf) {
-        try {
-            log.info("Recebida requisição para buscar códigos válidos para CPF: {}", cpf);
-            List<PasswordResetCode> codigos = passwordResetCodeService.buscarCodigosValidosPorCpf(cpf);
-            List<PasswordResetCodeResponseDTO> responseDTOs = PasswordResetCodeMapper.fromEntityList(codigos);
-            log.info("Retornando {} códigos válidos para CPF: {}", responseDTOs.size(), cpf);
-            return ResponseEntity.ok(responseDTOs);
-        } catch (Exception e) {
-            log.error("Erro ao buscar códigos válidos por CPF {}: {}", cpf, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(List.of());
         }

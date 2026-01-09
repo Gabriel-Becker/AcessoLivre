@@ -15,7 +15,6 @@ public class UsuarioMapper {
     return Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
-                .cpf(dto.getCpf())
         .role(parseRole(dto.getRole()))
                 .imagemPerfil(dto.getImagemPerfil())
                 .build();
@@ -30,7 +29,6 @@ public class UsuarioMapper {
                 .idUsuario(entity.getIdUsuario())
                 .nome(entity.getNome())
                 .email(entity.getEmail())
-                .cpf(entity.getCpf())
         .role(entity.getRole() != null ? entity.getRole().name() : null)
                 .dataCadastro(entity.getDataCadastro())
                 .imagemPerfil(entity.getImagemPerfil())
@@ -44,7 +42,6 @@ public class UsuarioMapper {
         
         entity.setNome(dto.getNome());
         entity.setEmail(dto.getEmail());
-        entity.setCpf(dto.getCpf());
         entity.setRole(parseRole(dto.getRole()));
         entity.setImagemPerfil(dto.getImagemPerfil());
         

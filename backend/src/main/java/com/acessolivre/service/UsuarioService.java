@@ -43,7 +43,7 @@ public class UsuarioService {
      * Salva um novo usuário
      * @param usuario Usuário a ser salvo
      * @return Usuário salvo
-     * @throws IllegalArgumentException se email ou CPF já existirem
+    * @throws IllegalArgumentException se email já existir
      */
     @Transactional
     public Usuario salvar(Usuario usuario) {
