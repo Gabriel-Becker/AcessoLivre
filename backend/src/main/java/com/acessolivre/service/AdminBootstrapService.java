@@ -51,6 +51,11 @@ public class AdminBootstrapService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Segredo inválido ou ausente");
         }
 
+        if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
+            log.warn("Email já cadastrado no bootstrap");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
+        }
+
         Usuario usuario = Usuario.builder()
                 .nome(dto.getNome())
                 .email(dto.getEmail())
