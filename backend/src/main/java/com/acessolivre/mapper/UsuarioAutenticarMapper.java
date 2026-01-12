@@ -25,7 +25,6 @@ public class UsuarioAutenticarMapper {
         return UsuarioAutenticar.builder()
                 .usuario(usuario)
                 .senhaHash(dto.getSenhaHash())
-                .tokenJwt(dto.getTokenJwt())
                 .dataExpiracao(dto.getDataExpiracao())
                 .build();
     }
@@ -43,7 +42,6 @@ public class UsuarioAutenticarMapper {
         return UsuarioAutenticarResponseDTO.builder()
                 .idUsuarioAutenticar(entity.getIdUsuarioAutenticar())
                 .usuarioId(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
-                .tokenJwt(entity.getTokenJwt())
                 .dataExpiracao(entity.getDataExpiracao())
                 .build();
     }

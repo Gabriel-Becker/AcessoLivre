@@ -15,6 +15,5 @@ public class UsuarioAutenticarResponseDTO {
 
     private Long idUsuarioAutenticar;
     private Long usuarioId;
-    private String tokenJwt;
     private LocalDateTime dataExpiracao;
 }

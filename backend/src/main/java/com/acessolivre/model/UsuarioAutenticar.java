@@ -31,9 +31,6 @@ public class UsuarioAutenticar {
     @Column(name = "senha_hash", nullable = false)
     private String senhaHash;
 
-    @Column(name = "token_jwt")
-    private String tokenJwt;
-
     @NotNull(message = "Data de expiração é obrigatória")
     @Column(name = "data_expiracao", nullable = false)
     private LocalDateTime dataExpiracao;

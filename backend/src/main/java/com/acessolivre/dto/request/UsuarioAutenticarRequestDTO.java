@@ -22,9 +22,6 @@ public class UsuarioAutenticarRequestDTO {
     @SenhaForte
     private String senhaHash;
 
-    @Size(max = 500, message = "Token JWT deve ter no máximo 500 caracteres")
-    private String tokenJwt;
-
     @NotNull(message = "Data de expiração é obrigatória")
     private LocalDateTime dataExpiracao;
 }
