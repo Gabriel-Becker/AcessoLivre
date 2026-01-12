@@ -10,6 +10,8 @@ import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +28,9 @@ public class AvaliacaoService {
     private final LocalRepository localRepository;
     private final LocalService localService;
 
-    public List<Avaliacao> listarTodos() {
-        log.info("Listando todas as avaliações");
-        return avaliacaoRepository.findAll();
+    public Page<Avaliacao> listarTodos(Pageable pageable) {
+        log.info("Listando avaliações com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
+        return avaliacaoRepository.findAll(pageable);
     }
 
     public Optional<Avaliacao> buscarPorId(Long id) {

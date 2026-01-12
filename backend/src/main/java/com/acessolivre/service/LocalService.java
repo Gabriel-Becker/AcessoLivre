@@ -5,6 +5,8 @@ import com.acessolivre.model.*;
 import com.acessolivre.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +25,9 @@ public class LocalService {
     private final EnderecoRepository enderecoRepository;
     private final AvaliacaoRepository avaliacaoRepository;
 
-    public List<Local> listarTodos() {
-        log.info("Listando todos os locais");
-        return localRepository.findAll();
+    public Page<Local> listarTodos(Pageable pageable) {
+        log.info("Listando locais com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
+        return localRepository.findAll(pageable);
     }
 
     public Optional<Local> buscarPorId(Long id) {

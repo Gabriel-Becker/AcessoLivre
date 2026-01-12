@@ -8,6 +8,10 @@ import com.acessolivre.service.LocalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,17 +33,22 @@ public class LocalController {
 
     /**
      * Lista todos os locais
+        * @param page Número da página (padrão: 0)
+        * @param size Tamanho da página (padrão: 20)
+        * @param sort Campo para ordenação (padrão: nome)
      * @return ResponseEntity com lista de locais
      */
     @GetMapping
-    public ResponseEntity<List<LocalResponseDTO>> listarTodos() {
-        log.info("Endpoint GET /api/locais - Listando todos os locais");
+    public ResponseEntity<Page<LocalResponseDTO>> listarTodos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "nome") String sort) {
+        log.info("Endpoint GET /api/locais - Listando locais paginados: página={}, tamanho={}", page, size);
         try {
-            List<Local> locais = localService.listarTodos();
-            List<LocalResponseDTO> responseDTOs = locais.stream()
-                    .map(LocalMapper::toResponse)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responseDTOs);
+                Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+                Page<Local> locais = localService.listarTodos(pageable);
+                Page<LocalResponseDTO> responseDTOs = locais.map(LocalMapper::toResponse);
+                return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao listar locais", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

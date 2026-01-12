@@ -9,6 +9,10 @@ import com.acessolivre.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,12 +34,20 @@ public class AdminController {
 
     // ===== GERENCIAMENTO DE USUÁRIOS =====
 
+    /**
+     * Lista todos os usuários com paginação
+     * @param page Número da página (padrão: 0)
+     * @param size Tamanho da página (padrão: 20)
+     * @param sort Campo para ordenação (padrão: dataCadastro)
+     */
     @GetMapping("/usuarios")
-    public ResponseEntity<List<UsuarioAdminResponseDTO>> listarUsuarios() {
-        List<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios()
-                .stream()
-                .map(this::toUsuarioAdminResponse)
-                .collect(Collectors.toList());
+    public ResponseEntity<Page<UsuarioAdminResponseDTO>> listarUsuarios(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "dataCadastro") String sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+        Page<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios(pageable)
+                .map(this::toUsuarioAdminResponse);
         return ResponseEntity.ok(usuarios);
     }
 

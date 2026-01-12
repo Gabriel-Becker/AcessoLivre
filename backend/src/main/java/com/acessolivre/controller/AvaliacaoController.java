@@ -8,6 +8,10 @@ import com.acessolivre.service.AvaliacaoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,13 +27,20 @@ public class AvaliacaoController {
 
     private final AvaliacaoService avaliacaoService;
 
-    // Listagem pública: somente moderadas (ou sem comentário)
+    /**
+     * Listagem pública de avaliações com paginação
+     * @param page Número da página (padrão: 0)
+     * @param size Tamanho da página (padrão: 20)
+     * @param sort Campo para ordenação (padrão: dataAvaliacao)
+     */
     @GetMapping
-    public ResponseEntity<List<AvaliacaoResponseDTO>> listarPublicas() {
-        List<AvaliacaoResponseDTO> dtos = avaliacaoService.listarPublicas()
-                .stream()
-                .map(AvaliacaoMapper::toResponse)
-                .collect(Collectors.toList());
+    public ResponseEntity<Page<AvaliacaoResponseDTO>> listarPublicas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "dataAvaliacao") String sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+        Page<AvaliacaoResponseDTO> dtos = avaliacaoService.listarTodos(pageable)
+                .map(AvaliacaoMapper::toResponse);
         return ResponseEntity.ok(dtos);
     }
 

@@ -8,6 +8,8 @@ import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +27,9 @@ public class AdminService {
     private final AvaliacaoRepository avaliacaoRepository;
     private final LocalRepository localRepository;
 
-    public List<Usuario> listarTodosUsuarios() {
-        log.info("Listando todos os usuários");
-        return usuarioRepository.findAll();
+    public Page<Usuario> listarTodosUsuarios(Pageable pageable) {
+        log.info("Listando usuários com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
+        return usuarioRepository.findAll(pageable);
     }
 
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
