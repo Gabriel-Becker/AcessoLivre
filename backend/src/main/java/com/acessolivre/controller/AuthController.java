@@ -39,6 +39,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RegistroUsuarioService registroUsuarioService;
+    private final com.acessolivre.security.LoginAttemptService loginAttemptService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
@@ -81,9 +82,27 @@ public class AuthController {
             
             log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
             return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            // Verifica se é bloqueio por tentativas excessivas
+            if (e.getMessage() != null && e.getMessage().contains("bloqueada")) {
+                log.error("Login bloqueado para email={}: {}", request.getEmail(), e.getMessage());
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(e.getMessage());
+            }
+            
+            // Erro de credenciais inválidas
+            int tentativasRestantes = loginAttemptService.tentativasRestantes(request.getEmail());
+            String mensagem = tentativasRestantes > 0 
+                ? String.format("Credenciais inválidas. Tentativas restantes: %d", tentativasRestantes)
+                : "Conta bloqueada temporariamente";
+            
+            log.warn("Falha no login para email={}: {} (tentativas restantes: {})", 
+                request.getEmail(), e.getMessage(), tentativasRestantes);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mensagem);
         } catch (Exception e) {
-            log.warn("Falha no login para email={}: {}", request.getEmail(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            log.error("Erro inesperado no login para email={}", request.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao processar login");
         }
     }
 

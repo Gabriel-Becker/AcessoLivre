@@ -29,15 +29,33 @@ public class AuthenticationService {
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
+    private final LoginAttemptService loginAttemptService;
 
     public String login(String email, String senha, Boolean rememberMe) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, senha)
-        );
+        // Verifica se o usuário está bloqueado por tentativas excessivas
+        if (loginAttemptService.estaBloqueado(email)) {
+            LocalDateTime bloqueioExpira = loginAttemptService.getBloqueioExpiraEm(email);
+            throw new RuntimeException(
+                String.format("Conta temporariamente bloqueada. Tente novamente após %s", bloqueioExpira)
+            );
+        }
 
-        String token = jwtService.gerarToken(authentication, rememberMe);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, senha)
+            );
 
-        return token;
+            String token = jwtService.gerarToken(authentication, rememberMe);
+            
+            // Login bem-sucedido, limpa tentativas falhas
+            loginAttemptService.loginSucesso(email);
+            
+            return token;
+        } catch (Exception e) {
+            // Login falhou, registra tentativa
+            loginAttemptService.loginFalhou(email);
+            throw e;
+        }
     }
 
     public void logout(String token, Long userId) {
