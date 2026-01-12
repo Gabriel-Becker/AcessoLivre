@@ -2,72 +2,187 @@ package com.acessolivre.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-/**
- * Handler global para exceções da aplicação.
- * Padroniza respostas de erro em português para validação, regras de negócio e erros genéricos.
- */
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private String getTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+    @ExceptionHandler({
+        UsuarioException.UsuarioNaoEncontradoException.class,
+        UsuarioException.EmailJaExisteException.class,
+        UsuarioException.PermissaoNegadaException.class,
+        UsuarioException.UsuarioInativoException.class,
+        UsuarioException.AutenticacaoFalhouException.class
+    })
+    public ResponseEntity<Map<String, String>> handleUsuarioExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex instanceof UsuarioException.UsuarioNaoEncontradoException) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof UsuarioException.EmailJaExisteException) {
+            status = HttpStatus.CONFLICT;
+        } else if (ex instanceof UsuarioException.PermissaoNegadaException ||
+                  ex instanceof UsuarioException.UsuarioInativoException) {
+            status = HttpStatus.FORBIDDEN;
+        } else if (ex instanceof UsuarioException.AutenticacaoFalhouException) {
+            status = HttpStatus.UNAUTHORIZED;
+        }
+        
+        return new ResponseEntity<>(errors, status);
+    }
+
+    @ExceptionHandler({
+        LocalException.LocalNaoEncontradoException.class,
+        LocalException.LocalAcessoNegadoException.class,
+        LocalException.CategoriaInvalidaException.class,
+        LocalException.TipoAcessibilidadeInvalidoException.class
+    })
+    public ResponseEntity<Map<String, String>> handleLocalExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex instanceof LocalException.LocalNaoEncontradoException) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof LocalException.LocalAcessoNegadoException) {
+            status = HttpStatus.FORBIDDEN;
+        }
+        
+        return new ResponseEntity<>(errors, status);
+    }
+
+    @ExceptionHandler({
+        AvaliacaoException.AvaliacaoNaoEncontradaException.class,
+        AvaliacaoException.AvaliacaoJaExisteException.class,
+        AvaliacaoException.AvaliacaoNaoPermitidaException.class,
+        AvaliacaoException.AvaliacaoAcessoNegadoException.class
+    })
+    public ResponseEntity<Map<String, String>> handleAvaliacaoExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex instanceof AvaliacaoException.AvaliacaoNaoEncontradaException) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof AvaliacaoException.AvaliacaoJaExisteException) {
+            status = HttpStatus.CONFLICT;
+        } else if (ex instanceof AvaliacaoException.AvaliacaoNaoPermitidaException ||
+                  ex instanceof AvaliacaoException.AvaliacaoAcessoNegadoException) {
+            status = HttpStatus.FORBIDDEN;
+        }
+        
+        return new ResponseEntity<>(errors, status);
+    }
+
+    @ExceptionHandler({
+        AuthenticationException.TokenInvalidoException.class,
+        AuthenticationException.TokenExpiradoException.class,
+        AuthenticationException.TokenRevogadoException.class,
+        AuthenticationException.CredenciaisInvalidasException.class,
+        AuthenticationException.AcessoNegadoException.class
+    })
+    public ResponseEntity<Map<String, String>> handleAuthenticationExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        if (ex instanceof AuthenticationException.AcessoNegadoException) {
+            status = HttpStatus.FORBIDDEN;
+        }
+        
+        return new ResponseEntity<>(errors, status);
+    }
+
+    @ExceptionHandler({
+        PasswordResetException.CodigoInvalidoException.class,
+        PasswordResetException.CodigoExpiradoException.class,
+        PasswordResetException.CodigoJaUtilizadoException.class,
+        PasswordResetException.EnvioEmailException.class
+    })
+    public ResponseEntity<Map<String, String>> handlePasswordResetExceptions(RuntimeException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex instanceof PasswordResetException.EnvioEmailException) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        
+        return new ResponseEntity<>(errors, status);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("erro", "Erro de validação");
+        response.put("mensagem", ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("mensagem", "Erro de validação nos campos enviados");
-        body.put("timestamp", getTimestamp());
-        List<Map<String, String>> erros = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> {
-                    Map<String, String> erro = new HashMap<>();
-                    erro.put("campo", error.getField());
-                    erro.put("mensagem", error.getDefaultMessage());
-                    return erro;
-                })
-                .collect(Collectors.toList());
-        body.put("erros", erros);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", "Acesso negado: você não tem permissão para realizar esta operação");
+        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentialsException(BadCredentialsException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", "Email ou senha inválidos");
+        return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", "Usuário não encontrado");
+        return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("mensagem", ex.getMessage());
-        body.put("timestamp", getTimestamp());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalStateException(IllegalStateException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", ex.getMessage());
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGenericException(Exception ex, WebRequest request) {
-        // Se for ResponseStatusException delegamos para o status correto, mantendo padrão da aplicação
-        if (ex instanceof ResponseStatusException rse) {
-            Map<String, Object> body = new HashMap<>();
-            HttpStatus status = (HttpStatus) rse.getStatusCode();
-            body.put("status", status.value());
-            body.put("mensagem", rse.getReason() != null ? rse.getReason() : status.getReasonPhrase());
-            body.put("timestamp", getTimestamp());
-            return ResponseEntity.status(status).body(body);
-        }
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("mensagem", "Erro interno inesperado");
-        body.put("timestamp", getTimestamp());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("erro", "Erro interno do servidor");
+        errors.put("mensagem", "Ocorreu um erro inesperado. Tente novamente mais tarde");
+        return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
