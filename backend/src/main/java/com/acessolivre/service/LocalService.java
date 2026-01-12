@@ -25,26 +25,31 @@ public class LocalService {
     private final EnderecoRepository enderecoRepository;
     private final AvaliacaoRepository avaliacaoRepository;
 
+    @Transactional(readOnly = true)
     public Page<Local> listarTodos(Pageable pageable) {
         log.info("Listando locais com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
         return localRepository.findAll(pageable);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Local> buscarPorId(Long id) {
         log.info("Buscando local por ID: {}", id);
         return localRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Local> buscarPorUsuario(Long idUsuario) {
         log.info("Buscando locais por usuário ID: {}", idUsuario);
         return localRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
+    @Transactional(readOnly = true)
     public List<Local> buscarPorCategoria(Long idCategoria) {
         log.info("Buscando locais por categoria ID: {}", idCategoria);
         return localRepository.findByCategoriaIdCategoria(idCategoria);
     }
 
+    @Transactional(readOnly = true)
     public List<Local> buscarPorTipoAcessibilidade(Long idTipoAcessibilidade) {
         log.info("Buscando locais por tipo de acessibilidade ID: {}", idTipoAcessibilidade);
         return localRepository.findByTipoAcessibilidadeIdTipoAcessibilidade(idTipoAcessibilidade);

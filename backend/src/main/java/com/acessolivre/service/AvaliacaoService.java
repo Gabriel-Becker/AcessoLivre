@@ -28,31 +28,37 @@ public class AvaliacaoService {
     private final LocalRepository localRepository;
     private final LocalService localService;
 
+    @Transactional(readOnly = true)
     public Page<Avaliacao> listarTodos(Pageable pageable) {
         log.info("Listando avaliações com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
         return avaliacaoRepository.findAll(pageable);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Avaliacao> buscarPorId(Long id) {
         log.info("Buscando avaliação por ID: {}", id);
         return avaliacaoRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorLocal(Long idLocal) {
         log.info("Buscando avaliações por local ID: {}", idLocal);
         return avaliacaoRepository.findByLocalIdLocal(idLocal);
     }
 
+    @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorUsuario(Long idUsuario) {
         log.info("Buscando avaliações por usuário ID: {}", idUsuario);
         return avaliacaoRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
+    @Transactional(readOnly = true)
     public List<Avaliacao> listarPublicas() {
         log.info("Listando avaliações públicas (moderadas)");
         return avaliacaoRepository.findByModerado(true);
     }
 
+    @Transactional(readOnly = true)
     public List<Avaliacao> buscarPublicasPorLocal(Long idLocal) {
         log.info("Buscando avaliações públicas por local ID: {}", idLocal);
         return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);

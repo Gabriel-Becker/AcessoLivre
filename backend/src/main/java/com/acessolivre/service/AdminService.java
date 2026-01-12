@@ -27,11 +27,13 @@ public class AdminService {
     private final AvaliacaoRepository avaliacaoRepository;
     private final LocalRepository localRepository;
 
+    @Transactional(readOnly = true)
     public Page<Usuario> listarTodosUsuarios(Pageable pageable) {
         log.info("Listando usuários com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
         return usuarioRepository.findAll(pageable);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
         log.info("Buscando usuário: id={}", id);
         return usuarioRepository.findById(id);
@@ -73,6 +75,7 @@ public class AdminService {
         return true;
     }
 
+    @Transactional(readOnly = true)
     public List<Avaliacao> listarAvaliacoesPendentes() {
         log.info("Listando avaliações pendentes");
         return avaliacaoRepository.findByModerado(false);
@@ -114,6 +117,7 @@ public class AdminService {
         return true;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> obterEstatisticasGerais() {
         log.info("Obtendo estatísticas gerais");
         
@@ -132,6 +136,7 @@ public class AdminService {
         return stats;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticasPorEstado() {
         log.info("Obtendo estatísticas por estado");
         
@@ -146,6 +151,7 @@ public class AdminService {
         return estatisticas;
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticasPorCategoria() {
         log.info("Obtendo estatísticas por categoria");
         
