@@ -37,13 +37,6 @@ public class AuthenticationService {
 
         String token = jwtService.gerarToken(authentication, rememberMe);
 
-        // salva token atual no usuário
-        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
-        if (usuario != null) {
-            usuario.setTokenAtual(token);
-            usuarioRepository.save(usuario);
-        }
-
         return token;
     }
 

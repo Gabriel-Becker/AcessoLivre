@@ -12,7 +12,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "usuario")
+@Table(name = "usuario", indexes = {
+    @Index(name = "idx_usuario_email", columnList = "email")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -39,9 +41,6 @@ public class Usuario {
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.ROLE_USER;
-
-    @Column(name = "token_atual")
-    private String tokenAtual;
 
     @CreationTimestamp
     @Column(name = "data_cadastro")
