@@ -10,7 +10,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "password_reset_code")
+@Table(name = "password_reset_code", indexes = {
+    @Index(name = "idx_password_reset_code", columnList = "code"),
+    @Index(name = "idx_password_reset_usuario", columnList = "usuario_id")
+})
 @Data
 @Builder
 @NoArgsConstructor

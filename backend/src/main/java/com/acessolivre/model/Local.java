@@ -11,7 +11,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "local")
+@Table(name = "local", indexes = {
+    @Index(name = "idx_local_nome", columnList = "nome"),
+    @Index(name = "idx_local_categoria", columnList = "categoria_id")
+})
 @Data
 @Builder
 @NoArgsConstructor

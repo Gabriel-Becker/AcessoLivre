@@ -9,7 +9,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "token_revogado")
+@Table(name = "token_revogado", indexes = {
+    @Index(name = "idx_token_revogado_token", columnList = "token")
+})
 @Data
 @Builder
 @NoArgsConstructor
