@@ -1,5 +1,7 @@
 package com.acessolivre.exception;
 
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({
@@ -40,6 +43,13 @@ public class GlobalExceptionHandler {
             status = HttpStatus.UNAUTHORIZED;
         }
         
+        // Log estruturado com contexto
+        log.error("Exceção de usuário: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"));
+        
         return new ResponseEntity<>(errors, status);
     }
 
@@ -59,6 +69,12 @@ public class GlobalExceptionHandler {
         } else if (ex instanceof LocalException.LocalAcessoNegadoException) {
             status = HttpStatus.FORBIDDEN;
         }
+        
+        log.error("Exceção de local: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"));
         
         return new ResponseEntity<>(errors, status);
     }
@@ -83,6 +99,12 @@ public class GlobalExceptionHandler {
             status = HttpStatus.FORBIDDEN;
         }
         
+        log.error("Exceção de avaliação: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"));
+        
         return new ResponseEntity<>(errors, status);
     }
 
@@ -102,6 +124,12 @@ public class GlobalExceptionHandler {
             status = HttpStatus.FORBIDDEN;
         }
         
+        log.error("Exceção de autenticação: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"));
+        
         return new ResponseEntity<>(errors, status);
     }
 
@@ -119,6 +147,12 @@ public class GlobalExceptionHandler {
         if (ex instanceof PasswordResetException.EnvioEmailException) {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
+        
+        log.error("Exceção de reset de senha: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"));
         
         return new ResponseEntity<>(errors, status);
     }
@@ -183,6 +217,14 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("erro", "Erro interno do servidor");
         errors.put("mensagem", "Ocorreu um erro inesperado. Tente novamente mais tarde");
+        
+        log.error("Exceção não tratada: tipo={}, mensagem={}, endpoint={}, usuario={}",
+            ex.getClass().getSimpleName(),
+            ex.getMessage(),
+            MDC.get("endpoint"),
+            MDC.get("userEmail"),
+            ex);
+        
         return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
