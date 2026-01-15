@@ -2,8 +2,10 @@ package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
+import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
+import com.acessolivre.dto.response.ValidateTokenResponseDTO;
 import com.acessolivre.mapper.UsuarioMapper;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
@@ -130,5 +132,29 @@ public class AuthController {
         return usuarioRepository.findById(userId)
                 .map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<ValidateTokenResponseDTO> validateToken(@Valid @RequestBody ValidateTokenRequestDTO request) {
+        try {
+            boolean isValid = authenticationService.validateToken(request.getToken());
+            
+            if (!isValid) {
+                return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+                    .valid(false)
+                    .reason("Token inválido ou revogado")
+                    .build());
+            }
+            
+            return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+                .valid(true)
+                .build());
+        } catch (Exception e) {
+            log.error("Erro ao validar token", e);
+            return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+                .valid(false)
+                .reason("Erro ao validar token")
+                .build());
+        }
     }
 }

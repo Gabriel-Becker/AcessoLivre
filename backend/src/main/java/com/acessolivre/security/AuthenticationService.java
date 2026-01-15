@@ -71,4 +71,30 @@ public class AuthenticationService {
     public boolean isTokenRevoked(String token) {
         return jwtService.isTokenRevogado(token);
     }
+
+    public boolean validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+        
+        if (jwtService.isTokenRevogado(token)) {
+            return false;
+        }
+        
+        try {
+            String username = jwtService.extrairNomeUsuario(token);
+            if (username == null) {
+                return false;
+            }
+            
+            Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
+            if (usuario == null) {
+                return false;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
