@@ -313,6 +313,23 @@ const AuthService = {
       return { autenticado: false, usuario: null };
     }
   },
+
+  async reautenticar(userId) {
+    try {
+      const response = await api.post(`/auth/reauth/${userId}`);
+      const newToken = response.data;
+      
+      if (newToken && typeof newToken === 'string') {
+        await this.setToken(newToken);
+        return newToken;
+      }
+      
+      throw new Error('Token inválido recebido');
+    } catch (error) {
+      console.error('[AuthService] Erro ao reautenticar:', error);
+      throw error;
+    }
+  },
 };
 
 export default AuthService;

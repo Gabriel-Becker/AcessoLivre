@@ -97,4 +97,17 @@ public class AuthenticationService {
             return false;
         }
     }
+
+    public String reautenticar(Long userId) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            usuario.getEmail(),
+            null,
+            usuario.getAuthorities()
+        );
+        
+        return jwtService.gerarToken(authentication, false);
+    }
 }

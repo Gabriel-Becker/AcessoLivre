@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Callback para quando o token for inválido
   const handleTokenInvalid = useCallback(async () => {
     console.log('[AuthContext] Token inválido detectado, fazendo logout');
     setIsAuthenticated(false);
@@ -30,8 +29,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Usar o hook de monitoramento de token
-  useTokenMonitor(isAuthenticated, handleTokenInvalid);
+  const handleTokenExpiring = useCallback(async () => {
+    if (!usuario?.idUsuario) return;
+    
+    try {
+      console.log('[AuthContext] Token próximo de expirar, renovando automaticamente');
+      const newToken = await AuthService.reautenticar(usuario.idUsuario);
+      setToken(newToken);
+      Toast.show({
+        type: 'info',
+        text1: 'Sessão renovada',
+        text2: 'Sua sessão foi atualizada automaticamente',
+      });
+    } catch (error) {
+      console.error('[AuthContext] Erro ao renovar token:', error);
+      await handleTokenInvalid();
+    }
+  }, [usuario, handleTokenInvalid]);
+
+  useTokenMonitor(isAuthenticated, handleTokenInvalid, handleTokenExpiring);
 
   useEffect(() => {
     carregarSessao();

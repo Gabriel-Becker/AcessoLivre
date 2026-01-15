@@ -157,4 +157,34 @@ public class AuthController {
                 .build());
         }
     }
+
+    @PostMapping("/reauth/{userId}")
+    public ResponseEntity<?> reautenticar(@PathVariable Long userId, HttpServletRequest request) {
+        try {
+            String auth = request.getHeader("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+            }
+            
+            String currentToken = auth.substring(7);
+            Long tokenUserId = jwtService.obterIdUsuarioDoToken(currentToken);
+            
+            if (!tokenUserId.equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuário não autorizado");
+            }
+            
+            if (authenticationService.isTokenRevoked(currentToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token revogado");
+            }
+            
+            String newToken = authenticationService.reautenticar(userId);
+            
+            log.info("Token renovado para userId={}", userId);
+            return ResponseEntity.ok(newToken);
+        } catch (Exception e) {
+            log.error("Erro ao reautenticar userId={}", userId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao renovar token");
+        }
+    }
 }
