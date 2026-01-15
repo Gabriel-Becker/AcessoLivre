@@ -38,39 +38,6 @@ export const AuthProvider = ({ children }) => {
     setLogoutHandler(() => logout);
   }, []);
 
-  // Verificação periódica de token (a cada 30 segundos)
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const interval = setInterval(() => {
-      const verifyTokenIntegrity = async () => {
-        try {
-          const isStillAuth = await AuthService.isAuthenticated();
-          if (!isStillAuth) {
-            console.log('[AuthContext] Token inválido detectado na verificação periódica');
-            setIsAuthenticated(false);
-            setUsuario(null);
-            setToken(null);
-            Toast.show({
-              type: 'warning',
-              text1: 'Sessão expirada',
-              text2: 'Faça login novamente',
-            });
-          }
-        } catch (error) {
-          console.error('[AuthContext] Erro na verificação periódica do token:', error);
-          setIsAuthenticated(false);
-          setUsuario(null);
-          setToken(null);
-        }
-      };
-      
-      verifyTokenIntegrity();
-    }, 30000); // 30 segundos
-    
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
-
   const carregarSessao = async () => {
     try {
       setLoading(true);
