@@ -60,12 +60,17 @@ public class AuthenticationService {
 
     public void logout(String token, Long userId) {
         if (token == null || token.isBlank()) return;
-        TokenRevogado tr = TokenRevogado.builder()
-                .token(token)
-                .dataRevogacao(LocalDateTime.now())
-                .usuario(usuarioRepository.findById(userId).orElse(null))
-                .build();
-        tokenRevogadoRepository.save(tr);
+        
+        try {
+            TokenRevogado tr = TokenRevogado.builder()
+                    .token(token)
+                    .dataRevogacao(LocalDateTime.now())
+                    .usuario(usuarioRepository.findById(userId).orElse(null))
+                    .build();
+            tokenRevogadoRepository.save(tr);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao revogar token", e);
+        }
     }
 
     public boolean isTokenRevoked(String token) {

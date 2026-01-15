@@ -110,12 +110,23 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-        String auth = request.getHeader("Authorization");
-        if (auth == null || !auth.startsWith("Bearer ")) return ResponseEntity.badRequest().build();
-        String token = auth.substring(7);
-        Long userId = jwtService.obterIdUsuarioDoToken(token);
-        authenticationService.logout(token, userId);
-        return ResponseEntity.ok().build();
+        try {
+            String auth = request.getHeader("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                log.warn("Tentativa de logout sem token");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+            }
+            
+            String token = auth.substring(7);
+            Long userId = jwtService.obterIdUsuarioDoToken(token);
+            authenticationService.logout(token, userId);
+            
+            log.info("Logout realizado com sucesso para userId={}", userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Erro ao processar logout", e);
+            return ResponseEntity.ok().build();
+        }
     }
 
     @GetMapping("/me")
