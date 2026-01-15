@@ -132,9 +132,16 @@ const AuthService = {
     }
   },
 
-  /**
-   * Verifica se usuário está autenticado e token é válido
-   */
+  async validateToken(token) {
+    try {
+      const response = await api.post('/auth/validate', { token });
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] Erro ao validar token no servidor:', error);
+      return { valid: false, reason: 'Erro na validação' };
+    }
+  },
+
   async isAuthenticated() {
     try {
       const token = await this.getToken();
@@ -143,7 +150,6 @@ const AuthService = {
         return false;
       }
       
-      // Verificar se o token tem formato válido
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
         console.log('[AuthService] Token com formato inválido detectado, fazendo logout automático');
@@ -151,9 +157,15 @@ const AuthService = {
         return false;
       }
       
-      // Verificar se o token está expirado
       if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
         console.log('[AuthService] Token expirado, fazendo logout automático');
+        await this.logout();
+        return false;
+      }
+      
+      const validation = await this.validateToken(token);
+      if (!validation.valid) {
+        console.log('[AuthService] Token inválido no servidor:', validation.reason);
         await this.logout();
         return false;
       }
@@ -161,7 +173,6 @@ const AuthService = {
       return true;
     } catch (error) {
       console.error('[AuthService] Erro ao verificar autenticação:', error);
-      // Em caso de erro crítico, fazer logout por segurança
       await this.logout();
       return false;
     }
