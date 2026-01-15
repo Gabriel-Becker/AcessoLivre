@@ -91,11 +91,6 @@ const AuthService = {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(usuario));
   },
 
-  /**
-   * Decodifica JWT sem validação de assinatura (compatível com React Native)
-   * @param {string} token - JWT token
-   * @returns {object|null} Payload decodificado ou null
-   */
   parseJwt(token) {
     try {
       if (!token || typeof token !== 'string') {
@@ -115,12 +110,13 @@ const AuthService = {
         return null;
       }
       
-      // Converter base64url para base64 padrão
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      
-      // Usar Buffer.from para compatibilidade com React Native
-      // Buffer está disponível via polyfill do Expo
-      const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
       
       const parsedPayload = JSON.parse(jsonPayload);
       
