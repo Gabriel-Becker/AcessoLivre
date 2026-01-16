@@ -19,15 +19,15 @@ const schema = z
     email: z.string().email(authMessages.loginErrors.invalidEmail),
     password: z.string().min(8, authMessages.validation.passwordTooShort),
     rememberMe: z.boolean().optional(),
+    twoFactorCode: z.string().optional(),
   });
 
 export default function Login({ navigation }) {
   const { login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
-
-  // TODO: Implementar autenticação de dois fatores (2FA)
-  // const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [pendingCredentials, setPendingCredentials] = useState(null);
 
   const {
     control,
@@ -41,6 +41,7 @@ export default function Login({ navigation }) {
       email: '',
       password: '',
       rememberMe: false,
+      twoFactorCode: '',
     },
   });
 
@@ -100,14 +101,29 @@ export default function Login({ navigation }) {
       const result = await login({
         email: values.email.trim(),
         senha: values.password,
-        rememberMe: !!values.rememberMe,
+        twoFactorCode: values.twoFactorCode ? parseInt(values.twoFactorCode, 10) : undefined,
       });
 
       if (!result?.sucesso) {
+        // Se 2FA for requerido
+        if (result?.twoFactorRequired) {
+          setShowTwoFactor(true);
+          setPendingCredentials({
+            email: values.email.trim(),
+            senha: values.password,
+            rememberMe: !!values.rememberMe,
+          });
+          toastHelper.showInfo('Digite o código de autenticação de dois fatores');
+          return;
+        }
+
         toastHelper.showError(result?.erro || authMessages.loginErrors.loginFailed);
         return;
       }
 
+      clearErrors();
+      setShowTwoFactor(false);
+      setPendingCredentials(null
       clearErrors();
       toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
     } catch (erro) {
@@ -168,7 +184,25 @@ export default function Login({ navigation }) {
               )}
             />
 
-            {/* TODO: Implementar autenticação de dois fatores (2FA) */}
+            {showTwoFactor && (
+              <Controller
+                control={control}
+                name="twoFactorCode"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Código de Autenticação"
+                    placeholder="000000"
+                    value={value}
+                    onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                    leftIcon="key-outline"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    error={errors.twoFactorCode?.message}
+                    altoContraste={isHighContrast}
+                  />
+                )}
+              />
+            )}
 
             <Controller
               control={control}

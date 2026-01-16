@@ -371,6 +371,101 @@ const AuthService = {
 
 export default AuthService;
 
+  // ============ 2FA Methods ============
+  
+  async setup2FA() {
+    try {
+      const response = await api.post('/auth/2fa/setup');
+      return {
+        sucesso: true,
+        dados: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao configurar 2FA:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao configurar 2FA'
+      };
+    }
+  },
+
+  async enable2FA(verificationCode) {
+    try {
+      const response = await api.post('/auth/2fa/enable', { verificationCode });
+      return {
+        sucesso: true,
+        mensagem: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao habilitar 2FA:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao habilitar 2FA'
+      };
+    }
+  },
+
+  async disable2FA(verificationCode) {
+    try {
+      const response = await api.post('/auth/2fa/disable', { verificationCode });
+      return {
+        sucesso: true,
+        mensagem: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao desabilitar 2FA:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao desabilitar 2FA'
+      };
+    }
+  },
+
+  async get2FAStatus() {
+    try {
+      const response = await api.get('/auth/2fa/status');
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] Erro ao consultar status 2FA:', error);
+      return false;
+    }
+  },
+
+  async getRecoveryCodes() {
+    try {
+      const response = await api.get('/auth/2fa/recovery-codes');
+      return {
+        sucesso: true,
+        codes: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao listar códigos:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao listar códigos'
+      };
+    }
+  },
+
+  async generateRecoveryCodes() {
+    try {
+      const response = await api.post('/auth/2fa/generate-recovery-codes');
+      return {
+        sucesso: true,
+        codes: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao gerar códigos:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao gerar códigos'
+      };
+    }
+  },
+};
+
+export default AuthService;
+
 export const { 
   login, 
   logout, 
@@ -380,5 +475,11 @@ export const {
   validateToken, 
   reautenticar,
   verificarEmail,
-  reenviarCodigoVerificacao
+  reenviarCodigoVerificacao,
+  setup2FA,
+  enable2FA,
+  disable2FA,
+  get2FAStatus,
+  getRecoveryCodes,
+  generateRecoveryCodes
 } = AuthService;
