@@ -42,6 +42,14 @@ public class Usuario {
     @Builder.Default
     private Role role = Role.ROLE_USER;
 
+    @Column(name = "two_factor_enabled")
+    @Builder.Default
+    private Boolean twoFactorEnabled = false;
+    
+    @JsonIgnore
+    @Column(name = "two_factor_secret", length = 500)
+    private String twoFactorSecret;
+
     @CreationTimestamp
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;
