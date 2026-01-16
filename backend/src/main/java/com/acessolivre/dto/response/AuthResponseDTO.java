@@ -15,4 +15,6 @@ import lombok.NoArgsConstructor;
 public class AuthResponseDTO {
     private String token;
     private UsuarioResponseDTO usuario;
+    @Builder.Default
+    private Boolean twoFactorRequired = false;
 }

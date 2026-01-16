@@ -4,6 +4,7 @@ import com.acessolivre.model.TokenRevogado;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.TokenRevogadoRepository;
 import com.acessolivre.repository.UsuarioRepository;
+import com.acessolivre.service.TwoFactorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,16 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * Serviço de autenticação responsável por login e logout.
- * 
- * TODO: Implementar autenticação de dois fatores (2FA)
- * - Adicionar método para validar código 2FA
- * - Adicionar método para gerar secret 2FA
- * - Adicionar método para gerar códigos de recuperação
- * - Modificar método login para suportar 2FA
- */
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -30,9 +23,9 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
     private final LoginAttemptService loginAttemptService;
+    private final TwoFactorService twoFactorService;
 
-    public String login(String email, String senha, Boolean rememberMe) {
-        // Verifica se o usuário está bloqueado por tentativas excessivas
+    public String login(String email, String senha, Boolean rememberMe, Integer twoFactorCode) {
         if (loginAttemptService.estaBloqueado(email)) {
             LocalDateTime bloqueioExpira = loginAttemptService.getBloqueioExpiraEm(email);
             throw new RuntimeException(
@@ -45,14 +38,25 @@ public class AuthenticationService {
                     new UsernamePasswordAuthenticationToken(email, senha)
             );
 
+            if (twoFactorService.isTwoFactorEnabledByEmail(email)) {
+                if (twoFactorCode == null) {
+                    throw new TwoFactorRequiredException("Código de autenticação de dois fatores é obrigatório");
+                }
+                
+                boolean isCodeValid = twoFactorService.validateCodeByEmail(email, twoFactorCode);
+                if (!isCodeValid) {
+                    loginAttemptService.loginFalhou(email);
+                    throw new InvalidTwoFactorCodeException("Código de autenticação de dois fatores inválido");
+                }
+            }
+
             String token = jwtService.gerarToken(authentication, rememberMe);
-            
-            // Login bem-sucedido, limpa tentativas falhas
             loginAttemptService.loginSucesso(email);
             
             return token;
+        } catch (TwoFactorRequiredException | InvalidTwoFactorCodeException e) {
+            throw e;
         } catch (Exception e) {
-            // Login falhou, registra tentativa
             loginAttemptService.loginFalhou(email);
             throw e;
         }
@@ -110,7 +114,7 @@ public class AuthenticationService {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
             usuario.getEmail(),
             null,
-            usuario.getAuthorities()
+            List.of(() -> usuario.getRole().name())
         );
         
         return jwtService.gerarToken(authentication, false);

@@ -22,6 +22,7 @@ public class CodigoRecuperacaoDoisFatores {
     private String codigo;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean usado = false;
 
     @CreationTimestamp

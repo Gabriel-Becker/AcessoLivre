@@ -67,7 +67,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
         try {
-            String token = authenticationService.login(request.getEmail(), request.getSenha(), request.getRememberMe());
+            String token = authenticationService.login(
+                request.getEmail(), 
+                request.getSenha(), 
+                request.getRememberMe(),
+                request.getTwoFactorCode()
+            );
             Optional<Usuario> u = usuarioRepository.findByEmail(request.getEmail());
             
             if (u.isEmpty()) {
@@ -80,10 +85,21 @@ public class AuthController {
             AuthResponseDTO response = AuthResponseDTO.builder()
                 .token(token)
                 .usuario(usuarioDTO)
+                .twoFactorRequired(false)
                 .build();
             
             log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
             return ResponseEntity.ok(response);
+        } catch (com.acessolivre.security.TwoFactorRequiredException e) {
+            log.info("2FA requerido para email={}", request.getEmail());
+            AuthResponseDTO response = AuthResponseDTO.builder()
+                .twoFactorRequired(true)
+                .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
+            log.warn("Código 2FA inválido para email={}", request.getEmail());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Código de autenticação de dois fatores inválido");
         } catch (RuntimeException e) {
             // Verifica se é bloqueio por tentativas excessivas
             if (e.getMessage() != null && e.getMessage().contains("bloqueada")) {
