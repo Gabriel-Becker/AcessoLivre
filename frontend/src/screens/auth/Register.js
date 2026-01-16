@@ -13,6 +13,7 @@ import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
+import VerifyEmailModal from '../../components/feedback/VerifyEmailModal';
 
 const schema = z
   .object({
@@ -37,6 +38,8 @@ export default function Register({ navigation }) {
   const { register: registerUser } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const {
     control,
@@ -126,11 +129,18 @@ export default function Register({ navigation }) {
       if (!resultado?.sucesso) {
         toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
         return;
-      }
-
-      toastHelper.showSuccess(authMessages.success.registerSuccess);
-      navigation?.navigate?.('Login');
+      }'Conta criada! Verifique seu email.');
+      setRegisteredEmail(values.email.trim().toLowerCase());
+      setShowVerifyModal(true);
     } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerificationSuccess = () => {
+    setShowVerifyModal(false);
+    toastHelper.showSuccess('Email verificado! Faça login para continuar.');
+    navigation?.navigate?.('Login'); finally {
       setSubmitting(false);
     }
   };
@@ -273,6 +283,13 @@ export default function Register({ navigation }) {
           </Card>
         </View>
       </ScrollView>
+
+      <VerifyEmailModal
+        visible={showVerifyModal}
+        email={registeredEmail}
+        onClose={() => setShowVerifyModal(false)}
+        onSuccess={handleVerificationSuccess}
+      />
     </Container>
   );
 }

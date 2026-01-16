@@ -50,6 +50,10 @@ public class Usuario {
     @Column(name = "two_factor_secret", length = 500)
     private String twoFactorSecret;
 
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
     @CreationTimestamp
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;
@@ -74,4 +78,8 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Endereco> enderecos;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CodigoVerificacaoEmail> codigosVerificacaoEmail;
 }

@@ -20,6 +20,7 @@ public class RegistroUsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public Usuario registrarUsuario(String nome, String email, String senha) {
@@ -34,6 +35,7 @@ public class RegistroUsuarioService {
                 .nome(nome)
                 .email(email)
                 .role(com.acessolivre.enums.Role.ROLE_USER)
+                .emailVerified(false)
                 .build();
         
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
@@ -46,7 +48,11 @@ public class RegistroUsuarioService {
                 .build();
         
         usuarioAutenticarRepository.save(ua);
-        log.info("Usuário registrado: id={}", usuarioSalvo.getIdUsuario());
+        
+        // Gera e envia código de verificação de email
+        emailVerificationService.gerarEEnviarCodigo(usuarioSalvo);
+        
+        log.info("Usuário registrado: id={}, código de verificação enviado", usuarioSalvo.getIdUsuario());
         
         return usuarioSalvo;
     }

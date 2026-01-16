@@ -34,6 +34,14 @@ public class AuthenticationService {
         }
 
         try {
+            // Verifica se email foi verificado
+            Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
+            
+            if (!usuario.getEmailVerified()) {
+                throw new EmailNotVerifiedException("Email não verificado. Verifique seu email antes de fazer login.");
+            }
+            
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, senha)
             );
@@ -54,7 +62,7 @@ public class AuthenticationService {
             loginAttemptService.loginSucesso(email);
             
             return token;
-        } catch (TwoFactorRequiredException | InvalidTwoFactorCodeException e) {
+        } catch (TwoFactorRequiredException | InvalidTwoFactorCodeException | EmailNotVerifiedException e) {
             throw e;
         } catch (Exception e) {
             loginAttemptService.loginFalhou(email);

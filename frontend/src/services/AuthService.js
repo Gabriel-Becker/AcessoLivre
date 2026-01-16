@@ -330,6 +330,55 @@ const AuthService = {
       throw error;
     }
   },
+
+  async verificarEmail(email, codigo) {
+    try {
+      const response = await api.post('/auth/verify-email', {
+        email,
+        codigo
+      });
+      
+      return {
+        sucesso: true,
+        mensagem: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao verificar email:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao verificar email'
+      };
+    }
+  },
+
+  async reenviarCodigoVerificacao(email) {
+    try {
+      const response = await api.post(`/auth/resend-verification-code?email=${encodeURIComponent(email)}`);
+      
+      return {
+        sucesso: true,
+        mensagem: response.data
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao reenviar código:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao reenviar código'
+      };
+    }
+  },
 };
 
 export default AuthService;
+
+export const { 
+  login, 
+  logout, 
+  register, 
+  isAuthenticated, 
+  carregarSessao, 
+  validateToken, 
+  reautenticar,
+  verificarEmail,
+  reenviarCodigoVerificacao
+} = AuthService;

@@ -3,6 +3,7 @@ package com.acessolivre.controller;
 import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
+import com.acessolivre.dto.request.VerifyEmailRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
 import com.acessolivre.dto.response.ValidateTokenResponseDTO;
@@ -11,6 +12,7 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
+import com.acessolivre.service.EmailVerificationService;
 import com.acessolivre.service.RegistroUsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final RegistroUsuarioService registroUsuarioService;
     private final com.acessolivre.security.LoginAttemptService loginAttemptService;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
@@ -100,6 +103,10 @@ public class AuthController {
             log.warn("Código 2FA inválido para email={}", request.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Código de autenticação de dois fatores inválido");
+        } catch (com.acessolivre.security.EmailNotVerifiedException e) {
+            log.warn("Email não verificado para email={}", request.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(e.getMessage());
         } catch (RuntimeException e) {
             // Verifica se é bloqueio por tentativas excessivas
             if (e.getMessage() != null && e.getMessage().contains("bloqueada")) {
@@ -212,6 +219,43 @@ public class AuthController {
             log.error("Erro ao reautenticar userId={}", userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erro ao renovar token");
+        }
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyEmailRequestDTO request) {
+        try {
+            log.info("Verificação de email para: {}", request.getEmail());
+            boolean verificado = emailVerificationService.verificarCodigo(
+                request.getEmail(), 
+                request.getCodigo()
+            );
+            
+            if (verificado) {
+                log.info("Email verificado com sucesso: {}", request.getEmail());
+                return ResponseEntity.ok("Email verificado com sucesso");
+            } else {
+                log.warn("Código de verificação inválido para: {}", request.getEmail());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Código inválido ou expirado");
+            }
+        } catch (Exception e) {
+            log.error("Erro ao verificar email: {}", request.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/resend-verification-code")
+    public ResponseEntity<?> resendVerificationCode(@RequestParam String email) {
+        try {
+            log.info("Reenviando código de verificação para: {}", email);
+            emailVerificationService.reenviarCodigo(email);
+            return ResponseEntity.ok("Código reenviado com sucesso");
+        } catch (Exception e) {
+            log.error("Erro ao reenviar código para: {}", email, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());
         }
     }
 }
