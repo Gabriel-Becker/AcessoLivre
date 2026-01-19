@@ -123,8 +123,7 @@ export default function Login({ navigation }) {
 
       clearErrors();
       setShowTwoFactor(false);
-      setPendingCredentials(null
-      clearErrors();
+      setPendingCredentials(null);
       toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);

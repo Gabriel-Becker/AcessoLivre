@@ -129,9 +129,13 @@ export default function Register({ navigation }) {
       if (!resultado?.sucesso) {
         toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
         return;
-      }'Conta criada! Verifique seu email.');
+      }
+
+      toastHelper.showSuccess('Conta criada! Verifique seu email.');
       setRegisteredEmail(values.email.trim().toLowerCase());
       setShowVerifyModal(true);
+    } catch (erro) {
+      toastHelper.showError(erro?.message || authMessages.registerErrors.serverError);
     } finally {
       setSubmitting(false);
     }
@@ -140,9 +144,7 @@ export default function Register({ navigation }) {
   const handleVerificationSuccess = () => {
     setShowVerifyModal(false);
     toastHelper.showSuccess('Email verificado! Faça login para continuar.');
-    navigation?.navigate?.('Login'); finally {
-      setSubmitting(false);
-    }
+    navigation?.navigate?.('Login');
   };
 
   return (

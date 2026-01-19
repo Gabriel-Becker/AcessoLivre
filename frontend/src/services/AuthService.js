@@ -367,9 +367,6 @@ const AuthService = {
       };
     }
   },
-};
-
-export default AuthService;
 
   // ============ 2FA Methods ============
   
