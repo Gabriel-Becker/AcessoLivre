@@ -183,15 +183,9 @@ const AuthService = {
    */
   async login({ email, senha, rememberMe = false }) {
     try {
-      // Limpar qualquer token anterior
       await this.logout();
       
       const loginData = { email, senha, rememberMe };
-      // TODO: Implementar autenticação de dois fatores (2FA)
-      // if (twoFactorCode) {
-      //   loginData.twoFactorCode = parseInt(twoFactorCode);
-      // }
-      
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
 
@@ -201,18 +195,14 @@ const AuthService = {
         throw new Error('Servidor retornou um token vazio');
       }
       
-      // Verificar se o token é válido
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
         throw new Error('Token inválido retornado pelo servidor');
       }
       
       await this.setToken(token);
-      
-      // Verificar se token foi armazenado corretamente
       const storedToken = await this.getToken();
       if (!storedToken) {
-        console.error('[AuthService] Falha ao armazenar token após login');
         throw new Error('Falha ao armazenar token de autenticação');
       }
       
@@ -229,29 +219,23 @@ const AuthService = {
     } catch (error) {
       console.error('[AuthService] Erro no login:', error);
       
-      // TODO: Tratamento de erro 428 para 2FA quando implementado
-      // if (error.response && error.response.status === 428) {
-      //   const responseData = error.response.data;
-      //   return {
-      //     success: false,
-      //     requiresTwoFactor: true,
-      //     message: responseData.message || 'Código de autenticação de dois fatores é obrigatório'
-      //   };
-      // }
-      
-      // Tratamento de erro 401 (credenciais inválidas)
       if (error.response && error.response.status === 401) {
         const responseData = error.response.data;
+        if (responseData?.twoFactorRequired) {
+          return {
+            success: false,
+            requiresTwoFactor: true,
+            emailDestino: responseData.emailDestino || email
+          };
+        }
         throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
       }
       
-      // Tratamento de outros erros HTTP
       if (error.response && error.response.data) {
         const responseData = error.response.data;
         throw new Error(responseData?.error || responseData?.message || 'Erro no login');
       }
       
-      // Tratamento de erro de rede
       if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
           error.message?.toLowerCase().includes('network') ||
           error.message?.toLowerCase().includes('timeout') ||
@@ -261,6 +245,20 @@ const AuthService = {
       
       throw error;
     }
+  },
+
+  async verifyTwoFactorCode({ email, codigo }) {
+    const response = await api.post('/auth/2fa/verify-code', { email, codigo });
+    const { token, usuario } = response.data;
+
+    if (!token) {
+      throw new Error('Token não retornado pelo servidor');
+    }
+
+    await this.setToken(token);
+    await this.setUserData(usuario);
+
+    return { success: true, token, usuario };
   },
 
   async register({ nome, email, senha }) {
@@ -478,5 +476,6 @@ export const {
   disable2FA,
   get2FAStatus,
   getRecoveryCodes,
-  generateRecoveryCodes
+  generateRecoveryCodes,
+  verifyTwoFactorCode
 } = AuthService;

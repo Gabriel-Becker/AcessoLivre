@@ -6,12 +6,6 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
-/**
- * Serviço para envio de emails.
- * 
- * TODO: Integrar com provedor de email (AWS SES, SendGrid, etc.)
- * Por enquanto apenas loga o código no console para desenvolvimento.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j

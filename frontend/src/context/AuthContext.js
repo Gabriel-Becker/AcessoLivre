@@ -98,16 +98,14 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const result = await AuthService.login({ email, senha, rememberMe });
       
-      // TODO: Tratamento de 2FA quando implementado
-      // if (!result.success && result.requiresTwoFactor) {
-      //   return {
-      //     sucesso: false,
-      //     requiresTwoFactor: true,
-      //     mensagem: result.message
-      //   };
-      // }
+      if (!result.success && result.requiresTwoFactor) {
+        return {
+          sucesso: false,
+          requiresTwoFactor: true,
+          emailDestino: result.emailDestino
+        };
+      }
       
-      // Se não foi sucesso por outro motivo
       if (!result.success) {
         return {
           sucesso: false,
@@ -116,11 +114,8 @@ export const AuthProvider = ({ children }) => {
       }
       
       const { token: novoToken, usuario: usuarioData } = result;
-      
-      // Verificar se o token está realmente disponível
       const tokenVerificado = await AuthService.getToken();
       if (!tokenVerificado) {
-        console.error('[AuthContext] Token não foi armazenado corretamente após login');
         return { 
           sucesso: false, 
           erro: 'Falha ao armazenar token. Por favor, tente novamente.'
@@ -155,6 +150,36 @@ export const AuthProvider = ({ children }) => {
         text2: mensagem,
       });
       
+      return { sucesso: false, erro: mensagem };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validarCodigo2FA = async ({ email, codigo }) => {
+    try {
+      setLoading(true);
+      const result = await AuthService.verifyTwoFactorCode({ email, codigo });
+      const { token: novoToken, usuario: usuarioData } = result;
+
+      setToken(novoToken);
+      setUsuario(usuarioData);
+      setIsAuthenticated(true);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Login confirmado!',
+        text2: `Bem-vindo, ${usuarioData.nome}!`,
+      });
+
+      return { sucesso: true };
+    } catch (erro) {
+      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
+      Toast.show({
+        type: 'error',
+        text1: 'Código inválido',
+        text2: mensagem,
+      });
       return { sucesso: false, erro: mensagem };
     } finally {
       setLoading(false);
@@ -241,6 +266,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
+        validarCodigo2FA,
         register,
         logout,
         carregarSessao,

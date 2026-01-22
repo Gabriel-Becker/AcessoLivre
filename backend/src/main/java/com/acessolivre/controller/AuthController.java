@@ -15,7 +15,7 @@ import com.acessolivre.security.JwtService;
 import com.acessolivre.service.EmailVerificationService;
 import com.acessolivre.service.TwoFactorService;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.response.TwoFactorSetupResponseDTO;
+import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.service.RegistroUsuarioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +27,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.Optional;
 
-/**
- * Controller responsável por autenticação (login, registro) e emissão de tokens JWT.
- * 
- * TODO: Implementar autenticação de dois fatores (2FA)
- * - Adicionar endpoint para habilitar/desabilitar 2FA
- * - Adicionar endpoint para validar código 2FA no login
- * - Implementar geração de QR code para Google Authenticator
- * - Adicionar códigos de recuperação
- */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -99,8 +90,10 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (com.acessolivre.security.TwoFactorRequiredException e) {
             log.info("2FA requerido para email={}", request.getEmail());
+            String emailDestino = twoFactorService.mascararEmail(request.getEmail());
             AuthResponseDTO response = AuthResponseDTO.builder()
                 .twoFactorRequired(true)
+                .emailDestino(emailDestino)
                 .build();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
@@ -132,6 +125,24 @@ public class AuthController {
             log.error("Erro inesperado no login para email={}", request.getEmail(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erro ao processar login");
+        }
+    }
+
+    @PostMapping("/2fa/verify-code")
+    public ResponseEntity<?> verifyTwoFactor(@Valid @RequestBody TwoFactorVerifyRequestDTO request) {
+        try {
+            String token = authenticationService.completarLoginComCodigo(request.getEmail(), request.getCodigo());
+            Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            AuthResponseDTO response = AuthResponseDTO.builder()
+                .token(token)
+                .usuario(UsuarioMapper.toResponse(usuario))
+                .twoFactorRequired(false)
+                .build();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.warn("Falha ao validar código 2FA para email={}", request.getEmail());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Código inválido ou expirado");
         }
     }
 
@@ -172,20 +183,11 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
             }
 
-            // Gera QR + secret
-            var qrData = twoFactorService.generateQRCodeAndSecret(userId);
-            // Gera códigos de recuperação
-            var recoveryCodes = twoFactorService.generateRecoveryCodes(userId);
+            Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            TwoFactorSetupResponseDTO response = TwoFactorSetupResponseDTO.builder()
-                    .qrCode((String) qrData.get("qrCode"))
-                    .secretKey((String) qrData.get("secretKey"))
-                    .issuer((String) qrData.get("issuer"))
-                    .accountName((String) qrData.get("accountName"))
-                    .recoveryCodes(recoveryCodes)
-                    .build();
-
-            return ResponseEntity.ok(response);
+            var desafio = twoFactorService.criarDesafioLogin(usuario.getEmail(), false);
+            return ResponseEntity.ok(desafio.emailMascarado());
         } catch (Exception e) {
             log.error("Erro ao configurar 2FA", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao configurar 2FA");
@@ -206,11 +208,12 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
             }
 
-            boolean ok = twoFactorService.enableTwoFactor(userId, body.getVerificationCode());
-            if (ok) {
-                return ResponseEntity.ok("2FA habilitado com sucesso");
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código 2FA inválido");
+            Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
+            twoFactorService.habilitar(userId);
+            return ResponseEntity.ok("2FA habilitado com sucesso");
         } catch (Exception e) {
             log.error("Erro ao habilitar 2FA", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao habilitar 2FA");
@@ -231,11 +234,12 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
             }
 
-            boolean ok = twoFactorService.disableTwoFactor(userId, body.getVerificationCode());
-            if (ok) {
-                return ResponseEntity.ok("2FA desabilitado com sucesso");
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Código 2FA inválido");
+            Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
+            twoFactorService.desabilitar(userId);
+            return ResponseEntity.ok("2FA desabilitado com sucesso");
         } catch (Exception e) {
             log.error("Erro ao desabilitar 2FA", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao desabilitar 2FA");
@@ -256,55 +260,13 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
             }
 
-            boolean enabled = twoFactorService.isTwoFactorEnabled(userId);
+            Usuario usuario = usuarioRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            boolean enabled = Boolean.TRUE.equals(usuario.getTwoFactorEnabled());
             return ResponseEntity.ok(enabled);
         } catch (Exception e) {
             log.error("Erro ao consultar status 2FA", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao consultar status 2FA");
-        }
-    }
-
-    @GetMapping("/2fa/recovery-codes")
-    public ResponseEntity<?> getRecoveryCodes(HttpServletRequest request) {
-        try {
-            String auth = request.getHeader("Authorization");
-            if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
-            }
-
-            String token = auth.substring(7);
-            Long userId = jwtService.obterIdUsuarioDoToken(token);
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
-            }
-
-            var codes = twoFactorService.getRecoveryCodes(userId);
-            return ResponseEntity.ok(codes);
-        } catch (Exception e) {
-            log.error("Erro ao listar códigos 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao listar códigos 2FA");
-        }
-    }
-
-    @PostMapping("/2fa/generate-recovery-codes")
-    public ResponseEntity<?> generateRecoveryCodes(HttpServletRequest request) {
-        try {
-            String auth = request.getHeader("Authorization");
-            if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
-            }
-
-            String token = auth.substring(7);
-            Long userId = jwtService.obterIdUsuarioDoToken(token);
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
-            }
-
-            var codes = twoFactorService.generateRecoveryCodes(userId);
-            return ResponseEntity.ok(codes);
-        } catch (Exception e) {
-            log.error("Erro ao gerar códigos 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao gerar códigos 2FA");
         }
     }
 

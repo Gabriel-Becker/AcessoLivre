@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,7 +35,6 @@ public class AuthenticationService {
         }
 
         try {
-            // Verifica se email foi verificado
             Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
             
@@ -47,27 +47,34 @@ public class AuthenticationService {
             );
 
             if (twoFactorService.isTwoFactorEnabledByEmail(email)) {
-                if (twoFactorCode == null) {
-                    throw new TwoFactorRequiredException("Código de autenticação de dois fatores é obrigatório");
-                }
-                
-                boolean isCodeValid = twoFactorService.validateCodeByEmail(email, twoFactorCode);
-                if (!isCodeValid) {
-                    loginAttemptService.loginFalhou(email);
-                    throw new InvalidTwoFactorCodeException("Código de autenticação de dois fatores inválido");
-                }
+                twoFactorService.criarDesafioLogin(email, Boolean.TRUE.equals(rememberMe));
+                throw new TwoFactorRequiredException("Código enviado por email");
             }
 
             String token = jwtService.gerarToken(authentication, rememberMe);
             loginAttemptService.loginSucesso(email);
-            
             return token;
-        } catch (TwoFactorRequiredException | InvalidTwoFactorCodeException | EmailNotVerifiedException e) {
+        } catch (TwoFactorRequiredException | EmailNotVerifiedException e) {
             throw e;
         } catch (Exception e) {
             loginAttemptService.loginFalhou(email);
             throw e;
         }
+    }
+
+    public String completarLoginComCodigo(String email, String codigo) {
+        TwoFactorService.ValidacaoLogin validacao = twoFactorService.validarCodigoLogin(email, codigo);
+
+        Usuario usuario = validacao.usuario();
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            usuario.getEmail(),
+            null,
+            List.of(new SimpleGrantedAuthority(usuario.getRole().name()))
+        );
+
+        String token = jwtService.gerarToken(authentication, validacao.rememberMe());
+        loginAttemptService.loginSucesso(email);
+        return token;
     }
 
     public void logout(String token, Long userId) {

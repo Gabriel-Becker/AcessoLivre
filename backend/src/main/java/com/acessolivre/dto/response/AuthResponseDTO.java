@@ -5,9 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * DTO de resposta do login contendo token e dados do usuário.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,4 +14,5 @@ public class AuthResponseDTO {
     private UsuarioResponseDTO usuario;
     @Builder.Default
     private Boolean twoFactorRequired = false;
+    private String emailDestino;
 }
