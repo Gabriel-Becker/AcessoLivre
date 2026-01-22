@@ -275,6 +275,11 @@ const AuthService = {
     return { success: true, usuario: response.data };
   },
 
+  async resendRegistrationCode(email) {
+    const response = await api.post(`/auth/register/resend-code?email=${encodeURIComponent(email)}`);
+    return { success: true, message: response.data };
+  },
+
   async logout() {
     try {
       const token = await this.getToken();
@@ -480,6 +485,7 @@ export const {
   reautenticar,
   verificarEmail,
   reenviarCodigoVerificacao,
+  resendRegistrationCode,
   setup2FA,
   enable2FA,
   disable2FA,

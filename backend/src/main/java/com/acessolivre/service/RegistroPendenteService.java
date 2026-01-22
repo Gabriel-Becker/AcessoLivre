@@ -107,6 +107,32 @@ public class RegistroPendenteService {
         return UsuarioMapper.toResponse(salvo);
     }
 
+    @Transactional
+    public String reenviarCodigo(String email) {
+        pendingUsuarioRegistroRepository.deleteByDataExpiracaoBefore(LocalDateTime.now());
+        codigoVerificacaoRegistroRepository.deleteByDataExpiracaoBefore(LocalDateTime.now());
+
+        PendingUsuarioRegistro pending = pendingUsuarioRegistroRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Nenhum registro pendente encontrado. Inicie o cadastro novamente."
+            ));
+
+        codigoVerificacaoRegistroRepository.deleteByEmail(email);
+
+        String codigo = emailService.gerarCodigoVerificacao();
+        CodigoVerificacaoRegistro verif = CodigoVerificacaoRegistro.builder()
+            .email(email)
+            .codigo(codigo)
+            .dataExpiracao(LocalDateTime.now().plusMinutes(CODIGO_EXPIRA_MINUTOS))
+            .build();
+        codigoVerificacaoRegistroRepository.save(verif);
+
+        emailService.enviarCodigoVerificacao(email, codigo);
+        log.info("Código de registro reenviado para email={}", email);
+
+        return mascararEmail(email);
+    }
+
     public String mascararEmail(String email) {
         if (email == null || !email.contains("@")) {
             return "email informado";

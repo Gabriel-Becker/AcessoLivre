@@ -12,11 +12,9 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
-import com.acessolivre.service.EmailVerificationService;
 import com.acessolivre.service.TwoFactorService;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
 import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
-import com.acessolivre.service.RegistroUsuarioService;
 import com.acessolivre.service.RegistroPendenteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +35,8 @@ public class AuthController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
-    private final RegistroUsuarioService registroUsuarioService;
     private final RegistroPendenteService registroPendenteService;
     private final com.acessolivre.security.LoginAttemptService loginAttemptService;
-    private final EmailVerificationService emailVerificationService;
     private final TwoFactorService twoFactorService;
 
     @PostMapping("/register")
@@ -78,6 +74,22 @@ public class AuthController {
             log.error("Erro ao confirmar registro para {}", request.getEmail(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erro ao confirmar registro");
+        }
+    }
+
+    @PostMapping("/register/resend-code")
+    public ResponseEntity<?> reenviarCodigoRegistro(@RequestParam String email) {
+        try {
+            log.info("Reenviando código de registro para: {}", email);
+            String emailMascarado = registroPendenteService.reenviarCodigo(email);
+            return ResponseEntity.ok(String.format("Código reenviado para %s", emailMascarado));
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao reenviar código para {}: {}", email, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Erro ao reenviar código para: {}", email, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao reenviar código");
         }
     }
 
@@ -356,43 +368,6 @@ public class AuthController {
             log.error("Erro ao reautenticar userId={}", userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erro ao renovar token");
-        }
-    }
-
-    @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyEmailRequestDTO request) {
-        try {
-            log.info("Verificação de email para: {}", request.getEmail());
-            boolean verificado = emailVerificationService.verificarCodigo(
-                request.getEmail(), 
-                request.getCodigo()
-            );
-            
-            if (verificado) {
-                log.info("Email verificado com sucesso: {}", request.getEmail());
-                return ResponseEntity.ok("Email verificado com sucesso");
-            } else {
-                log.warn("Código de verificação inválido para: {}", request.getEmail());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Código inválido ou expirado");
-            }
-        } catch (Exception e) {
-            log.error("Erro ao verificar email: {}", request.getEmail(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/resend-verification-code")
-    public ResponseEntity<?> resendVerificationCode(@RequestParam String email) {
-        try {
-            log.info("Reenviando código de verificação para: {}", email);
-            emailVerificationService.reenviarCodigo(email);
-            return ResponseEntity.ok("Código reenviado com sucesso");
-        } catch (Exception e) {
-            log.error("Erro ao reenviar código para: {}", email, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(e.getMessage());
         }
     }
 }

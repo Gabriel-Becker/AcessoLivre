@@ -151,6 +151,18 @@ export default function Register({ navigation }) {
       : { sucesso: false, mensagem: resultado?.erro };
   };
 
+  const handleResendCode = async () => {
+    try {
+      const AuthService = (await import('../../services/AuthService')).default;
+      const resultado = await AuthService.resendRegistrationCode(registeredEmail);
+      return resultado?.success
+        ? { sucesso: true, mensagem: resultado.message }
+        : { sucesso: false, mensagem: 'Erro ao reenviar código' };
+    } catch (erro) {
+      return { sucesso: false, mensagem: erro.response?.data || erro.message };
+    }
+  };
+
   const handleVerificationSuccess = () => {
     setShowVerifyModal(false);
     toastHelper.showSuccess('Email verificado! Faça login para continuar.');
@@ -302,6 +314,7 @@ export default function Register({ navigation }) {
         onClose={() => setShowVerifyModal(false)}
         onSuccess={handleVerificationSuccess}
         onConfirm={handleConfirmCode}
+        onResend={handleResendCode}
       />
     </Container>
   );

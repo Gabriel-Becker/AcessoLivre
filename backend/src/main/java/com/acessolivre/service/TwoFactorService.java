@@ -17,138 +17,93 @@ import java.util.Optional;
 @Slf4j
 public class TwoFactorService {
 
-    private final UsuarioRepository usuarioRepository;
-    private final CodigoRecuperacaoDoisFatoresRepository codigoRecuperacaoRepository;
-    private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
-    private static final String ISSUER = "AcessoLivre";
-    private static final int RECOVERY_CODES_COUNT = 10;
-    private static final int RECOVERY_CODE_LENGTH = 8;
+    private static final int CODE_EXPIRATION_MINUTES = 15;
 
-    public Map<String, Object> generateQRCodeAndSecret(Long userId) {
-        Usuario usuario = usuarioRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        
-        GoogleAuthenticatorKey key = googleAuthenticator.createCredentials();
-        String secretKey = key.getKey();
-        
-        usuario.setTwoFactorSecret(secretKey);
-        usuarioRepository.save(usuario);
-        
-        String accountName = usuario.getEmail();
-        String otpAuthUrl = String.format(
-            "otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
-            ISSUER, accountName, secretKey, ISSUER
-        );
-        
-        String qrCodeBase64 = generateQRCodeImage(otpAuthUrl);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("qrCode", "data:image/png;base64," + qrCodeBase64);
-        result.put("secretKey", secretKey);
-        result.put("issuer", ISSUER);
-        result.put("accountName", accountName);
-        
-        return result;
+    private final UsuarioRepository usuarioRepository;
+    private final CodigoTwoFactorEmailRepository codigoTwoFactorEmailRepository;
+    private final EmailService emailService;
+
+    public boolean isTwoFactorEnabledByEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+            .map(Usuario::getTwoFactorEnabled)
+            .orElse(false);
     }
 
-    private String generateQRCodeImage(String otpAuthUrl) {
-        try {
-            int width = 300;
-            int height = 300;
-            
-            @Service
-            @RequiredArgsConstructor
-            @Slf4j
-            public class TwoFactorService {
+    @Transactional
+    public DesafioLogin criarDesafioLogin(String email, boolean rememberMe) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-                private static final int CODE_EXPIRATION_MINUTES = 15;
+        codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
 
-                private final UsuarioRepository usuarioRepository;
-                private final CodigoTwoFactorEmailRepository codigoTwoFactorEmailRepository;
-                private final EmailService emailService;
+        String codigo = emailService.gerarCodigoVerificacao();
+        CodigoTwoFactorEmail registro = CodigoTwoFactorEmail.builder()
+            .usuario(usuario)
+            .codigo(codigo)
+            .dataExpiracao(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES))
+            .rememberMe(Boolean.TRUE.equals(rememberMe))
+            .build();
+        codigoTwoFactorEmailRepository.save(registro);
 
-                public boolean isTwoFactorEnabledByEmail(String email) {
-                    return usuarioRepository.findByEmail(email)
-                        .map(Usuario::getTwoFactorEnabled)
-                        .orElse(false);
-                }
+        emailService.enviarCodigoVerificacao(usuario.getEmail(), codigo);
+        log.info("Código 2FA por email enviado para userId={}", usuario.getIdUsuario());
 
-                @Transactional
-                public DesafioLogin criarDesafioLogin(String email, boolean rememberMe) {
-                    Usuario usuario = usuarioRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        return new DesafioLogin(mascararEmail(usuario.getEmail()));
+    }
 
-                    codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
+    @Transactional
+    public ValidacaoLogin validarCodigoLogin(String email, String codigo) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-                    String codigo = emailService.gerarCodigoVerificacao();
-                    CodigoTwoFactorEmail registro = CodigoTwoFactorEmail.builder()
-                        .usuario(usuario)
-                        .codigo(codigo)
-                        .dataExpiracao(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES))
-                        .rememberMe(Boolean.TRUE.equals(rememberMe))
-                        .build();
-                    codigoTwoFactorEmailRepository.save(registro);
+        codigoTwoFactorEmailRepository.deleteByDataExpiracaoBefore(LocalDateTime.now());
 
-                    emailService.enviarCodigoVerificacao(usuario.getEmail(), codigo);
-                    log.info("Código 2FA por email enviado para userId={}", usuario.getIdUsuario());
+        Optional<CodigoTwoFactorEmail> registroOpt = codigoTwoFactorEmailRepository
+            .findFirstByUsuarioAndCodigoAndUsadoFalseAndDataExpiracaoAfter(usuario, codigo, LocalDateTime.now());
 
-                    return new DesafioLogin(mascararEmail(usuario.getEmail()));
-                }
+        if (registroOpt.isEmpty()) {
+            throw new RuntimeException("Código inválido ou expirado");
+        }
 
-                @Transactional
-                public ValidacaoLogin validarCodigoLogin(String email, String codigo) {
-                    Usuario usuario = usuarioRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        CodigoTwoFactorEmail registro = registroOpt.get();
+        registro.setUsado(true);
+        codigoTwoFactorEmailRepository.save(registro);
+        codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
 
-                    codigoTwoFactorEmailRepository.deleteByDataExpiracaoBefore(LocalDateTime.now());
+        return new ValidacaoLogin(usuario, registro.getRememberMe());
+    }
 
-                    Optional<CodigoTwoFactorEmail> registroOpt = codigoTwoFactorEmailRepository
-                        .findFirstByUsuarioAndCodigoAndUsadoFalseAndDataExpiracaoAfter(usuario, codigo, LocalDateTime.now());
+    @Transactional
+    public void habilitar(Long userId) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        usuario.setTwoFactorEnabled(true);
+        usuario.setTwoFactorSecret(null);
+        usuarioRepository.save(usuario);
+    }
 
-                    if (registroOpt.isEmpty()) {
-                        throw new RuntimeException("Código inválido ou expirado");
-                    }
+    @Transactional
+    public void desabilitar(Long userId) {
+        Usuario usuario = usuarioRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        usuario.setTwoFactorEnabled(false);
+        usuario.setTwoFactorSecret(null);
+        usuarioRepository.save(usuario);
+        codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
+    }
 
-                    CodigoTwoFactorEmail registro = registroOpt.get();
-                    registro.setUsado(true);
-                    codigoTwoFactorEmailRepository.save(registro);
-                    codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
+    public String mascararEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "email informado";
+        }
+        String[] partes = email.split("@", 2);
+        String usuario = partes[0];
+        String dominio = partes[1];
+        String visivel = usuario.length() <= 2 ? usuario : usuario.substring(0, 2);
+        return visivel + "***@" + dominio;
+    }
 
-                    return new ValidacaoLogin(usuario, registro.getRememberMe());
-                }
+    public record DesafioLogin(String emailMascarado) { }
 
-                @Transactional
-                public void habilitar(Long userId) {
-                    Usuario usuario = usuarioRepository.findById(userId)
-                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-                    usuario.setTwoFactorEnabled(true);
-                    usuario.setTwoFactorSecret(null);
-                    usuarioRepository.save(usuario);
-                }
-
-                @Transactional
-                public void desabilitar(Long userId) {
-                    Usuario usuario = usuarioRepository.findById(userId)
-                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-                    usuario.setTwoFactorEnabled(false);
-                    usuario.setTwoFactorSecret(null);
-                    usuarioRepository.save(usuario);
-                    codigoTwoFactorEmailRepository.deleteByUsuario(usuario);
-                }
-
-                public String mascararEmail(String email) {
-                    if (email == null || !email.contains("@")) {
-                        return "email informado";
-                    }
-                    String[] partes = email.split("@", 2);
-                    String usuario = partes[0];
-                    String dominio = partes[1];
-                    String visivel = usuario.length() <= 2 ? usuario : usuario.substring(0, 2);
-                    return visivel + "***@" + dominio;
-                }
-
-                public record DesafioLogin(String emailMascarado) { }
-
-                public record ValidacaoLogin(Usuario usuario, boolean rememberMe) { }
-            }
-        return googleAuthenticator.authorize(usuario.getTwoFactorSecret(), verificationCode);
+    public record ValidacaoLogin(Usuario usuario, boolean rememberMe) { }
+}
