@@ -35,11 +35,12 @@ const schema = z
   });
 
 export default function Register({ navigation }) {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, confirmarCadastro } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [emailDestino, setEmailDestino] = useState('');
 
   const {
     control,
@@ -126,19 +127,28 @@ export default function Register({ navigation }) {
         senha: values.password,
       });
 
-      if (!resultado?.sucesso) {
-        toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
+      if (resultado?.requiresConfirmation) {
+        toastHelper.showSuccess('Cadastro iniciado! Confirme o código enviado.');
+        setRegisteredEmail(values.email.trim().toLowerCase());
+        setEmailDestino(resultado.emailDestino || values.email.trim().toLowerCase());
+        setShowVerifyModal(true);
         return;
       }
 
-      toastHelper.showSuccess('Conta criada! Verifique seu email.');
-      setRegisteredEmail(values.email.trim().toLowerCase());
-      setShowVerifyModal(true);
+      toastHelper.showSuccess('Conta criada com sucesso!');
+      navigation?.navigate?.('Login');
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.registerErrors.serverError);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleConfirmCode = async (codigo) => {
+    const resultado = await confirmarCadastro({ email: registeredEmail, codigo });
+    return resultado?.sucesso
+      ? { sucesso: true }
+      : { sucesso: false, mensagem: resultado?.erro };
   };
 
   const handleVerificationSuccess = () => {
@@ -288,9 +298,10 @@ export default function Register({ navigation }) {
 
       <VerifyEmailModal
         visible={showVerifyModal}
-        email={registeredEmail}
+        email={emailDestino || registeredEmail}
         onClose={() => setShowVerifyModal(false)}
         onSuccess={handleVerificationSuccess}
+        onConfirm={handleConfirmCode}
       />
     </Container>
   );

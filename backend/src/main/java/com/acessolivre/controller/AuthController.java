@@ -17,6 +17,7 @@ import com.acessolivre.service.TwoFactorService;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
 import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.service.RegistroUsuarioService;
+import com.acessolivre.service.RegistroPendenteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RegistroUsuarioService registroUsuarioService;
+    private final RegistroPendenteService registroPendenteService;
     private final com.acessolivre.security.LoginAttemptService loginAttemptService;
     private final EmailVerificationService emailVerificationService;
     private final TwoFactorService twoFactorService;
@@ -45,20 +47,37 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
-            Usuario usuario = registroUsuarioService.registrarUsuario(
+            String emailMascarado = registroPendenteService.iniciarRegistro(
                 request.getNome(),
                 request.getEmail(),
                 request.getSenha()
             );
-            log.info("Usuário registrado com sucesso. ID: {}, Email: {}", usuario.getIdUsuario(), usuario.getEmail());
-            UsuarioResponseDTO responseDTO = UsuarioMapper.toResponse(usuario);
-            return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+            return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(String.format("Código enviado para %s", emailMascarado));
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao registrar usuário: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             log.error("Erro inesperado ao registrar usuário", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao registrar usuário");
+        }
+    }
+
+    @PostMapping("/register/confirm")
+    public ResponseEntity<?> confirmarRegistro(@Valid @RequestBody VerifyEmailRequestDTO request) {
+        try {
+            UsuarioResponseDTO usuario = registroPendenteService.concluirRegistro(
+                request.getEmail(),
+                request.getCodigo()
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+        } catch (IllegalArgumentException e) {
+            log.warn("Falha ao confirmar registro para {}: {}", request.getEmail(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Erro ao confirmar registro para {}", request.getEmail(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao confirmar registro");
         }
     }
 

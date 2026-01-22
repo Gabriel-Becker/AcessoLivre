@@ -188,14 +188,17 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ nome, email, senha }) => {
     try {
-      await AuthService.register({ nome, email, senha });
-      
-      Toast.show({
-        type: 'success',
-        text1: 'Cadastro realizado!',
-        text2: 'Faça login para continuar.',
-      });
-      
+      const result = await AuthService.register({ nome, email, senha });
+
+      if (result.requiresConfirmation) {
+        Toast.show({
+          type: 'info',
+          text1: 'Confirme seu e-mail',
+          text2: `Enviamos um código para ${result.emailDestino}`,
+        });
+        return { sucesso: false, requiresConfirmation: true, emailDestino: result.emailDestino, email }; // keep email to usar depois
+      }
+
       return { sucesso: true };
     } catch (erro) {
       const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao realizar cadastro';
@@ -206,6 +209,28 @@ export const AuthProvider = ({ children }) => {
         text2: mensagem,
       });
       
+      return { sucesso: false, erro: mensagem };
+    }
+  };
+
+  const confirmarCadastro = async ({ email, codigo }) => {
+    try {
+      const result = await AuthService.confirmRegistration({ email, codigo });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Cadastro confirmado!',
+        text2: 'Agora você pode fazer login.',
+      });
+
+      return { sucesso: true, usuario: result.usuario };
+    } catch (erro) {
+      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
+      Toast.show({
+        type: 'error',
+        text1: 'Erro na confirmação',
+        text2: mensagem,
+      });
       return { sucesso: false, erro: mensagem };
     }
   };
@@ -268,6 +293,7 @@ export const AuthProvider = ({ children }) => {
         login,
         validarCodigo2FA,
         register,
+        confirmarCadastro,
         logout,
         carregarSessao,
         updateUserData,

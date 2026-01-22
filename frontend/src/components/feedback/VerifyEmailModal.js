@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { verificarEmail, reenviarCodigoVerificacao } from '../../services/AuthService';
 
-export default function VerifyEmailModal({ visible, email, onClose, onSuccess }) {
+export default function VerifyEmailModal({ visible, email, onClose, onSuccess, onConfirm, onResend }) {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -13,16 +12,21 @@ export default function VerifyEmailModal({ visible, email, onClose, onSuccess })
       return;
     }
 
+    if (!onConfirm) {
+      Alert.alert('Erro', 'Confirmação indisponível no momento.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const resultado = await verificarEmail(email, codigo);
-      
-      if (resultado.sucesso) {
+      const resultado = await onConfirm(codigo);
+
+      if (resultado?.sucesso) {
         Alert.alert('Sucesso', 'Email verificado com sucesso!', [
           { text: 'OK', onPress: onSuccess }
         ]);
       } else {
-        Alert.alert('Erro', resultado.mensagem || 'Código inválido ou expirado');
+        Alert.alert('Erro', resultado?.mensagem || 'Código inválido ou expirado');
       }
     } catch (error) {
       Alert.alert('Erro', 'Erro ao verificar código. Tente novamente.');
@@ -32,14 +36,19 @@ export default function VerifyEmailModal({ visible, email, onClose, onSuccess })
   };
 
   const handleReenviar = async () => {
+    if (!onResend) {
+      Alert.alert('Aviso', 'Reenvio indisponível no momento.');
+      return;
+    }
+
     setResending(true);
     try {
-      const resultado = await reenviarCodigoVerificacao(email);
-      
-      if (resultado.sucesso) {
+      const resultado = await onResend();
+
+      if (resultado?.sucesso) {
         Alert.alert('Sucesso', 'Código reenviado para seu email');
       } else {
-        Alert.alert('Erro', resultado.mensagem || 'Erro ao reenviar código');
+        Alert.alert('Erro', resultado?.mensagem || 'Erro ao reenviar código');
       }
     } catch (error) {
       Alert.alert('Erro', 'Erro ao reenviar código. Tente novamente.');
@@ -87,15 +96,17 @@ export default function VerifyEmailModal({ visible, email, onClose, onSuccess })
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.botaoReenviar}
-            onPress={handleReenviar}
-            disabled={resending}
-          >
-            <Text style={styles.textoBotaoReenviar}>
-              {resending ? 'Reenviando...' : 'Reenviar código'}
-            </Text>
-          </TouchableOpacity>
+          {onResend ? (
+            <TouchableOpacity
+              style={styles.botaoReenviar}
+              onPress={handleReenviar}
+              disabled={resending}
+            >
+              <Text style={styles.textoBotaoReenviar}>
+                {resending ? 'Reenviando...' : 'Reenviar código'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
           <TouchableOpacity style={styles.botaoFechar} onPress={onClose}>
             <Text style={styles.textoBotaoFechar}>Fechar</Text>

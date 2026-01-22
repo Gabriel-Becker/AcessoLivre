@@ -263,7 +263,16 @@ const AuthService = {
 
   async register({ nome, email, senha }) {
     const response = await api.post('/auth/register', { nome, email, senha });
-    return response.data;
+    return {
+      success: false,
+      requiresConfirmation: true,
+      emailDestino: response.data,
+    };
+  },
+
+  async confirmRegistration({ email, codigo }) {
+    const response = await api.post('/auth/register/confirm', { email, codigo });
+    return { success: true, usuario: response.data };
   },
 
   async logout() {
