@@ -41,4 +41,23 @@ public class TokenRevogadoFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return isPublicPath(path);
+    }
+
+    private boolean isPublicPath(String path) {
+        return path.equals("/api/auth/register")
+                || path.equals("/api/auth/register/confirm")
+                || path.equals("/api/auth/register/resend-code")
+                || path.equals("/api/auth/me")
+                || path.equals("/api/auth/login")
+                || path.startsWith("/api/auth/2fa/")
+                || path.startsWith("/api/auth/reset-password/")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs/")
+                || path.equals("/api/admin/bootstrap");
+    }
 }
