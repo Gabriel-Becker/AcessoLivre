@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "local", indexes = {
     @Index(name = "idx_local_nome", columnList = "nome"),
-    @Index(name = "idx_local_categoria", columnList = "categoria_id")
+    @Index(name = "idx_local_categoria", columnList = "idcategoria")
 })
 @Data
 @Builder

@@ -303,18 +303,29 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UsuarioResponseDTO> me(HttpServletRequest request) {
-        String auth = request.getHeader("Authorization");
-        if (auth == null || !auth.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        try {
+            String auth = request.getHeader("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            String token = auth.substring(7);
+            
+            if (authenticationService.isTokenRevoked(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            Long userId = jwtService.obterIdUsuarioDoToken(token);
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            return usuarioRepository.findById(userId)
+                    .map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        } catch (Exception e) {
+            log.error("Erro ao buscar dados do usuário", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        String token = auth.substring(7);
-        if (authenticationService.isTokenRevoked(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Long userId = jwtService.obterIdUsuarioDoToken(token);
-        return usuarioRepository.findById(userId)
-                .map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @PostMapping("/validate")

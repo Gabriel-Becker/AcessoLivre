@@ -118,6 +118,7 @@ public class RegistroPendenteService {
             ));
 
         codigoVerificacaoRegistroRepository.deleteByEmail(email);
+        codigoVerificacaoRegistroRepository.flush();
 
         String codigo = emailService.gerarCodigoVerificacao();
         CodigoVerificacaoRegistro verif = CodigoVerificacaoRegistro.builder()

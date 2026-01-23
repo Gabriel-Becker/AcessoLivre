@@ -33,6 +33,6 @@ public class CodigoRecuperacaoDoisFatores {
     private LocalDateTime dataUso;
 
     @ManyToOne
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
     private Usuario usuario;
 }

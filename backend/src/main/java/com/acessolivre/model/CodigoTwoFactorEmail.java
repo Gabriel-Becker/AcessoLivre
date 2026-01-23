@@ -22,7 +22,7 @@ public class CodigoTwoFactorEmail {
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "id_usuario")
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario")
     private Usuario usuario;
 
     @Column(nullable = false, length = 6)

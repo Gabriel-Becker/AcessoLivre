@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "password_reset_code", indexes = {
     @Index(name = "idx_password_reset_code", columnList = "code"),
-    @Index(name = "idx_password_reset_usuario", columnList = "usuario_id")
+    @Index(name = "idx_password_reset_usuario", columnList = "idusuario")
 })
 @Data
 @Builder
@@ -45,7 +45,7 @@ public class PasswordResetCode {
 
     @NotNull(message = "Usuário é obrigatório")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_usuario", referencedColumnName = "idusuario", nullable = false)
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
     @JsonIgnore
     private Usuario usuario;
 }

@@ -37,7 +37,7 @@ public class TokenRevogado {
 
     @NotNull(message = "Usuário é obrigatório")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario", referencedColumnName = "idusuario", nullable = false)
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
     @JsonIgnore
     private Usuario usuario;
 }
