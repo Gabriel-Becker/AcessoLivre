@@ -88,7 +88,7 @@ export default function Input({
           {...props}
         />
         
-        {isPassword && (
+        {isPassword ? (
           <TouchableOpacity
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             style={styles.rightIcon}
@@ -99,9 +99,7 @@ export default function Input({
               color={t.colors.textSecondary}
             />
           </TouchableOpacity>
-        )}
-        
-        {!isPassword && rightIcon && (
+        ) : rightIcon ? (
           <TouchableOpacity
             onPress={onRightIconPress}
             style={styles.rightIcon}
@@ -113,7 +111,7 @@ export default function Input({
               color={t.colors.textSecondary}
             />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
       
       {hasError && (
