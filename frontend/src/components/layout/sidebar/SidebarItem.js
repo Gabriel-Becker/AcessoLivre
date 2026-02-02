@@ -15,10 +15,10 @@ export default function SidebarItem({ icon, label, active, onPress, altoContrast
       iconColor={active ? t.colors.primary : t.colors.textSecondary}
       textStyle={{ color: active ? t.colors.primary : t.colors.textSecondary }}
       style={{
-        paddingVertical: 10,
+        paddingVertical: 12,
         paddingHorizontal: 12,
         borderRadius: t.borderRadius.md,
-        marginBottom: 4,
+        marginBottom: 8,
         backgroundColor: active ? t.colors.backgroundSecondary : 'transparent',
       }}
       onPress={onPress}

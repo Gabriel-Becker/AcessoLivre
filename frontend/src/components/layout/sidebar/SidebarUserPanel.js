@@ -25,13 +25,17 @@ export default function SidebarUserPanel({ onNavigate, altoContraste = false }) 
         </>
       ) : (
         <>
-          {usuario && (
-            <>
-              <ThemedText variant="h3">{usuario.nome}</ThemedText>
-              {usuario.email && <ThemedText color="textSecondary">{usuario.email}</ThemedText>}
-              <Spacer size="sm" />
-            </>
-          )}
+          <Button 
+            variant="ghost" 
+            size="large" 
+            fullWidth 
+            onPress={() => onNavigate && onNavigate('Perfil')} 
+            align="left" 
+            iconLeft="person-circle-outline"
+          >
+            Meu Perfil
+          </Button>
+          <Spacer size="xs" />
           <Button variant="danger" size="large" fullWidth onPress={logout} align="left" iconLeft="exit-outline">
             Sair
           </Button>

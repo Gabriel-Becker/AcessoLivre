@@ -1,6 +1,6 @@
 // Input - Campo de texto reutilizável com suporte a temas
-import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
 
@@ -28,6 +28,29 @@ export default function Input({
   const t = altoContraste ? getTheme(true) : theme;
   const hasError = !!error;
   const isPassword = secureTextEntry;
+  
+  // Se for campo de senha, ignora rightIcon passado
+  const effectiveRightIcon = isPassword ? null : rightIcon;
+
+  // Desabilita controles de senha do navegador na web
+  useEffect(() => {
+    if (Platform.OS === 'web' && isPassword) {
+      const style = document.createElement('style');
+      style.textContent = `
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+          display: none !important;
+        }
+        input[type="password"]::-webkit-credentials-auto-fill-button,
+        input[type="password"]::-webkit-contacts-auto-fill-button {
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+      return () => document.head.removeChild(style);
+    }
+  }, [isPassword]);
 
   const getBorderColor = () => {
     if (hasError) return t.colors.error;
@@ -67,7 +90,7 @@ export default function Input({
           style={[
             styles.input,
             leftIcon && styles.inputWithLeftIcon,
-            (rightIcon || isPassword) && styles.inputWithRightIcon,
+            (effectiveRightIcon || isPassword) && styles.inputWithRightIcon,
             multiline && styles.inputMultiline,
             { color: t.colors.textPrimary },
             style,
@@ -83,8 +106,9 @@ export default function Input({
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
-          autoComplete="off"
+          autoComplete={isPassword ? 'password' : 'off'}
           autoCorrect={false}
+          textContentType={isPassword ? 'password' : 'none'}
           {...props}
         />
         
@@ -99,14 +123,14 @@ export default function Input({
               color={t.colors.textSecondary}
             />
           </TouchableOpacity>
-        ) : rightIcon ? (
+        ) : effectiveRightIcon ? (
           <TouchableOpacity
             onPress={onRightIconPress}
             style={styles.rightIcon}
             disabled={!onRightIconPress}
           >
             <Ionicons
-              name={rightIcon}
+              name={effectiveRightIcon}
               size={20}
               color={t.colors.textSecondary}
             />
@@ -149,6 +173,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: theme.typography.fontSize.md,
     paddingVertical: theme.spacing.sm,
+    outlineStyle: 'none',
   },
   inputWithLeftIcon: {
     paddingLeft: theme.spacing.xs,

@@ -52,7 +52,8 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
 
 const styles = StyleSheet.create({
   sidebar: {
-    width: 260,
+    width: 240,
+    maxWidth: 240,
     borderRightWidth: 1,
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.lg,
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   menu: {
-    gap: 4,
+    gap: 6,
   },
   footer: {
     marginTop: 'auto',

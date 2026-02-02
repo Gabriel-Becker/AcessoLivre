@@ -9,6 +9,7 @@ import Home from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
 import Sobre from '../screens/sobre/Sobre';
+import Perfil from '../screens/perfil/Perfil';
 import theme from '../config/theme';
 
 const Stack = createNativeStackNavigator();
@@ -40,6 +41,8 @@ function MainApp() {
         return <AdicionarLocal />;
       case 'Sobre':
         return <Sobre />;
+      case 'Perfil':
+        return <Perfil />;
       default:
         return <Home />;
     }
