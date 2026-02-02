@@ -85,10 +85,13 @@ public class RegistroPendenteService {
             throw new IllegalArgumentException("Email já cadastrado");
         }
 
+        // Primeiro usuário do sistema recebe ROLE_ADMIN automaticamente
+        boolean isPrimeiroUsuario = usuarioRepository.count() == 0;
+        
         Usuario usuario = Usuario.builder()
             .nome(pending.getNome())
             .email(email)
-            .role(com.acessolivre.enums.Role.ROLE_USER)
+            .role(isPrimeiroUsuario ? com.acessolivre.enums.Role.ROLE_ADMIN : com.acessolivre.enums.Role.ROLE_USER)
             .emailVerified(true)
             .build();
         Usuario salvo = usuarioRepository.save(usuario);
