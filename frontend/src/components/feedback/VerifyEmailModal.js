@@ -22,16 +22,25 @@ export default function VerifyEmailModal({ visible, email, onClose, onSuccess, o
       const resultado = await onConfirm(codigo);
 
       if (resultado?.sucesso) {
+        setCodigo('');
+        setLoading(false);
         Alert.alert('Sucesso', 'Email verificado com sucesso!', [
-          { text: 'OK', onPress: onSuccess }
+          { 
+            text: 'OK', 
+            onPress: () => {
+              if (onSuccess) {
+                onSuccess();
+              }
+            }
+          }
         ]);
       } else {
+        setLoading(false);
         Alert.alert('Erro', resultado?.mensagem || 'Código inválido ou expirado');
       }
     } catch (error) {
-      Alert.alert('Erro', 'Erro ao verificar código. Tente novamente.');
-    } finally {
       setLoading(false);
+      Alert.alert('Erro', 'Erro ao verificar código. Tente novamente.');
     }
   };
 

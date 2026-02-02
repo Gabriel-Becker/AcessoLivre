@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 # Instalar expo-cli globalmente
 RUN npm install -g @expo/cli

@@ -83,6 +83,8 @@ export default function Input({
           multiline={multiline}
           numberOfLines={numberOfLines}
           textAlignVertical={multiline ? 'top' : 'center'}
+          autoComplete="off"
+          autoCorrect={false}
           {...props}
         />
         
