@@ -1,13 +1,10 @@
 package com.acessolivre.security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.lang.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +12,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Filtro responsável por interceptar requisições e validar o token JWT.
@@ -67,6 +68,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.equals("/api/auth/register/resend-code")
                 || path.equals("/api/auth/me")
                 || path.equals("/api/auth/login")
+            || path.equals("/api/auth/validate")
+            || path.equals("/api/auth/logout")
+                || path.equals("/api/auth/change-password")
                 || path.startsWith("/api/auth/2fa/")
                 || path.startsWith("/api/auth/reset-password/")
                 || path.startsWith("/swagger-ui/")

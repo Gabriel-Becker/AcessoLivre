@@ -1,10 +1,8 @@
 package com.acessolivre.config;
 
-import com.acessolivre.security.CustomUserDetailsService;
-import com.acessolivre.security.JwtAuthenticationFilter;
-import com.acessolivre.security.TokenRevogadoFilter;
-import com.acessolivre.security.JwtService;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,8 +21,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import com.acessolivre.security.CustomUserDetailsService;
+import com.acessolivre.security.JwtAuthenticationFilter;
+import com.acessolivre.security.JwtService;
+import com.acessolivre.security.TokenRevogadoFilter;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Configuração de segurança moderna com Spring Security, JWT e CORS.
@@ -57,12 +59,17 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Permitir requisições OPTIONS (CORS preflight) sem autenticação
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                     "/api/auth/register",
                     "/api/auth/register/confirm",
                     "/api/auth/register/resend-code",
                     "/api/auth/me",
                     "/api/auth/login",
+                    "/api/auth/validate",
+                    "/api/auth/logout",
+                    "/api/auth/change-password",
                     "/api/auth/2fa/**",
                     "/api/auth/reset-password/**",
                     "/swagger-ui/**",
@@ -73,9 +80,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
-            // Registramos ambos os filtros explicitamente como beans e ordenamos
-            // relacionando-os ao filtro padrão UsernamePasswordAuthenticationFilter.
-            // Evita dependência no registro de ordem por classe concreta.
             .addFilterBefore(tokenRevogadoFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 

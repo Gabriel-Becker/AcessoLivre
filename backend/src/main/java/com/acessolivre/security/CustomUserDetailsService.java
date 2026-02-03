@@ -1,12 +1,14 @@
 package com.acessolivre.security;
 
-import com.acessolivre.model.UsuarioAutenticar;
-import com.acessolivre.repository.UsuarioAutenticarRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.acessolivre.model.UsuarioAutenticar;
+import com.acessolivre.repository.UsuarioAutenticarRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -21,6 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      * Carrega dados do usuário para autenticação usando email como username.
      */
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UsuarioAutenticar ua = repository.findByUsuario_Email(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Não encontramos nenhum usuário com o e-mail informado: " + email));

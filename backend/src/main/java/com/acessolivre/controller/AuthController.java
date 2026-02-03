@@ -1,7 +1,24 @@
 package com.acessolivre.controller;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.acessolivre.dto.request.AuthRequestDTO;
+import com.acessolivre.dto.request.ChangePasswordRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
+import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
+import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.request.VerifyEmailRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
@@ -9,22 +26,18 @@ import com.acessolivre.dto.response.UsuarioResponseDTO;
 import com.acessolivre.dto.response.ValidateTokenResponseDTO;
 import com.acessolivre.mapper.UsuarioMapper;
 import com.acessolivre.model.Usuario;
+import com.acessolivre.model.UsuarioAutenticar;
+import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
-import com.acessolivre.service.TwoFactorService;
-import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.service.RegistroPendenteService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.acessolivre.service.TwoFactorService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,6 +51,8 @@ public class AuthController {
     private final RegistroPendenteService registroPendenteService;
     private final com.acessolivre.security.LoginAttemptService loginAttemptService;
     private final TwoFactorService twoFactorService;
+    private final UsuarioAutenticarRepository usuarioAutenticarRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
@@ -379,6 +394,52 @@ public class AuthController {
             log.error("Erro ao reautenticar userId={}", userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Erro ao renovar token");
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> trocarSenha(
+            @Valid @RequestBody ChangePasswordRequestDTO request,
+            HttpServletRequest httpRequest) {
+        try {
+            String auth = httpRequest.getHeader("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                log.warn("Tentativa de trocar senha sem token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+            }
+
+            String token = auth.substring(7);
+            if (authenticationService.isTokenRevoked(token)) {
+                log.warn("Tentativa de trocar senha com token revogado");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+            }
+
+            Long userId = jwtService.obterIdUsuarioDoToken(token);
+            if (userId == null) {
+                log.warn("Token JWT inválido ao trocar senha");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+            }
+
+            UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByUsuario_IdUsuario(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Credenciais não encontradas"));
+
+            if (!passwordEncoder.matches(request.getSenhaAtual(), usuarioAutenticar.getSenhaHash())) {
+                log.warn("Senha atual incorreta para userId={}", userId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Senha atual incorreta");
+            }
+
+            usuarioAutenticar.setSenhaHash(passwordEncoder.encode(request.getNovaSenha()));
+            usuarioAutenticar.setDataExpiracao(LocalDateTime.now().plusYears(1));
+            usuarioAutenticarRepository.save(usuarioAutenticar);
+
+            log.info("Senha alterada com sucesso para userId={}", userId);
+            return ResponseEntity.ok("Senha alterada com sucesso");
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao trocar senha: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Erro inesperado ao trocar senha", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao trocar senha");
         }
     }
 }

@@ -8,7 +8,17 @@ const TOKEN_KEY = 'jwtToken';
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      let token = await AsyncStorage.getItem(TOKEN_KEY);
+      if (!token && typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === TOKEN_KEY) {
+            token = value;
+            break;
+          }
+        }
+      }
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -26,8 +36,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      console.log('Token inválido detectado (401), limpando AsyncStorage');
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
+      console.log(`Token inválido detectado (${status}), limpando AsyncStorage`);
       
       try {
         await AsyncStorage.removeItem(TOKEN_KEY);

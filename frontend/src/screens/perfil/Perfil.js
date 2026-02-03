@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
+import { TrocarSenhaModal } from '../../components/feedback';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Perfil() {
   const { usuario } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const InfoItem = ({ icon, label, value }) => (
     <View style={styles.infoItem}>
@@ -22,11 +24,6 @@ export default function Perfil() {
       </View>
     </View>
   );
-
-  const handleChangePassword = () => {
-    // TODO: Implementar navegação para tela de troca de senha
-    console.log('Trocar senha');
-  };
 
   return (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
@@ -58,7 +55,7 @@ export default function Perfil() {
             variant="outline" 
             size="large" 
             fullWidth 
-            onPress={handleChangePassword}
+            onPress={() => setShowChangePassword(true)}
             iconLeft="key-outline"
             altoContraste={isHighContrast}
           >
@@ -68,6 +65,12 @@ export default function Perfil() {
 
         <Spacer size="lg" />
       </ScrollView>
+
+      <TrocarSenhaModal
+        visible={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        altoContraste={isHighContrast}
+      />
     </Container>
   );
 }

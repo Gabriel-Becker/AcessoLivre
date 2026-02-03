@@ -471,6 +471,45 @@ const AuthService = {
       };
     }
   },
+
+  /**
+   * Troca a senha do usuário autenticado
+   */
+  async trocarSenha({ senhaAtual, novaSenha }) {
+    try {
+      const token = await this.getToken();
+      if (!token) {
+        return {
+          sucesso: false,
+          mensagem: 'Sua sessão expirou. Faça login novamente para trocar a senha.',
+        };
+      }
+
+      const response = await api.post(
+        '/auth/change-password',
+        {
+          senhaAtual,
+          novaSenha,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return {
+        sucesso: true,
+        mensagem: response.data || 'Senha alterada com sucesso',
+      };
+    } catch (error) {
+      console.error('[AuthService] Erro ao trocar senha:', error);
+      return {
+        sucesso: false,
+        mensagem: error.response?.data || 'Erro ao trocar senha. Verifique sua senha atual.',
+      };
+    }
+  },
 };
 
 export default AuthService;
@@ -492,5 +531,6 @@ export const {
   get2FAStatus,
   getRecoveryCodes,
   generateRecoveryCodes,
-  verifyTwoFactorCode
+  verifyTwoFactorCode,
+  trocarSenha
 } = AuthService;

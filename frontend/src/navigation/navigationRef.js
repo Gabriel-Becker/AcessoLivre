@@ -9,14 +9,21 @@ export function navigate(name, params) {
 }
 
 export function resetToAuth() {
-  if (navigationRef.isReady()) {
-    navigationRef.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Auth' }],
-      })
-    );
+  if (!navigationRef.isReady()) return;
+
+  const state = navigationRef.getRootState();
+  const routeNames = state?.routeNames || [];
+
+  if (!routeNames.includes('Login')) {
+    return;
   }
+
+  navigationRef.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    })
+  );
 }
 
 export default navigationRef;

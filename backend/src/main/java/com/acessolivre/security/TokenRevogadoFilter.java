@@ -1,16 +1,17 @@
 package com.acessolivre.security;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.lang.NonNull;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.lang.NonNull;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class TokenRevogadoFilter extends OncePerRequestFilter {
@@ -54,6 +55,9 @@ public class TokenRevogadoFilter extends OncePerRequestFilter {
                 || path.equals("/api/auth/register/resend-code")
                 || path.equals("/api/auth/me")
                 || path.equals("/api/auth/login")
+            || path.equals("/api/auth/validate")
+            || path.equals("/api/auth/logout")
+                || path.equals("/api/auth/change-password")
                 || path.startsWith("/api/auth/2fa/")
                 || path.startsWith("/api/auth/reset-password/")
                 || path.startsWith("/swagger-ui/")
