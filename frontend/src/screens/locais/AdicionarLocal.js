@@ -1,26 +1,438 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Container } from '../../components/layout';
+import {
+  AreaPlaceholder,
+  Button,
+  CabecalhoPagina,
+  CardInfoIcone,
+  CardSecao,
+  CartaoMetricas,
+  CartaoSelecao,
+  Input,
+  ListaMarcadores,
+  Select,
+} from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
-import theme from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
+import { breakpoints } from '../../config/theme';
+import LocalService from '../../services/LocalService';
 
-export default function AdicionarLocal() {
+const RECURSOS_ACESSIBILIDADE = [
+  {
+    id: 'rampa',
+    titulo: 'Rampa de acesso',
+    descricao: 'Rampa para cadeira de rodas na entrada',
+    icon: 'walk-outline',
+    cor: 'rampa',
+  },
+  {
+    id: 'banheiro',
+    titulo: 'Banheiro adaptado',
+    descricao: 'Banheiro com acessibilidade para PcD',
+    icon: 'man-outline',
+    cor: 'banheiro',
+  },
+  {
+    id: 'elevador',
+    titulo: 'Elevador acessível',
+    descricao: 'Elevador funcionando com botões em braille',
+    icon: 'business-outline',
+    cor: 'elevador',
+  },
+  {
+    id: 'piso',
+    titulo: 'Piso tátil',
+    descricao: 'Piso com textura para orientação',
+    icon: 'trail-sign-outline',
+    cor: 'audiovisual',
+  },
+  {
+    id: 'braille',
+    titulo: 'Sinalização em braille',
+    descricao: 'Placas e informações em braille',
+    icon: 'eye-outline',
+    cor: 'braile',
+  },
+  {
+    id: 'estacionamento',
+    titulo: 'Estacionamento acessível',
+    descricao: 'Vagas reservadas para PcD',
+    icon: 'car-outline',
+    cor: 'estacionamento',
+  },
+  {
+    id: 'espaco',
+    titulo: 'Espaço amplo',
+    descricao: 'Corredores largos para circulação',
+    icon: 'resize-outline',
+    cor: 'secondary',
+  },
+  {
+    id: 'audiovisual',
+    titulo: 'Recursos audiovisuais',
+    descricao: 'Sistemas de som e sinalização visual',
+    icon: 'volume-high-outline',
+    cor: 'audiovisual',
+  },
+  {
+    id: 'atendimento',
+    titulo: 'Atendimento especializado',
+    descricao: 'Staff treinado para atender PcD',
+    icon: 'heart-outline',
+    cor: 'secondary',
+  },
+  {
+    id: 'mobiliario',
+    titulo: 'Mobiliário adaptado',
+    descricao: 'Mesas, balcões e assentos adaptados',
+    icon: 'grid-outline',
+    cor: 'primary',
+  },
+];
+
+const CATEGORIAS = [
+  { label: 'Comercial', value: 'Comercial' },
+  { label: 'Público', value: 'Público' },
+  { label: 'Saúde', value: 'Saúde' },
+  { label: 'Educação', value: 'Educação' },
+  { label: 'Lazer', value: 'Lazer' },
+  { label: 'Transporte', value: 'Transporte' },
+  { label: 'Alimentação', value: 'Alimentação' },
+  { label: 'Hospedagem', value: 'Hospedagem' },
+  { label: 'Serviços', value: 'Serviços' },
+];
+
+export default function AdicionarLocal({ onNavigate }) {
+  const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= breakpoints.desktop;
+  const isTablet = width >= breakpoints.tablet;
+
+  const [formulario, setFormulario] = useState({
+    nome: '',
+    categoria: '',
+    endereco: '',
+    descricao: '',
+  });
+  const [recursosSelecionados, setRecursosSelecionados] = useState({});
+  const [estatisticas, setEstatisticas] = useState({
+    totalLocais: 0,
+    totalAvaliacoes: 0,
+    totalUsuarios: 0,
+  });
+
+  const estilos = useMemo(() => criarEstilos(t, isHighContrast, isDesktop, isTablet), [
+    isDesktop,
+    isHighContrast,
+    isTablet,
+    t,
+  ]);
+  const fundos = useMemo(
+    () => ({
+      fundoDica: isHighContrast ? t.colors.surface : '#FFF5E1',
+      fundoComunidade: isHighContrast ? t.colors.surface : '#EAF8F0',
+    }),
+    [isHighContrast, t]
+  );
+
+  const atualizarCampo = (campo) => (valor) => {
+    setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
+  };
+
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      try {
+        const dados = await LocalService.obterEstatisticas();
+        setEstatisticas({
+          totalLocais: Number(dados?.totalLocais) || 0,
+          totalAvaliacoes: Number(dados?.totalAvaliacoes) || 0,
+          totalUsuarios: Number(dados?.totalUsuarios) || 0,
+        });
+      } catch (erro) {
+        setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
+      }
+    };
+
+    carregarEstatisticas();
+  }, []);
+
+  const alternarRecurso = (id) => {
+    setRecursosSelecionados((anterior) => ({
+      ...anterior,
+      [id]: !anterior[id],
+    }));
+  };
+
+  const obterCorRecurso = (chave) => {
+    if (t.colors.accessibility?.[chave]) {
+      return t.colors.accessibility[chave];
+    }
+    if (t.colors[chave]) {
+      return t.colors[chave];
+    }
+    return t.colors.primary;
+  };
+
   return (
-    <View style={styles.container}>
-      <ThemedText variant="h2" weight="bold">
-        Adicionar Local
-      </ThemedText>
-      <Spacer size="sm" />
-      <ThemedText color="textSecondary" align="center">
-        Em desenvolvimento
-      </ThemedText>
-    </View>
+    <Container
+      scroll
+      background={isHighContrast ? 'background' : 'backgroundSecondary'}
+      altoContraste={isHighContrast}
+      contentStyle={estilos.scroll}
+    >
+      <CabecalhoPagina
+        titulo="Adicionar Local"
+        subtitulo="Encontre e avalie locais acessíveis"
+        onVoltar={() => onNavigate && onNavigate('Inicio')}
+        altoContraste={isHighContrast}
+        style={estilos.header}
+      />
+
+      <View style={estilos.conteudo}>
+        <View style={estilos.colunaPrincipal}>
+          <CardSecao
+            titulo="Informações Básicas"
+            icone="document-text-outline"
+            corIcone={t.colors.primary}
+            altoContraste={isHighContrast}
+          >
+            <View style={estilos.linhaCampos}>
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Nome do Local *"
+                  placeholder="Ex: Shopping Center Norte"
+                  value={formulario.nome}
+                  onChangeText={atualizarCampo('nome')}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+
+              <View style={estilos.colunaCampo}>
+                <Select
+                  label="Categoria *"
+                  placeholder="Selecione uma categoria"
+                  value={formulario.categoria}
+                  options={CATEGORIAS}
+                  onSelect={(valor) => atualizarCampo('categoria')(valor)}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+            </View>
+
+            <Input
+              label="Endereço Completo *"
+              placeholder="Ex: Av. Paulista, 1000 - Bela Vista, São Paulo - SP, 01310-100"
+              value={formulario.endereco}
+              onChangeText={atualizarCampo('endereco')}
+              altoContraste={isHighContrast}
+            />
+
+            <Spacer size="sm" />
+
+            <View style={estilos.mapaContainer}>
+              <ThemedText weight="semibold">Localização no Mapa</ThemedText>
+              <Spacer size="sm" />
+              <AreaPlaceholder
+                icone="map-outline"
+                titulo="Mapa Interativo"
+                subtitulo="Integração futura com Google Maps"
+                altoContraste={isHighContrast}
+              />
+            </View>
+
+            <Spacer size="sm" />
+
+            <Input
+              label="Descrição (Opcional)"
+              placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
+              value={formulario.descricao}
+              onChangeText={atualizarCampo('descricao')}
+              multiline
+              numberOfLines={4}
+              altoContraste={isHighContrast}
+            />
+          </CardSecao>
+
+          <CardSecao
+            titulo="Recursos de Acessibilidade"
+            descricao="Marque todos os recursos de acessibilidade disponíveis no local"
+            icone="accessibility-outline"
+            corIcone={t.colors.secondary}
+            altoContraste={isHighContrast}
+          >
+            <View style={estilos.recursosGrid}>
+              {RECURSOS_ACESSIBILIDADE.map((recurso) => {
+                const selecionado = !!recursosSelecionados[recurso.id];
+                const corRecurso = obterCorRecurso(recurso.cor);
+
+                return (
+                  <CartaoSelecao
+                    key={recurso.id}
+                    titulo={recurso.titulo}
+                    descricao={recurso.descricao}
+                    icone={recurso.icon}
+                    corDestaque={corRecurso}
+                    selecionado={selecionado}
+                    onPress={() => alternarRecurso(recurso.id)}
+                    altoContraste={isHighContrast}
+                    style={estilos.recursoItem}
+                  />
+                );
+              })}
+            </View>
+          </CardSecao>
+
+          <CardSecao
+            titulo="Fotos do Local"
+            descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
+            icone="camera-outline"
+            corIcone={t.colors.primary}
+            altoContraste={isHighContrast}
+          >
+            <AreaPlaceholder
+              icone="cloud-upload-outline"
+              titulo="Clique ou arraste para adicionar fotos"
+              subtitulo="PNG, JPG até 10MB cada"
+              altoContraste={isHighContrast}
+            />
+          </CardSecao>
+
+          <View style={estilos.botaoContainer}>
+            <Button
+              variant="primary"
+              size="large"
+              onPress={() => null}
+              iconLeft="add"
+              fullWidth={!isDesktop}
+              style={estilos.botaoPrincipal}
+              altoContraste={isHighContrast}
+            >
+              Adicionar Local
+            </Button>
+          </View>
+        </View>
+
+        <View style={estilos.colunaLateral}>
+          <CardInfoIcone
+            titulo="Próximos passos:"
+            icone="navigate-outline"
+            corIcone={t.colors.primary}
+            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
+            altoContraste={isHighContrast}
+          >
+            <ListaMarcadores
+              itens={[
+                'Após adicionar, você poderá avaliar o local',
+                'Adicione fotos dos recursos de acessibilidade',
+                'Compartilhe com a comunidade',
+              ]}
+              corMarcador={t.colors.primary}
+              altoContraste={isHighContrast}
+            />
+          </CardInfoIcone>
+
+          <CardInfoIcone
+            titulo="Dica importante:"
+            icone="bulb-outline"
+            corIcone={t.colors.warning}
+            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
+            fundo={fundos.fundoDica}
+            altoContraste={isHighContrast}
+          >
+            <ThemedText color="textSecondary">
+              Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
+              diferentes necessidades a encontrar locais adequados para elas.
+            </ThemedText>
+          </CardInfoIcone>
+
+          <CardInfoIcone
+            titulo="Contribua com a Comunidade"
+            icone="heart"
+            corIcone={t.colors.secondary}
+            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
+            fundo={fundos.fundoComunidade}
+            layout="coluna"
+            centralizado
+            altoContraste={isHighContrast}
+          >
+            <ThemedText color="textSecondary" align="center">
+              Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
+              mundo mais inclusivo para todos.
+            </ThemedText>
+          </CardInfoIcone>
+
+          <CartaoMetricas
+            titulo="Impacto da Comunidade"
+            metricas={[
+              { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
+              { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
+              { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
+            ]}
+            altoContraste={isHighContrast}
+          />
+        </View>
+      </View>
+    </Container>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+function formatarNumero(valor) {
+  const numero = Number(valor) || 0;
+  if (numero >= 1000) {
+    return `${(numero / 1000).toFixed(1)}k+`;
+  }
+  return String(numero);
+}
+
+function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
+  return StyleSheet.create({
+    scroll: {
+      paddingBottom: t.spacing.xxxl,
+    },
+    header: {
+      flexDirection: isDesktop ? 'row' : 'column',
+      alignItems: isDesktop ? 'center' : 'flex-start',
+    },
+    conteudo: {
+      flexDirection: isDesktop ? 'row' : 'column',
+      alignItems: 'flex-start',
+      gap: t.spacing.xl,
+    },
+    colunaPrincipal: {
+      flex: 1,
+      minWidth: 0,
+    },
+    colunaLateral: {
+      width: isDesktop ? 320 : '100%',
+      gap: t.spacing.lg,
+    },
+    linhaCampos: {
+      flexDirection: isTablet ? 'row' : 'column',
+      gap: t.spacing.md,
+    },
+    colunaCampo: {
+      flex: 1,
+      minWidth: isTablet ? 260 : '100%',
+    },
+    mapaContainer: {
+      marginTop: t.spacing.sm,
+    },
+    recursosGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: t.spacing.md,
+    },
+    recursoItem: {
+      width: isTablet ? '48%' : '100%',
+    },
+    botaoContainer: {
+      alignItems: isDesktop ? 'flex-start' : 'stretch',
+      marginTop: t.spacing.md,
+    },
+    botaoPrincipal: {
+      minWidth: isDesktop ? 240 : '100%',
+      alignSelf: isDesktop ? 'flex-start' : 'stretch',
+    },
+  });
+}

@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,21 @@ public class LocalController {
                 return ResponseEntity.ok(responseDTOs);
         } catch (Exception e) {
             log.error("Erro ao listar locais", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Retorna estatísticas gerais do sistema (requer autenticação)
+     * @return ResponseEntity com totais de usuários, locais e avaliações
+     */
+    @GetMapping("/estatisticas")
+    public ResponseEntity<Map<String, Long>> obterEstatisticasGerais() {
+        log.info("Endpoint GET /api/locais/estatisticas - Obtendo estatísticas gerais");
+        try {
+            return ResponseEntity.ok(localService.obterEstatisticasGerais());
+        } catch (Exception e) {
+            log.error("Erro ao obter estatísticas gerais", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

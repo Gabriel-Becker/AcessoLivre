@@ -10,7 +10,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -127,5 +129,21 @@ public class LocalService {
         
         localRepository.save(local);
         log.info("Média de avaliações atualizada para local ID {}: {}", idLocal, local.getAvaliacaoMedia());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> obterEstatisticasGerais() {
+        log.info("Obtendo estatísticas gerais para locais");
+
+        long totalUsuarios = usuarioRepository.count();
+        long totalLocais = localRepository.count();
+        long totalAvaliacoes = avaliacaoRepository.count();
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("totalUsuarios", totalUsuarios);
+        stats.put("totalLocais", totalLocais);
+        stats.put("totalAvaliacoes", totalAvaliacoes);
+
+        return stats;
     }
 }

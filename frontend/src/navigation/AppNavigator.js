@@ -38,7 +38,7 @@ function MainApp() {
       case 'Buscar':
         return <Buscar />;
       case 'Adicionar':
-        return <AdicionarLocal />;
+        return <AdicionarLocal onNavigate={handleNavigate} />;
       case 'Sobre':
         return <Sobre />;
       case 'Perfil':
