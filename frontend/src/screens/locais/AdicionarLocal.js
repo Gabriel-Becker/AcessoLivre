@@ -413,6 +413,7 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
     },
     colunaCampo: {
       flex: 1,
+      flexBasis: 0,
       minWidth: isTablet ? 260 : '100%',
     },
     mapaContainer: {

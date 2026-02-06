@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,9 @@ import {
   Modal,
   FlatList,
   TouchableOpacity,
+  UIManager,
+  findNodeHandle,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
@@ -28,6 +31,8 @@ export default function Select({
   const contraste = altoContraste ?? isHighContrast;
   const t = getTheme(contraste);
   const [aberto, setAberto] = useState(false);
+  const [ancora, setAncora] = useState(null);
+  const inputRef = useRef(null);
 
   const estilos = useMemo(() => criarEstilos(t, contraste), [t, contraste]);
 
@@ -38,22 +43,46 @@ export default function Select({
     onSelect?.(opcao.value, opcao);
   };
 
+  const abrirDropdown = () => {
+    if (disabled) return;
+    const elemento = inputRef.current;
+
+    if (Platform.OS === 'web' && elemento?.getBoundingClientRect) {
+      const rect = elemento.getBoundingClientRect();
+      setAncora({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+      setAberto(true);
+      return;
+    }
+
+    const node = findNodeHandle(elemento);
+    if (!node) {
+      setAberto(true);
+      return;
+    }
+
+    UIManager.measureInWindow(node, (x, y, width, height) => {
+      setAncora({ x, y, width, height });
+      setAberto(true);
+    });
+  };
+
   return (
     <View style={[estilos.container, containerStyle]}>
       {label ? (
-        <ThemedText style={estilos.label} color="textPrimary">
+        <ThemedText variant="caption" style={estilos.label} color="textPrimary">
           {label}
         </ThemedText>
       ) : null}
 
       <Pressable
-        onPress={() => !disabled && setAberto(true)}
+        onPress={abrirDropdown}
         style={[
           estilos.input,
           disabled && estilos.inputDisabled,
           style,
         ]}
         accessibilityRole="button"
+        ref={inputRef}
       >
         <ThemedText
           color={selecionado ? 'textPrimary' : 'textTertiary'}
@@ -64,22 +93,28 @@ export default function Select({
         <Ionicons name="chevron-down" size={18} color={t.colors.textSecondary} />
       </Pressable>
 
-      <Modal
-        visible={aberto}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAberto(false)}
-      >
-        <Pressable style={estilos.overlay} onPress={() => setAberto(false)}>
-          <Pressable style={estilos.modalContainer} onPress={() => null}>
-            <View style={[estilos.modal, { maxHeight }]}>
-              <View style={estilos.modalHeader}>
-                <ThemedText weight="semibold">{label || 'Selecione'}</ThemedText>
-                <TouchableOpacity onPress={() => setAberto(false)}>
-                  <Ionicons name="close" size={20} color={t.colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
+      {aberto ? (
+        <Modal
+          visible={aberto}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAberto(false)}
+        >
+          <Pressable style={estilos.overlay} onPress={() => setAberto(false)}>
+            <Pressable
+              style={[
+                estilos.dropdownModal,
+                { maxHeight },
+                ancora
+                  ? {
+                      top: ancora.y + ancora.height + t.spacing.xs,
+                      left: ancora.x,
+                      width: ancora.width,
+                    }
+                  : null,
+              ]}
+              onPress={() => null}
+            >
               <FlatList
                 data={options}
                 keyExtractor={(item) => String(item.value)}
@@ -98,10 +133,10 @@ export default function Select({
                 }}
                 ItemSeparatorComponent={() => <View style={estilos.divisor} />}
               />
-            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      ) : null}
     </View>
   );
 }
@@ -113,11 +148,14 @@ function criarEstilos(t, contraste) {
     },
     label: {
       fontSize: t.typography.fontSize.sm,
+      lineHeight: t.typography.fontSize.sm * t.typography.lineHeight.tight,
       fontWeight: t.typography.fontWeight.medium,
       marginBottom: t.spacing.xs,
+      marginTop: 2,
     },
     input: {
       minHeight: 48,
+      height: 48,
       borderWidth: 2,
       borderColor: t.colors.border,
       borderRadius: t.borderRadius.md,
@@ -134,25 +172,26 @@ function criarEstilos(t, contraste) {
     texto: {
       flex: 1,
       marginRight: t.spacing.sm,
+      fontSize: t.typography.fontSize.md,
+      lineHeight: t.typography.fontSize.md * t.typography.lineHeight.normal,
     },
     overlay: {
-      flex: 1,
-      backgroundColor: t.colors.overlayLight,
-      justifyContent: 'center',
-      padding: t.spacing.lg,
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'transparent',
     },
-    modalContainer: {
-      width: '100%',
-    },
-    modal: {
+    dropdownModal: {
+      position: 'absolute',
+      marginTop: 0,
       backgroundColor: t.colors.surface,
-      borderRadius: t.borderRadius.lg,
+      borderRadius: t.borderRadius.md,
       borderWidth: contraste ? 2 : 1,
       borderColor: contraste ? t.colors.border : t.colors.borderLight,
       overflow: 'hidden',
+      zIndex: 10000,
+      elevation: 10000,
       ...(contraste ? t.shadows.none : t.shadows.lg),
     },
-    modalHeader: {
+    dropdownHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
