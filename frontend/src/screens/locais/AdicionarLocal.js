@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import axios from 'axios';
 import { Container } from '../../components/layout';
 import {
   AreaPlaceholder,
@@ -17,6 +18,8 @@ import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
+import { formatCEP } from '../../utils/formatters';
+import toastHelper from '../../utils/toastHelper';
 
 const RECURSOS_ACESSIBILIDADE = [
   {
@@ -112,9 +115,16 @@ export default function AdicionarLocal({ onNavigate }) {
   const [formulario, setFormulario] = useState({
     nome: '',
     categoria: '',
-    endereco: '',
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
     descricao: '',
   });
+  const [cepBuscado, setCepBuscado] = useState('');
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
@@ -138,6 +148,44 @@ export default function AdicionarLocal({ onNavigate }) {
 
   const atualizarCampo = (campo) => (valor) => {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
+  };
+
+  const buscarCep = async (cepLimpo) => {
+    if (!cepLimpo || cepLimpo.length !== 8) return;
+    if (cepLimpo === cepBuscado) return;
+
+    setCepBuscado(cepLimpo);
+
+    try {
+      const response = await axios.get(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+
+      if (response.data && !response.data.erro) {
+        const endereco = response.data;
+
+        setFormulario((anterior) => ({
+          ...anterior,
+          logradouro: endereco.logradouro || '',
+          bairro: endereco.bairro || '',
+          cidade: endereco.localidade || '',
+          estado: endereco.uf || '',
+        }));
+        return;
+      }
+
+      toastHelper.showError('CEP não encontrado');
+    } catch (erro) {
+      toastHelper.showError('Erro ao consultar CEP. Verifique sua conexão.');
+    }
+  };
+
+  const handleCepChange = (valor) => {
+    const cepFormatado = formatCEP(valor);
+    atualizarCampo('cep')(cepFormatado);
+
+    const cepLimpo = cepFormatado.replace(/\D/g, '');
+    if (cepLimpo.length === 8) {
+      buscarCep(cepLimpo);
+    }
   };
 
   useEffect(() => {
@@ -220,28 +268,84 @@ export default function AdicionarLocal({ onNavigate }) {
               </View>
             </View>
 
+            <View style={estilos.linhaCampos}>
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="CEP *"
+                  placeholder="88015-200"
+                  value={formulario.cep}
+                  onChangeText={handleCepChange}
+                  keyboardType="numeric"
+                  maxLength={9}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Estado *"
+                  placeholder="UF"
+                  value={formulario.estado}
+                  onChangeText={atualizarCampo('estado')}
+                  autoCapitalize="characters"
+                  maxLength={2}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+            </View>
+
             <Input
-              label="Endereço Completo *"
-              placeholder="Ex: Av. Paulista, 1000 - Bela Vista, São Paulo - SP, 01310-100"
-              value={formulario.endereco}
-              onChangeText={atualizarCampo('endereco')}
+              label="Logradouro *"
+              placeholder="Ex: Av. Beira-Mar Norte"
+              value={formulario.logradouro}
+              onChangeText={atualizarCampo('logradouro')}
               altoContraste={isHighContrast}
             />
 
-            <Spacer size="sm" />
+            <View style={estilos.linhaCampos}>
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Número *"
+                  placeholder="Ex: 1230"
+                  value={formulario.numero}
+                  onChangeText={atualizarCampo('numero')}
+                  keyboardType="numeric"
+                  altoContraste={isHighContrast}
+                />
+              </View>
 
-            <View style={estilos.mapaContainer}>
-              <ThemedText weight="semibold">Localização no Mapa</ThemedText>
-              <Spacer size="sm" />
-              <AreaPlaceholder
-                icone="map-outline"
-                titulo="Mapa Interativo"
-                subtitulo="Integração futura com Google Maps"
-                altoContraste={isHighContrast}
-              />
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Complemento"
+                  placeholder="Ex: Apto 402"
+                  value={formulario.complemento}
+                  onChangeText={atualizarCampo('complemento')}
+                  altoContraste={isHighContrast}
+                />
+              </View>
             </View>
 
-            <Spacer size="sm" />
+            <View style={estilos.linhaCampos}>
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Bairro *"
+                  placeholder="Ex: Centro"
+                  value={formulario.bairro}
+                  onChangeText={atualizarCampo('bairro')}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+
+              <View style={estilos.colunaCampo}>
+                <Input
+                  label="Cidade *"
+                  placeholder="Ex: Florianópolis"
+                  value={formulario.cidade}
+                  onChangeText={atualizarCampo('cidade')}
+                  altoContraste={isHighContrast}
+                />
+              </View>
+            </View>
 
             <Input
               label="Descrição (Opcional)"
@@ -415,9 +519,6 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
       flex: 1,
       flexBasis: 0,
       minWidth: isTablet ? 260 : '100%',
-    },
-    mapaContainer: {
-      marginTop: t.spacing.sm,
     },
     recursosGrid: {
       flexDirection: 'row',
