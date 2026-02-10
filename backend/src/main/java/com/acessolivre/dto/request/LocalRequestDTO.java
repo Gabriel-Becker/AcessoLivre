@@ -3,6 +3,7 @@ package com.acessolivre.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,8 @@ public class LocalRequestDTO {
     @NotNull(message = "ID do usuário é obrigatório")
     private Long idUsuario;
 
-    @NotNull(message = "ID do endereço é obrigatório")
     private Long idEndereco;
+
+    @Valid
+    private EnderecoRequestDTO endereco;
 }

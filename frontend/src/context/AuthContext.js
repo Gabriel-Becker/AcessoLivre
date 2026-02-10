@@ -260,29 +260,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Atualiza dados do usuário (útil após edição de perfil)
-   */
-  const updateUserData = async () => {
-    if (isAuthenticated) {
-      try {
-        setLoading(true);
-        const { autenticado, usuario: usuarioAtualizado } = await AuthService.carregarSessao();
-        
-        if (autenticado && usuarioAtualizado) {
-          setUsuario(usuarioAtualizado);
-        } else {
-          // Se não conseguiu carregar, fazer logout
-          await logout();
-        }
-      } catch (error) {
-        console.error('[AuthContext] Erro ao atualizar dados do usuário:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -296,7 +273,6 @@ export const AuthProvider = ({ children }) => {
         confirmarCadastro,
         logout,
         carregarSessao,
-        updateUserData,
       }}
     >
       {children}

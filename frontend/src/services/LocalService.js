@@ -16,17 +16,15 @@ const LocalService = {
   },
 
   /**
-   * Busca todos os locais com filtros opcionais
+   * Busca todos os locais com paginação
    */
-  async listarLocais({ cidade, categoria, acessibilidade, pagina = 1, limite = 10 } = {}) {
+  async listarLocais({ page = 0, size = 20, sort = 'nome' } = {}) {
     try {
       const response = await api.get('/locais', {
         params: {
-          cidade,
-          categoria,
-          acessibilidade,
-          pagina,
-          limite,
+          page,
+          size,
+          sort,
         },
       });
       return response.data;

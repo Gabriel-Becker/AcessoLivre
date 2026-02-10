@@ -53,7 +53,7 @@ public class Local {
     @JsonIgnore
     private Usuario usuario;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "idendereco", referencedColumnName = "idendereco")
     @NotNull(message = "Endereço é obrigatório")
     private Endereco endereco;

@@ -1,53 +1,168 @@
 package com.acessolivre.service;
 
 import com.acessolivre.model.Endereco;
-import com.acessolivre.repository.EnderecoRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EnderecoService {
 
-    private final EnderecoRepository enderecoRepository;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<Endereco> listarTodos() {
-        log.info("Listando todos os endereços");
-        return enderecoRepository.findAll();
-    }
-
-    public Optional<Endereco> buscarPorId(Long id) {
-        log.info("Buscando endereço: id={}", id);
-        return enderecoRepository.findById(id);
-    }
-
-    @Transactional
-    public Endereco salvar(Endereco endereco) {
-        log.info("Salvando endereço: usuarioId={}", 
-                endereco.getUsuario() != null ? endereco.getUsuario().getIdUsuario() : "null");
-        
-        Endereco salvo = enderecoRepository.save(endereco);
-        log.info("Endereço salvo: id={}", salvo.getIdEndereco());
-        return salvo;
-    }
-
-    @Transactional
-    public boolean deletar(Long id) {
-        log.info("Deletando endereço: id={}", id);
-        
-        if (!enderecoRepository.existsById(id)) {
-            log.warn("Endereço não encontrado para deletar: id={}", id);
-            return false;
+    public void validarEndereco(Endereco endereco) {
+        if (endereco == null) {
+            throw new IllegalArgumentException("Endereco nao pode ser nulo");
         }
-        
-        enderecoRepository.deleteById(id);
-        log.info("Endereço deletado: id={}", id);
-        return true;
+
+        if (endereco.getCep() == null || endereco.getCep().trim().isEmpty()) {
+            throw new IllegalArgumentException("CEP e obrigatorio");
+        }
+
+        String cepLimpo = endereco.getCep().replaceAll("[^0-9]", "");
+        if (cepLimpo.length() != 8) {
+            throw new IllegalArgumentException("CEP deve conter exatamente 8 digitos");
+        }
+        endereco.setCep(cepLimpo);
+
+        DadosViaCep dados = buscarDadosCep(cepLimpo);
+
+        if (endereco.getEstado() == null || endereco.getEstado().trim().isEmpty()) {
+            throw new IllegalArgumentException("Estado e obrigatorio");
+        }
+
+        String estado = endereco.getEstado().trim().toUpperCase();
+        if (!estado.matches("^[A-Z]{2}$")) {
+            throw new IllegalArgumentException("Estado deve ter exatamente 2 letras maiusculas");
+        }
+        endereco.setEstado(estado);
+        if (!dados.getUf().equalsIgnoreCase(estado)) {
+            throw new IllegalArgumentException(
+                String.format("Estado '%s' nao corresponde ao CEP informado. Estado esperado: %s", estado, dados.getUf())
+            );
+        }
+
+        if (endereco.getCidade() == null || endereco.getCidade().trim().isEmpty()) {
+            throw new IllegalArgumentException("Cidade e obrigatoria");
+        }
+        if (endereco.getCidade().trim().length() < 2 || endereco.getCidade().trim().length() > 100) {
+            throw new IllegalArgumentException("Cidade deve ter entre 2 e 100 caracteres");
+        }
+
+        if (endereco.getNumero() == null || endereco.getNumero().trim().isEmpty()) {
+            throw new IllegalArgumentException("Numero e obrigatorio");
+        }
+        if (endereco.getNumero().trim().length() < 1 || endereco.getNumero().trim().length() > 10) {
+            throw new IllegalArgumentException("Numero deve ter entre 1 e 10 caracteres");
+        }
+
+        if (endereco.getComplemento() != null && endereco.getComplemento().trim().length() > 100) {
+            throw new IllegalArgumentException("Complemento deve ter no maximo 100 caracteres");
+        }
+
+        if (!dados.getLocalidade().equalsIgnoreCase(endereco.getCidade().trim())) {
+            throw new IllegalArgumentException(
+                String.format("Cidade '%s' nao corresponde ao CEP informado. Cidade esperada: %s", endereco.getCidade(), dados.getLocalidade())
+            );
+        }
+
+        if (endereco.getBairro() == null || endereco.getBairro().trim().isEmpty()) {
+            throw new IllegalArgumentException("Bairro e obrigatorio");
+        }
+        if (endereco.getBairro().trim().length() < 3 || endereco.getBairro().trim().length() > 100) {
+            throw new IllegalArgumentException("Bairro deve ter entre 3 e 100 caracteres");
+        }
+        if (dados.getBairro() != null && !dados.getBairro().trim().isEmpty()) {
+            if (!dados.getBairro().equalsIgnoreCase(endereco.getBairro().trim())) {
+                throw new IllegalArgumentException(
+                    String.format("Bairro '%s' nao corresponde ao CEP informado. Bairro esperado: %s", endereco.getBairro(), dados.getBairro())
+                );
+            }
+        }
+
+        if (endereco.getLogradouro() == null || endereco.getLogradouro().trim().isEmpty()) {
+            throw new IllegalArgumentException("Logradouro e obrigatorio");
+        }
+        if (endereco.getLogradouro().trim().length() < 3 || endereco.getLogradouro().trim().length() > 200) {
+            throw new IllegalArgumentException("Logradouro deve ter entre 3 e 200 caracteres");
+        }
+        if (dados.getLogradouro() != null && !dados.getLogradouro().trim().isEmpty()) {
+            if (!dados.getLogradouro().equalsIgnoreCase(endereco.getLogradouro().trim())) {
+                throw new IllegalArgumentException(
+                    String.format("Logradouro '%s' nao corresponde ao CEP informado. Logradouro esperado: %s", endereco.getLogradouro(), dados.getLogradouro())
+                );
+            }
+        }
+    }
+
+    private DadosViaCep buscarDadosCep(String cep) {
+        try {
+            String url = "https://viacep.com.br/ws/" + cep + "/json/";
+            String response = restTemplate.getForObject(url, String.class);
+
+            if (response == null) {
+                throw new IllegalArgumentException("Erro ao consultar CEP no ViaCEP");
+            }
+
+            JsonNode jsonNode = objectMapper.readTree(response);
+            if (jsonNode.has("erro") && jsonNode.get("erro").asBoolean()) {
+                throw new IllegalArgumentException("CEP nao encontrado");
+            }
+
+            DadosViaCep dados = new DadosViaCep();
+            dados.setLogradouro(jsonNode.path("logradouro").asText(""));
+            dados.setBairro(jsonNode.path("bairro").asText(""));
+            dados.setLocalidade(jsonNode.path("localidade").asText(""));
+            dados.setUf(jsonNode.path("uf").asText(""));
+            return dados;
+        } catch (RestClientException e) {
+            throw new IllegalArgumentException("Erro ao consultar CEP no ViaCEP");
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Erro ao processar resposta do ViaCEP");
+        }
+    }
+
+    private static class DadosViaCep {
+        private String logradouro;
+        private String bairro;
+        private String localidade;
+        private String uf;
+
+        public String getLogradouro() {
+            return logradouro;
+        }
+
+        public void setLogradouro(String logradouro) {
+            this.logradouro = logradouro;
+        }
+
+        public String getBairro() {
+            return bairro;
+        }
+
+        public void setBairro(String bairro) {
+            this.bairro = bairro;
+        }
+
+        public String getLocalidade() {
+            return localidade;
+        }
+
+        public void setLocalidade(String localidade) {
+            this.localidade = localidade;
+        }
+
+        public String getUf() {
+            return uf;
+        }
+
+        public void setUf(String uf) {
+            this.uf = uf;
+        }
     }
 }

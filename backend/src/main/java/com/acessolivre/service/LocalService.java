@@ -1,6 +1,7 @@
 package com.acessolivre.service;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
+import com.acessolivre.mapper.EnderecoMapper;
 import com.acessolivre.model.*;
 import com.acessolivre.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class LocalService {
     private final CategoriaRepository categoriaRepository;
     private final TipoAcessibilidadeRepository tipoAcessibilidadeRepository;
     private final EnderecoRepository enderecoRepository;
+    private final EnderecoService enderecoService;
     private final AvaliacaoRepository avaliacaoRepository;
 
     @Transactional(readOnly = true)
@@ -70,8 +72,7 @@ public class LocalService {
         TipoAcessibilidade tipoAcessibilidade = tipoAcessibilidadeRepository.findById(dto.getIdTipoAcessibilidade())
                 .orElseThrow(() -> new IllegalArgumentException("Tipo de acessibilidade não encontrado"));
 
-        Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
-                .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
+        Endereco endereco = resolverEndereco(dto);
 
         Local local = com.acessolivre.mapper.LocalMapper.toEntity(dto, usuario, categoria, tipoAcessibilidade, endereco);
         Local salvo = localRepository.save(local);
@@ -93,8 +94,7 @@ public class LocalService {
             TipoAcessibilidade tipoAcessibilidade = tipoAcessibilidadeRepository.findById(dto.getIdTipoAcessibilidade())
                     .orElseThrow(() -> new IllegalArgumentException("Tipo de acessibilidade não encontrado"));
 
-            Endereco endereco = enderecoRepository.findById(dto.getIdEndereco())
-                    .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
+                Endereco endereco = resolverEndereco(dto);
 
             com.acessolivre.mapper.LocalMapper.updateEntity(local, dto, usuario, categoria, tipoAcessibilidade, endereco);
             Local atualizado = localRepository.save(local);
@@ -113,6 +113,24 @@ public class LocalService {
 
         localRepository.deleteById(id);
         return true;
+    }
+
+    private Endereco resolverEndereco(LocalRequestDTO dto) {
+        if (dto.getEndereco() != null) {
+            if (dto.getEndereco().getIdUsuario() == null) {
+                dto.getEndereco().setIdUsuario(dto.getIdUsuario());
+            }
+            Endereco endereco = EnderecoMapper.toEntity(dto.getEndereco());
+            enderecoService.validarEndereco(endereco);
+            return enderecoRepository.save(endereco);
+        }
+
+        if (dto.getIdEndereco() == null) {
+            throw new IllegalArgumentException("Endereço é obrigatório");
+        }
+
+        return enderecoRepository.findById(dto.getIdEndereco())
+                .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
     }
 
     @Transactional

@@ -112,15 +112,6 @@ const AuthService = {
     }
   },
 
-  async getUserData() {
-    try {
-      const raw = await AsyncStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  },
-
   async setUserData(usuario) {
     if (!usuario) {
       await AsyncStorage.removeItem(USER_KEY);
@@ -381,43 +372,6 @@ const AuthService = {
     }
   },
 
-  async verificarEmail(email, codigo) {
-    try {
-      const response = await api.post('/auth/verify-email', {
-        email,
-        codigo
-      });
-      
-      return {
-        sucesso: true,
-        mensagem: response.data
-      };
-    } catch (error) {
-      console.error('[AuthService] Erro ao verificar email:', error);
-      return {
-        sucesso: false,
-        mensagem: error.response?.data || 'Erro ao verificar email'
-      };
-    }
-  },
-
-  async reenviarCodigoVerificacao(email) {
-    try {
-      const response = await api.post(`/auth/resend-verification-code?email=${encodeURIComponent(email)}`);
-      
-      return {
-        sucesso: true,
-        mensagem: response.data
-      };
-    } catch (error) {
-      console.error('[AuthService] Erro ao reenviar código:', error);
-      return {
-        sucesso: false,
-        mensagem: error.response?.data || 'Erro ao reenviar código'
-      };
-    }
-  },
-
   // ============ 2FA Methods ============
   
   async setup2FA() {
@@ -478,38 +432,6 @@ const AuthService = {
     }
   },
 
-  async getRecoveryCodes() {
-    try {
-      const response = await api.get('/auth/2fa/recovery-codes');
-      return {
-        sucesso: true,
-        codes: response.data
-      };
-    } catch (error) {
-      console.error('[AuthService] Erro ao listar códigos:', error);
-      return {
-        sucesso: false,
-        mensagem: error.response?.data || 'Erro ao listar códigos'
-      };
-    }
-  },
-
-  async generateRecoveryCodes() {
-    try {
-      const response = await api.post('/auth/2fa/generate-recovery-codes');
-      return {
-        sucesso: true,
-        codes: response.data
-      };
-    } catch (error) {
-      console.error('[AuthService] Erro ao gerar códigos:', error);
-      return {
-        sucesso: false,
-        mensagem: error.response?.data || 'Erro ao gerar códigos'
-      };
-    }
-  },
-
   /**
    * Troca a senha do usuário autenticado
    */
@@ -560,15 +482,11 @@ export const {
   carregarSessao, 
   validateToken, 
   reautenticar,
-  verificarEmail,
-  reenviarCodigoVerificacao,
   resendRegistrationCode,
   setup2FA,
   enable2FA,
   disable2FA,
   get2FAStatus,
-  getRecoveryCodes,
-  generateRecoveryCodes,
   verifyTwoFactorCode,
   trocarSenha
 } = AuthService;

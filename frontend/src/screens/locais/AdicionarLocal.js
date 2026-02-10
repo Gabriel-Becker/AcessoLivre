@@ -145,7 +145,6 @@ export default function AdicionarLocal({ onNavigate }) {
   const [tiposAcessibilidade, setTiposAcessibilidade] = useState([]);
   const [carregandoListas, setCarregandoListas] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [avisouLogin, setAvisouLogin] = useState(false);
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
@@ -216,13 +215,32 @@ export default function AdicionarLocal({ onNavigate }) {
   useEffect(() => {
     const carregarListas = async () => {
       setCarregandoListas(true);
-      setCategorias(CATEGORIAS_FIXAS);
-      setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
-      setCarregandoListas(false);
+      try {
+        const [categoriasResponse, tiposResponse] = await Promise.all([
+          api.get('/categorias'),
+          api.get('/tipos-acessibilidade'),
+        ]);
+
+        const categoriasData = Array.isArray(categoriasResponse.data)
+          ? categoriasResponse.data
+          : CATEGORIAS_FIXAS;
+        const tiposData = Array.isArray(tiposResponse.data)
+          ? tiposResponse.data
+          : TIPOS_ACESSIBILIDADE_FIXOS;
+
+        setCategorias(categoriasData);
+        setTiposAcessibilidade(tiposData);
+      } catch (erro) {
+        setCategorias(CATEGORIAS_FIXAS);
+        setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
+        toastHelper.showError('Nao foi possivel carregar categorias e tipos.');
+      } finally {
+        setCarregandoListas(false);
+      }
     };
 
     carregarListas();
-  }, [avisouLogin, isAuthenticated]);
+  }, []);
 
   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
@@ -352,31 +370,22 @@ export default function AdicionarLocal({ onNavigate }) {
     setEnviando(true);
 
     try {
-      const enderecoPayload = {
-        idUsuario: usuario.idUsuario,
-        cep: formulario.cep,
-        logradouro: formulario.logradouro,
-        numero: formulario.numero,
-        complemento: formulario.complemento || '',
-        bairro: formulario.bairro,
-        cidade: formulario.cidade,
-        estado: formulario.estado,
-      };
-
-      const enderecoResponse = await api.post('/enderecos', enderecoPayload);
-      const idEndereco = enderecoResponse.data?.idEndereco;
-
-      if (!idEndereco) {
-        throw new Error('Endereço não retornou um ID válido.');
-      }
-
       const payloadLocal = {
         nome: formulario.nome,
         descricao: formulario.descricao,
         idCategoria: formulario.categoria,
         idTipoAcessibilidade,
         idUsuario: usuario.idUsuario,
-        idEndereco,
+        endereco: {
+          idUsuario: usuario.idUsuario,
+          cep: formulario.cep,
+          logradouro: formulario.logradouro,
+          numero: formulario.numero,
+          complemento: formulario.complemento || '',
+          bairro: formulario.bairro,
+          cidade: formulario.cidade,
+          estado: formulario.estado,
+        },
       };
 
       await LocalService.cadastrarLocal(payloadLocal);
@@ -444,16 +453,11 @@ export default function AdicionarLocal({ onNavigate }) {
                   options={opcoesCategoria}
                   onSelect={(valor) => atualizarCampo('categoria')(valor)}
                   altoContraste={isHighContrast}
-                  disabled={!isAuthenticated || carregandoListas || !opcoesCategoria.length}
+                  disabled={carregandoListas || !opcoesCategoria.length}
                 />
-                {!isAuthenticated ? (
+                {!carregandoListas && !opcoesCategoria.length ? (
                   <ThemedText variant="tiny" color="textTertiary">
-                    Faça login para carregar categorias.
-                  </ThemedText>
-                ) : null}
-                {isAuthenticated && !carregandoListas && !opcoesCategoria.length ? (
-                  <ThemedText variant="tiny" color="textTertiary">
-                    Nenhuma categoria disponível no momento.
+                    Nao foi possivel carregar categorias.
                   </ThemedText>
                 ) : null}
               </View>
