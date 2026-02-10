@@ -142,6 +142,8 @@ export default function Select({
 }
 
 function criarEstilos(t, contraste) {
+  const isWeb = Platform.OS === 'web';
+
   return StyleSheet.create({
     container: {
       marginBottom: t.spacing.sm,
@@ -176,19 +178,24 @@ function criarEstilos(t, contraste) {
       lineHeight: t.typography.fontSize.md * t.typography.lineHeight.normal,
     },
     overlay: {
-      ...StyleSheet.absoluteFillObject,
+      position: isWeb ? 'fixed' : 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
       backgroundColor: 'transparent',
+      zIndex: 9998,
     },
     dropdownModal: {
-      position: 'absolute',
+      position: isWeb ? 'fixed' : 'absolute',
       marginTop: 0,
       backgroundColor: t.colors.surface,
       borderRadius: t.borderRadius.md,
       borderWidth: contraste ? 2 : 1,
       borderColor: contraste ? t.colors.border : t.colors.borderLight,
       overflow: 'hidden',
-      zIndex: 10000,
-      elevation: 10000,
+      zIndex: 9999,
+      elevation: 9999,
       ...(contraste ? t.shadows.none : t.shadows.lg),
     },
     dropdownHeader: {

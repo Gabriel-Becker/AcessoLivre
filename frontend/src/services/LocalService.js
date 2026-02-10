@@ -5,28 +5,14 @@ const LocalService = {
    * Busca estatísticas gerais do sistema
    */
   async obterEstatisticas() {
-    try {
-      const response = await api.get('/locais/estatisticas');
-      return response.data;
-    } catch (erro) {
-      console.error('Erro ao obter estatísticas:', erro);
-      throw erro;
-    }
+    return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
   },
 
   /**
    * Busca locais em destaque (avaliados recentemente)
    */
   async obterLocaisEmDestaque(limite = 4) {
-    try {
-      const response = await api.get('/locais/destaque', {
-        params: { limite },
-      });
-      return response.data;
-    } catch (erro) {
-      console.error('Erro ao obter locais em destaque:', erro);
-      throw erro;
-    }
+    return [];
   },
 
   /**

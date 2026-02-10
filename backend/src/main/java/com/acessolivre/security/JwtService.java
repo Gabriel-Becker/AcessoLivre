@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class JwtService {
 
     private final JwtEncoder encoder;
@@ -86,6 +88,7 @@ public class JwtService {
             Jwt jwt = jwtDecoder.decode(token);
             return jwt.getSubject();
         } catch (Exception e) {
+            log.warn("Falha ao decodificar JWT para extrair usuario: {}", e.getClass().getSimpleName());
             return null;
         }
     }
@@ -94,16 +97,29 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         if (token == null || userDetails == null) return false;
         String username = extrairNomeUsuario(token);
-        if (username == null || !username.equals(userDetails.getUsername())) return false;
+        if (username == null || !username.equals(userDetails.getUsername())) {
+            log.warn("JWT com usuario divergente. esperado={}, obtido={}", userDetails.getUsername(), username);
+            return false;
+        }
         try {
             Jwt jwt = jwtDecoder.decode(token);
             Instant exp = jwt.getExpiresAt();
-            if (exp == null) return false;
-            if (exp.isBefore(Instant.now())) return false;
+            if (exp == null) {
+                log.warn("JWT sem expiracao (exp)");
+                return false;
+            }
+            if (exp.isBefore(Instant.now())) {
+                log.warn("JWT expirado em {}", exp);
+                return false;
+            }
         } catch (Exception e) {
+            log.warn("Falha ao validar JWT: {}", e.getClass().getSimpleName());
             return false;
         }
-        if (isTokenRevogado(token)) return false;
+        if (isTokenRevogado(token)) {
+            log.warn("JWT revogado");
+            return false;
+        }
         return true;
     }
 }

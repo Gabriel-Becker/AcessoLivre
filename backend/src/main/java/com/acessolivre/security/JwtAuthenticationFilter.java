@@ -17,12 +17,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Filtro responsável por interceptar requisições e validar o token JWT.
  */
 @RequiredArgsConstructor
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -32,17 +34,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null) {
+            // Fallback para proxies/servidores que normalizam nomes de header.
+            authHeader = request.getHeader("authorization");
+        }
+        if (authHeader == null) {
+            // Fallback defensivo para variacoes comuns em ambiente web.
+            authHeader = request.getHeader("X-Authorization");
+        }
         final String jwt;
         final String userEmail;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (log.isDebugEnabled()) {
+                log.debug("Authorization ausente ou invalido. path={}, hasHeader={}, hasBearerPrefix={}",
+                        request.getRequestURI(), authHeader != null, authHeader != null && authHeader.startsWith("Bearer "));
+            }
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(7);
         userEmail = jwtService.extrairNomeUsuario(jwt);
+        if (userEmail == null) {
+            log.warn("JWT invalido: nao foi possivel extrair usuario. path={}", request.getRequestURI());
+        }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
@@ -51,6 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+            } else {
+                log.warn("JWT rejeitado na validacao. path={}, usuario={}", request.getRequestURI(), userEmail);
             }
         }
         filterChain.doFilter(request, response);

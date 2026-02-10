@@ -16,8 +16,10 @@ import {
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
+import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 
@@ -93,28 +95,42 @@ const RECURSOS_ACESSIBILIDADE = [
     cor: 'primary',
   },
 ];
-
-const CATEGORIAS = [
-  { label: 'Comercial', value: 'Comercial' },
-  { label: 'Público', value: 'Público' },
-  { label: 'Saúde', value: 'Saúde' },
-  { label: 'Educação', value: 'Educação' },
-  { label: 'Lazer', value: 'Lazer' },
-  { label: 'Transporte', value: 'Transporte' },
-  { label: 'Alimentação', value: 'Alimentação' },
-  { label: 'Hospedagem', value: 'Hospedagem' },
-  { label: 'Serviços', value: 'Serviços' },
+const CATEGORIAS_FIXAS = [
+  { idCategoria: 1, nome: 'Comercial' },
+  { idCategoria: 2, nome: 'Publico' },
+  { idCategoria: 3, nome: 'Saude' },
+  { idCategoria: 4, nome: 'Educacao' },
+  { idCategoria: 5, nome: 'Lazer' },
+  { idCategoria: 6, nome: 'Transporte' },
+  { idCategoria: 7, nome: 'Alimentacao' },
+  { idCategoria: 8, nome: 'Hospedagem' },
+  { idCategoria: 9, nome: 'Servicos' },
 ];
+
+const TIPOS_ACESSIBILIDADE_FIXOS = [
+  { idTipoAcessibilidade: 1, nome: 'Rampa de acesso' },
+  { idTipoAcessibilidade: 2, nome: 'Banheiro adaptado' },
+  { idTipoAcessibilidade: 3, nome: 'Elevador acessível' },
+  { idTipoAcessibilidade: 4, nome: 'Piso tátil' },
+  { idTipoAcessibilidade: 5, nome: 'Sinalização em braille' },
+  { idTipoAcessibilidade: 6, nome: 'Estacionamento acessível' },
+  { idTipoAcessibilidade: 7, nome: 'Espaço amplo' },
+  { idTipoAcessibilidade: 8, nome: 'Recursos audiovisuais' },
+  { idTipoAcessibilidade: 9, nome: 'Atendimento especializado' },
+  { idTipoAcessibilidade: 10, nome: 'Mobiliário adaptado' },
+];
+
 
 export default function AdicionarLocal({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
+  const { usuario, isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet;
 
   const [formulario, setFormulario] = useState({
     nome: '',
-    categoria: '',
+    categoria: null,
     cep: '',
     logradouro: '',
     numero: '',
@@ -125,6 +141,11 @@ export default function AdicionarLocal({ onNavigate }) {
     descricao: '',
   });
   const [cepBuscado, setCepBuscado] = useState('');
+  const [categorias, setCategorias] = useState([]);
+  const [tiposAcessibilidade, setTiposAcessibilidade] = useState([]);
+  const [carregandoListas, setCarregandoListas] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [avisouLogin, setAvisouLogin] = useState(false);
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
@@ -189,21 +210,19 @@ export default function AdicionarLocal({ onNavigate }) {
   };
 
   useEffect(() => {
-    const carregarEstatisticas = async () => {
-      try {
-        const dados = await LocalService.obterEstatisticas();
-        setEstatisticas({
-          totalLocais: Number(dados?.totalLocais) || 0,
-          totalAvaliacoes: Number(dados?.totalAvaliacoes) || 0,
-          totalUsuarios: Number(dados?.totalUsuarios) || 0,
-        });
-      } catch (erro) {
-        setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
-      }
+    setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const carregarListas = async () => {
+      setCarregandoListas(true);
+      setCategorias(CATEGORIAS_FIXAS);
+      setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
+      setCarregandoListas(false);
     };
 
-    carregarEstatisticas();
-  }, []);
+    carregarListas();
+  }, [avisouLogin, isAuthenticated]);
 
   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
@@ -221,6 +240,167 @@ export default function AdicionarLocal({ onNavigate }) {
     }
     return t.colors.primary;
   };
+
+  const normalizarTexto = (texto) =>
+    texto
+      ?.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+  const obterIdTipoAcessibilidade = () => {
+    const selecionados = Object.keys(recursosSelecionados).filter(
+      (id) => recursosSelecionados[id]
+    );
+
+    if (!selecionados.length) {
+      return null;
+    }
+
+    // Usa o primeiro recurso selecionado que encontrar no cadastro de tipos
+    const recursosSelecionadosInfo = RECURSOS_ACESSIBILIDADE.filter((recurso) =>
+      selecionados.includes(recurso.id)
+    );
+
+    for (const recurso of recursosSelecionadosInfo) {
+      const recursoNormalizado = normalizarTexto(recurso.titulo);
+      const tipo = tiposAcessibilidade.find((item) => {
+        const tipoNormalizado = normalizarTexto(item.nome);
+        return tipoNormalizado?.includes(recursoNormalizado) || recursoNormalizado?.includes(tipoNormalizado);
+      });
+
+      if (tipo?.idTipoAcessibilidade) {
+        return tipo.idTipoAcessibilidade;
+      }
+    }
+
+    return null;
+  };
+
+  const validarFormulario = () => {
+    if (!usuario?.idUsuario) {
+      toastHelper.showError('Faça login para adicionar um local.');
+      return false;
+    }
+
+    if (!formulario.nome?.trim()) {
+      toastHelper.showError('Nome do local é obrigatório.');
+      return false;
+    }
+
+    if (!formulario.categoria) {
+      toastHelper.showError('Categoria é obrigatória.');
+      return false;
+    }
+
+    if (!formulario.descricao?.trim()) {
+      toastHelper.showError('Descrição é obrigatória.');
+      return false;
+    }
+
+    if (!formulario.cep || formulario.cep.replace(/\D/g, '').length !== 8) {
+      toastHelper.showError('CEP válido é obrigatório.');
+      return false;
+    }
+
+    if (!formulario.logradouro?.trim()) {
+      toastHelper.showError('Logradouro é obrigatório.');
+      return false;
+    }
+
+    if (!formulario.numero?.trim()) {
+      toastHelper.showError('Número é obrigatório.');
+      return false;
+    }
+
+    if (!formulario.bairro?.trim()) {
+      toastHelper.showError('Bairro é obrigatório.');
+      return false;
+    }
+
+    if (!formulario.cidade?.trim()) {
+      toastHelper.showError('Cidade é obrigatória.');
+      return false;
+    }
+
+    if (!formulario.estado?.trim()) {
+      toastHelper.showError('Estado é obrigatório.');
+      return false;
+    }
+
+    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
+    if (!idTipoAcessibilidade) {
+      toastHelper.showError('Selecione um recurso de acessibilidade válido.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSalvarLocal = async () => {
+    if (enviando) return;
+
+    if (!validarFormulario()) {
+      return;
+    }
+
+    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
+    if (!idTipoAcessibilidade) {
+      return;
+    }
+
+    setEnviando(true);
+
+    try {
+      const enderecoPayload = {
+        idUsuario: usuario.idUsuario,
+        cep: formulario.cep,
+        logradouro: formulario.logradouro,
+        numero: formulario.numero,
+        complemento: formulario.complemento || '',
+        bairro: formulario.bairro,
+        cidade: formulario.cidade,
+        estado: formulario.estado,
+      };
+
+      const enderecoResponse = await api.post('/enderecos', enderecoPayload);
+      const idEndereco = enderecoResponse.data?.idEndereco;
+
+      if (!idEndereco) {
+        throw new Error('Endereço não retornou um ID válido.');
+      }
+
+      const payloadLocal = {
+        nome: formulario.nome,
+        descricao: formulario.descricao,
+        idCategoria: formulario.categoria,
+        idTipoAcessibilidade,
+        idUsuario: usuario.idUsuario,
+        idEndereco,
+      };
+
+      await LocalService.cadastrarLocal(payloadLocal);
+      toastHelper.showSuccess('Local adicionado com sucesso.');
+    } catch (erro) {
+      const mensagem =
+        erro?.response?.data?.mensagem ||
+        erro?.response?.data ||
+        erro?.message ||
+        'Erro ao cadastrar local.';
+      toastHelper.showError(mensagem);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const opcoesCategoria = useMemo(
+    () =>
+      categorias.map((categoria) => ({
+        label: categoria.nome,
+        value: categoria.idCategoria,
+      })),
+    [categorias]
+  );
 
   return (
     <Container
@@ -261,10 +441,21 @@ export default function AdicionarLocal({ onNavigate }) {
                   label="Categoria *"
                   placeholder="Selecione uma categoria"
                   value={formulario.categoria}
-                  options={CATEGORIAS}
+                  options={opcoesCategoria}
                   onSelect={(valor) => atualizarCampo('categoria')(valor)}
                   altoContraste={isHighContrast}
+                  disabled={!isAuthenticated || carregandoListas || !opcoesCategoria.length}
                 />
+                {!isAuthenticated ? (
+                  <ThemedText variant="tiny" color="textTertiary">
+                    Faça login para carregar categorias.
+                  </ThemedText>
+                ) : null}
+                {isAuthenticated && !carregandoListas && !opcoesCategoria.length ? (
+                  <ThemedText variant="tiny" color="textTertiary">
+                    Nenhuma categoria disponível no momento.
+                  </ThemedText>
+                ) : null}
               </View>
             </View>
 
@@ -348,7 +539,7 @@ export default function AdicionarLocal({ onNavigate }) {
             </View>
 
             <Input
-              label="Descrição (Opcional)"
+              label="Descrição *"
               placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
               value={formulario.descricao}
               onChangeText={atualizarCampo('descricao')}
@@ -406,8 +597,10 @@ export default function AdicionarLocal({ onNavigate }) {
             <Button
               variant="primary"
               size="large"
-              onPress={() => null}
+              onPress={handleSalvarLocal}
               iconLeft="add"
+              loading={enviando}
+              disabled={carregandoListas}
               fullWidth={!isDesktop}
               style={estilos.botaoPrincipal}
               altoContraste={isHighContrast}

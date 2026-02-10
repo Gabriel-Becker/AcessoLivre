@@ -1,9 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/axios';
-import '../api/interceptors'; // garante que os interceptors estejam registrados
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
+
+const normalizarToken = (token) => {
+  if (!token || typeof token !== 'string') return null;
+  const limpo = token.replace(/^Bearer\s+/i, '').trim();
+  return limpo || null;
+};
+
+const obterCookie = (nome) => {
+  if (typeof document === 'undefined') return null;
+  const cookies = document.cookie ? document.cookie.split(';') : [];
+  for (const cookie of cookies) {
+    const cookieLimpo = cookie.trim();
+    if (cookieLimpo.startsWith(`${nome}=`)) {
+      const valor = cookieLimpo.substring(nome.length + 1);
+      try {
+        return decodeURIComponent(valor);
+      } catch (e) {
+        return valor;
+      }
+    }
+  }
+  return null;
+};
 
 const AuthService = {
   /**
@@ -14,18 +36,21 @@ const AuthService = {
       // Tentar obter do AsyncStorage (mobile)
       const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
       if (tokenFromStorage) {
-        return tokenFromStorage;
-      }
-      
-      // Tentar obter de cookie (web)
-      if (typeof document !== 'undefined') {
-        const cookies = document.cookie.split(';');
-        for (const cookie of cookies) {
-          const [name, value] = cookie.trim().split('=');
-          if (name === TOKEN_KEY) {
-            return value;
-          }
+        const tokenNormalizado = normalizarToken(tokenFromStorage);
+        if (tokenNormalizado) {
+          api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
         }
+        return tokenNormalizado;
+      }
+
+      // Tentar obter de cookie (web)
+      const tokenFromCookie = obterCookie(TOKEN_KEY);
+      if (tokenFromCookie) {
+        const tokenNormalizado = normalizarToken(tokenFromCookie);
+        if (tokenNormalizado) {
+          api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
+        }
+        return tokenNormalizado;
       }
       
       return null;
@@ -39,17 +64,27 @@ const AuthService = {
    * Armazena token no AsyncStorage e Cookie (web)
    */
   async setToken(token) {
-    if (!token) return;
+    const tokenNormalizado = normalizarToken(token);
+    if (!tokenNormalizado) return;
     
     try {
       // Salvar no AsyncStorage (para mobile)
-      await AsyncStorage.setItem(TOKEN_KEY, token);
+      await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
       
-      // Salvar em cookie (para web)
+      // Salvar em cookie (fallback web)
       if (typeof document !== 'undefined') {
         const expirationDate = new Date();
         expirationDate.setDate(expirationDate.getDate() + 30); // Cookie expira em 30 dias
-        document.cookie = `${TOKEN_KEY}=${token}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+        document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      }
+
+      api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
+
+      if (typeof document !== 'undefined') {
+        const tokenCookie = document.cookie.includes(`${TOKEN_KEY}=`);
+        console.log('[AuthService] Token armazenado no web', {
+          cookie: tokenCookie,
+        });
       }
     } catch (error) {
       console.error('[AuthService] Erro ao armazenar token:', error);
@@ -69,6 +104,9 @@ const AuthService = {
       if (typeof document !== 'undefined') {
         document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
+
+      delete api.defaults.headers.common.Authorization;
+
     } catch (error) {
       console.error('[AuthService] Erro ao remover token:', error);
     }
