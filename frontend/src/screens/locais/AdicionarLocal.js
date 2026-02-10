@@ -233,7 +233,6 @@ export default function AdicionarLocal({ onNavigate }) {
       } catch (erro) {
         setCategorias(CATEGORIAS_FIXAS);
         setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
-        toastHelper.showError('Nao foi possivel carregar categorias e tipos.');
       } finally {
         setCarregandoListas(false);
       }

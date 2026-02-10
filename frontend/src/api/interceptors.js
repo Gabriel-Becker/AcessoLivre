@@ -28,7 +28,16 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  async (response) => {
+    try {
+      const newToken = response.headers?.['new-auth-token'];
+      if (newToken) {
+        await AuthService.setToken(newToken);
+      }
+    } catch (error) {
+    }
+    return response;
+  },
   async (error) => {
     const status = error.response?.status;
     if (status === 401) {

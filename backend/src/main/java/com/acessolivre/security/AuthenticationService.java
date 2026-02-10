@@ -52,6 +52,8 @@ public class AuthenticationService {
             }
 
             String token = jwtService.gerarToken(authentication, rememberMe);
+            usuario.setTokenAtual(token);
+            usuarioRepository.save(usuario);
             loginAttemptService.loginSucesso(email);
             return token;
         } catch (TwoFactorRequiredException | EmailNotVerifiedException e) {
@@ -73,6 +75,8 @@ public class AuthenticationService {
         );
 
         String token = jwtService.gerarToken(authentication, validacao.rememberMe());
+        usuario.setTokenAtual(token);
+        usuarioRepository.save(usuario);
         loginAttemptService.loginSucesso(email);
         return token;
     }
@@ -87,6 +91,12 @@ public class AuthenticationService {
                     .usuario(usuarioRepository.findById(userId).orElse(null))
                     .build();
             tokenRevogadoRepository.save(tr);
+            if (userId != null) {
+                usuarioRepository.findById(userId).ifPresent(usuario -> {
+                    usuario.setTokenAtual(null);
+                    usuarioRepository.save(usuario);
+                });
+            }
         } catch (Exception e) {
             throw new RuntimeException("Erro ao revogar token", e);
         }
@@ -132,6 +142,9 @@ public class AuthenticationService {
             List.of(() -> usuario.getRole().name())
         );
         
-        return jwtService.gerarToken(authentication, false);
+        String token = jwtService.gerarToken(authentication, false);
+        usuario.setTokenAtual(token);
+        usuarioRepository.save(usuario);
+        return token;
     }
 }

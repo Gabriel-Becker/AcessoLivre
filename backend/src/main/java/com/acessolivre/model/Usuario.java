@@ -54,6 +54,9 @@ public class Usuario {
     @Builder.Default
     private Boolean emailVerified = false;
 
+    @Column(name = "token_atual", length = 2000)
+    private String tokenAtual;
+
     @CreationTimestamp
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;
