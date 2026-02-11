@@ -24,16 +24,10 @@ export default function VerifyEmailModal({ visible, email, onClose, onSuccess, o
       if (resultado?.sucesso) {
         setCodigo('');
         setLoading(false);
-        Alert.alert('Sucesso', 'Email verificado com sucesso!', [
-          { 
-            text: 'OK', 
-            onPress: () => {
-              if (onSuccess) {
-                onSuccess();
-              }
-            }
-          }
-        ]);
+        // Fecha modal e navega automaticamente sem Alert intermediário
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         setLoading(false);
         Alert.alert('Erro', resultado?.mensagem || 'Código inválido ou expirado');
