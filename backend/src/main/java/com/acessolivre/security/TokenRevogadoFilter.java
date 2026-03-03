@@ -36,7 +36,7 @@ public class TokenRevogadoFilter extends OncePerRequestFilter {
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 response.setContentType("application/json;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"mensagem\": \"" + ERRO_TOKEN_REVOGADO + "\"}");
+                response.getWriter().write("{\"erro\":\"Unauthorized\",\"mensagem\":\"" + ERRO_TOKEN_REVOGADO + "\"}");
                 return;
             }
         }

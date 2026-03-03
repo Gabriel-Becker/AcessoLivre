@@ -1,6 +1,8 @@
 package com.acessolivre.controller;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -67,10 +69,10 @@ public class AuthController {
                 .body(String.format("Código enviado para %s", emailMascarado));
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao registrar usuário: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro inesperado ao registrar usuário", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao registrar usuário");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao registrar usuário");
         }
     }
 
@@ -84,11 +86,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
         } catch (IllegalArgumentException e) {
             log.warn("Falha ao confirmar registro para {}: {}", request.getEmail(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao confirmar registro para {}", request.getEmail(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao confirmar registro");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao confirmar registro");
         }
     }
 
@@ -100,11 +101,10 @@ public class AuthController {
             return ResponseEntity.ok(String.format("Código reenviado para %s", emailMascarado));
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao reenviar código para {}: {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao reenviar código para: {}", email, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao reenviar código");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao reenviar código");
         }
     }
 
@@ -144,18 +144,15 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
             log.warn("Código 2FA inválido para email={}", request.getEmail());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Código de autenticação de dois fatores inválido");
+            return erro(HttpStatus.UNAUTHORIZED, "Código de autenticação de dois fatores inválido");
         } catch (com.acessolivre.security.EmailNotVerifiedException e) {
             log.warn("Email não verificado para email={}", request.getEmail());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(e.getMessage());
+            return erro(HttpStatus.FORBIDDEN, e.getMessage());
         } catch (RuntimeException e) {
             // Verifica se é bloqueio por tentativas excessivas
             if (e.getMessage() != null && e.getMessage().contains("bloqueada")) {
                 log.error("Login bloqueado para email={}: {}", request.getEmail(), e.getMessage());
-                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(e.getMessage());
+                return erro(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
             }
             
             // Erro de credenciais inválidas
@@ -166,11 +163,10 @@ public class AuthController {
             
             log.warn("Falha no login para email={}: {} (tentativas restantes: {})", 
                 request.getEmail(), e.getMessage(), tentativasRestantes);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(mensagem);
+            return erro(HttpStatus.UNAUTHORIZED, mensagem);
         } catch (Exception e) {
             log.error("Erro inesperado no login para email={}", request.getEmail(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao processar login");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar login");
         }
     }
 
@@ -188,7 +184,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.warn("Falha ao validar código 2FA para email={}", request.getEmail());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Código inválido ou expirado");
+            return erro(HttpStatus.UNAUTHORIZED, "Código inválido ou expirado");
         }
     }
 
@@ -198,7 +194,7 @@ public class AuthController {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
                 log.warn("Tentativa de logout sem token");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+                return erro(HttpStatus.BAD_REQUEST, "Token não fornecido");
             }
             
             String token = auth.substring(7);
@@ -209,8 +205,7 @@ public class AuthController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Erro ao processar logout", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao processar logout");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar logout");
         }
     }
 
@@ -221,13 +216,13 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
 
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             Usuario usuario = usuarioRepository.findById(userId)
@@ -237,7 +232,7 @@ public class AuthController {
             return ResponseEntity.ok(desafio.emailMascarado());
         } catch (Exception e) {
             log.error("Erro ao configurar 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao configurar 2FA");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao configurar 2FA");
         }
     }
 
@@ -246,13 +241,13 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
 
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             Usuario usuario = usuarioRepository.findById(userId)
@@ -263,7 +258,7 @@ public class AuthController {
             return ResponseEntity.ok("2FA habilitado com sucesso");
         } catch (Exception e) {
             log.error("Erro ao habilitar 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao habilitar 2FA");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao habilitar 2FA");
         }
     }
 
@@ -272,13 +267,13 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
 
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             Usuario usuario = usuarioRepository.findById(userId)
@@ -289,7 +284,7 @@ public class AuthController {
             return ResponseEntity.ok("2FA desabilitado com sucesso");
         } catch (Exception e) {
             log.error("Erro ao desabilitar 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao desabilitar 2FA");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao desabilitar 2FA");
         }
     }
 
@@ -298,13 +293,13 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
 
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             Usuario usuario = usuarioRepository.findById(userId)
@@ -313,7 +308,7 @@ public class AuthController {
             return ResponseEntity.ok(enabled);
         } catch (Exception e) {
             log.error("Erro ao consultar status 2FA", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao consultar status 2FA");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao consultar status 2FA");
         }
     }
 
@@ -373,18 +368,18 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
             
             String currentToken = auth.substring(7);
             Long tokenUserId = jwtService.obterIdUsuarioDoToken(currentToken);
             
             if (!tokenUserId.equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuário não autorizado");
+                return erro(HttpStatus.FORBIDDEN, "Usuário não autorizado");
             }
             
             if (authenticationService.isTokenRevoked(currentToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token revogado");
+                return erro(HttpStatus.UNAUTHORIZED, "Token revogado");
             }
             
             String newToken = authenticationService.reautenticar(userId);
@@ -393,8 +388,7 @@ public class AuthController {
             return ResponseEntity.ok(newToken);
         } catch (Exception e) {
             log.error("Erro ao reautenticar userId={}", userId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Erro ao renovar token");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao renovar token");
         }
     }
 
@@ -406,19 +400,19 @@ public class AuthController {
             String auth = httpRequest.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
                 log.warn("Tentativa de trocar senha sem token");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
 
             String token = auth.substring(7);
             if (authenticationService.isTokenRevoked(token)) {
                 log.warn("Tentativa de trocar senha com token revogado");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
                 log.warn("Token JWT inválido ao trocar senha");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+                return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
             UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByUsuario_IdUsuario(userId)
@@ -426,7 +420,7 @@ public class AuthController {
 
             if (!passwordEncoder.matches(request.getSenhaAtual(), usuarioAutenticar.getSenhaHash())) {
                 log.warn("Senha atual incorreta para userId={}", userId);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Senha atual incorreta");
+                return erro(HttpStatus.BAD_REQUEST, "Senha atual incorreta");
             }
 
             usuarioAutenticar.setSenhaHash(passwordEncoder.encode(request.getNovaSenha()));
@@ -437,10 +431,17 @@ public class AuthController {
             return ResponseEntity.ok("Senha alterada com sucesso");
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao trocar senha: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro inesperado ao trocar senha", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao trocar senha");
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao trocar senha");
         }
+    }
+
+    private ResponseEntity<Map<String, String>> erro(HttpStatus status, String mensagem) {
+        Map<String, String> body = new HashMap<>();
+        body.put("erro", status.getReasonPhrase());
+        body.put("mensagem", mensagem);
+        return ResponseEntity.status(status).body(body);
     }
 }
