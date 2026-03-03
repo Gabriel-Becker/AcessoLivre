@@ -221,7 +221,7 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
             }
 
             String token = auth.substring(7);
@@ -246,7 +246,7 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
             }
 
             String token = auth.substring(7);
@@ -272,7 +272,7 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
             }
 
             String token = auth.substring(7);
@@ -298,7 +298,7 @@ public class AuthController {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token não fornecido");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token não fornecido");
             }
 
             String token = auth.substring(7);

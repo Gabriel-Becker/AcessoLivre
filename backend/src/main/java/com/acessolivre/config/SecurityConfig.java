@@ -72,12 +72,8 @@ public class SecurityConfig {
                     "/api/auth/register",
                     "/api/auth/register/confirm",
                     "/api/auth/register/resend-code",
-                    "/api/auth/me",
                     "/api/auth/login",
                     "/api/auth/validate",
-                    "/api/auth/logout",
-                    "/api/auth/change-password",
-                    "/api/auth/2fa/**",
                     "/api/auth/reset-password/**",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
