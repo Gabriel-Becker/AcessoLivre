@@ -209,7 +209,8 @@ public class AuthController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Erro ao processar logout", e);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erro ao processar logout");
         }
     }
 

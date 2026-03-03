@@ -83,20 +83,39 @@ public class AuthenticationService {
 
     public void logout(String token, Long userId) {
         if (token == null || token.isBlank()) return;
-        
+        if (tokenRevogadoRepository.existsByToken(token)) {
+            return;
+        }
+
         try {
-            TokenRevogado tr = TokenRevogado.builder()
-                    .token(token)
-                    .dataRevogacao(LocalDateTime.now())
-                    .usuario(usuarioRepository.findById(userId).orElse(null))
-                    .build();
-            tokenRevogadoRepository.save(tr);
+            Usuario usuario = null;
+
             if (userId != null) {
-                usuarioRepository.findById(userId).ifPresent(usuario -> {
-                    usuario.setTokenAtual(null);
-                    usuarioRepository.save(usuario);
-                });
+                usuario = usuarioRepository.findById(userId).orElse(null);
             }
+
+            if (usuario == null) {
+                String email = jwtService.extrairNomeUsuario(token);
+                if (email != null) {
+                    usuario = usuarioRepository.findByEmail(email).orElse(null);
+                }
+            }
+
+            if (usuario == null) {
+                throw new IllegalArgumentException("Usuário do token não encontrado para revogação");
+            }
+
+            TokenRevogado tr = TokenRevogado.builder()
+                .token(token)
+                .dataRevogacao(LocalDateTime.now())
+                .expiracao(jwtService.obterExpiracaoToken(token))
+                .usuario(usuario)
+                .build();
+
+            tokenRevogadoRepository.save(tr);
+
+            usuario.setTokenAtual(null);
+            usuarioRepository.save(usuario);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao revogar token", e);
         }

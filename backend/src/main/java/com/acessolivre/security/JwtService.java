@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
@@ -76,6 +77,15 @@ public class JwtService {
     public Long obterIdUsuarioDoToken(String token) {
         Jwt jwt = jwtDecoder.decode(token);
         return jwt.getClaim("userId");
+    }
+
+    public LocalDateTime obterExpiracaoToken(String token) {
+        Jwt jwt = jwtDecoder.decode(token);
+        Instant exp = jwt.getExpiresAt();
+        if (exp == null) {
+            throw new IllegalArgumentException("Token sem expiração");
+        }
+        return LocalDateTime.ofInstant(exp, ZoneId.of("America/Sao_Paulo"));
     }
 
     public boolean isTokenRevogado(String token) {
