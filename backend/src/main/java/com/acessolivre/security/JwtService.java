@@ -30,11 +30,11 @@ public class JwtService {
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final UsuarioRepository usuarioRepository;
 
-    @Value("${jwt.token.expiration.default:720}")
-    private long defaultTokenExpirationMinutes;
+    @Value("${jwt.token.expiration.default:3600}")
+    private long defaultTokenExpirationSeconds;
 
-    @Value("${jwt.token.expiration.remember-me:43200}")
-    private long rememberMeTokenExpirationMinutes;
+    @Value("${jwt.token.expiration.remember-me:2592000}")
+    private long rememberMeTokenExpirationSeconds;
 
     public JwtService(JwtEncoder encoder, JwtDecoder jwtDecoder, TokenRevogadoRepository tokenRevogadoRepository, UsuarioRepository usuarioRepository) {
         this.encoder = encoder;
@@ -49,7 +49,9 @@ public class JwtService {
 
     public String gerarToken(Authentication authentication, Boolean rememberMe) {
         Instant now = ZonedDateTime.now(ZoneId.of("America/Sao_Paulo")).toInstant();
-        long expiry = (rememberMe != null && rememberMe) ? rememberMeTokenExpirationMinutes * 60 : defaultTokenExpirationMinutes * 60;
+        long expiry = (rememberMe != null && rememberMe)
+            ? rememberMeTokenExpirationSeconds
+            : defaultTokenExpirationSeconds;
 
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
