@@ -6,9 +6,14 @@
 import { useEffect, useRef } from 'react';
 import AuthService from '../services/AuthService';
 
+const INTERVALO_MONITORAMENTO_MS = 30000;
+const JANELA_RENOVACAO_MS = 5 * 60 * 1000;
+const COOLDOWN_RENOVACAO_MS = 60 * 1000;
+
 const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
   const lastTokenRef = useRef(null);
   const intervalRef = useRef(null);
+  const proximaRenovacaoPermitidaRef = useRef(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -37,16 +42,9 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
           }
 
           if (lastTokenRef.current !== currentToken) {
-            console.log('[TokenMonitor] Mudança no token detectada, verificando validade');
-            
-            const isValid = await AuthService.isAuthenticated();
-            if (!isValid) {
-              console.log('[TokenMonitor] Token modificado é inválido, fazendo logout');
-              onTokenInvalid();
-              return;
-            }
-            
+            console.log('[TokenMonitor] Mudança no token detectada');
             lastTokenRef.current = currentToken;
+            proximaRenovacaoPermitidaRef.current = 0;
           }
 
           if (onTokenExpiring) {
@@ -55,24 +53,27 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
               const expirationTime = tokenData.exp * 1000;
               const currentTime = Date.now();
               const timeUntilExpiration = expirationTime - currentTime;
-              const tokenLifetime = expirationTime - (tokenData.iat * 1000);
-              const renewalThreshold = tokenLifetime * 0.1;
 
-              if (timeUntilExpiration > 0 && timeUntilExpiration <= renewalThreshold) {
+              if (
+                timeUntilExpiration > 0 &&
+                timeUntilExpiration <= JANELA_RENOVACAO_MS &&
+                currentTime >= proximaRenovacaoPermitidaRef.current
+              ) {
                 console.log('[TokenMonitor] Token próximo de expirar, iniciando renovação');
-                onTokenExpiring();
+                proximaRenovacaoPermitidaRef.current = currentTime + COOLDOWN_RENOVACAO_MS;
+                await onTokenExpiring();
               }
             }
           }
         }
       } catch (error) {
         console.error('[TokenMonitor] Erro ao monitorar token:', error);
-        onTokenInvalid();
+        await onTokenInvalid();
       }
     };
 
     checkTokenChanges();
-    intervalRef.current = setInterval(checkTokenChanges, 2000);
+    intervalRef.current = setInterval(checkTokenChanges, INTERVALO_MONITORAMENTO_MS);
 
     return () => {
       if (intervalRef.current) {

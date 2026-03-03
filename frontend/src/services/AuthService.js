@@ -3,6 +3,8 @@ import api from '../api/axios';
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
+let tokenEmMemoria = null;
+let tokenInicializado = false;
 
 const normalizarToken = (token) => {
   if (!token || typeof token !== 'string') return null;
@@ -27,18 +29,36 @@ const obterCookie = (nome) => {
   return null;
 };
 
+const aplicarTokenNoHeader = (token) => {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    return;
+  }
+  delete api.defaults.headers.common.Authorization;
+};
+
 const AuthService = {
   /**
    * Obtém token do AsyncStorage ou Cookie (web)
    */
   async getToken() {
     try {
+      if (tokenEmMemoria) {
+        return tokenEmMemoria;
+      }
+
+      if (tokenInicializado) {
+        return null;
+      }
+
       // Tentar obter do AsyncStorage (mobile)
       const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
       if (tokenFromStorage) {
         const tokenNormalizado = normalizarToken(tokenFromStorage);
         if (tokenNormalizado) {
-          api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
+          tokenEmMemoria = tokenNormalizado;
+          tokenInicializado = true;
+          aplicarTokenNoHeader(tokenNormalizado);
         }
         return tokenNormalizado;
       }
@@ -48,10 +68,14 @@ const AuthService = {
       if (tokenFromCookie) {
         const tokenNormalizado = normalizarToken(tokenFromCookie);
         if (tokenNormalizado) {
-          api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
+          tokenEmMemoria = tokenNormalizado;
+          tokenInicializado = true;
+          aplicarTokenNoHeader(tokenNormalizado);
         }
         return tokenNormalizado;
       }
+
+      tokenInicializado = true;
       
       return null;
     } catch (e) {
@@ -66,6 +90,9 @@ const AuthService = {
   async setToken(token) {
     const tokenNormalizado = normalizarToken(token);
     if (!tokenNormalizado) return;
+
+    tokenEmMemoria = tokenNormalizado;
+    tokenInicializado = true;
     
     try {
       // Salvar no AsyncStorage (para mobile)
@@ -78,7 +105,7 @@ const AuthService = {
         document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
       }
 
-      api.defaults.headers.common.Authorization = `Bearer ${tokenNormalizado}`;
+      aplicarTokenNoHeader(tokenNormalizado);
 
       if (typeof document !== 'undefined') {
         const tokenCookie = document.cookie.includes(`${TOKEN_KEY}=`);
@@ -97,6 +124,9 @@ const AuthService = {
    */
   async removeToken() {
     try {
+      tokenEmMemoria = null;
+      tokenInicializado = true;
+
       // Remover do AsyncStorage
       await AsyncStorage.removeItem(TOKEN_KEY);
       
@@ -105,11 +135,15 @@ const AuthService = {
         document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
 
-      delete api.defaults.headers.common.Authorization;
+      aplicarTokenNoHeader(null);
 
     } catch (error) {
       console.error('[AuthService] Erro ao remover token:', error);
     }
+  },
+
+  getTokenEmMemoria() {
+    return tokenEmMemoria;
   },
 
   async setUserData(usuario) {

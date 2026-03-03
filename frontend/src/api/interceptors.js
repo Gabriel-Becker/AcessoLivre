@@ -6,7 +6,8 @@ import { resetToAuth } from '../navigation/navigationRef';
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AuthService.getToken();
+      const tokenEmMemoria = AuthService.getTokenEmMemoria();
+      const token = tokenEmMemoria || await AuthService.getToken();
       if (token) {
         if (config.headers && typeof config.headers.set === 'function') {
           config.headers.set('Authorization', `Bearer ${token}`);
