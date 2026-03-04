@@ -100,7 +100,6 @@ public class UsuarioAutenticarController {
                                                                  @Valid @RequestBody UsuarioAutenticarRequestDTO requestDTO) {
         log.info("Endpoint PUT /usuarioautenticar/{} - Atualizando registro", id);
         try {
-            // Verifica se o registro existe
             Optional<UsuarioAutenticar> registroExistente = usuarioAutenticarService.buscarPorId(id);
             
             if (registroExistente.isEmpty()) {
@@ -108,11 +107,9 @@ public class UsuarioAutenticarController {
                 return ResponseEntity.notFound().build();
             }
             
-            // Converte DTO para entidade
             UsuarioAutenticar usuarioAutenticar = UsuarioAutenticarMapper.toEntity(requestDTO);
             usuarioAutenticar.setIdUsuarioAutenticar(id);
-            
-            // Salva as alterações
+
             UsuarioAutenticar registroAtualizado = usuarioAutenticarService.salvar(usuarioAutenticar);
             UsuarioAutenticarResponseDTO responseDTO = UsuarioAutenticarMapper.toResponse(registroAtualizado);
             log.info("Registro atualizado com sucesso. ID: {}", id);

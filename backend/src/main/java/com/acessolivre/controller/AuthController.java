@@ -149,13 +149,11 @@ public class AuthController {
             log.warn("Email não verificado para email={}", request.getEmail());
             return erro(HttpStatus.FORBIDDEN, e.getMessage());
         } catch (RuntimeException e) {
-            // Verifica se é bloqueio por tentativas excessivas
             if (e.getMessage() != null && e.getMessage().contains("bloqueada")) {
                 log.error("Login bloqueado para email={}: {}", request.getEmail(), e.getMessage());
                 return erro(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
             }
-            
-            // Erro de credenciais inválidas
+
             int tentativasRestantes = loginAttemptService.tentativasRestantes(request.getEmail());
             String mensagem = tentativasRestantes > 0 
                 ? String.format("Credenciais inválidas. Tentativas restantes: %d", tentativasRestantes)
@@ -208,8 +206,6 @@ public class AuthController {
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar logout");
         }
     }
-
-    // ============ 2FA Endpoints ============
 
     @PostMapping("/2fa/setup")
     public ResponseEntity<?> setupTwoFactor(HttpServletRequest request) {

@@ -3,6 +3,7 @@ package com.acessolivre.security;
 import java.io.IOException;
 
 import com.acessolivre.repository.UsuarioRepository;
+import org.springframework.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +18,7 @@ public class TokenResponseFilter extends OncePerRequestFilter {
     private final UsuarioRepository usuarioRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
@@ -38,7 +39,6 @@ public class TokenResponseFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
-                // Evita quebrar a requisicao caso a validacao falhe
             }
         }
 

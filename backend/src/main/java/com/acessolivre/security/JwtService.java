@@ -94,7 +94,6 @@ public class JwtService {
         return tokenRevogadoRepository.existsByToken(token);
     }
 
-    // Compatibility helper: extract username (subject) from token
     public String extrairNomeUsuario(String token) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
@@ -105,7 +104,6 @@ public class JwtService {
         }
     }
 
-    // Compatibility helper: validate token against a UserDetails
     public boolean isTokenValid(String token, UserDetails userDetails) {
         if (token == null || userDetails == null) return false;
         String username = extrairNomeUsuario(token);

@@ -36,11 +36,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null) {
-            // Fallback para proxies/servidores que normalizam nomes de header.
             authHeader = request.getHeader("authorization");
         }
         if (authHeader == null) {
-            // Fallback defensivo para variacoes comuns em ambiente web.
             authHeader = request.getHeader("X-Authorization");
         }
         final String jwt;
@@ -75,27 +73,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return isPublicPath(path);
-    }
-
-    private boolean isPublicPath(String path) {
-        return path.equals("/api/auth/register")
-                || path.equals("/api/auth/register/confirm")
-                || path.equals("/api/auth/register/resend-code")
-                || path.equals("/api/auth/me")
-                || path.equals("/api/auth/login")
-            || path.equals("/api/auth/validate")
-            || path.equals("/api/auth/logout")
-                || path.equals("/api/auth/change-password")
-                || path.equals("/api/categorias")
-                || path.equals("/api/tipos-acessibilidade")
-                || path.startsWith("/api/auth/2fa/")
-                || path.startsWith("/api/auth/reset-password/")
-                || path.startsWith("/swagger-ui/")
-                || path.startsWith("/v3/api-docs/")
-                || path.equals("/api/admin/bootstrap");
-    }
 }

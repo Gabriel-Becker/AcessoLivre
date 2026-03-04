@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const handleTokenInvalid = useCallback(async () => {
-    console.log('[AuthContext] Token inválido detectado, fazendo logout');
     setIsAuthenticated(false);
     setUsuario(null);
     setToken(null);
@@ -33,7 +32,6 @@ export const AuthProvider = ({ children }) => {
     if (!usuario?.idUsuario) return;
     
     try {
-      console.log('[AuthContext] Token próximo de expirar, renovando automaticamente');
       const newToken = await AuthService.reautenticar(usuario.idUsuario);
       setToken(newToken);
       Toast.show({
@@ -67,7 +65,6 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Valida token com backend
       const { autenticado, usuario: usuarioData } = await AuthService.carregarSessao();
       
       if (autenticado && usuarioData) {
@@ -196,7 +193,7 @@ export const AuthProvider = ({ children }) => {
           text1: 'Confirme seu e-mail',
           text2: `Enviamos um código para ${result.emailDestino}`,
         });
-        return { sucesso: false, requiresConfirmation: true, emailDestino: result.emailDestino, email }; // keep email to usar depois
+        return { sucesso: false, requiresConfirmation: true, emailDestino: result.emailDestino, email };
       }
 
       return { sucesso: true };
@@ -251,7 +248,6 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (erro) {
       console.error('[AuthContext] Erro ao fazer logout:', erro);
-      // Mesmo com erro, limpar estado local
       setToken(null);
       setUsuario(null);
       setIsAuthenticated(false);

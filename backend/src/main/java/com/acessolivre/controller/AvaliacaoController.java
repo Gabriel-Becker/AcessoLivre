@@ -52,7 +52,6 @@ public class AvaliacaoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Listagem pública por local: somente moderadas
     @GetMapping("/local/{idLocal}")
     public ResponseEntity<List<AvaliacaoResponseDTO>> listarPorLocal(@PathVariable Long idLocal) {
         List<AvaliacaoResponseDTO> dtos = avaliacaoService.buscarPublicasPorLocal(idLocal)
@@ -62,7 +61,6 @@ public class AvaliacaoController {
         return ResponseEntity.ok(dtos);
     }
 
-    // Listagem por usuário (sem filtro de moderação)
     @GetMapping("/usuario/{idUsuario}")
     public ResponseEntity<List<AvaliacaoResponseDTO>> listarPorUsuario(@PathVariable Long idUsuario) {
         List<AvaliacaoResponseDTO> dtos = avaliacaoService.buscarPorUsuario(idUsuario)
@@ -80,7 +78,6 @@ public class AvaliacaoController {
                 .body(resposta);
     }
 
-    // OBS: Regra de ownership/Admin será adicionada no Bloco 4 (Admin)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         boolean deletada = avaliacaoService.deletar(id);

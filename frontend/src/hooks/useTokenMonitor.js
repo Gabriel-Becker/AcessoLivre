@@ -1,8 +1,3 @@
-/**
- * Hook useTokenMonitor
- * Monitora mudanças no token JWT, detecta remoções/modificações não autorizadas
- * e renova automaticamente tokens próximos de expirar
- */
 import { useEffect, useRef } from 'react';
 import AuthService from '../services/AuthService';
 
@@ -30,7 +25,6 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
         const currentToken = await AuthService.getToken();
         
         if (!currentToken && lastTokenRef.current) {
-          console.log('[TokenMonitor] Token removido detectado, fazendo logout');
           onTokenInvalid();
           return;
         }
@@ -42,7 +36,6 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
           }
 
           if (lastTokenRef.current !== currentToken) {
-            console.log('[TokenMonitor] Mudança no token detectada');
             lastTokenRef.current = currentToken;
             proximaRenovacaoPermitidaRef.current = 0;
           }
@@ -59,7 +52,6 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
                 timeUntilExpiration <= JANELA_RENOVACAO_MS &&
                 currentTime >= proximaRenovacaoPermitidaRef.current
               ) {
-                console.log('[TokenMonitor] Token próximo de expirar, iniciando renovação');
                 proximaRenovacaoPermitidaRef.current = currentTime + COOLDOWN_RENOVACAO_MS;
                 await onTokenExpiring();
               }

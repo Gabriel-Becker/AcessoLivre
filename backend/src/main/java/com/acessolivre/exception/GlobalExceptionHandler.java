@@ -44,8 +44,7 @@ public class GlobalExceptionHandler {
         } else if (ex instanceof UsuarioException.AutenticacaoFalhouException) {
             status = HttpStatus.UNAUTHORIZED;
         }
-        
-        // Log estruturado com contexto
+
         log.error("Exceção de usuário: tipo={}, mensagem={}, endpoint={}, usuario={}",
             ex.getClass().getSimpleName(),
             ex.getMessage(),

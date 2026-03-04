@@ -65,7 +65,6 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Permitir requisições OPTIONS (CORS preflight) sem autenticação
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias", "/api/tipos-acessibilidade").permitAll()
                 .requestMatchers(
@@ -78,7 +77,6 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
-                // Endpoint público somente para bootstrap inicial do ADMIN (controlado por segredo interno)
                 .requestMatchers("/api/admin/bootstrap").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

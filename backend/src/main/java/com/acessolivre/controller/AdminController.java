@@ -32,8 +32,6 @@ public class AdminController {
     private final AdminService adminService;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
-    // ===== GERENCIAMENTO DE USUÁRIOS =====
-
     /**
      * Lista todos os usuários com paginação
      * @param page Número da página (padrão: 0)
@@ -73,8 +71,6 @@ public class AdminController {
         return deletado ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
-    // ===== MODERAÇÃO DE AVALIAÇÕES =====
-
     @GetMapping("/moderacao/avaliacoes/pendentes")
     public ResponseEntity<List<AvaliacaoResponseDTO>> listarAvaliacoesPendentes() {
         List<AvaliacaoResponseDTO> avaliacoes = adminService.listarAvaliacoesPendentes()
@@ -96,8 +92,6 @@ public class AdminController {
         return rejeitada ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
-    // ===== ESTATÍSTICAS E RELATÓRIOS =====
-
     @GetMapping("/relatorios/estatisticas-gerais")
     public ResponseEntity<Map<String, Object>> obterEstatisticasGerais() {
         return ResponseEntity.ok(adminService.obterEstatisticasGerais());
@@ -118,7 +112,6 @@ public class AdminController {
         return ResponseEntity.ok(adminService.obterEstatisticasPorTipoAcessibilidade());
     }
 
-    // Helper para conversão
     private UsuarioAdminResponseDTO toUsuarioAdminResponse(Usuario usuario) {
     return UsuarioAdminResponseDTO.builder()
                 .idUsuario(usuario.getIdUsuario())

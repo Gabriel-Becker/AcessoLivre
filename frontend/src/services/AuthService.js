@@ -38,9 +38,6 @@ const aplicarTokenNoHeader = (token) => {
 };
 
 const AuthService = {
-  /**
-   * Obtém token do AsyncStorage ou Cookie (web)
-   */
   async getToken() {
     try {
       if (tokenEmMemoria) {
@@ -51,7 +48,6 @@ const AuthService = {
         return null;
       }
 
-      // Tentar obter do AsyncStorage (mobile)
       const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
       if (tokenFromStorage) {
         const tokenNormalizado = normalizarToken(tokenFromStorage);
@@ -63,7 +59,6 @@ const AuthService = {
         return tokenNormalizado;
       }
 
-      // Tentar obter de cookie (web)
       const tokenFromCookie = obterCookie(TOKEN_KEY);
       if (tokenFromCookie) {
         const tokenNormalizado = normalizarToken(tokenFromCookie);
@@ -84,9 +79,6 @@ const AuthService = {
     }
   },
 
-  /**
-   * Armazena token no AsyncStorage e Cookie (web)
-   */
   async setToken(token) {
     const tokenNormalizado = normalizarToken(token);
     if (!tokenNormalizado) return;
@@ -95,42 +87,28 @@ const AuthService = {
     tokenInicializado = true;
     
     try {
-      // Salvar no AsyncStorage (para mobile)
       await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
-      
-      // Salvar em cookie (fallback web)
+
       if (typeof document !== 'undefined') {
         const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 30); // Cookie expira em 30 dias
+        expirationDate.setDate(expirationDate.getDate() + 30);
         document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
       }
 
       aplicarTokenNoHeader(tokenNormalizado);
-
-      if (typeof document !== 'undefined') {
-        const tokenCookie = document.cookie.includes(`${TOKEN_KEY}=`);
-        console.log('[AuthService] Token armazenado no web', {
-          cookie: tokenCookie,
-        });
-      }
     } catch (error) {
       console.error('[AuthService] Erro ao armazenar token:', error);
       throw error;
     }
   },
 
-  /**
-   * Remove token do AsyncStorage e Cookie (web)
-   */
   async removeToken() {
     try {
       tokenEmMemoria = null;
       tokenInicializado = true;
 
-      // Remover do AsyncStorage
       await AsyncStorage.removeItem(TOKEN_KEY);
-      
-      // Remover de cookie (web)
+
       if (typeof document !== 'undefined') {
         document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
@@ -215,20 +193,17 @@ const AuthService = {
       
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
-        console.log('[AuthService] Token com formato inválido detectado, fazendo logout automático');
         await this.logout();
         return false;
       }
       
       if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
-        console.log('[AuthService] Token expirado, fazendo logout automático');
         await this.logout();
         return false;
       }
       
       const validation = await this.validateToken(token);
       if (!validation.valid) {
-        console.log('[AuthService] Token inválido no servidor:', validation.reason);
         await this.logout();
         return false;
       }
@@ -241,9 +216,6 @@ const AuthService = {
     }
   },
 
-  /**
-   * Realiza login do usuário
-   */
   async login({ email, senha, rememberMe = false }) {
     try {
       await this.logout();
@@ -350,8 +322,6 @@ const AuthService = {
         try {
           await api.post('/auth/logout');
         } catch (e) {
-          // Ignorar erro de logout no backend
-          console.log('[AuthService] Erro ao fazer logout no backend:', e.message);
         }
       }
     } catch (e) {
@@ -369,7 +339,6 @@ const AuthService = {
       return { autenticado: false, usuario: null };
     }
     
-    // Verificar validade do token antes de chamar o backend
     const isValid = await this.isAuthenticated();
     if (!isValid) {
       return { autenticado: false, usuario: null };
@@ -382,7 +351,6 @@ const AuthService = {
       return { autenticado: !!usuario, usuario };
     } catch (e) {
       console.error('[AuthService] Erro ao carregar sessão:', e);
-      // Se 401 ou erro, limpa sessão
       await this.removeToken();
       await this.setUserData(null);
       return { autenticado: false, usuario: null };
@@ -406,8 +374,6 @@ const AuthService = {
     }
   },
 
-  // ============ 2FA Methods ============
-  
   async setup2FA() {
     try {
       const response = await api.post('/auth/2fa/setup');
@@ -466,9 +432,6 @@ const AuthService = {
     }
   },
 
-  /**
-   * Troca a senha do usuário autenticado
-   */
   async trocarSenha({ senhaAtual, novaSenha }) {
     try {
       const token = await this.getToken();
