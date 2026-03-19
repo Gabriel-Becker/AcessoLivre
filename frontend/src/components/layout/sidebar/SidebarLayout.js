@@ -44,7 +44,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
       </View>
 
       <View style={styles.footer}>
-        <SidebarUserPanel onNavigate={onNavigate} altoContraste={altoContraste} />
+        <SidebarUserPanel current={current} onNavigate={onNavigate} altoContraste={altoContraste} />
       </View>
     </SafeArea>
   );

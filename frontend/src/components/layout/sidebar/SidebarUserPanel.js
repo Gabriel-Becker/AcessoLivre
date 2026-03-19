@@ -6,7 +6,7 @@ import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
 import SidebarItem from './SidebarItem';
 
-export default function SidebarUserPanel({ onNavigate, altoContraste = false }) {
+export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
   const { isAuthenticated, usuario, logout } = useAuth();
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
@@ -32,7 +32,7 @@ export default function SidebarUserPanel({ onNavigate, altoContraste = false }) 
               <SidebarItem
                 icon="shield-checkmark-outline"
                 label="Admin"
-                active={false}
+                active={current === 'Admin'}
                 onPress={() => onNavigate && onNavigate('Admin')}
                 altoContraste={altoContraste}
               />
@@ -42,7 +42,7 @@ export default function SidebarUserPanel({ onNavigate, altoContraste = false }) 
           <SidebarItem
             icon="person-circle-outline"
             label="Meu Perfil"
-            active={false}
+            active={current === 'Perfil'}
             onPress={() => onNavigate && onNavigate('Perfil')}
             altoContraste={altoContraste}
           />
