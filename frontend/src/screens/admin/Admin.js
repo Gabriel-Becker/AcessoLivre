@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Alert } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
@@ -23,6 +24,7 @@ export default function Admin() {
 
   const [estatisticas, setEstatisticas] = useState(null);
   const [carregando, setCarregando] = useState(false);
+  const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [erro, setErro] = useState('');
 
   const abas = useMemo(
@@ -100,6 +102,64 @@ export default function Admin() {
     carregarRelatorios();
   }, [abaAtiva, paginaUsuarios, paginaLocais]);
 
+  const atualizarRoleUsuario = async (usuarioItem) => {
+    const roleAtual = String(usuarioItem?.role || 'ROLE_USER').toUpperCase();
+    const proximaRole = roleAtual === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
+
+    setCarregandoAcao(true);
+    setErro('');
+    try {
+      await AdminService.alterarRoleUsuario(usuarioItem.idUsuario, proximaRole);
+      await carregarUsuarios();
+    } catch (e) {
+      setErro('Não foi possível editar o usuário.');
+    } finally {
+      setCarregandoAcao(false);
+    }
+  };
+
+  const confirmarEdicaoUsuario = (usuarioItem) => {
+    const roleAtual = String(usuarioItem?.role || 'ROLE_USER').toUpperCase();
+    const proximaRole = roleAtual === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
+    Alert.alert(
+      'Editar usuário',
+      `Deseja alterar a role para ${proximaRole}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Confirmar', onPress: () => atualizarRoleUsuario(usuarioItem) },
+      ]
+    );
+  };
+
+  const apagarUsuario = async (usuarioItem) => {
+    setCarregandoAcao(true);
+    setErro('');
+    try {
+      await AdminService.deletarUsuario(usuarioItem.idUsuario);
+
+      if (usuarios.length === 1 && paginaUsuarios > 0) {
+        setPaginaUsuarios((p) => Math.max(0, p - 1));
+      } else {
+        await carregarUsuarios();
+      }
+    } catch (e) {
+      setErro('Não foi possível apagar o usuário.');
+    } finally {
+      setCarregandoAcao(false);
+    }
+  };
+
+  const confirmarApagarUsuario = (usuarioItem) => {
+    Alert.alert(
+      'Apagar usuário',
+      `Tem certeza que deseja apagar ${usuarioItem?.nome || 'este usuário'}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Apagar', style: 'destructive', onPress: () => apagarUsuario(usuarioItem) },
+      ]
+    );
+  };
+
   const renderPaginacao = ({ paginaAtual, totalPaginas, onAnterior, onProxima }) => (
     <View style={styles.paginacao}>
       <Button variant="outline" size="small" onPress={onAnterior} disabled={carregando || paginaAtual <= 0}>
@@ -136,6 +196,37 @@ export default function Admin() {
             <ThemedText color="textSecondary">{item.email || 'Email não informado'}</ThemedText>
             <Spacer size="xs" />
             <ThemedText color="textSecondary">Role: {item.role || 'ROLE_USER'}</ThemedText>
+
+            {usuario?.idUsuario !== item.idUsuario ? (
+              <>
+                <Spacer size="sm" />
+                <View style={styles.acoesUsuario}>
+                  <Button
+                    variant="outline"
+                    size="small"
+                    iconLeft="create-outline"
+                    loading={carregandoAcao}
+                    disabled={carregandoAcao}
+                    onPress={() => confirmarEdicaoUsuario(item)}
+                    style={styles.botaoAcao}
+                  >
+                    Editar
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="small"
+                    iconLeft="trash-outline"
+                    loading={carregandoAcao}
+                    disabled={carregandoAcao}
+                    onPress={() => confirmarApagarUsuario(item)}
+                    style={styles.botaoAcao}
+                  >
+                    Apagar
+                  </Button>
+                </View>
+              </>
+            ) : null}
           </Card>
         ))
       )}
@@ -266,5 +357,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
+  },
+  acoesUsuario: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  botaoAcao: {
+    flex: 1,
   },
 });

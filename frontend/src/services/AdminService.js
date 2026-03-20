@@ -19,6 +19,18 @@ const AdminService = {
     const response = await api.get('/admin/relatorios/estatisticas-gerais');
     return response.data;
   },
+
+  async alterarRoleUsuario(idUsuario, novaRole) {
+    const response = await api.put(`/admin/usuarios/${idUsuario}/role`, {
+      novaRole,
+    });
+    return response.data;
+  },
+
+  async deletarUsuario(idUsuario) {
+    const response = await api.delete(`/admin/usuarios/${idUsuario}`);
+    return response.data;
+  },
 };
 
 export default AdminService;
