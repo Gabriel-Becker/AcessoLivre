@@ -27,8 +27,25 @@ const AdminService = {
     return response.data;
   },
 
+  async alterarSenhaUsuario(idUsuario, novaSenha) {
+    const response = await api.put(`/admin/usuarios/${idUsuario}/senha`, {
+      novaSenha,
+    });
+    return response.data;
+  },
+
   async deletarUsuario(idUsuario) {
     const response = await api.delete(`/admin/usuarios/${idUsuario}`);
+    return response.data;
+  },
+
+  async buscarUsuario(idUsuario) {
+    const response = await api.get(`/usuarios/${idUsuario}`);
+    return response.data;
+  },
+
+  async atualizarUsuarioBasico(idUsuario, dados) {
+    const response = await api.put(`/usuarios/${idUsuario}`, dados);
     return response.data;
   },
 };

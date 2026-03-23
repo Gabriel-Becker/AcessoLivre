@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
+import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
 import { useAuth } from '../../context/AuthContext';
 import AdminService from '../../services/AdminService';
 import theme from '../../config/theme';
@@ -26,6 +27,9 @@ export default function Admin() {
   const [carregando, setCarregando] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [erro, setErro] = useState('');
+
+  const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
   const abas = useMemo(
     () => [
@@ -102,33 +106,9 @@ export default function Admin() {
     carregarRelatorios();
   }, [abaAtiva, paginaUsuarios, paginaLocais]);
 
-  const atualizarRoleUsuario = async (usuarioItem) => {
-    const roleAtual = String(usuarioItem?.role || 'ROLE_USER').toUpperCase();
-    const proximaRole = roleAtual === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
-
-    setCarregandoAcao(true);
-    setErro('');
-    try {
-      await AdminService.alterarRoleUsuario(usuarioItem.idUsuario, proximaRole);
-      await carregarUsuarios();
-    } catch (e) {
-      setErro('Não foi possível editar o usuário.');
-    } finally {
-      setCarregandoAcao(false);
-    }
-  };
-
   const confirmarEdicaoUsuario = (usuarioItem) => {
-    const roleAtual = String(usuarioItem?.role || 'ROLE_USER').toUpperCase();
-    const proximaRole = roleAtual === 'ROLE_ADMIN' ? 'ROLE_USER' : 'ROLE_ADMIN';
-    Alert.alert(
-      'Editar usuário',
-      `Deseja alterar a role para ${proximaRole}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', onPress: () => atualizarRoleUsuario(usuarioItem) },
-      ]
-    );
+    setUsuarioSelecionado(usuarioItem);
+    setModalEditarVisivel(true);
   };
 
   const apagarUsuario = async (usuarioItem) => {
@@ -334,6 +314,16 @@ export default function Admin() {
       {!carregando && !erro && abaAtiva === 'usuarios' ? renderUsuarios() : null}
       {!carregando && !erro && abaAtiva === 'locais' ? renderLocais() : null}
       {!carregando && !erro && abaAtiva === 'relatorios' ? renderRelatorios() : null}
+
+      <EditarUsuarioModal
+        visible={modalEditarVisivel}
+        onClose={() => setModalEditarVisivel(false)}
+        usuario={usuarioSelecionado}
+        onSucesso={() => {
+          setUsuarioSelecionado(null);
+          carregarUsuarios();
+        }}
+      />
     </Container>
   );
 }
