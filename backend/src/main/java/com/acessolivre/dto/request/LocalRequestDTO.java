@@ -1,5 +1,6 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.enums.StatusLocal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -20,8 +21,11 @@ public class LocalRequestDTO {
     private String nome;
 
     @NotBlank(message = "Descrição é obrigatória")
-    @Size(max = 300, message = "Descrição deve ter no máximo 300 caracteres")
+    @Size(max = 350, message = "Descrição deve ter no máximo 350 caracteres")
     private String descricao;
+    
+    @Size(max = 120, message = "Nome da imagem deve ter no máximo 120 caracteres")
+    private String imagem;
 
     @NotNull(message = "ID da categoria é obrigatório")
     private Long idCategoria;
@@ -33,6 +37,12 @@ public class LocalRequestDTO {
     private Long idUsuario;
 
     private Long idEndereco;
+    
+    // ID do local principal (opcional)
+    private Long idLocalPrincipal;
+    
+    // Status do local (opcional, padrão será EM_ANALISE)
+    private StatusLocal status;
 
     @Valid
     private EnderecoRequestDTO endereco;
