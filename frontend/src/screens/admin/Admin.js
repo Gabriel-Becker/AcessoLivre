@@ -185,22 +185,23 @@ export default function Admin() {
       <Spacer size="md" />
 
       {usuarios.length === 0 && !carregando ? (
-        <Card>
+        <Card style={styles.cardUsuario}>
           <ThemedText>Nenhum usuário encontrado.</ThemedText>
         </Card>
       ) : (
         usuarios.map((item) => (
-          <Card key={item.idUsuario} style={styles.cardLista}>
-            <ThemedText weight="bold">{item.nome || 'Usuário sem nome'}</ThemedText>
-            <Spacer size="xs" />
-            <ThemedText color="textSecondary">{item.email || 'Email não informado'}</ThemedText>
-            <Spacer size="xs" />
-            <ThemedText color="textSecondary">Role: {item.role || 'ROLE_USER'}</ThemedText>
+          <Card key={item.idUsuario} style={styles.cardUsuario}>
+            <View style={styles.containerUsuario}>
+              <View style={styles.infoUsuario}>
+                <ThemedText weight="bold" size="sm">{item.nome || 'Usuário sem nome'}</ThemedText>
+                <Spacer size="xs" />
+                <ThemedText color="textSecondary" size="sm">{item.email || 'Email não informado'}</ThemedText>
+                <Spacer size="xs" />
+                <ThemedText color="textSecondary" size="sm">Role: {item.role || 'ROLE_USER'}</ThemedText>
+              </View>
 
-            {usuario?.idUsuario !== item.idUsuario ? (
-              <>
-                <Spacer size="sm" />
-                <View style={styles.acoesUsuario}>
+              {usuario?.idUsuario !== item.idUsuario ? (
+                <View style={styles.botoesMiniatura}>
                   <Button
                     variant="outline"
                     size="small"
@@ -208,7 +209,7 @@ export default function Admin() {
                     loading={carregandoAcao}
                     disabled={carregandoAcao}
                     onPress={() => confirmarEdicaoUsuario(item)}
-                    style={styles.botaoAcao}
+                    style={styles.botaoIcon}
                   >
                     Editar
                   </Button>
@@ -220,13 +221,13 @@ export default function Admin() {
                     loading={carregandoAcao}
                     disabled={carregandoAcao}
                     onPress={() => confirmarApagarUsuario(item)}
-                    style={styles.botaoAcao}
+                    style={styles.botaoIcon}
                   >
-                    Apagar
+                    Deletar
                   </Button>
                 </View>
-              </>
-            ) : null}
+              ) : null}
+            </View>
           </Card>
         ))
       )}
@@ -248,19 +249,19 @@ export default function Admin() {
       <Spacer size="md" />
 
       {locais.length === 0 && !carregando ? (
-        <Card>
+        <Card style={styles.cardUsuario}>
           <ThemedText>Nenhum local encontrado.</ThemedText>
         </Card>
       ) : (
         locais.map((item) => (
-          <Card key={item.idLocal} style={styles.cardLista}>
-            <ThemedText weight="bold">{item.nome || 'Local sem nome'}</ThemedText>
+          <Card key={item.idLocal} style={styles.cardUsuario}>
+            <ThemedText weight="bold" size="sm">{item.nome || 'Local sem nome'}</ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary">
+            <ThemedText color="textSecondary" size="sm">
               Categoria: {item?.categoria?.nome || 'Não informada'}
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary">
+            <ThemedText color="textSecondary" size="sm">
               Cidade/UF: {item?.endereco?.cidade || 'N/I'} - {item?.endereco?.estado || 'N/I'}
             </ThemedText>
           </Card>
@@ -279,16 +280,16 @@ export default function Admin() {
   );
 
   const renderRelatorios = () => (
-    <Card style={styles.cardLista}>
+    <Card style={styles.cardUsuario}>
       <ThemedText variant="h3" weight="bold">Resumo Geral</ThemedText>
       <Spacer size="md" />
-      <ThemedText>Total de usuários: {Number(estatisticas?.totalUsuarios) || 0}</ThemedText>
+      <ThemedText size="sm">Total de usuários: {Number(estatisticas?.totalUsuarios) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText>Total de locais: {Number(estatisticas?.totalLocais) || 0}</ThemedText>
+      <ThemedText size="sm">Total de locais: {Number(estatisticas?.totalLocais) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText>Total de avaliações: {Number(estatisticas?.totalAvaliacoes) || 0}</ThemedText>
+      <ThemedText size="sm">Total de avaliações: {Number(estatisticas?.totalAvaliacoes) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText>Avaliações pendentes: {Number(estatisticas?.avaliacoesPendentes) || 0}</ThemedText>
+      <ThemedText size="sm">Avaliações pendentes: {Number(estatisticas?.avaliacoesPendentes) || 0}</ThemedText>
     </Card>
   );
 
@@ -319,14 +320,14 @@ export default function Admin() {
       <Spacer size="md" />
 
       {carregando ? (
-        <Card>
-          <ThemedText>Carregando dados...</ThemedText>
+        <Card style={styles.cardUsuario}>
+          <ThemedText size="sm">Carregando dados...</ThemedText>
         </Card>
       ) : null}
 
       {erro ? (
-        <Card>
-          <ThemedText color="error">{erro}</ThemedText>
+        <Card style={styles.cardUsuario}>
+          <ThemedText color="error" size="sm">{erro}</ThemedText>
         </Card>
       ) : null}
 
@@ -358,11 +359,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
   },
-  acoesUsuario: {
+  containerUsuario: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  botaoAcao: {
+  infoUsuario: {
+    flex: 1,
+  },
+  cardUsuario: {
+    padding: theme.spacing.md,
+  },
+  botoesMiniatura: {
+    flexDirection: 'column',
+    gap: theme.spacing.sm,
+    marginLeft: theme.spacing.md,
+  },
+  botaoIcon: {
     flex: 1,
   },
 });
