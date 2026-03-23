@@ -1,7 +1,6 @@
 package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.AlterarRoleRequestDTO;
-import com.acessolivre.dto.request.AlterarSenhaAdminRequestDTO;
 import com.acessolivre.dto.response.AvaliacaoResponseDTO;
 import com.acessolivre.dto.response.UsuarioAdminResponseDTO;
 import com.acessolivre.mapper.AvaliacaoMapper;
@@ -69,8 +68,12 @@ public class AdminController {
     @PutMapping("/usuarios/{id}/senha")
     public ResponseEntity<Void> alterarSenhaUsuario(
             @PathVariable Long id,
-            @Valid @RequestBody AlterarSenhaAdminRequestDTO dto) {
-        boolean alterado = adminService.alterarSenhaUsuario(id, dto.getNovaSenha());
+            @RequestBody Map<String, String> body) {
+        String novaSenha = body != null ? body.get("novaSenha") : null;
+        if (novaSenha == null || novaSenha.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        boolean alterado = adminService.alterarSenhaUsuario(id, novaSenha);
         return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
