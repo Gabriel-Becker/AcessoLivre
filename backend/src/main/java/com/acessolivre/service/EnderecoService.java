@@ -1,12 +1,20 @@
 package com.acessolivre.service;
 
 import com.acessolivre.model.Endereco;
+import com.acessolivre.repository.EnderecoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; 
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +22,28 @@ public class EnderecoService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final EnderecoRepository enderecoRepository;
+
+   
+      @Transactional(readOnly = true)
+    public Page<Endereco> listarTodos(Pageable pageable) {
+        return enderecoRepository.findAll(pageable);
+    }
+
+    @Transactional
+    public Endereco salvar(Endereco endereco) {
+        validarEndereco(endereco);
+        
+        Optional<Endereco> existente = enderecoRepository
+                .findByCepAndLogradouroAndNumero(
+                    endereco.getCep(),
+                    endereco.getLogradouro(),
+                    endereco.getNumero()
+                );
+        
+        return existente.orElseGet(() -> enderecoRepository.save(endereco));
+    }
+
 
     public void validarEndereco(Endereco endereco) {
         if (endereco == null) {
