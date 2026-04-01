@@ -60,7 +60,7 @@ public class EnderecoService {
         return enderecoRepository.findByCep(cepLimpo);
     }
 
-        @Transactional
+    @Transactional
     public Endereco atualizar(Long id, Endereco enderecoAtualizado) {
         return enderecoRepository.findById(id).map(endereco -> {
             endereco.setCep(enderecoAtualizado.getCep());
@@ -75,8 +75,13 @@ public class EnderecoService {
         }).orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
     }
 
-
-
+    @Transactional
+    public void deletar(Long id) {
+        if (!enderecoRepository.existsById(id)) {
+            throw new IllegalArgumentException("Endereço não encontrado");
+        }
+        enderecoRepository.deleteById(id);
+    }
 
 
     public void validarEndereco(Endereco endereco) {

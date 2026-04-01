@@ -69,10 +69,10 @@ public class EnderecoController {
         return ResponseEntity.ok(EnderecoMapper.toResponse(enderecoService.atualizar(id, endereco)));
     }
 
-
-
-
-
-
+        @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        enderecoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
    
 }
