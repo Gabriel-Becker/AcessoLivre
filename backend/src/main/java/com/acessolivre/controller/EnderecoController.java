@@ -49,6 +49,23 @@ public class EnderecoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+        @GetMapping("/cidade/{cidade}")
+    public ResponseEntity<List<EnderecoResponseDTO>> buscarPorCidade(@PathVariable String cidade) {
+        return ResponseEntity.ok(enderecoService.buscarPorCidade(cidade).stream()
+                .map(EnderecoMapper::toResponse)
+                .collect(Collectors.toList()));
+    }
+
+        @GetMapping("/cep/{cep}")
+    public ResponseEntity<List<EnderecoResponseDTO>> buscarPorCep(@PathVariable String cep) {
+        return ResponseEntity.ok(enderecoService.buscarPorCep(cep).stream()
+                .map(EnderecoMapper::toResponse)
+                .collect(Collectors.toList()));
+    }
+
+
+
+
 
    
 }

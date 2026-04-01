@@ -43,11 +43,23 @@ public class EnderecoService {
         
         return existente.orElseGet(() -> enderecoRepository.save(endereco));
     }
-    
+
     @Transactional(readOnly = true)
     public Optional<Endereco> buscarPorId(Long id) {
         return enderecoRepository.findById(id);
     }
+
+     @Transactional(readOnly = true)
+    public List<Endereco> buscarPorCidade(String cidade) {
+        return enderecoRepository.findByCidade(cidade);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Endereco> buscarPorCep(String cep) {
+        String cepLimpo = cep.replaceAll("[^0-9]", "");
+        return enderecoRepository.findByCep(cepLimpo);
+    }
+
 
 
 
