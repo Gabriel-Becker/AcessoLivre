@@ -63,6 +63,13 @@ public class EnderecoController {
                 .collect(Collectors.toList()));
     }
 
+        @PutMapping("/{id}")
+    public ResponseEntity<EnderecoResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody EnderecoRequestDTO requestDTO) {
+        Endereco endereco = EnderecoMapper.toEntity(requestDTO);
+        return ResponseEntity.ok(EnderecoMapper.toResponse(enderecoService.atualizar(id, endereco)));
+    }
+
+
 
 
 

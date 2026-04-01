@@ -60,6 +60,22 @@ public class EnderecoService {
         return enderecoRepository.findByCep(cepLimpo);
     }
 
+        @Transactional
+    public Endereco atualizar(Long id, Endereco enderecoAtualizado) {
+        return enderecoRepository.findById(id).map(endereco -> {
+            endereco.setCep(enderecoAtualizado.getCep());
+            endereco.setLogradouro(enderecoAtualizado.getLogradouro());
+            endereco.setNumero(enderecoAtualizado.getNumero());
+            endereco.setComplemento(enderecoAtualizado.getComplemento());
+            endereco.setBairro(enderecoAtualizado.getBairro());
+            endereco.setCidade(enderecoAtualizado.getCidade());
+            endereco.setEstado(enderecoAtualizado.getEstado());
+            validarEndereco(endereco);
+            return enderecoRepository.save(endereco);
+        }).orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
+    }
+
+
 
 
 
