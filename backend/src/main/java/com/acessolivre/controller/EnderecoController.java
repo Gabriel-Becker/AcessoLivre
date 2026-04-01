@@ -41,5 +41,14 @@ public class EnderecoController {
                 .body(EnderecoMapper.toResponse(enderecoService.salvar(endereco)));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<EnderecoResponseDTO> buscarPorId(@PathVariable Long id) {
+        return enderecoService.buscarPorId(id)
+                .map(EnderecoMapper::toResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
    
 }

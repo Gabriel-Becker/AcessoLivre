@@ -25,7 +25,7 @@ public class EnderecoService {
     private final EnderecoRepository enderecoRepository;
 
    
-      @Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Page<Endereco> listarTodos(Pageable pageable) {
         return enderecoRepository.findAll(pageable);
     }
@@ -43,6 +43,12 @@ public class EnderecoService {
         
         return existente.orElseGet(() -> enderecoRepository.save(endereco));
     }
+    
+    @Transactional(readOnly = true)
+    public Optional<Endereco> buscarPorId(Long id) {
+        return enderecoRepository.findById(id);
+    }
+
 
 
     public void validarEndereco(Endereco endereco) {
