@@ -1,10 +1,13 @@
 package com.acessolivre.mapper;
 
+import org.springframework.stereotype.Component;
+
 import com.acessolivre.dto.request.EnderecoRequestDTO;
 import com.acessolivre.dto.response.EnderecoResponseDTO;
 import com.acessolivre.model.Endereco;
 import com.acessolivre.model.Usuario;
 
+@Component
 public class EnderecoMapper {
 
     /**

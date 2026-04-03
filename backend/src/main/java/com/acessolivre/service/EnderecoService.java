@@ -1,12 +1,20 @@
 package com.acessolivre.service;
 
 import com.acessolivre.model.Endereco;
+import com.acessolivre.repository.EnderecoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; 
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +22,67 @@ public class EnderecoService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final EnderecoRepository enderecoRepository;
+
+   
+    @Transactional(readOnly = true)
+    public Page<Endereco> listarTodos(Pageable pageable) {
+        return enderecoRepository.findAll(pageable);
+    }
+
+    @Transactional
+    public Endereco salvar(Endereco endereco) {
+        validarEndereco(endereco);
+        
+        Optional<Endereco> existente = enderecoRepository
+                .findByCepAndLogradouroAndNumero(
+                    endereco.getCep(),
+                    endereco.getLogradouro(),
+                    endereco.getNumero()
+                );
+        
+        return existente.orElseGet(() -> enderecoRepository.save(endereco));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Endereco> buscarPorId(Long id) {
+        return enderecoRepository.findById(id);
+    }
+
+     @Transactional(readOnly = true)
+    public List<Endereco> buscarPorCidade(String cidade) {
+        return enderecoRepository.findByCidade(cidade);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Endereco> buscarPorCep(String cep) {
+        String cepLimpo = cep.replaceAll("[^0-9]", "");
+        return enderecoRepository.findByCep(cepLimpo);
+    }
+
+    @Transactional
+    public Endereco atualizar(Long id, Endereco enderecoAtualizado) {
+        return enderecoRepository.findById(id).map(endereco -> {
+            endereco.setCep(enderecoAtualizado.getCep());
+            endereco.setLogradouro(enderecoAtualizado.getLogradouro());
+            endereco.setNumero(enderecoAtualizado.getNumero());
+            endereco.setComplemento(enderecoAtualizado.getComplemento());
+            endereco.setBairro(enderecoAtualizado.getBairro());
+            endereco.setCidade(enderecoAtualizado.getCidade());
+            endereco.setEstado(enderecoAtualizado.getEstado());
+            validarEndereco(endereco);
+            return enderecoRepository.save(endereco);
+        }).orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado"));
+    }
+
+    @Transactional
+    public void deletar(Long id) {
+        if (!enderecoRepository.existsById(id)) {
+            throw new IllegalArgumentException("Endereço não encontrado");
+        }
+        enderecoRepository.deleteById(id);
+    }
+
 
     public void validarEndereco(Endereco endereco) {
         if (endereco == null) {
