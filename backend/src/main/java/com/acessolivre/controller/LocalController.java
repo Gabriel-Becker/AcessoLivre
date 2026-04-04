@@ -80,6 +80,13 @@ public class LocalController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        localService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
 
    
 }
