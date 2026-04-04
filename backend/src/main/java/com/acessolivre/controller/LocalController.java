@@ -63,5 +63,14 @@ public class LocalController {
         Local local = localService.salvar(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(localMapper.toResponse(local));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LocalResponseDTO> buscarPorId(@PathVariable Long id) {
+        return localService.buscarPorId(id)
+                .map(localMapper::toResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
    
 }
