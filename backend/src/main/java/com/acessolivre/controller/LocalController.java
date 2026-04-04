@@ -45,16 +45,14 @@ public class LocalController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "nome") String sort) {
-        log.info("Endpoint GET /api/locais - Listando locais paginados: página={}, tamanho={}", page, size);
-        try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-            Page<Local> locais = localService.listarTodos(pageable);
-            Page<LocalResponseDTO> responseDTOs = locais.map(localMapper::toResponse); // ← USAR INSTÂNCIA
-            return ResponseEntity.ok(responseDTOs);
-        } catch (Exception e) {
-            log.error("Erro ao listar locais", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        
+        log.info("Listando apenas locais RAIZ (paginado): página={}, tamanho={}", page, size);
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Page<Local> locais = localService.listarLocaisRaiz(pageable);
+        Page<LocalResponseDTO> responseDTOs = locais.map(localMapper::toResponse);
+        
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @PostMapping
