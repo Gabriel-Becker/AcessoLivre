@@ -57,5 +57,11 @@ public class LocalController {
         }
     }
 
+    @PostMapping
+    public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
+        log.info("Salvando local: {}", requestDTO.getNome());
+        Local local = localService.salvar(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(localMapper.toResponse(local));
+    }
    
 }
