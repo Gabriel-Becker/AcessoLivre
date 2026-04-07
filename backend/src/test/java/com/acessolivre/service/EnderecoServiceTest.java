@@ -277,6 +277,27 @@ class EnderecoServiceTest {
         assertEquals("Numero deve ter entre 1 e 10 caracteres", exception.getMessage());
     }
 
+     // TESTES DE COMPLEMENTO 
+    
+    @Test
+    void validarEndereco_ComComplementoMuitoLongo_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SC");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Pantanal");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        endereco.setComplemento("a".repeat(101));
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Complemento deve ter no maximo 100 caracteres", exception.getMessage());
+    }
+
 
    
 }
