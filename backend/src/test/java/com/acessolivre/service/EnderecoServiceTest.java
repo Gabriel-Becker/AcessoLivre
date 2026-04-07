@@ -446,7 +446,37 @@ class EnderecoServiceTest {
         assertTrue(exception.getMessage().contains("Logradouro 'Rua Qualquer' nao corresponde ao CEP informado"));
     }
 
+     //  TESTES DE SUCESSO E ERROS DA API 
+    
+    @Test
+    void validarEndereco_ComDadosValidos_DeveValidarComSucesso() throws Exception {
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        assertDoesNotThrow(() -> enderecoService.validarEndereco(enderecoValido));
+    }
 
+    @Test
+    void validarEndereco_ComCepNaoEncontrado_DeveLancarExcecao() throws Exception {
+        String mockResponse = "{\"erro\": true}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(enderecoValido));
+        
+        String mensagem = exception.getMessage();
+        assertTrue(mensagem.equals("CEP nao encontrado") || 
+                   mensagem.equals("Erro ao processar resposta do ViaCEP"));
+    }
+
+    @Test
+    void validarEndereco_ComErroDeConexao_DeveLancarExcecao() throws Exception {
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new RestClientException("Erro de conexão"));
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(enderecoValido));
+        assertEquals("Erro ao consultar CEP no ViaCEP", exception.getMessage());
+    }
+}
 
    
-}
