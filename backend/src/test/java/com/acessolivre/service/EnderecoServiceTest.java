@@ -298,6 +298,81 @@ class EnderecoServiceTest {
         assertEquals("Complemento deve ter no maximo 100 caracteres", exception.getMessage());
     }
 
+     //  TESTES DE BAIRRO 
+    
+    @Test
+    void validarEndereco_ComBairroNulo_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SC");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro(null);
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Bairro e obrigatorio", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComBairroVazio_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SC");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Bairro e obrigatorio", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComBairroMuitoCurto_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SC");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("AB");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Bairro deve ter entre 3 e 100 caracteres", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComBairroDiferenteDoViaCep_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SC");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Centro");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertTrue(exception.getMessage().contains("Bairro 'Centro' nao corresponde ao CEP informado"));
+    }
+
+
 
    
 }
