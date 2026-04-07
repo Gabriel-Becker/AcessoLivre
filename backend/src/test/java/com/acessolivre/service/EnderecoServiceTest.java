@@ -38,7 +38,7 @@ class EnderecoServiceTest {
         enderecoValido.setComplemento("Apto 101");
     }
 
-    // ========== TESTES DE CEP ==========
+    // TESTES DE CEP 
     
     @Test
     void validarEndereco_ComEnderecoNulo_DeveLancarExcecao() {
@@ -90,6 +90,81 @@ class EnderecoServiceTest {
             () -> enderecoService.validarEndereco(enderecoValido));
         assertEquals("CEP deve conter exatamente 8 digitos", exception.getMessage());
     }
+
+     // TESTES DE ESTADO 
+    
+    @Test
+    void validarEndereco_ComEstadoNulo_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado(null);
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Pantanal");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Estado e obrigatorio", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComEstadoVazio_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Pantanal");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Estado e obrigatorio", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComEstadoFormatoInvalido_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("SAO PAULO");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Pantanal");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertEquals("Estado deve ter exatamente 2 letras maiusculas", exception.getMessage());
+    }
+
+    @Test
+    void validarEndereco_ComEstadoDiferenteDoViaCep_DeveLancarExcecao() throws Exception {
+        Endereco endereco = new Endereco();
+        endereco.setCep("88040150");
+        endereco.setEstado("RJ");
+        endereco.setCidade("Florianópolis");
+        endereco.setBairro("Pantanal");
+        endereco.setLogradouro("Rua Deputado Antônio Edu Vieira");
+        endereco.setNumero("119");
+        
+        String mockResponse = "{\"logradouro\":\"Rua Deputado Antônio Edu Vieira\",\"bairro\":\"Pantanal\",\"localidade\":\"Florianópolis\",\"uf\":\"SC\"}";
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenReturn(mockResponse);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> enderecoService.validarEndereco(endereco));
+        assertTrue(exception.getMessage().contains("Estado 'RJ' nao corresponde ao CEP informado"));
+    }
+
 
    
 }
