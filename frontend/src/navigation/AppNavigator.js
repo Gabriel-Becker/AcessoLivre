@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
 import Sobre from '../screens/sobre/Sobre';
 import Perfil from '../screens/perfil/Perfil';
+import Admin from '../screens/admin/Admin';
 import theme from '../config/theme';
 
 const Stack = createNativeStackNavigator();
@@ -25,11 +26,24 @@ function LoadingScreen() {
 }
 
 function MainApp() {
+  const { usuario } = useAuth();
   const [currentScreen, setCurrentScreen] = useState('Inicio');
+  const roleUsuario = String(usuario?.role || '').toUpperCase();
+  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   const handleNavigate = (screen) => {
+    if (screen === 'Admin' && !isAdmin) {
+      setCurrentScreen('Inicio');
+      return;
+    }
     setCurrentScreen(screen);
   };
+
+  useEffect(() => {
+    if (!isAdmin && currentScreen === 'Admin') {
+      setCurrentScreen('Inicio');
+    }
+  }, [isAdmin, currentScreen]);
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -43,6 +57,8 @@ function MainApp() {
         return <Sobre />;
       case 'Perfil':
         return <Perfil />;
+      case 'Admin':
+        return isAdmin ? <Admin /> : <Home />;
       default:
         return <Home />;
     }

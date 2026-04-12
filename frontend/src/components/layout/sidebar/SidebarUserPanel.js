@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import theme, { getTheme } from '../../../config/theme';
-import { ThemedText, Spacer, Divider } from '../../commons';
+import theme from '../../../config/theme';
+import { Spacer, Divider } from '../../commons';
 import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
+import SidebarItem from './SidebarItem';
 
-export default function SidebarUserPanel({ onNavigate, altoContraste = false }) {
-  const t = altoContraste ? getTheme(true) : theme;
+export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
   const { isAuthenticated, usuario, logout } = useAuth();
+  const roleUsuario = String(usuario?.role || '').toUpperCase();
+  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   return (
     <View style={styles.container}>
@@ -25,16 +27,25 @@ export default function SidebarUserPanel({ onNavigate, altoContraste = false }) 
         </>
       ) : (
         <>
-          <Button 
-            variant="ghost" 
-            size="large" 
-            fullWidth 
-            onPress={() => onNavigate && onNavigate('Perfil')} 
-            align="left" 
-            iconLeft="person-circle-outline"
-          >
-            Meu Perfil
-          </Button>
+          {isAdmin ? (
+            <>
+              <SidebarItem
+                icon="shield-checkmark-outline"
+                label="Admin"
+                active={current === 'Admin'}
+                onPress={() => onNavigate && onNavigate('Admin')}
+                altoContraste={altoContraste}
+              />
+              <Spacer size="xs" />
+            </>
+          ) : null}
+          <SidebarItem
+            icon="person-circle-outline"
+            label="Meu Perfil"
+            active={current === 'Perfil'}
+            onPress={() => onNavigate && onNavigate('Perfil')}
+            altoContraste={altoContraste}
+          />
           <Spacer size="xs" />
           <Button variant="danger" size="large" fullWidth onPress={logout} align="left" iconLeft="exit-outline">
             Sair
