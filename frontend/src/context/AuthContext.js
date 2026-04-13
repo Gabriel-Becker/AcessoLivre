@@ -153,36 +153,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const validarCodigo2FA = async ({ email, codigo }) => {
-    try {
-      setLoading(true);
-      const result = await AuthService.verifyTwoFactorCode({ email, codigo });
-      const { token: novoToken, usuario: usuarioData } = result;
-
-      setToken(novoToken);
-      setUsuario(usuarioData);
-      setIsAuthenticated(true);
-
-      Toast.show({
-        type: 'success',
-        text1: 'Login confirmado!',
-        text2: `Bem-vindo, ${usuarioData.nome}!`,
-      });
-
-      return { sucesso: true };
-    } catch (erro) {
-      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
-      Toast.show({
-        type: 'error',
-        text1: 'Código inválido',
-        text2: mensagem,
-      });
-      return { sucesso: false, erro: mensagem };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const register = async ({ nome, email, senha }) => {
     try {
       const result = await AuthService.register({ nome, email, senha });
@@ -198,28 +168,6 @@ export const AuthProvider = ({ children }) => {
         text2: mensagem,
       });
       
-      return { sucesso: false, erro: mensagem };
-    }
-  };
-
-  const confirmarCadastro = async ({ email, codigo }) => {
-    try {
-      const result = await AuthService.confirmRegistration({ email, codigo });
-
-      Toast.show({
-        type: 'success',
-        text1: 'Cadastro confirmado!',
-        text2: 'Agora você pode fazer login.',
-      });
-
-      return { sucesso: true, usuario: result.usuario };
-    } catch (erro) {
-      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
-      Toast.show({
-        type: 'error',
-        text1: 'Erro na confirmação',
-        text2: mensagem,
-      });
       return { sucesso: false, erro: mensagem };
     }
   };
@@ -256,9 +204,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
-        validarCodigo2FA,
         register,
-        confirmarCadastro,
         logout,
         carregarSessao,
       }}

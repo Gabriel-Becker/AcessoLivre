@@ -282,20 +282,6 @@ const AuthService = {
     }
   },
 
-  async verifyTwoFactorCode({ email, codigo }) {
-    const response = await api.post('/auth/2fa/verify-code', { email, codigo });
-    const { token, usuario } = response.data;
-
-    if (!token) {
-      throw new Error('Token não retornado pelo servidor');
-    }
-
-    await this.setToken(token);
-    await this.setUserData(usuario);
-
-    return { success: true, token, usuario };
-  },
-
   async register({ nome, email, senha }) {
     const response = await api.post('/auth/register', { nome, email, senha });
     return {
@@ -303,16 +289,6 @@ const AuthService = {
       message: response.data?.message || 'Conta criada com sucesso',
       usuario: response.data,
     };
-  },
-
-  async confirmRegistration({ email, codigo }) {
-    const response = await api.post('/auth/register/confirm', { email, codigo });
-    return { success: true, usuario: response.data };
-  },
-
-  async resendRegistrationCode(email) {
-    const response = await api.post(`/auth/register/resend-code?email=${encodeURIComponent(email)}`);
-    return { success: true, message: response.data };
   },
 
   async logout() {
@@ -479,11 +455,9 @@ export const {
   carregarSessao, 
   validateToken, 
   reautenticar,
-  resendRegistrationCode,
   setup2FA,
   enable2FA,
   disable2FA,
   get2FAStatus,
-  verifyTwoFactorCode,
   trocarSenha
 } = AuthService;
