@@ -6,6 +6,7 @@ import com.acessolivre.model.CodigoVerificacaoRegistro;
 import com.acessolivre.model.PendingUsuarioRegistro;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
+import com.acessolivre.enums.Role;
 import com.acessolivre.repository.CodigoVerificacaoRegistroRepository;
 import com.acessolivre.repository.PendingUsuarioRegistroRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
@@ -32,6 +33,34 @@ public class RegistroPendenteService {
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
+    @Transactional
+    public UsuarioResponseDTO registrarUsuarioDireto(String nome, String email, String senha) {
+        if (usuarioRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email já cadastrado");
+        }
+
+        boolean isPrimeiroUsuario = usuarioRepository.count() == 0;
+
+        Usuario usuario = Usuario.builder()
+            .nome(nome)
+            .email(email)
+            .role(isPrimeiroUsuario ? Role.ROLE_ADMIN : Role.ROLE_USER)
+            .emailVerified(true)
+            .twoFactorEnabled(false)
+            .build();
+        Usuario salvo = usuarioRepository.save(usuario);
+
+        UsuarioAutenticar cred = UsuarioAutenticar.builder()
+            .usuario(salvo)
+            .senhaHash(passwordEncoder.encode(senha))
+            .dataExpiracao(LocalDateTime.now().plusYears(1))
+            .build();
+        usuarioAutenticarRepository.save(cred);
+
+        log.info("Usuário criado diretamente no cadastro: id={}, email={}", salvo.getIdUsuario(), email);
+        return UsuarioMapper.toResponse(salvo);
+    }
 
     @Transactional
     public String iniciarRegistro(String nome, String email, String senha) {

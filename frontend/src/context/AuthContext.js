@@ -186,17 +186,9 @@ export const AuthProvider = ({ children }) => {
   const register = async ({ nome, email, senha }) => {
     try {
       const result = await AuthService.register({ nome, email, senha });
-
-      if (result.requiresConfirmation) {
-        Toast.show({
-          type: 'info',
-          text1: 'Confirme seu e-mail',
-          text2: `Enviamos um código para ${result.emailDestino}`,
-        });
-        return { sucesso: false, requiresConfirmation: true, emailDestino: result.emailDestino, email };
-      }
-
-      return { sucesso: true };
+      return result?.success
+        ? { sucesso: true, mensagem: result.message }
+        : { sucesso: false, erro: result?.message || 'Erro ao realizar cadastro' };
     } catch (erro) {
       const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao realizar cadastro';
       

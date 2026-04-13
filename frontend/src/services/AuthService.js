@@ -299,9 +299,9 @@ const AuthService = {
   async register({ nome, email, senha }) {
     const response = await api.post('/auth/register', { nome, email, senha });
     return {
-      success: false,
-      requiresConfirmation: true,
-      emailDestino: response.data,
+      success: true,
+      message: response.data?.message || 'Conta criada com sucesso',
+      usuario: response.data,
     };
   },
 
@@ -392,7 +392,7 @@ const AuthService = {
 
   async enable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/enable', { verificationCode });
+      const response = await api.post('/auth/2fa/enable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
@@ -408,7 +408,7 @@ const AuthService = {
 
   async disable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/disable', { verificationCode });
+      const response = await api.post('/auth/2fa/disable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
