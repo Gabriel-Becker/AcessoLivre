@@ -20,7 +20,6 @@ import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.ChangePasswordRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.request.VerifyEmailRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
@@ -162,24 +161,6 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Erro inesperado no login para email={}", request.getEmail(), e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar login");
-        }
-    }
-
-    @PostMapping("/2fa/verify-code")
-    public ResponseEntity<?> verifyTwoFactor(@Valid @RequestBody TwoFactorVerifyRequestDTO request) {
-        try {
-            String token = authenticationService.completarLoginComCodigo(request.getEmail(), request.getCodigo());
-            Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                .token(token)
-                .usuario(UsuarioMapper.toResponse(usuario))
-                .twoFactorRequired(false)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.warn("Falha ao validar código 2FA para email={}", request.getEmail());
-            return erro(HttpStatus.UNAUTHORIZED, "Código inválido ou expirado");
         }
     }
 

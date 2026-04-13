@@ -70,27 +70,6 @@ public class AuthenticationService {
         }
     }
 
-    public String completarLoginComCodigo(String email, String codigo) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        if (!twoFactorService.validarCodigoAutenticador(email, codigo)) {
-            throw new InvalidTwoFactorCodeException("Código inválido ou expirado");
-        }
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-            usuario.getEmail(),
-            null,
-            List.of(new SimpleGrantedAuthority(usuario.getRole().name()))
-        );
-
-        String token = jwtService.gerarToken(authentication, false);
-        usuario.setTokenAtual(token);
-        usuarioRepository.save(usuario);
-        loginAttemptService.loginSucesso(email);
-        return token;
-    }
-
     public void logout(String token, Long userId) {
         if (token == null || token.isBlank()) return;
         if (tokenRevogadoRepository.existsByToken(token)) {
