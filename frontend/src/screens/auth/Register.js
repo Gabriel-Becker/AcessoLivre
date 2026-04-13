@@ -22,7 +22,13 @@ const schema = z
       .min(2, authMessages.validation.nameTooShort)
       .max(120, authMessages.validation.maxLength),
     email: z.string().trim().email(authMessages.validation.invalidEmail),
-    password: z.string().min(8, authMessages.validation.passwordTooShort),
+    password: z
+      .string()
+      .min(8, 'Senha deve ter no mínimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
+      .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmPassword: z.string().min(8, authMessages.validation.passwordTooShort),
     terms: z.boolean().refine((val) => val === true, {
       message: authMessages.registerErrors.termsNotAccepted,
