@@ -56,23 +56,18 @@ function MainApp() {
 }
 
 export default function AppNavigator() {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
-        <>
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Register" component={Register} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        </>
-      ) : (
-        <Stack.Screen name="Main" component={MainApp} />
-      )}
+    <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Main" component={MainApp} />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
     </Stack.Navigator>
   );
 }

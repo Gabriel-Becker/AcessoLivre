@@ -40,7 +40,7 @@ const schema = z
   });
 
 export default function Register({ navigation }) {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -131,7 +131,23 @@ export default function Register({ navigation }) {
 
       if (resultado?.sucesso) {
         toastHelper.showSuccess(resultado?.mensagem || 'Conta criada com sucesso!');
-        navigation?.navigate?.('Login');
+        
+        // Fazer login automático após cadastro bem-sucedido
+        const loginResult = await login({
+          email: values.email.trim().toLowerCase(),
+          senha: values.password,
+          rememberMe: false,
+        });
+        
+        if (loginResult?.sucesso) {
+          // Navega para Home (o AuthContext cuidará da navegação automática)
+          navigation?.navigate?.('Home');
+          return;
+        } else {
+          // Se login automático falhar, redireciona para login manual
+          toastHelper.showInfo('Cadastro realizado! Por favor, faça login com suas credenciais.');
+          navigation?.navigate?.('Login');
+        }
         return;
       }
 
