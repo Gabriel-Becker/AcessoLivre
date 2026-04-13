@@ -47,8 +47,14 @@ public class AuthenticationService {
             );
 
             if (twoFactorService.isTwoFactorEnabledByEmail(email)) {
-                twoFactorService.criarDesafioLogin(email, Boolean.TRUE.equals(rememberMe));
-                throw new TwoFactorRequiredException("Código enviado por email");
+                if (twoFactorCode == null) {
+                    throw new TwoFactorRequiredException("Código de autenticação obrigatório");
+                }
+
+                boolean codigoValido = twoFactorService.validarCodigoAutenticador(email, String.valueOf(twoFactorCode));
+                if (!codigoValido) {
+                    throw new InvalidTwoFactorCodeException("Código de autenticação inválido");
+                }
             }
 
             String token = jwtService.gerarToken(authentication, rememberMe);
@@ -65,16 +71,20 @@ public class AuthenticationService {
     }
 
     public String completarLoginComCodigo(String email, String codigo) {
-        TwoFactorService.ValidacaoLogin validacao = twoFactorService.validarCodigoLogin(email, codigo);
+        Usuario usuario = usuarioRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Usuario usuario = validacao.usuario();
+        if (!twoFactorService.validarCodigoAutenticador(email, codigo)) {
+            throw new InvalidTwoFactorCodeException("Código inválido ou expirado");
+        }
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
             usuario.getEmail(),
             null,
             List.of(new SimpleGrantedAuthority(usuario.getRole().name()))
         );
 
-        String token = jwtService.gerarToken(authentication, validacao.rememberMe());
+        String token = jwtService.gerarToken(authentication, false);
         usuario.setTokenAtual(token);
         usuarioRepository.save(usuario);
         loginAttemptService.loginSucesso(email);
