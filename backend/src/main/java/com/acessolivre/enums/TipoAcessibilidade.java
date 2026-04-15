@@ -1,3 +1,5 @@
+package com.acessolivre.enums;
+
 public enum TipoAcessibilidade {
     RAMPA,
     ELEVADOR,
