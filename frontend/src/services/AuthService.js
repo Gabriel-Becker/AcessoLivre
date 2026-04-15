@@ -231,7 +231,7 @@ const AuthService = {
       
       const loginData = { email, senha, rememberMe };
       if (twoFactorCode !== undefined && twoFactorCode !== null && twoFactorCode !== '') {
-        loginData.twoFactorCode = Number(twoFactorCode);
+        loginData.twoFactorCode = String(twoFactorCode).trim();
       }
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
@@ -275,12 +275,12 @@ const AuthService = {
             emailDestino: responseData.emailDestino || email
           };
         }
-        throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais inválidas');
       }
       
       if (error.response && error.response.data) {
         const responseData = error.response.data;
-        throw new Error(responseData?.error || responseData?.message || 'Erro no login');
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Erro no login');
       }
       
       if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 

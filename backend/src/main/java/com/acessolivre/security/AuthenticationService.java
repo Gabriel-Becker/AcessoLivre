@@ -26,7 +26,7 @@ public class AuthenticationService {
     private final LoginAttemptService loginAttemptService;
     private final TwoFactorService twoFactorService;
 
-    public String login(String email, String senha, Boolean rememberMe, Integer twoFactorCode) {
+    public String login(String email, String senha, Boolean rememberMe, String twoFactorCode) {
         if (loginAttemptService.estaBloqueado(email)) {
             LocalDateTime bloqueioExpira = loginAttemptService.getBloqueioExpiraEm(email);
             throw new RuntimeException(
@@ -51,7 +51,7 @@ public class AuthenticationService {
                     throw new TwoFactorRequiredException("Código de autenticação obrigatório");
                 }
 
-                boolean codigoValido = twoFactorService.validarCodigoAutenticador(email, String.valueOf(twoFactorCode));
+                boolean codigoValido = twoFactorService.validarCodigoAutenticador(email, twoFactorCode);
                 if (!codigoValido) {
                     throw new InvalidTwoFactorCodeException("Código de autenticação inválido");
                 }

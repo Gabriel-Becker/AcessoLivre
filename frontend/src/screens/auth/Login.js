@@ -98,11 +98,20 @@ export default function Login({ navigation }) {
   const handleSubmitLogin = async (values) => {
     try {
       setSubmitting(true);
+      const credenciaisBase =
+        showTwoFactor && pendingCredentials
+          ? pendingCredentials
+          : {
+              email: values.email.trim(),
+              senha: values.password,
+              rememberMe: !!values.rememberMe,
+            };
+
       const result = await login({
-        email: values.email.trim(),
-        senha: values.password,
-        rememberMe: !!values.rememberMe,
-        twoFactorCode: values.twoFactorCode ? parseInt(values.twoFactorCode, 10) : undefined,
+        email: credenciaisBase.email,
+        senha: credenciaisBase.senha,
+        rememberMe: !!credenciaisBase.rememberMe,
+        twoFactorCode: values.twoFactorCode ? values.twoFactorCode.trim() : undefined,
       });
 
       if (!result?.sucesso) {
