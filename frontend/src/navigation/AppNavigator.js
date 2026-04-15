@@ -26,6 +26,7 @@ function LoadingScreen() {
 
 function MainApp() {
   const [currentScreen, setCurrentScreen] = useState('Inicio');
+  const navigation = { navigate: setCurrentScreen };
 
   const handleNavigate = (screen) => {
     setCurrentScreen(screen);
@@ -43,6 +44,12 @@ function MainApp() {
         return <Sobre />;
       case 'Perfil':
         return <Perfil />;
+      case 'Login':
+        return <Login navigation={navigation} />;
+      case 'Register':
+        return <Register navigation={navigation} />;
+      case 'ForgotPassword':
+        return <ForgotPassword navigation={navigation} />;
       default:
         return <Home />;
     }
