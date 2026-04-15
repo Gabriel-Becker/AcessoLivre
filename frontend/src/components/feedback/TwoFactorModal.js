@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Input } from '../ui';
@@ -14,6 +14,8 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [setupDados, setSetupDados] = useState(null);
   const [codigo, setCodigo] = useState('');
+  const [erroModal, setErroModal] = useState('');
+  const ultimaRequisicaoSetupRef = useRef(0);
 
   const estilos = useMemo(
     () =>
@@ -40,16 +42,15 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
         qrContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          padding: t.spacing.md,
-          backgroundColor: t.colors.backgroundSecondary,
+          padding: t.spacing.lg,
+          backgroundColor: '#FFFFFF',
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
         },
         qrImage: {
-          width: 220,
-          height: 220,
-          borderRadius: t.borderRadius.md,
+          width: 260,
+          height: 260,
         },
         secretBox: {
           padding: t.spacing.md,
@@ -87,6 +88,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
     if (!visible) {
       setCodigo('');
       setSetupDados(null);
+      setErroModal('');
       return;
     }
 
@@ -98,14 +100,28 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
   }, [visible, enabled]);
 
   const carregarSetup = async () => {
+    const requestId = Date.now();
+    ultimaRequisicaoSetupRef.current = requestId;
     try {
       setCarregandoSetup(true);
+      setErroModal('');
       const resultado = await AuthService.setup2FA();
+      if (ultimaRequisicaoSetupRef.current !== requestId) return;
+
+      if (!resultado?.sucesso) {
+        setSetupDados(null);
+        setErroModal(resultado?.mensagem || 'Erro ao carregar configuração do 2FA');
+        return;
+      }
+
       setSetupDados(resultado?.dados || null);
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao carregar configuração do 2FA');
+      if (ultimaRequisicaoSetupRef.current !== requestId) return;
+      setErroModal(erro?.message || 'Erro ao carregar configuração do 2FA');
     } finally {
-      setCarregandoSetup(false);
+      if (ultimaRequisicaoSetupRef.current === requestId) {
+        setCarregandoSetup(false);
+      }
     }
   };
 
@@ -117,12 +133,13 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
 
   const confirmarAtivacao = async () => {
     if (!codigo || codigo.length !== 6) {
-      toastHelper.showError('Digite o código de 6 dígitos');
+      setErroModal('Digite o código de 6 dígitos');
       return;
     }
 
     try {
       setCarregandoAcao(true);
+      setErroModal('');
       const resultado = await AuthService.enable2FA(codigo);
       if (resultado?.sucesso) {
         toastHelper.showSuccess('2FA habilitado com sucesso');
@@ -132,9 +149,9 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
         return;
       }
 
-      toastHelper.showError(resultado?.mensagem || 'Erro ao habilitar 2FA');
+      setErroModal(resultado?.mensagem || 'Erro ao habilitar 2FA');
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao habilitar 2FA');
+      setErroModal(erro?.message || 'Erro ao habilitar 2FA');
     } finally {
       setCarregandoAcao(false);
     }
@@ -142,12 +159,13 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
 
   const confirmarDesativacao = async () => {
     if (!codigo || codigo.length < 6) {
-      toastHelper.showError('Digite um código válido');
+      setErroModal('Digite um código válido');
       return;
     }
 
     try {
       setCarregandoAcao(true);
+      setErroModal('');
       const resultado = await AuthService.disable2FA(codigo);
       if (resultado?.sucesso) {
         toastHelper.showSuccess('2FA desabilitado com sucesso');
@@ -157,9 +175,9 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
         return;
       }
 
-      toastHelper.showError(resultado?.mensagem || 'Erro ao desabilitar 2FA');
+      setErroModal(resultado?.mensagem || 'Erro ao desabilitar 2FA');
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao desabilitar 2FA');
+      setErroModal(erro?.message || 'Erro ao desabilitar 2FA');
     } finally {
       setCarregandoAcao(false);
     }
@@ -179,6 +197,24 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                 ? 'Digite o código do seu aplicativo autenticador ou um código de recuperação para desativar.'
                 : 'Escaneie o QR Code com seu aplicativo autenticador e depois confirme com o código de 6 dígitos.'}
             </ThemedText>
+
+            {!enabled ? (
+              <>
+                <Spacer size="xs" />
+                <ThemedText color="textSecondary" size="sm" align="center">
+                  Se o app não conseguir ler o QR, use a chave manual abaixo.
+                </ThemedText>
+              </>
+            ) : null}
+
+            {erroModal ? (
+              <>
+                <Spacer size="sm" />
+                <ThemedText color="error" size="sm" align="center">
+                  {erroModal}
+                </ThemedText>
+              </>
+            ) : null}
 
             {!enabled ? (
               <>

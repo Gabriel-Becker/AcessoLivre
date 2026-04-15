@@ -37,6 +37,15 @@ const aplicarTokenNoHeader = (token) => {
   delete api.defaults.headers.common.Authorization;
 };
 
+const extrairMensagemErro = (error, fallback) => {
+  const data = error?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data?.mensagem) return data.mensagem;
+  if (data?.message) return data.message;
+  if (error?.message) return error.message;
+  return fallback;
+};
+
 const AuthService = {
   async getToken() {
     try {
@@ -364,7 +373,7 @@ const AuthService = {
       console.error('[AuthService] Erro ao configurar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao configurar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao configurar 2FA')
       };
     }
   },
@@ -380,7 +389,7 @@ const AuthService = {
       console.error('[AuthService] Erro ao habilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao habilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao habilitar 2FA')
       };
     }
   },
@@ -396,7 +405,7 @@ const AuthService = {
       console.error('[AuthService] Erro ao desabilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao desabilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao desabilitar 2FA')
       };
     }
   },
