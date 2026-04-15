@@ -1,23 +1,25 @@
 package com.acessolivre.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.acessolivre.dto.response.UsuarioResponseDTO;
+import com.acessolivre.enums.Role;
 import com.acessolivre.mapper.UsuarioMapper;
 import com.acessolivre.model.CodigoVerificacaoRegistro;
 import com.acessolivre.model.PendingUsuarioRegistro;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
-import com.acessolivre.enums.Role;
 import com.acessolivre.repository.CodigoVerificacaoRegistroRepository;
 import com.acessolivre.repository.PendingUsuarioRegistroRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor

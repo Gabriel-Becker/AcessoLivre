@@ -1,12 +1,25 @@
 package com.acessolivre.model;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "token_revogado", indexes = {
@@ -32,7 +45,7 @@ public class TokenRevogado {
     private LocalDateTime expiracao;
 
     @NotBlank(message = "Token é obrigatório")
-    @Column(name = "token", nullable = false)
+    @Column(name = "token", nullable = false, length = 2048)
     private String token;
 
     @NotNull(message = "Usuário é obrigatório")

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -64,8 +64,15 @@ function MainApp() {
 
 export default function AppNavigator() {
   const { loading } = useAuth();
+  const [sessaoInicializada, setSessaoInicializada] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading) {
+      setSessaoInicializada(true);
+    }
+  }, [loading]);
+
+  if (!sessaoInicializada && loading) {
     return <LoadingScreen />;
   }
 

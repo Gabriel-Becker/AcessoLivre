@@ -46,6 +46,73 @@ const extrairMensagemErro = (error, fallback) => {
   return fallback;
 };
 
+const valorEhVerdadeiro = (valor) => {
+  if (valor === true || valor === 1) return true;
+  if (typeof valor === 'string') {
+    const normalizado = valor.trim().toLowerCase();
+    return normalizado === 'true' || normalizado === '1' || normalizado === 'sim';
+  }
+  return false;
+};
+
+const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) => {
+  const payload = responseData && typeof responseData === 'object' ? responseData : {};
+
+  const flagExplicita =
+    valorEhVerdadeiro(payload?.twoFactorRequired) ||
+    valorEhVerdadeiro(payload?.requiresTwoFactor) ||
+    valorEhVerdadeiro(payload?.requires2FA) ||
+    valorEhVerdadeiro(payload?.two_factor_required);
+
+  const mensagemNormalizada = String(mensagem || '').toLowerCase();
+  const mensagemIndicaTwoFactor =
+    mensagemNormalizada.includes('dois fatores') ||
+    mensagemNormalizada.includes('2fa') ||
+    mensagemNormalizada.includes('autenticação obrigatório') ||
+    mensagemNormalizada.includes('autenticacao obrigatorio') ||
+    mensagemNormalizada.includes('autenticação obrigatória') ||
+    mensagemNormalizada.includes('autenticacao obrigatoria') ||
+    mensagemNormalizada.includes('código de autenticação obrigatório') ||
+    mensagemNormalizada.includes('codigo de autenticacao obrigatorio');
+
+  const possuiIndicadorEmailDestino = Boolean(payload?.emailDestino);
+  const semMensagemUtil = !mensagemNormalizada;
+
+  return (
+    flagExplicita ||
+    mensagemIndicaTwoFactor ||
+    (!twoFactorCodeInformado && possuiIndicadorEmailDestino) ||
+    (!twoFactorCodeInformado && semMensagemUtil && Object.keys(payload).length > 0)
+  );
+};
+
+const mensagemIndicaCredenciaisInvalidasOuBloqueio = (mensagem) => {
+  const texto = String(mensagem || '').toLowerCase();
+  if (!texto) return false;
+
+  return (
+    texto.includes('credenciais inválidas') ||
+    texto.includes('credenciais invalidas') ||
+    texto.includes('tentativas restantes') ||
+    texto.includes('conta bloqueada') ||
+    texto.includes('email não verificado') ||
+    texto.includes('email nao verificado') ||
+    texto.includes('senha inválida') ||
+    texto.includes('senha invalida')
+  );
+};
+
+const montarRespostaTwoFactor = (responseData, email, mensagemPadrao) => ({
+  success: false,
+  requiresTwoFactor: true,
+  twoFactorRequired: true,
+  emailDestino: responseData?.emailDestino || email,
+  message:
+    responseData?.mensagem ||
+    responseData?.message ||
+    mensagemPadrao,
+});
+
 const AuthService = {
   async getToken() {
     try {
@@ -226,11 +293,17 @@ const AuthService = {
   },
 
   async login({ email, senha, rememberMe = false, twoFactorCode }) {
+    let twoFactorCodeInformado = false;
     try {
-      await this.logout();
+      // Antes de um novo login, limpa apenas estado local para evitar chamada remota
+      // de logout que pode falhar com token antigo e interromper o fluxo de 2FA.
+      await this.removeToken();
+      await this.setUserData(null);
       
       const loginData = { email, senha, rememberMe };
-      if (twoFactorCode !== undefined && twoFactorCode !== null && twoFactorCode !== '') {
+      twoFactorCodeInformado =
+        twoFactorCode !== undefined && twoFactorCode !== null && String(twoFactorCode).trim() !== '';
+      if (twoFactorCodeInformado) {
         loginData.twoFactorCode = String(twoFactorCode).trim();
       }
       const response = await api.post('/auth/login', loginData);
@@ -264,17 +337,30 @@ const AuthService = {
         message: responseData.message || 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('[AuthService] Erro no login:', error);
-      
       if (error.response && error.response.status === 401) {
         const responseData = error.response.data;
-        if (responseData?.twoFactorRequired) {
-          return {
-            success: false,
-            requiresTwoFactor: true,
-            emailDestino: responseData.emailDestino || email
-          };
+        const mensagem401 = String(
+          responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || ''
+        );
+        const ehFluxoTwoFactor = detectarFluxoTwoFactor(responseData, mensagem401, twoFactorCodeInformado);
+        const ehCredencialInvalidaOuBloqueio = mensagemIndicaCredenciaisInvalidasOuBloqueio(mensagem401);
+
+        if (!twoFactorCodeInformado && !ehFluxoTwoFactor && !ehCredencialInvalidaOuBloqueio) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Digite o código de verificação para continuar o login.'
+          );
         }
+
+        if (ehFluxoTwoFactor) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Confirme o código de autenticação de dois fatores para continuar.'
+          );
+        }
+
         throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais inválidas');
       }
       

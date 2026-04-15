@@ -6,6 +6,57 @@ import useTokenMonitor from '../hooks/useTokenMonitor';
 
 const AuthContext = createContext({});
 
+const obterMensagemLoginAmigavel = (erro) => {
+  const mensagemBackend = erro?.response?.data?.mensagem || erro?.response?.data?.message;
+  const mensagemErro = erro?.message;
+  const mensagem = mensagemBackend || mensagemErro || '';
+  const mensagemNormalizada = String(mensagem).toLowerCase();
+
+  if (!mensagem) {
+    return 'Não foi possível entrar agora. Tente novamente em instantes.';
+  }
+
+  if (
+    mensagemNormalizada.includes('referenceerror') ||
+    mensagemNormalizada.includes('is not defined') ||
+    mensagemNormalizada.includes('undefined')
+  ) {
+    return 'Não foi possível concluir o login agora. Tente novamente.';
+  }
+
+  if (mensagemNormalizada.includes('network') || mensagemNormalizada.includes('timeout')) {
+    return 'Falha de conexão. Verifique sua internet e tente novamente.';
+  }
+
+  return mensagem;
+};
+
+const detectarRequisicaoTwoFactorNoErro = (erro) => {
+  const status = erro?.response?.status;
+  const data = erro?.response?.data;
+
+  if (status !== 401) return false;
+
+  if (data && typeof data === 'object') {
+    if (data.twoFactorRequired === true || data.requiresTwoFactor === true) {
+      return true;
+    }
+  }
+
+  const textoErro = String(
+    data?.mensagem || data?.message || data?.erro || data?.error || erro?.message || ''
+  ).toLowerCase();
+
+  return (
+    textoErro.includes('2fa') ||
+    textoErro.includes('dois fatores') ||
+    textoErro.includes('autenticação obrigatório') ||
+    textoErro.includes('autenticação obrigatória') ||
+    textoErro.includes('codigo de autenticacao') ||
+    textoErro.includes('código de autenticação')
+  );
+};
+
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [token, setToken] = useState(null);
@@ -94,12 +145,15 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const result = await AuthService.login({ email, senha, rememberMe, twoFactorCode });
+      const requerTwoFactor = Boolean(result?.requiresTwoFactor || result?.twoFactorRequired);
       
-      if (!result.success && result.requiresTwoFactor) {
+      if (!result.success && requerTwoFactor) {
         return {
           sucesso: false,
           requiresTwoFactor: true,
-          emailDestino: result.emailDestino
+          twoFactorRequired: true,
+          emailDestino: result.emailDestino,
+          message: result.message,
         };
       }
       
@@ -138,8 +192,20 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Resposta inválida do servidor');
       }
     } catch (erro) {
-      console.error('[AuthContext] Erro ao fazer login:', erro);
-      const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao fazer login';
+      if (detectarRequisicaoTwoFactorNoErro(erro)) {
+        return {
+          sucesso: false,
+          requiresTwoFactor: true,
+          twoFactorRequired: true,
+          emailDestino: erro?.response?.data?.emailDestino || email,
+          message:
+            erro?.response?.data?.mensagem ||
+            erro?.response?.data?.message ||
+            'Digite o código de verificação para continuar o login.',
+        };
+      }
+
+      const mensagem = obterMensagemLoginAmigavel(erro);
       
       Toast.show({
         type: 'error',
