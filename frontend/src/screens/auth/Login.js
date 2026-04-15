@@ -101,6 +101,7 @@ export default function Login({ navigation }) {
       const result = await login({
         email: values.email.trim(),
         senha: values.password,
+        rememberMe: !!values.rememberMe,
         twoFactorCode: values.twoFactorCode ? parseInt(values.twoFactorCode, 10) : undefined,
       });
 

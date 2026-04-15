@@ -216,11 +216,14 @@ const AuthService = {
     }
   },
 
-  async login({ email, senha, rememberMe = false }) {
+  async login({ email, senha, rememberMe = false, twoFactorCode }) {
     try {
       await this.logout();
       
       const loginData = { email, senha, rememberMe };
+      if (twoFactorCode !== undefined && twoFactorCode !== null && twoFactorCode !== '') {
+        loginData.twoFactorCode = Number(twoFactorCode);
+      }
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
 

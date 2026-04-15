@@ -90,10 +90,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ email, senha, rememberMe = false }) => {
+  const login = async ({ email, senha, rememberMe = false, twoFactorCode }) => {
     try {
       setLoading(true);
-      const result = await AuthService.login({ email, senha, rememberMe });
+      const result = await AuthService.login({ email, senha, rememberMe, twoFactorCode });
       
       if (!result.success && result.requiresTwoFactor) {
         return {
