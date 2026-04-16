@@ -1,5 +1,6 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.enums.Categoria;
 import com.acessolivre.enums.StatusLocal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,8 +28,8 @@ public class LocalRequestDTO {
     @Size(max = 120, message = "Nome da imagem deve ter no máximo 120 caracteres")
     private String imagem;
 
-    @NotNull(message = "ID da categoria é obrigatório")
-    private Long idCategoria;
+    @NotNull(message = "Categoria é obrigatória")
+    private Categoria categoria;
 
     @NotNull(message = "ID do tipo de acessibilidade é obrigatório")
     private Long idTipoAcessibilidade;

@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,13 +22,12 @@ public class LocalService {
 
     private final LocalRepository localRepository;
     private final UsuarioRepository usuarioRepository;
-    private final CategoriaRepository categoriaRepository;
-    private final TipoAcessibilidadeRepository tipoAcessibilidadeRepository;
+    // REMOVIDOS: CategoriaRepository e TipoAcessibilidadeRepository (não são mais necessários)
     private final EnderecoRepository enderecoRepository;
     private final EnderecoService enderecoService;
     private final AvaliacaoRepository avaliacaoRepository;
-    private final LocalMapper localMapper;
-    
+    // REMOVIDO: LocalMapper injetado (agora é estático)
+
     private static final int MAX_PROFUNDIDADE_HIERARQUIA = 5;
 
     @Transactional(readOnly = true)
@@ -64,33 +62,36 @@ public class LocalService {
         return localRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
+    /**
+     * Busca locais por categoria (agora usando o enum diretamente)
+     * @param categoria valor do enum Categoria
+     */
     @Transactional(readOnly = true)
-    public List<Local> buscarPorCategoria(Long idCategoria) {
-        log.info("Buscando locais por categoria ID: {}", idCategoria);
-        return localRepository.findByCategoriaIdCategoria(idCategoria);
+    public List<Local> buscarPorCategoria(Categoria categoria) {
+        log.info("Buscando locais por categoria: {}", categoria);
+        return localRepository.findByCategoria(categoria);
     }
 
+    /**
+     * Busca locais por tipo de acessibilidade (agora usando o enum diretamente)
+     * @param tipoAcessibilidade valor do enum TipoAcessibilidade
+     */
     @Transactional(readOnly = true)
-    public List<Local> buscarPorTipoAcessibilidade(Long idTipoAcessibilidade) {
-        log.info("Buscando locais por tipo de acessibilidade ID: {}", idTipoAcessibilidade);
-        return localRepository.findByTipoAcessibilidadeIdTipoAcessibilidade(idTipoAcessibilidade);
+    public List<Local> buscarPorTipoAcessibilidade(TipoAcessibilidade tipoAcessibilidade) {
+        log.info("Buscando locais por tipo de acessibilidade: {}", tipoAcessibilidade);
+        return localRepository.findByTipoAcessibilidade(tipoAcessibilidade);
     }
     
     @Transactional(readOnly = true)
     public List<Local> buscarHierarquiaCompleta(Long idLocal) {
         log.info("Buscando hierarquia completa para local ID: {}", idLocal);
-        
         validarExistenciaLocal(idLocal);
-        
         List<Local> hierarquia = new ArrayList<>();
-        
-        // Subir na hierarquia (ancestrais)
         Local atual = localRepository.findById(idLocal).get();
         while (atual != null) {
-            hierarquia.add(0, atual); // Adiciona no início para ordem correta
+            hierarquia.add(0, atual);
             atual = atual.getLocalPrincipal();
         }
-        
         return hierarquia;
     }
     
@@ -118,23 +119,25 @@ public class LocalService {
     public Local salvar(LocalRequestDTO dto) {
         log.info("Salvando novo local: nome={}", dto.getNome());
 
-        // Validar entidades básicas
+        // Validar usuário
         Usuario usuario = validarUsuario(dto.getIdUsuario());
-        Categoria categoria = validarCategoria(dto.getIdCategoria());
-        TipoAcessibilidade tipoAcessibilidade = validarTipoAcessibilidade(dto.getIdTipoAcessibilidade());
+        
+        // Resolver endereço (criar novo ou reutilizar)
         Endereco endereco = resolverEndereco(dto);
         
-        // Validar local principal se existir
+        // Validar local principal se existir (agora usando ID vindo do DTO)
         Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
         
-        // Validar hierarquia
+        // Validar hierarquia (profundidade, ciclos)
         validarHierarquia(localPrincipal, null);
         
-        // Criar e salvar o local
-        Local local = localMapper.toEntity(dto, usuario, categoria, tipoAcessibilidade, endereco, localPrincipal);
+        // Criar entidade via mapper estático (sem categoria/tipo como objetos, apenas enums do DTO)
+        Local local = LocalMapper.toEntity(dto, usuario, endereco);
+        local.setLocalPrincipal(localPrincipal); // Define o pai
+        
         Local salvo = localRepository.save(local);
         
-        // Se este local é filho, atualizar a lista do pai
+        // Se este local é filho, atualizar a lista do pai (bidirecionalidade)
         if (localPrincipal != null) {
             localPrincipal.adicionarSubLocal(salvo);
             localRepository.save(localPrincipal);
@@ -151,14 +154,12 @@ public class LocalService {
         return localRepository.findById(id).map(local -> {
             // Validar entidades
             Usuario usuario = validarUsuario(dto.getIdUsuario());
-            Categoria categoria = validarCategoria(dto.getIdCategoria());
-            TipoAcessibilidade tipoAcessibilidade = validarTipoAcessibilidade(dto.getIdTipoAcessibilidade());
             Endereco endereco = resolverEndereco(dto);
             
             // Validar novo local principal
             Local novoLocalPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), id);
             
-            // Validar hierarquia para evitar ciclos
+            // Validar hierarquia para evitar ciclos e profundidade
             validarHierarquia(novoLocalPrincipal, id);
             
             // Remover da lista do antigo pai se existir
@@ -167,8 +168,10 @@ public class LocalService {
                 localRepository.save(local.getLocalPrincipal());
             }
             
-            // Atualizar entidade
-            localMapper.updateEntity(local, dto, usuario, categoria, tipoAcessibilidade, endereco, novoLocalPrincipal);
+            // Atualizar entidade via mapper estático
+            LocalMapper.updateEntity(local, dto, usuario, endereco);
+            local.setLocalPrincipal(novoLocalPrincipal); // Atualiza o pai
+            
             Local atualizado = localRepository.save(local);
             
             // Adicionar à lista do novo pai
@@ -198,14 +201,9 @@ public class LocalService {
             );
         }
         
-        // Verificar se o local possui avaliações
-        /*long countAvaliacoes = avaliacaoRepository.countByLocalIdLocal(id);
-        if (countAvaliacoes > 0) {
-            throw new IllegalStateException(
-                String.format("Não é possível deletar o local '%s' pois ele possui %d avaliação(ões). " +
-                "Remova as avaliações primeiro.", local.getNome(), countAvaliacoes)
-            );
-        }*/
+        // Verificar se o local possui avaliações (opcional - descomente se quiser bloquear)
+        // long countAvaliacoes = avaliacaoRepository.countByLocalIdLocal(id);
+        // if (countAvaliacoes > 0) { ... }
         
         // Remover da lista do pai
         if (local.getLocalPrincipal() != null) {
@@ -221,13 +219,10 @@ public class LocalService {
     @Transactional
     public void atualizarStatus(Long id, StatusLocal novoStatus) {
         log.info("Atualizando status do local ID: {} para {}", id, novoStatus);
-        
         Local local = localRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
-        
         local.setStatus(novoStatus);
         localRepository.save(local);
-        
         log.info("Status do local ID: {} atualizado para {}", id, novoStatus);
     }
     
@@ -243,12 +238,10 @@ public class LocalService {
             novoPai = localRepository.findById(idNovoPai)
                     .orElseThrow(() -> new IllegalArgumentException("Local pai não encontrado"));
             
-            // Validar se não está criando ciclo
             if (isCicloHierarquico(novoPai, idLocal)) {
                 throw new IllegalArgumentException("Não é possível mover: esta operação criaria um ciclo na hierarquia");
             }
             
-            // Validar profundidade máxima
             int novaProfundidade = getProfundidadeHierarquia(novoPai) + 1;
             if (novaProfundidade > MAX_PROFUNDIDADE_HIERARQUIA) {
                 throw new IllegalArgumentException(
@@ -263,10 +256,8 @@ public class LocalService {
             localRepository.save(local.getLocalPrincipal());
         }
         
-        // Atualizar o pai
         local.setLocalPrincipal(novoPai);
         
-        // Adicionar ao novo pai
         if (novoPai != null) {
             novoPai.getSubLocais().add(local);
             localRepository.save(novoPai);
@@ -279,15 +270,10 @@ public class LocalService {
     @Transactional
     public void recalcularMediaAvaliacoes(Long idLocal) {
         log.info("Recalculando média de avaliações para local ID: {}", idLocal);
-        
         Local local = localRepository.findById(idLocal)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
-
         Double media = avaliacaoRepository.calcularMediaPorLocal(idLocal);
-        
-        // Define média como 0.0 se não houver avaliações, caso contrário usa a média calculada
         local.setAvaliacaoMedia(media != null ? media : 0.0);
-        
         localRepository.save(local);
         log.info("Média de avaliações atualizada para local ID {}: {}", idLocal, local.getAvaliacaoMedia());
     }
@@ -295,78 +281,52 @@ public class LocalService {
     @Transactional(readOnly = true)
     public Map<String, Object> obterEstatisticasGerais() {
         log.info("Obtendo estatísticas gerais para locais");
-
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsuarios", usuarioRepository.count());
         stats.put("totalLocais", localRepository.count());
         stats.put("totalAvaliacoes", avaliacaoRepository.count());
-        
-      /*   // Estatísticas de status
-        for (StatusLocal status : StatusLocal.values()) {
-            long count = localRepository.countByStatus(status);
-            stats.put("locais" + status.name(), count);
-        }
-        
-        // Estatísticas de hierarquia
-        stats.put("totalLocaisRaiz", localRepository.countByLocalPrincipalIsNull());
-        stats.put("totalLocaisComSubLocais", localRepository.countByLocalPrincipalIsNotNull());
-        */
+        // Estatísticas adicionais podem ser reativadas se os métodos existirem no repositório
         return stats;
     }
     
     @Transactional(readOnly = true)
     public Map<String, Object> obterEstatisticasHierarquia(Long idLocal) {
         log.info("Obtendo estatísticas de hierarquia para local ID: {}", idLocal);
-        
         validarExistenciaLocal(idLocal);
-        
         Map<String, Object> stats = new HashMap<>();
         stats.put("profundidade", getProfundidadeHierarquia(localRepository.findById(idLocal).get()));
         stats.put("totalDescendentes", localRepository.buscarTodosDescendentes(idLocal).size());
         stats.put("totalSubLocaisDiretos", localRepository.countSubLocais(idLocal));
-        
         return stats;
     }
     
-    // Métodos privados de validação
+    // ==================== MÉTODOS PRIVADOS DE VALIDAÇÃO ====================
     
     private Usuario validarUsuario(Long idUsuario) {
         return usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + idUsuario));
     }
     
-    private Categoria validarCategoria(Long idCategoria) {
-        return categoriaRepository.findById(idCategoria)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada com ID: " + idCategoria));
-    }
-    
-    private TipoAcessibilidade validarTipoAcessibilidade(Long idTipoAcessibilidade) {
-        return tipoAcessibilidadeRepository.findById(idTipoAcessibilidade)
-                .orElseThrow(() -> new IllegalArgumentException("Tipo de acessibilidade não encontrado com ID: " + idTipoAcessibilidade));
-    }
-    
+    /**
+     * Valida e retorna o Local principal (pai) a partir do ID, se fornecido.
+     * @param idLocalPrincipal ID do possível pai
+     * @param idLocalAtual ID do próprio local (para verificar auto-referência, pode ser null)
+     */
     private Local validarLocalPrincipal(Long idLocalPrincipal, Long idLocalAtual) {
         if (idLocalPrincipal == null) {
             return null;
         }
-        
         Local localPrincipal = localRepository.findById(idLocalPrincipal)
                 .orElseThrow(() -> new IllegalArgumentException("Local principal não encontrado com ID: " + idLocalPrincipal));
-        
-        // Validação: um local não pode ser principal de si mesmo
         if (idLocalAtual != null && localPrincipal.getIdLocal().equals(idLocalAtual)) {
             throw new IllegalArgumentException("Um local não pode ser principal de si mesmo");
         }
-        
         return localPrincipal;
     }
     
     private void validarHierarquia(Local localPrincipal, Long idLocalAtual) {
-        if (localPrincipal == null) {
-            return;
-        }
+        if (localPrincipal == null) return;
         
-        // Validar profundidade máxima
         int profundidadeAtual = getProfundidadeHierarquia(localPrincipal);
         if (profundidadeAtual + 1 > MAX_PROFUNDIDADE_HIERARQUIA) {
             throw new IllegalArgumentException(
@@ -376,7 +336,6 @@ public class LocalService {
             );
         }
         
-        // Validar se não está criando ciclo
         if (idLocalAtual != null && isCicloHierarquico(localPrincipal, idLocalAtual)) {
             throw new IllegalArgumentException("Esta operação criaria um ciclo na hierarquia");
         }
@@ -391,11 +350,9 @@ public class LocalService {
             enderecoService.validarEndereco(endereco);
             return enderecoRepository.save(endereco);
         }
-
         if (dto.getIdEndereco() == null) {
             throw new IllegalArgumentException("Endereço é obrigatório");
         }
-
         return enderecoRepository.findById(dto.getIdEndereco())
                 .orElseThrow(() -> new IllegalArgumentException("Endereço não encontrado com ID: " + dto.getIdEndereco()));
     }
@@ -414,7 +371,7 @@ public class LocalService {
         Local atual = local;
         while (atual != null) {
             if (atual.getIdLocal().equals(idLocalFilho)) {
-                return true; // Encontrou ciclo
+                return true;
             }
             atual = atual.getLocalPrincipal();
         }
