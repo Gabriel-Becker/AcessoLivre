@@ -2,6 +2,7 @@ package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
 import com.acessolivre.dto.response.LocalResponseDTO;
+import com.acessolivre.enums.Categoria;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
@@ -69,6 +70,8 @@ public class LocalController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    
 
     @PutMapping("/{id}")
     public ResponseEntity<LocalResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody LocalRequestDTO requestDTO) {
