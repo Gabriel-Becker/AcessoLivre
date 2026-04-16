@@ -65,6 +65,11 @@ public class Local {
     @NotNull(message = "Categoria é obrigatória")
     private Categoria categoria;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_acessibilidade", nullable = false)
+    @NotNull(message = "Tipo de acessibilidade é obrigatório")
+    private TipoAcessibilidade tipoAcessibilidade;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
     @NotNull(message = "Usuário é obrigatório")

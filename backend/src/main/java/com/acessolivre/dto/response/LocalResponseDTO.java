@@ -2,6 +2,8 @@ package com.acessolivre.dto.response;
 
 import com.acessolivre.enums.Categoria;
 import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +25,7 @@ public class LocalResponseDTO {
     private Double avaliacaoMedia;
     private StatusLocal status;
     private Categoria categoria;
-    private TipoAcessibilidadeResponseDTO tipoAcessibilidade;
+    private TipoAcessibilidade tipoAcessibilidade;
     private Long idUsuario;
     private String nomeUsuario;
     private EnderecoResponseDTO endereco;

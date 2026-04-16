@@ -32,13 +32,13 @@ public class LocalMapper {
                 .nome(dto.getNome())
                 .descricao(dto.getDescricao())
                 .imagem(dto.getImagem())
-                .categoria(dto.getCategoria())               // enum direto do DTO
-                .tipoAcessibilidade(dto.getTipoAcessibilidade()) // enum direto do DTO
+                .categoria(dto.getCategoria())               
+                .tipoAcessibilidade(dto.getTipoAcessibilidade()) 
                 .usuario(usuario)
                 .endereco(endereco)
                 .status(dto.getStatus() != null ? dto.getStatus() : StatusLocal.EM_ANALISE)
                 .avaliacaoMedia(0.0)
-                .localPrincipal(null)   // será setado separadamente se necessário
+                .localPrincipal(null)   
                 .build();
     }
 
@@ -59,8 +59,8 @@ public class LocalMapper {
                 .imagem(entity.getImagem())
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
-                .categoria(entity.getCategoria())                     // enum diretamente
-                .tipoAcessibilidade(entity.getTipoAcessibilidade())   // enum diretamente
+                .categoria(entity.getCategoria())                     
+                .tipoAcessibilidade(entity.getTipoAcessibilidade())   
                 .idUsuario(entity.getUsuario().getIdUsuario())
                 .nomeUsuario(entity.getUsuario().getNome())
                 .endereco(EnderecoMapper.toResponse(entity.getEndereco()))
@@ -70,7 +70,6 @@ public class LocalMapper {
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha());
 
-        // Local principal (se existir)
         if (entity.getLocalPrincipal() != null) {
             builder.idLocalPrincipal(entity.getLocalPrincipal().getIdLocal());
             builder.nomeLocalPrincipal(entity.getLocalPrincipal().getNome());
@@ -121,7 +120,6 @@ public class LocalMapper {
     }
 
     /**
-     * Atualiza uma entidade Local existente com dados de um DTO.
      * @param entity Entidade a ser atualizada
      * @param dto DTO com os novos dados
      * @param usuario Novo usuário proprietário (se houver alteração)
@@ -131,8 +129,8 @@ public class LocalMapper {
         entity.setNome(dto.getNome());
         entity.setDescricao(dto.getDescricao());
         entity.setImagem(dto.getImagem());
-        entity.setCategoria(dto.getCategoria());               // enum direto
-        entity.setTipoAcessibilidade(dto.getTipoAcessibilidade()); // enum direto
+        entity.setCategoria(dto.getCategoria());             
+        entity.setTipoAcessibilidade(dto.getTipoAcessibilidade()); 
         entity.setUsuario(usuario);
         entity.setEndereco(endereco);
         if (dto.getStatus() != null) {
