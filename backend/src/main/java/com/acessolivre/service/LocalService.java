@@ -2,6 +2,8 @@ package com.acessolivre.service;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
 import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.Categoria;
+import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.mapper.EnderecoMapper;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.*;
@@ -22,11 +24,9 @@ public class LocalService {
 
     private final LocalRepository localRepository;
     private final UsuarioRepository usuarioRepository;
-    // REMOVIDOS: CategoriaRepository e TipoAcessibilidadeRepository (não são mais necessários)
     private final EnderecoRepository enderecoRepository;
     private final EnderecoService enderecoService;
     private final AvaliacaoRepository avaliacaoRepository;
-    // REMOVIDO: LocalMapper injetado (agora é estático)
 
     private static final int MAX_PROFUNDIDADE_HIERARQUIA = 5;
 
@@ -62,20 +62,13 @@ public class LocalService {
         return localRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
-    /**
-     * Busca locais por categoria (agora usando o enum diretamente)
-     * @param categoria valor do enum Categoria
-     */
+
     @Transactional(readOnly = true)
     public List<Local> buscarPorCategoria(Categoria categoria) {
         log.info("Buscando locais por categoria: {}", categoria);
         return localRepository.findByCategoria(categoria);
     }
 
-    /**
-     * Busca locais por tipo de acessibilidade (agora usando o enum diretamente)
-     * @param tipoAcessibilidade valor do enum TipoAcessibilidade
-     */
     @Transactional(readOnly = true)
     public List<Local> buscarPorTipoAcessibilidade(TipoAcessibilidade tipoAcessibilidade) {
         log.info("Buscando locais por tipo de acessibilidade: {}", tipoAcessibilidade);
@@ -119,25 +112,19 @@ public class LocalService {
     public Local salvar(LocalRequestDTO dto) {
         log.info("Salvando novo local: nome={}", dto.getNome());
 
-        // Validar usuário
         Usuario usuario = validarUsuario(dto.getIdUsuario());
         
-        // Resolver endereço (criar novo ou reutilizar)
         Endereco endereco = resolverEndereco(dto);
-        
-        // Validar local principal se existir (agora usando ID vindo do DTO)
+    
         Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
         
-        // Validar hierarquia (profundidade, ciclos)
         validarHierarquia(localPrincipal, null);
         
-        // Criar entidade via mapper estático (sem categoria/tipo como objetos, apenas enums do DTO)
         Local local = LocalMapper.toEntity(dto, usuario, endereco);
-        local.setLocalPrincipal(localPrincipal); // Define o pai
+        local.setLocalPrincipal(localPrincipal); 
         
         Local salvo = localRepository.save(local);
         
-        // Se este local é filho, atualizar a lista do pai (bidirecionalidade)
         if (localPrincipal != null) {
             localPrincipal.adicionarSubLocal(salvo);
             localRepository.save(localPrincipal);
@@ -152,17 +139,14 @@ public class LocalService {
         log.info("Atualizando local: id={}", id);
 
         return localRepository.findById(id).map(local -> {
-            // Validar entidades
+    
             Usuario usuario = validarUsuario(dto.getIdUsuario());
             Endereco endereco = resolverEndereco(dto);
             
-            // Validar novo local principal
             Local novoLocalPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), id);
             
-            // Validar hierarquia para evitar ciclos e profundidade
             validarHierarquia(novoLocalPrincipal, id);
             
-            // Remover da lista do antigo pai se existir
             if (local.getLocalPrincipal() != null) {
                 local.getLocalPrincipal().getSubLocais().remove(local);
                 localRepository.save(local.getLocalPrincipal());
@@ -200,11 +184,7 @@ public class LocalService {
                 "Mova ou delete os sub-locais primeiro.", local.getNome(), countSubLocais)
             );
         }
-        
-        // Verificar se o local possui avaliações (opcional - descomente se quiser bloquear)
-        // long countAvaliacoes = avaliacaoRepository.countByLocalIdLocal(id);
-        // if (countAvaliacoes > 0) { ... }
-        
+         
         // Remover da lista do pai
         if (local.getLocalPrincipal() != null) {
             local.getLocalPrincipal().getSubLocais().remove(local);
@@ -299,8 +279,6 @@ public class LocalService {
         stats.put("totalSubLocaisDiretos", localRepository.countSubLocais(idLocal));
         return stats;
     }
-    
-    // ==================== MÉTODOS PRIVADOS DE VALIDAÇÃO ====================
     
     private Usuario validarUsuario(Long idUsuario) {
         return usuarioRepository.findById(idUsuario)
