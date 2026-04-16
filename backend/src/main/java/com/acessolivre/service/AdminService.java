@@ -187,8 +187,8 @@ public class AdminService {
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
         
-        for (Local local : locais) {
-            String categoria = local.getCategoria().getNome();
+         for (Local local : locais) {
+            String categoria = local.getCategoria().name();
             estatisticas.put(categoria, estatisticas.getOrDefault(categoria, 0L) + 1);
         }
         
@@ -201,8 +201,8 @@ public class AdminService {
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
         
-        for (Local local : locais) {
-            String tipo = local.getTipoAcessibilidade().getNome();
+         for (Local local : locais) {
+            String tipo = local.getTipoAcessibilidade().name();
             estatisticas.put(tipo, estatisticas.getOrDefault(tipo, 0L) + 1);
         }
         
