@@ -29,6 +29,27 @@ export default function Login({ navigation }) {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState(null);
 
+  const redirecionarAposLogin = () => {
+    if (!navigation) return;
+
+    if (typeof navigation.replace === 'function') {
+      navigation.replace('Main');
+      return;
+    }
+
+    if (typeof navigation.reset === 'function') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+      return;
+    }
+
+    if (typeof navigation.navigate === 'function') {
+      navigation.navigate('Inicio');
+    }
+  };
+
   const {
     control,
     handleSubmit,
@@ -182,6 +203,7 @@ export default function Login({ navigation }) {
       setShowTwoFactor(false);
       setPendingCredentials(null);
       toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
+      redirecionarAposLogin();
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);
     } finally {

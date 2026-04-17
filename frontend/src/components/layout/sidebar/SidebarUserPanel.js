@@ -1,13 +1,19 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import theme, { getTheme } from '../../../config/theme';
-import { ThemedText, Spacer, Divider } from '../../commons';
+import theme from '../../../config/theme';
+import { Spacer, Divider } from '../../commons';
 import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function SidebarUserPanel({ onNavigate, altoContraste = false }) {
-  const t = altoContraste ? getTheme(true) : theme;
-  const { isAuthenticated, usuario, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    if (onNavigate) {
+      onNavigate('Login');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -36,7 +42,7 @@ export default function SidebarUserPanel({ onNavigate, altoContraste = false }) 
             Meu Perfil
           </Button>
           <Spacer size="xs" />
-          <Button variant="danger" size="large" fullWidth onPress={logout} align="left" iconLeft="exit-outline">
+          <Button variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline">
             Sair
           </Button>
         </>

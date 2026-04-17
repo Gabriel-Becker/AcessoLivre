@@ -100,7 +100,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     carregarSessao();
-    setLogoutHandler(() => logout);
+    setLogoutHandler(logout);
+
+    return () => {
+      setLogoutHandler(null);
+    };
   }, []);
 
   const carregarSessao = async () => {
