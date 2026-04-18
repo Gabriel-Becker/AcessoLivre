@@ -1,7 +1,10 @@
 package com.acessolivre.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.acessolivre.enums.Categoria;
 import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +23,6 @@ import java.util.List;
 @Entity
 @Table(name = "local", indexes = {
     @Index(name = "idx_local_nome", columnList = "nome"),
-    @Index(name = "idx_local_categoria", columnList = "idcategoria"),
     @Index(name = "idx_local_principal", columnList = "idlocal_principal"),
     @Index(name = "idx_local_status", columnList = "status")
 })
@@ -57,13 +59,13 @@ public class Local {
     @Builder.Default
     private StatusLocal status = StatusLocal.EM_ANALISE;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idcategoria", referencedColumnName = "idcategoria", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "categoria", nullable = false)
     @NotNull(message = "Categoria é obrigatória")
     private Categoria categoria;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idtipo_acessibilidade", referencedColumnName = "idtipo_acessibilidade", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_acessibilidade", nullable = false)
     @NotNull(message = "Tipo de acessibilidade é obrigatório")
     private TipoAcessibilidade tipoAcessibilidade;
 
