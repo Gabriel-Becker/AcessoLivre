@@ -65,6 +65,18 @@ public class AdminController {
         return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/usuarios/{id}/senha")
+    public ResponseEntity<Void> alterarSenhaUsuario(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String novaSenha = body != null ? body.get("novaSenha") : null;
+        if (novaSenha == null || novaSenha.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        boolean alterado = adminService.alterarSenhaUsuario(id, novaSenha);
+        return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
     @DeleteMapping("/usuarios/{id}")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         boolean deletado = adminService.deletarUsuario(id);

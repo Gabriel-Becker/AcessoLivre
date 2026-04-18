@@ -1,22 +1,26 @@
 package com.acessolivre.service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.acessolivre.model.Avaliacao;
 import com.acessolivre.model.Local;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.AvaliacaoRepository;
 import com.acessolivre.repository.LocalRepository;
+import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +28,10 @@ import java.util.Optional;
 public class AdminService {
 
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final AvaliacaoRepository avaliacaoRepository;
     private final LocalRepository localRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public Page<Usuario> listarTodosUsuarios(Pageable pageable) {
@@ -72,6 +78,29 @@ public class AdminService {
         
         usuarioRepository.deleteById(idUsuario);
         log.info("Usuário deletado: id={}", idUsuario);
+        return true;
+    }
+
+    @Transactional
+    public boolean alterarSenhaUsuario(Long idUsuario, String novaSenha) {
+        log.info("Alterando senha do usuário: id={}", idUsuario);
+
+        if (!usuarioRepository.existsById(idUsuario)) {
+            log.warn("Usuário não encontrado para alterar senha: id={}", idUsuario);
+            return false;
+        }
+
+        var usuarioAutenticarOpt = usuarioAutenticarRepository.findByUsuario_IdUsuario(idUsuario);
+        if (usuarioAutenticarOpt.isEmpty()) {
+            log.warn("Credenciais não encontradas para usuário: id={}", idUsuario);
+            return false;
+        }
+
+        var usuarioAutenticar = usuarioAutenticarOpt.get();
+        usuarioAutenticar.setSenhaHash(passwordEncoder.encode(novaSenha));
+        usuarioAutenticarRepository.save(usuarioAutenticar);
+
+        log.info("Senha alterada com sucesso para usuário: id={}", idUsuario);
         return true;
     }
 
