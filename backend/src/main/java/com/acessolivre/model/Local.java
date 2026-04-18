@@ -23,7 +23,6 @@ import java.util.List;
 @Entity
 @Table(name = "local", indexes = {
     @Index(name = "idx_local_nome", columnList = "nome"),
-    @Index(name = "idx_local_categoria", columnList = "idcategoria"),
     @Index(name = "idx_local_principal", columnList = "idlocal_principal"),
     @Index(name = "idx_local_status", columnList = "status")
 })
