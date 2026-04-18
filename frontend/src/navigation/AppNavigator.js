@@ -52,10 +52,16 @@ function MainApp() {
       case 'Buscar':
         return <Buscar />;
       case 'Adicionar':
+        if (!isAuthenticated) {
+          return <Login navigation={navigation} />;
+        }
         return <AdicionarLocal onNavigate={handleNavigate} />;
       case 'Sobre':
         return <Sobre />;
       case 'Perfil':
+        if (!isAuthenticated) {
+          return <Login navigation={navigation} />;
+        }
         return <Perfil />;
       case 'Admin':
         return isAdmin ? <Admin /> : <Home />;
@@ -72,23 +78,25 @@ function MainApp() {
 }
 
 export default function AppNavigator() {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
+  const [sessaoInicializada, setSessaoInicializada] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading) {
+      setSessaoInicializada(true);
+    }
+  }, [loading]);
+
+  if (!sessaoInicializada && loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
-        <>
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Register" component={Register} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        </>
-      ) : (
-        <Stack.Screen name="Main" component={MainApp} />
-      )}
+    <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Main" component={MainApp} />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
     </Stack.Navigator>
   );
 }

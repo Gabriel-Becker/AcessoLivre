@@ -37,6 +37,82 @@ const aplicarTokenNoHeader = (token) => {
   delete api.defaults.headers.common.Authorization;
 };
 
+const extrairMensagemErro = (error, fallback) => {
+  const data = error?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data?.mensagem) return data.mensagem;
+  if (data?.message) return data.message;
+  if (error?.message) return error.message;
+  return fallback;
+};
+
+const valorEhVerdadeiro = (valor) => {
+  if (valor === true || valor === 1) return true;
+  if (typeof valor === 'string') {
+    const normalizado = valor.trim().toLowerCase();
+    return normalizado === 'true' || normalizado === '1' || normalizado === 'sim';
+  }
+  return false;
+};
+
+const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) => {
+  const payload = responseData && typeof responseData === 'object' ? responseData : {};
+
+  const flagExplicita =
+    valorEhVerdadeiro(payload?.twoFactorRequired) ||
+    valorEhVerdadeiro(payload?.requiresTwoFactor) ||
+    valorEhVerdadeiro(payload?.requires2FA) ||
+    valorEhVerdadeiro(payload?.two_factor_required);
+
+  const mensagemNormalizada = String(mensagem || '').toLowerCase();
+  const mensagemIndicaTwoFactor =
+    mensagemNormalizada.includes('dois fatores') ||
+    mensagemNormalizada.includes('2fa') ||
+    mensagemNormalizada.includes('autenticação obrigatório') ||
+    mensagemNormalizada.includes('autenticacao obrigatorio') ||
+    mensagemNormalizada.includes('autenticação obrigatória') ||
+    mensagemNormalizada.includes('autenticacao obrigatoria') ||
+    mensagemNormalizada.includes('código de autenticação obrigatório') ||
+    mensagemNormalizada.includes('codigo de autenticacao obrigatorio');
+
+  const possuiIndicadorEmailDestino = Boolean(payload?.emailDestino);
+  const semMensagemUtil = !mensagemNormalizada;
+
+  return (
+    flagExplicita ||
+    mensagemIndicaTwoFactor ||
+    (!twoFactorCodeInformado && possuiIndicadorEmailDestino) ||
+    (!twoFactorCodeInformado && semMensagemUtil && Object.keys(payload).length > 0)
+  );
+};
+
+const mensagemIndicaCredenciaisInvalidasOuBloqueio = (mensagem) => {
+  const texto = String(mensagem || '').toLowerCase();
+  if (!texto) return false;
+
+  return (
+    texto.includes('credenciais inválidas') ||
+    texto.includes('credenciais invalidas') ||
+    texto.includes('tentativas restantes') ||
+    texto.includes('conta bloqueada') ||
+    texto.includes('email não verificado') ||
+    texto.includes('email nao verificado') ||
+    texto.includes('senha inválida') ||
+    texto.includes('senha invalida')
+  );
+};
+
+const montarRespostaTwoFactor = (responseData, email, mensagemPadrao) => ({
+  success: false,
+  requiresTwoFactor: true,
+  twoFactorRequired: true,
+  emailDestino: responseData?.emailDestino || email,
+  message:
+    responseData?.mensagem ||
+    responseData?.message ||
+    mensagemPadrao,
+});
+
 const AuthService = {
   async getToken() {
     try {
@@ -216,11 +292,20 @@ const AuthService = {
     }
   },
 
-  async login({ email, senha, rememberMe = false }) {
+  async login({ email, senha, rememberMe = false, twoFactorCode }) {
+    let twoFactorCodeInformado = false;
     try {
-      await this.logout();
+      // Antes de um novo login, limpa apenas estado local para evitar chamada remota
+      // de logout que pode falhar com token antigo e interromper o fluxo de 2FA.
+      await this.removeToken();
+      await this.setUserData(null);
       
       const loginData = { email, senha, rememberMe };
+      twoFactorCodeInformado =
+        twoFactorCode !== undefined && twoFactorCode !== null && String(twoFactorCode).trim() !== '';
+      if (twoFactorCodeInformado) {
+        loginData.twoFactorCode = String(twoFactorCode).trim();
+      }
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
 
@@ -252,23 +337,36 @@ const AuthService = {
         message: responseData.message || 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('[AuthService] Erro no login:', error);
-      
       if (error.response && error.response.status === 401) {
         const responseData = error.response.data;
-        if (responseData?.twoFactorRequired) {
-          return {
-            success: false,
-            requiresTwoFactor: true,
-            emailDestino: responseData.emailDestino || email
-          };
+        const mensagem401 = String(
+          responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || ''
+        );
+        const ehFluxoTwoFactor = detectarFluxoTwoFactor(responseData, mensagem401, twoFactorCodeInformado);
+        const ehCredencialInvalidaOuBloqueio = mensagemIndicaCredenciaisInvalidasOuBloqueio(mensagem401);
+
+        if (!twoFactorCodeInformado && !ehFluxoTwoFactor && !ehCredencialInvalidaOuBloqueio) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Digite o código de verificação para continuar o login.'
+          );
         }
-        throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
+
+        if (ehFluxoTwoFactor) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Confirme o código de autenticação de dois fatores para continuar.'
+          );
+        }
+
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais inválidas');
       }
       
       if (error.response && error.response.data) {
         const responseData = error.response.data;
-        throw new Error(responseData?.error || responseData?.message || 'Erro no login');
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Erro no login');
       }
       
       if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
@@ -282,37 +380,13 @@ const AuthService = {
     }
   },
 
-  async verifyTwoFactorCode({ email, codigo }) {
-    const response = await api.post('/auth/2fa/verify-code', { email, codigo });
-    const { token, usuario } = response.data;
-
-    if (!token) {
-      throw new Error('Token não retornado pelo servidor');
-    }
-
-    await this.setToken(token);
-    await this.setUserData(usuario);
-
-    return { success: true, token, usuario };
-  },
-
   async register({ nome, email, senha }) {
     const response = await api.post('/auth/register', { nome, email, senha });
     return {
-      success: false,
-      requiresConfirmation: true,
-      emailDestino: response.data,
+      success: true,
+      message: response.data?.message || 'Conta criada com sucesso',
+      usuario: response.data,
     };
-  },
-
-  async confirmRegistration({ email, codigo }) {
-    const response = await api.post('/auth/register/confirm', { email, codigo });
-    return { success: true, usuario: response.data };
-  },
-
-  async resendRegistrationCode(email) {
-    const response = await api.post(`/auth/register/resend-code?email=${encodeURIComponent(email)}`);
-    return { success: true, message: response.data };
   },
 
   async logout() {
@@ -385,14 +459,14 @@ const AuthService = {
       console.error('[AuthService] Erro ao configurar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao configurar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao configurar 2FA')
       };
     }
   },
 
   async enable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/enable', { verificationCode });
+      const response = await api.post('/auth/2fa/enable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
@@ -401,14 +475,14 @@ const AuthService = {
       console.error('[AuthService] Erro ao habilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao habilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao habilitar 2FA')
       };
     }
   },
 
   async disable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/disable', { verificationCode });
+      const response = await api.post('/auth/2fa/disable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
@@ -417,7 +491,7 @@ const AuthService = {
       console.error('[AuthService] Erro ao desabilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao desabilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao desabilitar 2FA')
       };
     }
   },
@@ -479,11 +553,9 @@ export const {
   carregarSessao, 
   validateToken, 
   reautenticar,
-  resendRegistrationCode,
   setup2FA,
   enable2FA,
   disable2FA,
   get2FAStatus,
-  verifyTwoFactorCode,
   trocarSenha
 } = AuthService;

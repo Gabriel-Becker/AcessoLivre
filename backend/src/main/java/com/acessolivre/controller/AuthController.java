@@ -20,7 +20,6 @@ import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.ChangePasswordRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.request.VerifyEmailRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
@@ -60,13 +59,12 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
-            String emailMascarado = registroPendenteService.iniciarRegistro(
+            UsuarioResponseDTO usuario = registroPendenteService.registrarUsuarioDireto(
                 request.getNome(),
                 request.getEmail(),
                 request.getSenha()
             );
-            return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(String.format("Código enviado para %s", emailMascarado));
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao registrar usuário: {}", e.getMessage());
             return erro(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -136,12 +134,10 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (com.acessolivre.security.TwoFactorRequiredException e) {
             log.info("2FA requerido para email={}", request.getEmail());
-            String emailDestino = twoFactorService.mascararEmail(request.getEmail());
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                .twoFactorRequired(true)
-                .emailDestino(emailDestino)
-                .build();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthResponseDTO.builder()
+                    .twoFactorRequired(true)
+                    .build());
         } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
             log.warn("Código 2FA inválido para email={}", request.getEmail());
             return erro(HttpStatus.UNAUTHORIZED, "Código de autenticação de dois fatores inválido");
@@ -165,24 +161,6 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Erro inesperado no login para email={}", request.getEmail(), e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar login");
-        }
-    }
-
-    @PostMapping("/2fa/verify-code")
-    public ResponseEntity<?> verifyTwoFactor(@Valid @RequestBody TwoFactorVerifyRequestDTO request) {
-        try {
-            String token = authenticationService.completarLoginComCodigo(request.getEmail(), request.getCodigo());
-            Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                .token(token)
-                .usuario(UsuarioMapper.toResponse(usuario))
-                .twoFactorRequired(false)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.warn("Falha ao validar código 2FA para email={}", request.getEmail());
-            return erro(HttpStatus.UNAUTHORIZED, "Código inválido ou expirado");
         }
     }
 
@@ -224,8 +202,10 @@ public class AuthController {
             Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            var desafio = twoFactorService.criarDesafioLogin(usuario.getEmail(), false);
-            return ResponseEntity.ok(desafio.emailMascarado());
+            return ResponseEntity.ok(twoFactorService.prepararConfiguracao(userId));
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao configurar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao configurar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao configurar 2FA");
@@ -249,9 +229,11 @@ public class AuthController {
             Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
-            twoFactorService.habilitar(userId);
+            twoFactorService.habilitar(userId, body.getVerificationCode());
             return ResponseEntity.ok("2FA habilitado com sucesso");
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao habilitar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao habilitar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao habilitar 2FA");
@@ -275,9 +257,11 @@ public class AuthController {
             Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
-            twoFactorService.desabilitar(userId);
+            twoFactorService.desabilitar(userId, body.getVerificationCode());
             return ResponseEntity.ok("2FA desabilitado com sucesso");
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao desabilitar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao desabilitar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao desabilitar 2FA");

@@ -6,6 +6,57 @@ import useTokenMonitor from '../hooks/useTokenMonitor';
 
 const AuthContext = createContext({});
 
+const obterMensagemLoginAmigavel = (erro) => {
+  const mensagemBackend = erro?.response?.data?.mensagem || erro?.response?.data?.message;
+  const mensagemErro = erro?.message;
+  const mensagem = mensagemBackend || mensagemErro || '';
+  const mensagemNormalizada = String(mensagem).toLowerCase();
+
+  if (!mensagem) {
+    return 'Não foi possível entrar agora. Tente novamente em instantes.';
+  }
+
+  if (
+    mensagemNormalizada.includes('referenceerror') ||
+    mensagemNormalizada.includes('is not defined') ||
+    mensagemNormalizada.includes('undefined')
+  ) {
+    return 'Não foi possível concluir o login agora. Tente novamente.';
+  }
+
+  if (mensagemNormalizada.includes('network') || mensagemNormalizada.includes('timeout')) {
+    return 'Falha de conexão. Verifique sua internet e tente novamente.';
+  }
+
+  return mensagem;
+};
+
+const detectarRequisicaoTwoFactorNoErro = (erro) => {
+  const status = erro?.response?.status;
+  const data = erro?.response?.data;
+
+  if (status !== 401) return false;
+
+  if (data && typeof data === 'object') {
+    if (data.twoFactorRequired === true || data.requiresTwoFactor === true) {
+      return true;
+    }
+  }
+
+  const textoErro = String(
+    data?.mensagem || data?.message || data?.erro || data?.error || erro?.message || ''
+  ).toLowerCase();
+
+  return (
+    textoErro.includes('2fa') ||
+    textoErro.includes('dois fatores') ||
+    textoErro.includes('autenticação obrigatório') ||
+    textoErro.includes('autenticação obrigatória') ||
+    textoErro.includes('codigo de autenticacao') ||
+    textoErro.includes('código de autenticação')
+  );
+};
+
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [token, setToken] = useState(null);
@@ -49,7 +100,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     carregarSessao();
-    setLogoutHandler(() => logout);
+    setLogoutHandler(logout);
+
+    return () => {
+      setLogoutHandler(null);
+    };
   }, []);
 
   const carregarSessao = async () => {
@@ -90,16 +145,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ email, senha, rememberMe = false }) => {
+  const login = async ({ email, senha, rememberMe = false, twoFactorCode }) => {
     try {
       setLoading(true);
-      const result = await AuthService.login({ email, senha, rememberMe });
+      const result = await AuthService.login({ email, senha, rememberMe, twoFactorCode });
+      const requerTwoFactor = Boolean(result?.requiresTwoFactor || result?.twoFactorRequired);
       
-      if (!result.success && result.requiresTwoFactor) {
+      if (!result.success && requerTwoFactor) {
         return {
           sucesso: false,
           requiresTwoFactor: true,
-          emailDestino: result.emailDestino
+          twoFactorRequired: true,
+          emailDestino: result.emailDestino,
+          message: result.message,
         };
       }
       
@@ -138,8 +196,20 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Resposta inválida do servidor');
       }
     } catch (erro) {
-      console.error('[AuthContext] Erro ao fazer login:', erro);
-      const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao fazer login';
+      if (detectarRequisicaoTwoFactorNoErro(erro)) {
+        return {
+          sucesso: false,
+          requiresTwoFactor: true,
+          twoFactorRequired: true,
+          emailDestino: erro?.response?.data?.emailDestino || email,
+          message:
+            erro?.response?.data?.mensagem ||
+            erro?.response?.data?.message ||
+            'Digite o código de verificação para continuar o login.',
+        };
+      }
+
+      const mensagem = obterMensagemLoginAmigavel(erro);
       
       Toast.show({
         type: 'error',
@@ -153,50 +223,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const validarCodigo2FA = async ({ email, codigo }) => {
-    try {
-      setLoading(true);
-      const result = await AuthService.verifyTwoFactorCode({ email, codigo });
-      const { token: novoToken, usuario: usuarioData } = result;
-
-      setToken(novoToken);
-      setUsuario(usuarioData);
-      setIsAuthenticated(true);
-
-      Toast.show({
-        type: 'success',
-        text1: 'Login confirmado!',
-        text2: `Bem-vindo, ${usuarioData.nome}!`,
-      });
-
-      return { sucesso: true };
-    } catch (erro) {
-      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
-      Toast.show({
-        type: 'error',
-        text1: 'Código inválido',
-        text2: mensagem,
-      });
-      return { sucesso: false, erro: mensagem };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const register = async ({ nome, email, senha }) => {
     try {
       const result = await AuthService.register({ nome, email, senha });
-
-      if (result.requiresConfirmation) {
-        Toast.show({
-          type: 'info',
-          text1: 'Confirme seu e-mail',
-          text2: `Enviamos um código para ${result.emailDestino}`,
-        });
-        return { sucesso: false, requiresConfirmation: true, emailDestino: result.emailDestino, email };
-      }
-
-      return { sucesso: true };
+      return result?.success
+        ? { sucesso: true, mensagem: result.message }
+        : { sucesso: false, erro: result?.message || 'Erro ao realizar cadastro' };
     } catch (erro) {
       const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao realizar cadastro';
       
@@ -206,28 +238,6 @@ export const AuthProvider = ({ children }) => {
         text2: mensagem,
       });
       
-      return { sucesso: false, erro: mensagem };
-    }
-  };
-
-  const confirmarCadastro = async ({ email, codigo }) => {
-    try {
-      const result = await AuthService.confirmRegistration({ email, codigo });
-
-      Toast.show({
-        type: 'success',
-        text1: 'Cadastro confirmado!',
-        text2: 'Agora você pode fazer login.',
-      });
-
-      return { sucesso: true, usuario: result.usuario };
-    } catch (erro) {
-      const mensagem = erro.response?.data || erro.message || 'Código inválido ou expirado';
-      Toast.show({
-        type: 'error',
-        text1: 'Erro na confirmação',
-        text2: mensagem,
-      });
       return { sucesso: false, erro: mensagem };
     }
   };
@@ -264,9 +274,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
-        validarCodigo2FA,
         register,
-        confirmarCadastro,
         logout,
         carregarSessao,
       }}

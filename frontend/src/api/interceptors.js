@@ -41,6 +41,13 @@ api.interceptors.response.use(
   },
   async (error) => {
     const status = error.response?.status;
+    const requestUrl = error.config?.url || '';
+    const isLoginEndpoint = String(requestUrl).includes('/auth/login');
+
+    if (status === 401 && isLoginEndpoint) {
+      return Promise.reject(error);
+    }
+
     if (status === 401) {
       try {
         await AuthService.removeToken();

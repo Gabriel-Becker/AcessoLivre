@@ -13,7 +13,6 @@ import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
-import VerifyEmailModal from '../../components/feedback/VerifyEmailModal';
 
 const schema = z
   .object({
@@ -23,7 +22,13 @@ const schema = z
       .min(2, authMessages.validation.nameTooShort)
       .max(120, authMessages.validation.maxLength),
     email: z.string().trim().email(authMessages.validation.invalidEmail),
-    password: z.string().min(8, authMessages.validation.passwordTooShort),
+    password: z
+      .string()
+      .min(8, 'Senha deve ter no mínimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
+      .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmPassword: z.string().min(8, authMessages.validation.passwordTooShort),
     terms: z.boolean().refine((val) => val === true, {
       message: authMessages.registerErrors.termsNotAccepted,
@@ -35,12 +40,9 @@ const schema = z
   });
 
 export default function Register({ navigation }) {
-  const { register: registerUser, confirmarCadastro } = useAuth();
+  const { register: registerUser, login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-  const [emailDestino, setEmailDestino] = useState('');
 
   const {
     control,
@@ -127,46 +129,31 @@ export default function Register({ navigation }) {
         senha: values.password,
       });
 
-      if (resultado?.requiresConfirmation) {
-        toastHelper.showSuccess('Cadastro iniciado! Confirme o código enviado.');
-        setRegisteredEmail(values.email.trim().toLowerCase());
-        setEmailDestino(resultado.emailDestino || values.email.trim().toLowerCase());
-        setShowVerifyModal(true);
+      if (resultado?.sucesso) {
+        toastHelper.showSuccess(resultado?.mensagem || 'Conta criada com sucesso!');
+        
+        const loginResult = await login({
+          email: values.email.trim().toLowerCase(),
+          senha: values.password,
+          rememberMe: false,
+        });
+        
+        if (loginResult?.sucesso) {
+          navigation?.navigate?.('Inicio');
+          return;
+        } else {
+          toastHelper.showInfo('Cadastro realizado! Por favor, faça login com suas credenciais.');
+          navigation?.navigate?.('Login');
+        }
         return;
       }
 
-      toastHelper.showSuccess('Conta criada com sucesso!');
-      navigation?.navigate?.('Login');
+      toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.registerErrors.serverError);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleConfirmCode = async (codigo) => {
-    const resultado = await confirmarCadastro({ email: registeredEmail, codigo });
-    return resultado?.sucesso
-      ? { sucesso: true }
-      : { sucesso: false, mensagem: resultado?.erro };
-  };
-
-  const handleResendCode = async () => {
-    try {
-      const AuthService = (await import('../../services/AuthService')).default;
-      const resultado = await AuthService.resendRegistrationCode(registeredEmail);
-      return resultado?.success
-        ? { sucesso: true, mensagem: resultado.message }
-        : { sucesso: false, mensagem: 'Erro ao reenviar código' };
-    } catch (erro) {
-      return { sucesso: false, mensagem: erro.response?.data || erro.message };
-    }
-  };
-
-  const handleVerificationSuccess = () => {
-    setShowVerifyModal(false);
-    toastHelper.showSuccess('Email verificado! Faça login para continuar.');
-    navigation?.navigate?.('Login');
   };
 
   return (
@@ -308,14 +295,6 @@ export default function Register({ navigation }) {
         </View>
       </ScrollView>
 
-      <VerifyEmailModal
-        visible={showVerifyModal}
-        email={emailDestino || registeredEmail}
-        onClose={() => setShowVerifyModal(false)}
-        onSuccess={handleVerificationSuccess}
-        onConfirm={handleConfirmCode}
-        onResend={handleResendCode}
-      />
     </Container>
   );
 }

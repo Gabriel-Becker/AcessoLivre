@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -29,10 +29,31 @@ export default function Login({ navigation }) {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState(null);
 
+  const redirecionarAposLogin = () => {
+    if (!navigation) return;
+
+    if (typeof navigation.replace === 'function') {
+      navigation.replace('Main');
+      return;
+    }
+
+    if (typeof navigation.reset === 'function') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+      return;
+    }
+
+    if (typeof navigation.navigate === 'function') {
+      navigation.navigate('Inicio');
+    }
+  };
+
   const {
     control,
     handleSubmit,
-    setError,
+    setValue,
     clearErrors,
     formState: { errors },
   } = useForm({
@@ -91,6 +112,31 @@ export default function Login({ navigation }) {
           marginTop: -t.spacing.sm,
           marginBottom: t.spacing.md,
         },
+        twoFactorInlineBox: {
+          borderWidth: isHighContrast ? 2 : 1,
+          borderColor: t.colors.borderLight,
+          borderRadius: t.borderRadius.md,
+          padding: t.spacing.md,
+          marginBottom: t.spacing.md,
+          backgroundColor: isHighContrast ? t.colors.backgroundSecondary : t.colors.surface,
+        },
+        modalOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: t.spacing.lg,
+        },
+        modalCard: {
+          width: '100%',
+          maxWidth: 420,
+          backgroundColor: t.colors.surface,
+          borderRadius: t.borderRadius.lg,
+          borderWidth: isHighContrast ? 2 : 1,
+          borderColor: t.colors.borderLight,
+          padding: t.spacing.lg,
+          ...(isHighContrast ? t.shadows.none : t.shadows.md),
+        },
       }),
     [isHighContrast, t]
   );
@@ -98,22 +144,53 @@ export default function Login({ navigation }) {
   const handleSubmitLogin = async (values) => {
     try {
       setSubmitting(true);
+      const credenciaisBase =
+        showTwoFactor && pendingCredentials
+          ? pendingCredentials
+          : {
+              email: values.email.trim(),
+              senha: values.password,
+              rememberMe: !!values.rememberMe,
+            };
+
       const result = await login({
-        email: values.email.trim(),
-        senha: values.password,
-        twoFactorCode: values.twoFactorCode ? parseInt(values.twoFactorCode, 10) : undefined,
+        email: credenciaisBase.email,
+        senha: credenciaisBase.senha,
+        rememberMe: !!credenciaisBase.rememberMe,
+        twoFactorCode: values.twoFactorCode ? values.twoFactorCode.trim() : undefined,
       });
+      const requerTwoFactor = Boolean(result?.requiresTwoFactor || result?.twoFactorRequired);
 
       if (!result?.sucesso) {
         // Se 2FA for requerido
-        if (result?.twoFactorRequired) {
+        if (requerTwoFactor) {
+          setValue('twoFactorCode', '');
           setShowTwoFactor(true);
           setPendingCredentials({
-            email: values.email.trim(),
-            senha: values.password,
-            rememberMe: !!values.rememberMe,
+            email: credenciaisBase.email,
+            senha: credenciaisBase.senha,
+            rememberMe: !!credenciaisBase.rememberMe,
           });
-          toastHelper.showInfo('Digite o código de autenticação de dois fatores');
+          return;
+        }
+
+        const textoErro = String(result?.erro || '').toLowerCase();
+        const erroIndicaTwoFactor =
+          textoErro.includes('2fa') ||
+          textoErro.includes('dois fatores') ||
+          textoErro.includes('autenticação obrigatório') ||
+          textoErro.includes('autenticação obrigatória') ||
+          textoErro.includes('codigo de autenticacao') ||
+          textoErro.includes('código de autenticação');
+
+        if (erroIndicaTwoFactor) {
+          setValue('twoFactorCode', '');
+          setShowTwoFactor(true);
+          setPendingCredentials({
+            email: credenciaisBase.email,
+            senha: credenciaisBase.senha,
+            rememberMe: !!credenciaisBase.rememberMe,
+          });
           return;
         }
 
@@ -122,9 +199,11 @@ export default function Login({ navigation }) {
       }
 
       clearErrors();
+      setValue('twoFactorCode', '');
       setShowTwoFactor(false);
       setPendingCredentials(null);
       toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
+      redirecionarAposLogin();
     } catch (erro) {
       toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);
     } finally {
@@ -184,23 +263,33 @@ export default function Login({ navigation }) {
             />
 
             {showTwoFactor && (
-              <Controller
-                control={control}
-                name="twoFactorCode"
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Código de Autenticação"
-                    placeholder="000000"
-                    value={value}
-                    onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
-                    leftIcon="key-outline"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    error={errors.twoFactorCode?.message}
-                    altoContraste={isHighContrast}
-                  />
-                )}
-              />
+              <View style={styles.twoFactorInlineBox}>
+                <ThemedText weight="semibold" altoContraste={isHighContrast}>
+                  Verificação em duas etapas
+                </ThemedText>
+                <Spacer size="xs" />
+                <ThemedText color="textSecondary" altoContraste={isHighContrast}>
+                  Digite o código de 6 dígitos do aplicativo autenticador.
+                </ThemedText>
+                <Spacer size="sm" />
+                <Controller
+                  control={control}
+                  name="twoFactorCode"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Código 2FA"
+                      placeholder="000000"
+                      value={value}
+                      onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                      leftIcon="key-outline"
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      error={errors.twoFactorCode?.message}
+                      altoContraste={isHighContrast}
+                    />
+                  )}
+                />
+              </View>
             )}
 
             <Controller
@@ -256,6 +345,77 @@ export default function Login({ navigation }) {
           </Card>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showTwoFactor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowTwoFactor(false);
+          setPendingCredentials(null);
+          setValue('twoFactorCode', '');
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+              Verificação em duas etapas
+            </ThemedText>
+            <Spacer size="xs" />
+            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+              Digite o código de 6 dígitos do seu aplicativo autenticador.
+            </ThemedText>
+
+            <Spacer size="md" />
+            <Controller
+              control={control}
+              name="twoFactorCode"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Código 2FA"
+                  placeholder="000000"
+                  value={value}
+                  onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                  leftIcon="key-outline"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  error={errors.twoFactorCode?.message}
+                  altoContraste={isHighContrast}
+                />
+              )}
+            />
+
+            <Spacer size="sm" />
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={handleSubmit(handleSubmitLogin)}
+              loading={submitting}
+              disabled={submitting}
+              altoContraste={isHighContrast}
+            >
+              Confirmar código
+            </Button>
+
+            <Spacer size="xs" />
+            <Button
+              variant="ghost"
+              size="large"
+              fullWidth
+              onPress={() => {
+                setShowTwoFactor(false);
+                setPendingCredentials(null);
+                setValue('twoFactorCode', '');
+              }}
+              disabled={submitting}
+              altoContraste={isHighContrast}
+            >
+              Cancelar
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </Container>
   );
 }

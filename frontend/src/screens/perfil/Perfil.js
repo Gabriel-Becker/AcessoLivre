@@ -1,17 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
-import { TrocarSenhaModal } from '../../components/feedback';
+import { TrocarSenhaModal, TwoFactorModal } from '../../components/feedback';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
+import AuthService from '../../services/AuthService';
 
 export default function Perfil() {
   const { usuario } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
+  const [twoFactorAtivo, setTwoFactorAtivo] = useState(false);
+  const [carregandoTwoFactor, setCarregandoTwoFactor] = useState(true);
+
+  const carregarStatusTwoFactor = async () => {
+    try {
+      setCarregandoTwoFactor(true);
+      const status = await AuthService.get2FAStatus();
+      setTwoFactorAtivo(Boolean(status?.enabled ?? status?.ativo ?? status));
+    } finally {
+      setCarregandoTwoFactor(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarStatusTwoFactor();
+  }, []);
 
   const InfoItem = ({ icon, label, value }) => (
     <View style={styles.infoItem}>
@@ -51,6 +69,37 @@ export default function Perfil() {
 
           <Spacer size="xl" />
 
+          <View style={styles.segurancaBox}>
+            <View style={styles.segurancaHeader}>
+              <View style={styles.segurancaIcone}>
+                <Ionicons name="shield-checkmark-outline" size={22} color={t.colors.primary} />
+              </View>
+              <View style={styles.segurancaTexto}>
+                <ThemedText weight="semibold">Autenticação em dois fatores</ThemedText>
+                <ThemedText color="textSecondary" size="sm">
+                  {twoFactorAtivo ? 'Ativada para sua conta' : 'Desativada no momento'}
+                </ThemedText>
+              </View>
+            </View>
+
+            <Spacer size="sm" />
+
+            <Button
+              variant={twoFactorAtivo ? 'outline' : 'primary'}
+              size="large"
+              fullWidth
+              onPress={() => setShowTwoFactorModal(true)}
+              iconLeft={twoFactorAtivo ? 'key-outline' : 'shield-checkmark-outline'}
+              loading={carregandoTwoFactor}
+              disabled={carregandoTwoFactor}
+              altoContraste={isHighContrast}
+            >
+              {twoFactorAtivo ? 'Gerenciar 2FA' : 'Ativar 2FA'}
+            </Button>
+          </View>
+
+          <Spacer size="xl" />
+
           <Button 
             variant="outline" 
             size="large" 
@@ -70,6 +119,13 @@ export default function Perfil() {
         visible={showChangePassword}
         onClose={() => setShowChangePassword(false)}
         altoContraste={isHighContrast}
+      />
+
+      <TwoFactorModal
+        visible={showTwoFactorModal}
+        enabled={twoFactorAtivo}
+        onClose={() => setShowTwoFactorModal(false)}
+        onSuccess={carregarStatusTwoFactor}
       />
     </Container>
   );
@@ -98,6 +154,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  segurancaBox: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e8e8e8',
+    backgroundColor: '#fafafa',
+  },
+  segurancaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  segurancaIcone: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segurancaTexto: {
     flex: 1,
     marginLeft: 12,
   },

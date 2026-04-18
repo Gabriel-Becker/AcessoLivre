@@ -7,14 +7,21 @@ import { Spacer, ThemedText } from '../../commons';
 import { Button } from '../../ui';
 import SidebarUserPanel from './SidebarUserPanel';
 import SidebarItem from './SidebarItem';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false }) {
   const t = altoContraste ? getTheme(true) : theme;
+  const { isAuthenticated } = useAuth();
 
   const items = [
     { key: 'Inicio', label: 'Início', icon: 'home-outline' },
     { key: 'Buscar', label: 'Buscar', icon: 'search-outline' },
-    { key: 'Adicionar', label: 'Adicionar Local', icon: 'add-outline' },
+    {
+      key: 'Adicionar',
+      label: 'Adicionar Local',
+      icon: 'add-outline',
+      disabled: !isAuthenticated,
+    },
     { key: 'Sobre', label: 'Sobre Nós', icon: 'information-circle-outline' },
   ];
 
@@ -37,7 +44,8 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
             icon={item.icon}
             label={item.label}
             active={current === item.key}
-            onPress={() => onNavigate && onNavigate(item.key)}
+            disabled={item.disabled}
+            onPress={item.disabled ? undefined : () => onNavigate && onNavigate(item.key)}
             altoContraste={altoContraste}
           />
         ))}

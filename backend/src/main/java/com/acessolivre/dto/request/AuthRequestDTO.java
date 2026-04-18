@@ -15,5 +15,5 @@ public class AuthRequestDTO {
 
     private Boolean rememberMe;
     
-    private Integer twoFactorCode;
+    private String twoFactorCode;
 }

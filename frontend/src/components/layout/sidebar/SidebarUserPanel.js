@@ -47,7 +47,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             altoContraste={altoContraste}
           />
           <Spacer size="xs" />
-          <Button variant="danger" size="large" fullWidth onPress={logout} align="left" iconLeft="exit-outline">
+          <Button variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline">
             Sair
           </Button>
         </>

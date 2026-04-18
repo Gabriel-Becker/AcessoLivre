@@ -12,7 +12,13 @@ import toastHelper from '../../utils/toastHelper';
 const schema = z
   .object({
     senhaAtual: z.string().min(8, 'A senha atual deve ter no mínimo 8 caracteres'),
-    novaSenha: z.string().min(8, 'A nova senha deve ter no mínimo 8 caracteres'),
+    novaSenha: z
+      .string()
+      .min(8, 'A nova senha deve ter no mínimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
+      .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmarSenha: z.string().min(8, 'A confirmação deve ter no mínimo 8 caracteres'),
   })
   .refine((data) => data.novaSenha === data.confirmarSenha, {
