@@ -20,7 +20,8 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
       key: 'Adicionar',
       label: 'Adicionar Local',
       icon: 'add-outline',
-      disabled: !isAuthenticated,
+      // ✅ REMOVIDO: disabled: !isAuthenticated,
+      // Agora o botão fica sempre habilitado
     },
     { key: 'Sobre', label: 'Sobre Nós', icon: 'information-circle-outline' },
   ];

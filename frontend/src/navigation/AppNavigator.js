@@ -25,13 +25,14 @@ function LoadingScreen() {
   );
 }
 
-function MainApp() {
-  const { usuario } = useAuth();
+function MainApp({ navigation }) {  
+  const { usuario, isAuthenticated } = useAuth();  
   const [currentScreen, setCurrentScreen] = useState('Inicio');
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   const handleNavigate = (screen) => {
+    console.log('Navegando para:', screen);  
     if (screen === 'Admin' && !isAdmin) {
       setCurrentScreen('Inicio');
       return;
@@ -46,27 +47,26 @@ function MainApp() {
   }, [isAdmin, currentScreen]);
 
   const renderScreen = () => {
+    console.log('Renderizando tela:', currentScreen);  
     switch (currentScreen) {
       case 'Inicio':
-        return <Home />;
+        return <Home navigation={navigation} />;
       case 'Buscar':
-        return <Buscar />;
+        return <Buscar navigation={navigation} />;
       case 'Adicionar':
-        if (!isAuthenticated) {
-          return <Login navigation={navigation} />;
-        }
-        return <AdicionarLocal onNavigate={handleNavigate} />;
+        // Passar ambas as props
+        return <AdicionarLocal onNavigate={handleNavigate} navigation={navigation} />;
       case 'Sobre':
-        return <Sobre />;
+        return <Sobre navigation={navigation} />;
       case 'Perfil':
         if (!isAuthenticated) {
           return <Login navigation={navigation} />;
         }
-        return <Perfil />;
+        return <Perfil navigation={navigation} />;
       case 'Admin':
-        return isAdmin ? <Admin /> : <Home />;
+        return isAdmin ? <Admin navigation={navigation} /> : <Home navigation={navigation} />;
       default:
-        return <Home />;
+        return <Home navigation={navigation} />;
     }
   };
 
@@ -93,7 +93,10 @@ export default function AppNavigator() {
 
   return (
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Main" component={MainApp} />
+      {/* Usar render props para passar navigation */}
+      <Stack.Screen name="Main">
+        {(props) => <MainApp {...props} />}
+      </Stack.Screen>
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
