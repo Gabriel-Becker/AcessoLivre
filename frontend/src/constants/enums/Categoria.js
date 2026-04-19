@@ -1,0 +1,11 @@
+export const CATEGORIAS = [
+  'PUBLICO',
+  'SAUDE',
+  'EDUCACAO',
+  'LAZER',
+  'TRANSPORTE',
+  'ALIMENTACAO',
+  'HOSPEDAGEM',
+  'SERVICOS',
+  'COMERCIAL',
+];
