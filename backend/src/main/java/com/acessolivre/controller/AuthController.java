@@ -21,6 +21,7 @@ import com.acessolivre.dto.request.ChangePasswordRequestDTO;
 import com.acessolivre.dto.request.ForgotPasswordRequestDTO;
 import com.acessolivre.dto.request.PasswordResetCodeRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
+import com.acessolivre.dto.request.ResetPasswordRequestDTO;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.request.VerifyEmailRequestDTO;
@@ -420,6 +421,50 @@ public class AuthController {
             ));
         } catch (Exception e) {
             log.error("Erro ao processar recuperação de senha: {}", e.getMessage(), e);
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar solicitação");
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        try {
+            log.info("Solicitação de redefinição de senha: email={}", request.getEmail());
+            
+            Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(request.getEmail());
+            if (usuarioOpt.isEmpty()) {
+                log.warn("Tentativa de reset para email inexistente: {}", request.getEmail());
+                return erro(HttpStatus.BAD_REQUEST, "Email não encontrado");
+            }
+            
+            Usuario usuario = usuarioOpt.get();
+            
+            boolean codigoValido = passwordResetCodeService.marcarComoUsado(request.getCode(), usuario.getIdUsuario());
+            if (!codigoValido) {
+                log.warn("Código inválido ou expirado para email={}", request.getEmail());
+                return erro(HttpStatus.BAD_REQUEST, "Código inválido ou expirado");
+            }
+            
+            Optional<UsuarioAutenticar> usuarioAutenticarOpt = usuarioAutenticarRepository.findByUsuario_IdUsuario(usuario.getIdUsuario());
+            if (usuarioAutenticarOpt.isEmpty()) {
+                log.error("UsuarioAutenticar não encontrado para userId={}", usuario.getIdUsuario());
+                return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao atualizar senha");
+            }
+            
+            UsuarioAutenticar usuarioAutenticar = usuarioAutenticarOpt.get();
+            usuarioAutenticar.setSenhaHash(passwordEncoder.encode(request.getNovaSenha()));
+            usuarioAutenticar.setDataExpiracao(LocalDateTime.now().plusYears(1));
+            usuarioAutenticarRepository.save(usuarioAutenticar);
+            
+            log.info("Senha redefinida com sucesso: email={}", request.getEmail());
+            
+            return ResponseEntity.ok(Map.of(
+                "mensagem", "Senha redefinida com sucesso. Você já pode fazer login com a nova senha"
+            ));
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro na redefinição de senha: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Erro ao processar redefinição de senha: {}", e.getMessage(), e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar solicitação");
         }
     }
