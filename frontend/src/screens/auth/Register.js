@@ -139,7 +139,12 @@ export default function Register({ navigation }) {
         });
         
         if (loginResult?.sucesso) {
-          navigation?.navigate?.('Inicio');
+          if (typeof navigation?.replace === 'function') {
+            navigation.replace('Main');
+            return;
+          }
+
+          navigation?.navigate?.('Main');
           return;
         } else {
           toastHelper.showInfo('Cadastro realizado! Por favor, faça login com suas credenciais.');

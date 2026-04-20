@@ -4,12 +4,18 @@ import theme from '../../../config/theme';
 import { Spacer, Divider } from '../../commons';
 import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
+import { resetToAuth } from '../../../navigation/navigationRef';
 import SidebarItem from './SidebarItem';
 
 export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
   const { isAuthenticated, usuario, logout } = useAuth();
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
+
+  const handleLogout = async () => {
+    await logout();
+    resetToAuth();
+  };
 
   return (
     <View style={styles.container}>

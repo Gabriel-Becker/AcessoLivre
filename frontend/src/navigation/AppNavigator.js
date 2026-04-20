@@ -25,13 +25,23 @@ function LoadingScreen() {
   );
 }
 
-function MainApp() {
-  const { usuario } = useAuth();
+function MainApp({ navigation }) {
+  const { usuario, isAuthenticated } = useAuth();
   const [currentScreen, setCurrentScreen] = useState('Inicio');
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   const handleNavigate = (screen) => {
+    if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword') {
+      navigation?.navigate?.(screen);
+      return;
+    }
+
+    if ((screen === 'Adicionar' || screen === 'Perfil') && !isAuthenticated) {
+      navigation?.navigate?.('Login');
+      return;
+    }
+
     if (screen === 'Admin' && !isAdmin) {
       setCurrentScreen('Inicio');
       return;
@@ -52,16 +62,10 @@ function MainApp() {
       case 'Buscar':
         return <Buscar />;
       case 'Adicionar':
-        if (!isAuthenticated) {
-          return <Login navigation={navigation} />;
-        }
         return <AdicionarLocal onNavigate={handleNavigate} />;
       case 'Sobre':
         return <Sobre />;
       case 'Perfil':
-        if (!isAuthenticated) {
-          return <Login navigation={navigation} />;
-        }
         return <Perfil />;
       case 'Admin':
         return isAdmin ? <Admin /> : <Home />;
