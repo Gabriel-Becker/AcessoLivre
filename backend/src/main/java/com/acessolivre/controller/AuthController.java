@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.ChangePasswordRequestDTO;
+import com.acessolivre.dto.request.ForgotPasswordRequestDTO;
+import com.acessolivre.dto.request.PasswordResetCodeRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
@@ -32,6 +34,8 @@ import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
+import com.acessolivre.service.EmailService;
+import com.acessolivre.service.PasswordResetCodeService;
 import com.acessolivre.service.RegistroPendenteService;
 import com.acessolivre.service.TwoFactorService;
 
@@ -54,6 +58,8 @@ public class AuthController {
     private final TwoFactorService twoFactorService;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetCodeService passwordResetCodeService;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
@@ -372,6 +378,52 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
+        try {
+            log.info("Solicitação de recuperação de senha: email={}", request.getEmail());
+            
+            Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(request.getEmail());
+            if (usuarioOpt.isEmpty()) {
+                log.warn("Tentativa de recuperação para email inexistente: {}", request.getEmail());
+                // Retorna sucesso mesmo se email não existe (segurança)
+                return ResponseEntity.ok(Map.of(
+                    "mensagem", "Se o email existir, você receberá um código de recuperação",
+                    "email", mascararEmail(request.getEmail())
+                ));
+            }
+            
+            Usuario usuario = usuarioOpt.get();
+            
+            // Gerar código de 6 dígitos
+            String codigo = emailService.gerarCodigoVerificacao();
+            
+            // Salvar código com expiração de 15 minutos
+            PasswordResetCodeRequestDTO codigoDTO = PasswordResetCodeRequestDTO.builder()
+                .code(codigo)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusMinutes(15))
+                .used(false)
+                .usuarioId(usuario.getIdUsuario())
+                .build();
+            
+            passwordResetCodeService.salvar(codigoDTO);
+            
+            // Enviar email
+            emailService.enviarCodigoVerificacao(usuario.getEmail(), codigo);
+            
+            log.info("Código de recuperação enviado: email={}", usuario.getEmail());
+            
+            return ResponseEntity.ok(Map.of(
+                "mensagem", "Código de recuperação enviado",
+                "email", mascararEmail(usuario.getEmail())
+            ));
+        } catch (Exception e) {
+            log.error("Erro ao processar recuperação de senha: {}", e.getMessage(), e);
+            return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar solicitação");
+        }
+    }
+
     @PostMapping("/change-password")
     public ResponseEntity<?> trocarSenha(
             @Valid @RequestBody ChangePasswordRequestDTO request,
@@ -416,6 +468,15 @@ public class AuthController {
             log.error("Erro inesperado ao trocar senha", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao trocar senha");
         }
+    }
+
+    private String mascararEmail(String email) {
+        int indexArroba = email.indexOf('@');
+        if (indexArroba <= 1) return email;
+        
+        String nome = email.substring(0, 1) + "*".repeat(indexArroba - 1);
+        String dominio = email.substring(indexArroba);
+        return nome + dominio;
     }
 
     private ResponseEntity<Map<String, String>> erro(HttpStatus status, String mensagem) {
