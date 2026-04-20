@@ -11,6 +11,7 @@ import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
+import AuthService from '../../services/AuthService';
 
 const schema = z.object({
   email: z.string().email(authMessages.validation.invalidEmail),
@@ -62,15 +63,10 @@ export default function ForgotPassword({ navigation }) {
   const onSubmit = async (values) => {
     try {
       setSubmitting(true);
-      
-      // TODO: Integrar com a API quando o backend estiver pronto
-      // const response = await AuthService.forgotPassword(values.email);
-      
-      // Simulação de envio bem-sucedido
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await AuthService.forgotPassword(values.email);
       
       setEmailEnviado(true);
-      toastHelper.showSuccess('E-mail de recuperação enviado com sucesso!');
+      toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
     } catch (erro) {
       toastHelper.showError(erro?.message || 'Erro ao enviar e-mail de recuperação');
     } finally {

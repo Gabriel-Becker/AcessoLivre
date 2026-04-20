@@ -389,6 +389,17 @@ const AuthService = {
     };
   },
 
+  async forgotPassword(email) {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extrairMensagemErro(error, 'Erro ao enviar solicitação de recuperação de senha')
+      );
+    }
+  },
+
   async logout() {
     try {
       const token = await this.getToken();
@@ -549,6 +560,7 @@ export const {
   login, 
   logout, 
   register, 
+  forgotPassword,
   isAuthenticated, 
   carregarSessao, 
   validateToken, 
