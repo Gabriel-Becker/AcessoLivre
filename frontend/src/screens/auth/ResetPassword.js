@@ -13,15 +13,31 @@ import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import AuthService from '../../services/AuthService';
 
-const schema = z.object({
-  email: z.string().email(authMessages.validation.invalidEmail),
-});
+const schema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .min(6, authMessages.resetPasswordErrors.invalidCode)
+      .max(6, authMessages.resetPasswordErrors.invalidCode)
+      .regex(/^\d{6}$/, authMessages.resetPasswordErrors.invalidCode),
+    novaSenha: z
+      .string()
+      .min(8, authMessages.validation.passwordTooShort),
+    confirmarSenha: z
+      .string()
+      .min(8, authMessages.validation.passwordTooShort),
+  })
+  .refine((data) => data.novaSenha === data.confirmarSenha, {
+    path: ['confirmarSenha'],
+    message: authMessages.validation.passwordMismatch,
+  });
 
-export default function ForgotPassword({ navigation }) {
+export default function ResetPassword({ navigation, route }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
-  const [emailEnviado, setEmailEnviado] = useState(false);
-  const [emailSolicitado, setEmailSolicitado] = useState('');
+  const [senhaAtualizada, setSenhaAtualizada] = useState(false);
+  const email = route?.params?.email || '';
 
   const {
     control,
@@ -30,7 +46,9 @@ export default function ForgotPassword({ navigation }) {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      email: '',
+      code: '',
+      novaSenha: '',
+      confirmarSenha: '',
     },
   });
 
@@ -53,25 +71,28 @@ export default function ForgotPassword({ navigation }) {
           borderRadius: t.borderRadius.lg,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
-        successIcon: {
-          alignSelf: 'center',
-          marginBottom: t.spacing.md,
-        },
       }),
     [isHighContrast, t]
   );
 
   const onSubmit = async (values) => {
+    if (!email) {
+      toastHelper.showError('Email não informado para redefinição de senha');
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const emailNormalizado = values.email.trim().toLowerCase();
-      await AuthService.forgotPassword(emailNormalizado);
-      
-      setEmailEnviado(true);
-      setEmailSolicitado(emailNormalizado);
-      toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
+      await AuthService.resetPassword({
+        email,
+        code: values.code,
+        novaSenha: values.novaSenha,
+      });
+
+      setSenhaAtualizada(true);
+      toastHelper.showSuccess(authMessages.success.resetPasswordSuccess);
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao enviar e-mail de recuperação');
+      toastHelper.showError(erro?.message || 'Erro ao redefinir senha');
     } finally {
       setSubmitting(false);
     }
@@ -85,76 +106,97 @@ export default function ForgotPassword({ navigation }) {
       >
         <View style={styles.wrapper}>
           <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
-            {emailEnviado ? (
+            {senhaAtualizada ? (
               <>
-                <View style={styles.successIcon}>
-                  <ThemedText size="xxxl" altoContraste={isHighContrast}>✉️</ThemedText>
-                </View>
-                <AuthHeader 
-                  title="E-mail enviado!" 
-                  subtitle="Acessibilidade para todos" 
-                  altoContraste={isHighContrast} 
+                <AuthHeader
+                  title="Senha redefinida"
+                  subtitle="Acessibilidade para todos"
+                  altoContraste={isHighContrast}
                 />
-                <Spacer size="md" />
+                <Spacer size="sm" />
                 <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-                  Enviamos um código de recuperação para o seu e-mail. Verifique sua caixa de entrada e spam.
+                  Sua senha foi atualizada com sucesso. Faça login com sua nova senha.
                 </ThemedText>
-                <Spacer size="xl" />
+                <Spacer size="lg" />
                 <Button
                   variant="primary"
-                  size="large"
-                  fullWidth
-                  onPress={() => navigation?.navigate?.('ResetPassword', { email: emailSolicitado })}
-                  altoContraste={isHighContrast}
-                >
-                  Inserir código
-                </Button>
-
-                <Spacer size="md" />
-
-                <Button
-                  variant="ghost"
                   size="large"
                   fullWidth
                   onPress={() => navigation?.navigate?.('Login')}
                   altoContraste={isHighContrast}
                 >
-                  Voltar ao Login
+                  Ir para Login
                 </Button>
               </>
             ) : (
               <>
-                <AuthHeader 
-                  title="Esqueceu a senha?" 
-                  subtitle="Acessibilidade para todos" 
-                  altoContraste={isHighContrast} 
+                <AuthHeader
+                  title="Redefinir senha"
+                  subtitle="Acessibilidade para todos"
+                  altoContraste={isHighContrast}
                 />
+
                 <Spacer size="sm" />
+
                 <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-                  Digite seu e-mail e enviaremos um código para redefinir sua senha
+                  Informe o código enviado para {email} e defina sua nova senha.
                 </ThemedText>
 
-                <Spacer size="xl" />
+                <Spacer size="lg" />
 
                 <Controller
                   control={control}
-                  name="email"
+                  name="code"
                   render={({ field: { onChange, value } }) => (
                     <Input
-                      label="E-mail"
-                      placeholder="seu@email.com"
+                      label="Código de recuperação"
+                      placeholder="000000"
                       value={value}
-                      onChangeText={(text) => onChange(text.trimStart())}
-                      leftIcon="mail-outline"
-                      error={errors.email?.message}
-                      keyboardType="email-address"
+                      onChangeText={(text) => onChange(text.replace(/\D/g, '').slice(0, 6))}
+                      leftIcon="key-outline"
+                      error={errors.code?.message}
+                      keyboardType="number-pad"
                       autoCapitalize="none"
                       altoContraste={isHighContrast}
                     />
                   )}
                 />
 
-                <Spacer size="lg" />
+                <Controller
+                  control={control}
+                  name="novaSenha"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Nova senha"
+                      placeholder="Sua nova senha"
+                      value={value}
+                      onChangeText={onChange}
+                      leftIcon="lock-closed-outline"
+                      secureTextEntry
+                      error={errors.novaSenha?.message}
+                      altoContraste={isHighContrast}
+                    />
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="confirmarSenha"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Confirmar nova senha"
+                      placeholder="Confirme a nova senha"
+                      value={value}
+                      onChangeText={onChange}
+                      leftIcon="lock-closed-outline"
+                      secureTextEntry
+                      error={errors.confirmarSenha?.message}
+                      altoContraste={isHighContrast}
+                    />
+                  )}
+                />
+
+                <Spacer size="sm" />
 
                 <Button
                   variant="primary"
@@ -165,10 +207,8 @@ export default function ForgotPassword({ navigation }) {
                   disabled={submitting}
                   altoContraste={isHighContrast}
                 >
-                  Enviar código de recuperação
+                  Confirmar redefinição
                 </Button>
-
-                <Spacer size="md" />
 
                 <AuthActions
                   text="Lembrou a senha?"
