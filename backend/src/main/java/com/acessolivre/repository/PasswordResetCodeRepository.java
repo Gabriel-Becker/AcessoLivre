@@ -1,14 +1,15 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.model.PasswordResetCode;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.acessolivre.model.PasswordResetCode;
 
 @Repository
 public interface PasswordResetCodeRepository extends JpaRepository<PasswordResetCode, Long> {
@@ -34,6 +35,8 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      * @return Lista de códigos válidos do usuário
      */
     List<PasswordResetCode> findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(Long idUsuario, LocalDateTime now);
+
+    long countByUsuario_IdUsuarioAndCreatedAtAfter(Long idUsuario, LocalDateTime createdAt);
 
     /**
      * Verifica se um código específico existe e está válido

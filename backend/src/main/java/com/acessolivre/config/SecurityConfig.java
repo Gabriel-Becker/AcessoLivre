@@ -8,8 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,11 +24,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.CustomUserDetailsService;
 import com.acessolivre.security.JwtService;
 import com.acessolivre.security.TokenResponseFilter;
 import com.acessolivre.security.TokenRevogadoFilter;
-import com.acessolivre.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -72,8 +71,9 @@ public class SecurityConfig {
                     "/api/auth/register/confirm",
                     "/api/auth/register/resend-code",
                     "/api/auth/login",
+                    "/api/auth/forgot-password",
                     "/api/auth/validate",
-                    "/api/auth/reset-password/**",
+                    "/api/auth/reset-password",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
@@ -125,11 +125,8 @@ public class SecurityConfig {
      * Configura o AuthenticationManager com o UserDetailsService e PasswordEncoder corretos.
      */
     @Bean
-    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(authProvider);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
