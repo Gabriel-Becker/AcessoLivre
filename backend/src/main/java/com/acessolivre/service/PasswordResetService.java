@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.acessolivre.model.PasswordResetCode;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
+import com.acessolivre.exception.PasswordResetException;
 import com.acessolivre.repository.PasswordResetCodeRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
@@ -40,14 +41,14 @@ public class PasswordResetService {
         String emailLimpo = normalizarEmail(email);
 
         Usuario usuario = usuarioRepository.findByEmail(emailLimpo)
-            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com o email informado"));
+            .orElseThrow(() -> new PasswordResetException("Usuário não encontrado com o email informado"));
 
         LocalDateTime janelaInicio = LocalDateTime.now().minusMinutes(MINUTOS_JANELA);
         long tentativasRecentes = passwordResetCodeRepository
             .countByUsuario_IdUsuarioAndCreatedAtAfter(usuario.getIdUsuario(), janelaInicio);
 
         if (tentativasRecentes >= MAX_TENTATIVAS_JANELA) {
-            throw new IllegalArgumentException("Muitas tentativas. Tente novamente em 15 minutos");
+            throw new PasswordResetException("Muitas tentativas. Tente novamente em 15 minutos");
         }
 
         List<PasswordResetCode> codigosAtivos = passwordResetCodeRepository
@@ -70,7 +71,11 @@ public class PasswordResetService {
 
         passwordResetCodeRepository.save(resetCode);
 
-        emailService.sendPasswordResetCode(usuario.getEmail(), usuario.getNome(), codigo);
+        try {
+            emailService.sendPasswordResetCode(usuario.getEmail(), usuario.getNome(), codigo);
+        } catch (Exception e) {
+            throw new PasswordResetException.EnvioEmailException(e);
+        }
 
         return "Código de recuperação enviado para " + mascararEmail(usuario.getEmail());
     }
@@ -81,26 +86,26 @@ public class PasswordResetService {
         String codeLimpo = code == null ? "" : code.trim();
 
         if (!PasswordValidator.isStrong(newPassword)) {
-            throw new IllegalArgumentException(PasswordValidator.getStrengthMessage(newPassword));
+            throw new PasswordResetException(PasswordValidator.getStrengthMessage(newPassword));
         }
 
         Usuario usuario = usuarioRepository.findByEmail(emailLimpo)
-            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+            .orElseThrow(() -> new PasswordResetException("Usuário não encontrado"));
 
         PasswordResetCode resetCode = passwordResetCodeRepository
             .findByCodeAndUsuario_IdUsuario(codeLimpo, usuario.getIdUsuario())
-            .orElseThrow(() -> new IllegalArgumentException("Código inválido ou expirado"));
+            .orElseThrow(PasswordResetException.CodigoInvalidoException::new);
 
         if (Boolean.TRUE.equals(resetCode.getUsed())) {
-            throw new IllegalArgumentException("Código já foi utilizado");
+            throw new PasswordResetException.CodigoJaUtilizadoException();
         }
 
         if (resetCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Código expirado");
+            throw new PasswordResetException.CodigoExpiradoException();
         }
 
         UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
-            .orElseThrow(() -> new IllegalArgumentException("Credenciais não encontradas"));
+            .orElseThrow(() -> new PasswordResetException("Credenciais não encontradas"));
 
         usuarioAutenticar.setSenhaHash(passwordEncoder.encode(newPassword));
         usuarioAutenticar.setDataExpiracao(LocalDateTime.now().plusYears(1));
@@ -109,7 +114,11 @@ public class PasswordResetService {
         resetCode.setUsed(true);
         passwordResetCodeRepository.save(resetCode);
 
-        emailService.sendPasswordResetConfirmation(usuario.getEmail(), usuario.getNome());
+        try {
+            emailService.sendPasswordResetConfirmation(usuario.getEmail(), usuario.getNome());
+        } catch (Exception e) {
+            log.warn("Falha ao enviar confirmação de reset para {}: {}", usuario.getEmail(), e.getMessage());
+        }
 
         return "Senha redefinida com sucesso";
     }
