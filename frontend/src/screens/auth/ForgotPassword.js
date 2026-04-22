@@ -20,8 +20,6 @@ const schema = z.object({
 export default function ForgotPassword({ navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
-  const [emailEnviado, setEmailEnviado] = useState(false);
-  const [emailSolicitado, setEmailSolicitado] = useState('');
 
   const {
     control,
@@ -53,10 +51,6 @@ export default function ForgotPassword({ navigation }) {
           borderRadius: t.borderRadius.lg,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
-        successIcon: {
-          alignSelf: 'center',
-          marginBottom: t.spacing.md,
-        },
       }),
     [isHighContrast, t]
   );
@@ -66,10 +60,9 @@ export default function ForgotPassword({ navigation }) {
       setSubmitting(true);
       const emailNormalizado = values.email.trim().toLowerCase();
       await AuthService.forgotPassword(emailNormalizado);
-      
-      setEmailEnviado(true);
-      setEmailSolicitado(emailNormalizado);
+
       toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
+      navigation?.navigate?.('ResetPassword', { email: emailNormalizado });
     } catch (erro) {
       toastHelper.showError(erro?.message || 'Erro ao enviar e-mail de recuperação');
     } finally {
@@ -85,98 +78,59 @@ export default function ForgotPassword({ navigation }) {
       >
         <View style={styles.wrapper}>
           <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
-            {emailEnviado ? (
-              <>
-                <View style={styles.successIcon}>
-                  <ThemedText size="xxxl" altoContraste={isHighContrast}>✉️</ThemedText>
-                </View>
-                <AuthHeader 
-                  title="E-mail enviado!" 
-                  subtitle="Acessibilidade para todos" 
-                  altoContraste={isHighContrast} 
-                />
-                <Spacer size="md" />
-                <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-                  Enviamos um código de recuperação para o seu e-mail. Verifique sua caixa de entrada e spam.
-                </ThemedText>
-                <Spacer size="xl" />
-                <Button
-                  variant="primary"
-                  size="large"
-                  fullWidth
-                  onPress={() => navigation?.navigate?.('ResetPassword', { email: emailSolicitado })}
-                  altoContraste={isHighContrast}
-                >
-                  Inserir código
-                </Button>
+            <>
+              <AuthHeader 
+                title="Esqueceu a senha?" 
+                subtitle="Acessibilidade para todos" 
+                altoContraste={isHighContrast} 
+              />
+              <Spacer size="sm" />
+              <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+                Digite seu e-mail e enviaremos um código para redefinir sua senha
+              </ThemedText>
 
-                <Spacer size="md" />
+              <Spacer size="xl" />
 
-                <Button
-                  variant="ghost"
-                  size="large"
-                  fullWidth
-                  onPress={() => navigation?.navigate?.('Login')}
-                  altoContraste={isHighContrast}
-                >
-                  Voltar ao Login
-                </Button>
-              </>
-            ) : (
-              <>
-                <AuthHeader 
-                  title="Esqueceu a senha?" 
-                  subtitle="Acessibilidade para todos" 
-                  altoContraste={isHighContrast} 
-                />
-                <Spacer size="sm" />
-                <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-                  Digite seu e-mail e enviaremos um código para redefinir sua senha
-                </ThemedText>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="E-mail"
+                    placeholder="seu@email.com"
+                    value={value}
+                    onChangeText={(text) => onChange(text.trimStart())}
+                    leftIcon="mail-outline"
+                    error={errors.email?.message}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    altoContraste={isHighContrast}
+                  />
+                )}
+              />
 
-                <Spacer size="xl" />
+              <Spacer size="lg" />
 
-                <Controller
-                  control={control}
-                  name="email"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="E-mail"
-                      placeholder="seu@email.com"
-                      value={value}
-                      onChangeText={(text) => onChange(text.trimStart())}
-                      leftIcon="mail-outline"
-                      error={errors.email?.message}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      altoContraste={isHighContrast}
-                    />
-                  )}
-                />
+              <Button
+                variant="primary"
+                size="large"
+                fullWidth
+                onPress={handleSubmit(onSubmit)}
+                loading={submitting}
+                disabled={submitting}
+                altoContraste={isHighContrast}
+              >
+                Enviar código de recuperação
+              </Button>
 
-                <Spacer size="lg" />
+              <Spacer size="md" />
 
-                <Button
-                  variant="primary"
-                  size="large"
-                  fullWidth
-                  onPress={handleSubmit(onSubmit)}
-                  loading={submitting}
-                  disabled={submitting}
-                  altoContraste={isHighContrast}
-                >
-                  Enviar código de recuperação
-                </Button>
-
-                <Spacer size="md" />
-
-                <AuthActions
-                  text="Lembrou a senha?"
-                  actionLabel="Voltar ao login"
-                  onPress={() => navigation?.navigate?.('Login')}
-                />
-              </>
-            )}
+              <AuthActions
+                text="Lembrou a senha?"
+                actionLabel="Voltar ao login"
+                onPress={() => navigation?.navigate?.('Login')}
+              />
+            </>
           </Card>
         </View>
       </KeyboardAvoidingView>
