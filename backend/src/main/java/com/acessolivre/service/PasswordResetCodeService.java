@@ -12,11 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class PasswordResetCodeService {
 
     private final PasswordResetCodeRepository passwordResetCodeRepository;
@@ -29,7 +31,8 @@ public class PasswordResetCodeService {
 
     public Optional<PasswordResetCode> buscarPorId(Long id) {
         log.info("Buscando código de reset: id={}", id);
-        return passwordResetCodeRepository.findById(id);
+        Long idNaoNulo = Objects.requireNonNull(id, "id não pode ser nulo");
+        return passwordResetCodeRepository.findById(idNaoNulo);
     }
 
     @Transactional
@@ -53,7 +56,10 @@ public class PasswordResetCodeService {
         }
         
         PasswordResetCode codigo = PasswordResetCodeMapper.toEntity(dto, usuario);
-        PasswordResetCode salvo = passwordResetCodeRepository.save(codigo);
+        PasswordResetCode salvo = Objects.requireNonNull(
+            passwordResetCodeRepository.save(codigo),
+            "falha ao salvar código de reset"
+        );
         log.info("Código de reset salvo: id={}", salvo.getId());
         return salvo;
     }
@@ -61,13 +67,14 @@ public class PasswordResetCodeService {
     @Transactional
     public void deletar(Long id) {
         log.info("Deletando código de reset: id={}", id);
+        Long idNaoNulo = Objects.requireNonNull(id, "id não pode ser nulo");
         
-        if (!passwordResetCodeRepository.existsById(id)) {
+        if (!passwordResetCodeRepository.existsById(idNaoNulo)) {
             log.warn("Código de reset não encontrado: id={}", id);
             throw new IllegalArgumentException("Código de reset não encontrado");
         }
         
-        passwordResetCodeRepository.deleteById(id);
+        passwordResetCodeRepository.deleteById(idNaoNulo);
         log.info("Código de reset deletado: id={}", id);
     }
 
