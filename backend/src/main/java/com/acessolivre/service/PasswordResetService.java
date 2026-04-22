@@ -2,7 +2,6 @@ package com.acessolivre.service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,7 @@ public class PasswordResetService {
     private static final int MAX_TENTATIVAS_JANELA = 3;
     private static final int MINUTOS_JANELA = 15;
     private static final int MINUTOS_EXPIRACAO = 15;
+    private static final String MENSAGEM_RETORNO_NEUTRA = "Se o email existir, você receberá um código de recuperação";
 
     private final PasswordResetCodeRepository passwordResetCodeRepository;
     private final UsuarioRepository usuarioRepository;
@@ -40,8 +40,13 @@ public class PasswordResetService {
     public String gerarCodigoRecuperacaoComValidacao(String email) {
         String emailLimpo = normalizarEmail(email);
 
-        Usuario usuario = usuarioRepository.findByEmail(emailLimpo)
-            .orElseThrow(() -> new PasswordResetException("Usuário não encontrado com o email informado"));
+        Usuario usuario = usuarioRepository.findByEmail(emailLimpo).orElse(null);
+
+        if (usuario == null) {
+            // Resposta neutra para não permitir enumeração de contas.
+            log.info("Solicitação de recuperação para email não encontrado");
+            return MENSAGEM_RETORNO_NEUTRA;
+        }
 
         LocalDateTime janelaInicio = LocalDateTime.now().minusMinutes(MINUTOS_JANELA);
         long tentativasRecentes = passwordResetCodeRepository
@@ -51,12 +56,7 @@ public class PasswordResetService {
             throw new PasswordResetException("Muitas tentativas. Tente novamente em 15 minutos");
         }
 
-        List<PasswordResetCode> codigosAtivos = passwordResetCodeRepository
-            .findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(usuario.getIdUsuario(), LocalDateTime.now());
-        for (PasswordResetCode codigoExistente : codigosAtivos) {
-            codigoExistente.setUsed(true);
-            passwordResetCodeRepository.save(codigoExistente);
-        }
+        passwordResetCodeRepository.markAllAsUsedByUsuarioId(usuario.getIdUsuario());
 
         String codigo = gerarCodigoSeisDigitos();
         LocalDateTime agora = LocalDateTime.now();
@@ -77,13 +77,15 @@ public class PasswordResetService {
             throw new PasswordResetException.EnvioEmailException(e);
         }
 
-        return "Código de recuperação enviado para " + mascararEmail(usuario.getEmail());
+        return MENSAGEM_RETORNO_NEUTRA;
     }
 
     @Transactional
     public String redefinirSenhaComValidacao(String email, String code, String newPassword) {
         String emailLimpo = normalizarEmail(email);
         String codeLimpo = code == null ? "" : code.trim();
+
+        validarFormatoCodigo(codeLimpo);
 
         if (!PasswordValidator.isStrong(newPassword)) {
             throw new PasswordResetException(PasswordValidator.getStrengthMessage(newPassword));
@@ -93,16 +95,22 @@ public class PasswordResetService {
             .orElseThrow(() -> new PasswordResetException("Usuário não encontrado"));
 
         PasswordResetCode resetCode = passwordResetCodeRepository
-            .findByCodeAndUsuario_IdUsuario(codeLimpo, usuario.getIdUsuario())
-            .orElseThrow(PasswordResetException.CodigoInvalidoException::new);
+            .findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(codeLimpo, usuario.getIdUsuario(), LocalDateTime.now())
+            .orElseGet(() -> {
+                PasswordResetCode codigoExistente = passwordResetCodeRepository
+                    .findByCodeAndUsuario_IdUsuario(codeLimpo, usuario.getIdUsuario())
+                    .orElseThrow(PasswordResetException.CodigoInvalidoException::new);
 
-        if (Boolean.TRUE.equals(resetCode.getUsed())) {
-            throw new PasswordResetException.CodigoJaUtilizadoException();
-        }
+                if (Boolean.TRUE.equals(codigoExistente.getUsed())) {
+                    throw new PasswordResetException.CodigoJaUtilizadoException();
+                }
 
-        if (resetCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new PasswordResetException.CodigoExpiradoException();
-        }
+                if (codigoExistente.getExpiresAt().isBefore(LocalDateTime.now())) {
+                    throw new PasswordResetException.CodigoExpiradoException();
+                }
+
+                throw new PasswordResetException.CodigoInvalidoException();
+            });
 
         UsuarioAutenticar usuarioAutenticar = usuarioAutenticarRepository.findByUsuario_IdUsuario(usuario.getIdUsuario())
             .orElseThrow(() -> new PasswordResetException("Credenciais não encontradas"));
@@ -131,23 +139,10 @@ public class PasswordResetService {
         return email == null ? "" : email.trim().toLowerCase();
     }
 
-    private String mascararEmail(String email) {
-        if (email == null || email.length() < 3) {
-            return "***@***.***";
+    private void validarFormatoCodigo(String code) {
+        if (code.length() != 6 || !code.chars().allMatch(Character::isDigit)) {
+            throw new PasswordResetException.CodigoInvalidoException();
         }
-
-        int atIndex = email.indexOf('@');
-        if (atIndex == -1) {
-            return "***@***.***";
-        }
-
-        String localPart = email.substring(0, atIndex);
-        String domainPart = email.substring(atIndex);
-
-        if (localPart.length() <= 2) {
-            return "**" + localPart.charAt(localPart.length() - 1) + domainPart;
-        }
-
-        return localPart.substring(0, 2) + "***" + localPart.charAt(localPart.length() - 1) + domainPart;
     }
+
 }
