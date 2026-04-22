@@ -45,6 +45,15 @@ services:
     networks:
       - acessolivre-network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: acessolivre-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - acessolivre-network
+
 volumes:
   postgres_data_dev:
 

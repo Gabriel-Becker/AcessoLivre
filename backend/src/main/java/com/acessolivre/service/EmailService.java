@@ -1,54 +1,73 @@
 package com.acessolivre.service;
 
-import java.security.SecureRandom;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class EmailService {
 
-    private static final SecureRandom RANDOM = new SecureRandom();
-
-    public String gerarCodigoVerificacao() {
-        int codigo = 100000 + RANDOM.nextInt(900000);
-        return String.valueOf(codigo);
-    }
-
-    public void enviarCodigoVerificacao(String email, String codigo) {
-        // TODO: Implementar envio real de email
-        log.info("==============================================");
-        log.info("CÓDIGO DE VERIFICAÇÃO DE EMAIL");
-        log.info("Email: {}", email);
-        log.info("Código: {}", codigo);
-        log.info("==============================================");
-        
-        // Simula envio bem-sucedido
-        // Em produção, aqui seria a integração com AWS SES, SendGrid, etc.
-    }
+    private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
+    
+    @Value("${spring.mail.properties.mail.from:noreply@acessolivre.com.br}")
+    private String emailFrom;
 
     public void sendPasswordResetCode(String email, String nome, String code) {
-        log.info("==============================================");
-        log.info("CÓDIGO DE RECUPERAÇÃO DE SENHA");
-        log.info("Nome: {}", nome);
-        log.info("Email: {}", email);
-        log.info("Código: {}", code);
-        log.info("==============================================");
+        try {
+            Context context = new Context();
+            context.setVariable("nome", nome);
+            context.setVariable("codigo", code);
+            
+            String htmlContent = templateEngine.process("email/codigo-reset-senha", context);
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(emailFrom);
+            helper.setTo(email);
+            helper.setSubject("Código de Recuperação de Senha - AcessoLivre");
+            helper.setText(htmlContent, true);
+            
+            mailSender.send(message);
+            log.info("Email de recuperação de senha enviado para: {}", email);
+        } catch (MessagingException e) {
+            log.error("Erro ao enviar email de recuperação para {}: {}", email, e.getMessage());
+            throw new RuntimeException("Erro ao enviar email de recuperação", e);
+        }
     }
 
     public void sendPasswordResetConfirmation(String email, String nome) {
-        log.info("==============================================");
-        log.info("CONFIRMAÇÃO DE REDEFINIÇÃO DE SENHA");
-        log.info("Nome: {}", nome);
-        log.info("Email: {}", email);
-        log.info("==============================================");
-    }
-
-    public void enviarBoasVindas(String email, String nome) {
-        log.info("Email de boas-vindas enviado para {} ({})", nome, email);
+        try {
+            Context context = new Context();
+            context.setVariable("nome", nome);
+            
+            String htmlContent = templateEngine.process("email/confirmacao-reset-senha", context);
+            
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(emailFrom);
+            helper.setTo(email);
+            helper.setSubject("Senha Redefinida com Sucesso - AcessoLivre");
+            helper.setText(htmlContent, true);
+            
+            mailSender.send(message);
+            log.info("Email de confirmação de reset enviado para: {}", email);
+        } catch (MessagingException e) {
+            log.error("Erro ao enviar confirmação de reset para {}: {}", email, e.getMessage());
+            throw new RuntimeException("Erro ao enviar confirmação de reset", e);
+        }
     }
 }
