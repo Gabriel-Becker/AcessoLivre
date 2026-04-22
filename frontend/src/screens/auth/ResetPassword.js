@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Container } from '../../components/layout';
+import { Container, DesktopLayout } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import AuthHeader from './components/AuthHeader';
@@ -98,8 +98,15 @@ export default function ResetPassword({ navigation, route }) {
     }
   };
 
+  const handleNavigate = (screenName) => {
+    if (typeof navigation?.navigate === 'function') {
+      navigation.navigate(screenName);
+    }
+  };
+
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
+    <DesktopLayout current="ResetPassword" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -221,5 +228,6 @@ export default function ResetPassword({ navigation, route }) {
         </View>
       </KeyboardAvoidingView>
     </Container>
+    </DesktopLayout>
   );
 }
