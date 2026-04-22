@@ -1,6 +1,5 @@
 package com.acessolivre.controller;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +31,7 @@ import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
+import com.acessolivre.security.LoginAttemptService;
 import com.acessolivre.service.RegistroPendenteService;
 import com.acessolivre.service.TwoFactorService;
 
@@ -50,7 +50,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RegistroPendenteService registroPendenteService;
-    private final com.acessolivre.security.LoginAttemptService loginAttemptService;
+    private final LoginAttemptService loginAttemptService;
     private final TwoFactorService twoFactorService;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
@@ -110,18 +110,18 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
         try {
             String token = authenticationService.login(
-                request.getEmail(), 
-                request.getSenha(), 
+                request.getEmail(),
+                request.getSenha(),
                 request.getRememberMe(),
                 request.getTwoFactorCode()
             );
             Optional<Usuario> u = usuarioRepository.findByEmail(request.getEmail());
-            
+
             if (u.isEmpty()) {
                 log.warn("Usuário não encontrado após autenticação: {}", request.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             Usuario usuario = u.get();
             UsuarioResponseDTO usuarioDTO = UsuarioMapper.toResponse(usuario);
             AuthResponseDTO response = AuthResponseDTO.builder()
@@ -129,7 +129,7 @@ public class AuthController {
                 .usuario(usuarioDTO)
                 .twoFactorRequired(false)
                 .build();
-            
+
             log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
             return ResponseEntity.ok(response);
         } catch (com.acessolivre.security.TwoFactorRequiredException e) {
@@ -151,11 +151,11 @@ public class AuthController {
             }
 
             int tentativasRestantes = loginAttemptService.tentativasRestantes(request.getEmail());
-            String mensagem = tentativasRestantes > 0 
+            String mensagem = tentativasRestantes > 0
                 ? String.format("Credenciais inválidas. Tentativas restantes: %d", tentativasRestantes)
                 : "Conta bloqueada temporariamente";
-            
-            log.warn("Falha no login para email={}: {} (tentativas restantes: {})", 
+
+            log.warn("Falha no login para email={}: {} (tentativas restantes: {})",
                 request.getEmail(), e.getMessage(), tentativasRestantes);
             return erro(HttpStatus.UNAUTHORIZED, mensagem);
         } catch (Exception e) {
@@ -172,11 +172,11 @@ public class AuthController {
                 log.warn("Tentativa de logout sem token");
                 return erro(HttpStatus.BAD_REQUEST, "Token não fornecido");
             }
-            
+
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             authenticationService.logout(token, userId);
-            
+
             log.info("Logout realizado com sucesso para userId={}", userId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
@@ -199,7 +199,7 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             return ResponseEntity.ok(twoFactorService.prepararConfiguracao(userId));
@@ -226,7 +226,7 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             twoFactorService.habilitar(userId, body.getVerificationCode());
@@ -254,7 +254,7 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             twoFactorService.desabilitar(userId, body.getVerificationCode());
@@ -300,16 +300,16 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             String token = auth.substring(7);
-            
+
             if (authenticationService.isTokenRevoked(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             return usuarioRepository.findById(userId)
                     .map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -323,14 +323,14 @@ public class AuthController {
     public ResponseEntity<ValidateTokenResponseDTO> validateToken(@Valid @RequestBody ValidateTokenRequestDTO request) {
         try {
             boolean isValid = authenticationService.validateToken(request.getToken());
-            
+
             if (!isValid) {
                 return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
                     .valid(false)
                     .reason("Token inválido ou revogado")
                     .build());
             }
-            
+
             return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
                 .valid(true)
                 .build());
@@ -350,20 +350,20 @@ public class AuthController {
             if (auth == null || !auth.startsWith("Bearer ")) {
                 return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
-            
+
             String currentToken = auth.substring(7);
             Long tokenUserId = jwtService.obterIdUsuarioDoToken(currentToken);
-            
+
             if (!tokenUserId.equals(userId)) {
                 return erro(HttpStatus.FORBIDDEN, "Usuário não autorizado");
             }
-            
+
             if (authenticationService.isTokenRevoked(currentToken)) {
                 return erro(HttpStatus.UNAUTHORIZED, "Token revogado");
             }
-            
+
             String newToken = authenticationService.reautenticar(userId);
-            
+
             log.info("Token renovado para userId={}", userId);
             return ResponseEntity.ok(newToken);
         } catch (Exception e) {
@@ -404,7 +404,7 @@ public class AuthController {
             }
 
             usuarioAutenticar.setSenhaHash(passwordEncoder.encode(request.getNovaSenha()));
-            usuarioAutenticar.setDataExpiracao(LocalDateTime.now().plusYears(1));
+            usuarioAutenticar.setDataExpiracao(java.time.LocalDateTime.now().plusYears(1));
             usuarioAutenticarRepository.save(usuarioAutenticar);
 
             log.info("Senha alterada com sucesso para userId={}", userId);

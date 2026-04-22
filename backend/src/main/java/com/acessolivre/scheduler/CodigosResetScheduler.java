@@ -18,8 +18,7 @@ public class CodigosResetScheduler {
         this.passwordResetCodeRepository = passwordResetCodeRepository;
     }
 
-    // TODO: Descomentar após correção do deleteByExpiresAtBefore
-    // @Scheduled(fixedRate = 3600000)
+    @Scheduled(fixedRate = 3600000)
     @Transactional
     public void limparCodigosExpirados() {
         try {

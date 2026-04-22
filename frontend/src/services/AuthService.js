@@ -389,6 +389,28 @@ const AuthService = {
     };
   },
 
+  async forgotPassword(email) {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extrairMensagemErro(error, 'Erro ao enviar solicitação de recuperação de senha')
+      );
+    }
+  },
+
+  async resetPassword({ email, code, novaSenha }) {
+    try {
+      const response = await api.post('/auth/reset-password', { email, code, novaSenha });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extrairMensagemErro(error, 'Erro ao redefinir senha')
+      );
+    }
+  },
+
   async logout() {
     try {
       const token = await this.getToken();
@@ -549,6 +571,8 @@ export const {
   login, 
   logout, 
   register, 
+  forgotPassword,
+  resetPassword,
   isAuthenticated, 
   carregarSessao, 
   validateToken, 

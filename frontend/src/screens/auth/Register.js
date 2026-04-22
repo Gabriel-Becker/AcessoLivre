@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
-import { Container } from '../../components/layout';
+import { Container, DesktopLayout } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import { useAuth } from '../../context/AuthContext';
@@ -161,8 +161,15 @@ export default function Register({ navigation }) {
     }
   };
 
+  const handleNavigate = (screenName) => {
+    if (typeof navigation?.navigate === 'function') {
+      navigation.navigate(screenName);
+    }
+  };
+
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
+    <DesktopLayout current="Register" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -300,6 +307,7 @@ export default function Register({ navigation }) {
         </View>
       </ScrollView>
 
-    </Container>
+      </Container>
+    </DesktopLayout>
   );
 }
