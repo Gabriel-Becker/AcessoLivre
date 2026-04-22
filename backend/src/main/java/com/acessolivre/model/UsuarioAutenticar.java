@@ -22,8 +22,8 @@ public class UsuarioAutenticar {
     private Long idUsuarioAutenticar;
 
     @NotNull(message = "Usuário é obrigatório")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false, unique = true)
     @JsonIgnore
     private Usuario usuario;
 
