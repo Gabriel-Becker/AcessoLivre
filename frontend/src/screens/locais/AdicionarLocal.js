@@ -22,8 +22,7 @@ import LocalService from '../../services/LocalService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
-import { CATEGORIAS } from '../../constants/enums/Categoria';
-import { TIPOS_ACESSIBILIDADE } from '../../constants/enums/Tipo_Acessibilidade';
+import { CATEGORIAS, TIPO_ACESSIBILIDADE} from '../../constants/enums/Categoria';
 // Mapeamento dos recursos de acessibilidade para exibição na UI
 const RECURSOS_ACESSIBILIDADE = [
   {
@@ -116,7 +115,7 @@ const CATEGORIAS_OPTIONS = CATEGORIAS.map((categoria) => ({
 }));
 
 // Converter enums de tipos de acessibilidade para o formato de busca
-const TIPOS_ACESSIBILIDADE_OPTIONS = TIPOS_ACESSIBILIDADE.map((tipo) => ({
+const TIPOS_ACESSIBILIDADE_OPTIONS = TIPO_ACESSIBILIDADE.map((tipo) => ({
   idTipoAcessibilidade: tipo,
   nome: tipo.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
   enumValue: tipo,
@@ -769,4 +768,4 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
       alignSelf: isDesktop ? 'flex-start' : 'stretch',
     },
   });
-}
+};
