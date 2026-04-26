@@ -126,6 +126,45 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     }
   };
 
+  const handleTakePhoto = async () => {
+    if (!cameraPermission?.granted) {
+      const result = await requestCameraPermission();
+      if (!result.granted) {
+        toastHelper.showError('Permissão de câmera negada');
+        return;
+      }
+    }
+
+    if (!mediaPermission?.granted) {
+      const result = await requestMediaPermission();
+      if (!result.granted) {
+        toastHelper.showError('Permissão de galeria negada');
+        return;
+      }
+    }
+
+    setShowCamera(true);
+  };
+
+  const handleCapture = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: true,
+      });
+      
+      const newImage = {
+        uri: photo.uri,
+        base64: photo.base64,
+        name: `photo_${Date.now()}.jpg`,
+        size: photo.fileSize || 0,
+      };
+      
+      onAddImages([newImage]);
+      setShowCamera(false);
+    }
+  };
+
   const renderPreview = () => {
     if (images.length === 0) return null;
 
@@ -146,7 +185,25 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     );
   };
 
-  
+  if (showCamera) {
+    return (
+      <View style={{ flex: 1, height: 400 }}>
+        <CameraView
+          ref={cameraRef}
+          style={{ flex: 1 }}
+          facing="back"
+        />
+        <View style={{ flexDirection: 'row', gap: 16, padding: 16 }}>
+          <Button variant="danger" onPress={() => setShowCamera(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onPress={handleCapture}>
+            Tirar Foto
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   if (Platform.OS === 'web') {
     return (
@@ -216,7 +273,54 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
 };
 
 // Estilos locais para o componente de imagem
-
+const localStyles = StyleSheet.create({
+  dropArea: {
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    marginBottom: 16,
+  },
+  previewContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  previewItem: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+});
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -278,6 +382,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
+  // ============================================
+  // FUNÇÕES DE IMAGEM
+  // ============================================
+
   const adicionarImagens = (novasImagens) => {
     const MAX_IMAGES = 10;
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -301,6 +409,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const removerImagem = (index) => {
     setImagens(prev => prev.filter((_, i) => i !== index));
   };
+
+  // ============================================
+  // FUNÇÕES AUXILIARES
+  // ============================================
 
   const atualizarCampo = (campo) => (valor) => {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
@@ -458,6 +570,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     }
   };
 
+  // ============================================
+  // SUBMISSÃO DO FORMULÁRIO COM IMAGENS
+  // ============================================
+
   const handleSalvarLocal = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -559,6 +675,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       else if (navigation) navigation.goBack();
     }
   };
+
+  // ============================================
+  // RENDERIZAÇÃO
+  // ============================================
 
   return (
     <Container
