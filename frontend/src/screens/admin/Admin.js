@@ -8,6 +8,7 @@ import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
 import { useAuth } from '../../context/AuthContext';
 import AdminService from '../../services/AdminService';
 import theme from '../../config/theme';
+import toastHelper from '../../utils/toastHelper';
 
 export default function Admin() {
   const { usuario } = useAuth();
@@ -116,6 +117,7 @@ export default function Admin() {
     setErro('');
     try {
       await AdminService.deletarUsuario(usuarioItem.idUsuario);
+      toastHelper.showSuccess('Usuário removido com sucesso.', 'Exclusão concluída');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
         setPaginaUsuarios((p) => Math.max(0, p - 1));
@@ -123,7 +125,9 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
-      setErro('Não foi possível apagar o usuário.');
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o usuário.';
+      setErro(mensagemErro);
+      toastHelper.showError(mensagemErro, 'Falha ao excluir usuário');
     } finally {
       setCarregandoAcao(false);
     }

@@ -8,7 +8,17 @@ const normalizarRole = (role) => {
 };
 
 const resolverMensagemErro = (erro, fallback) => {
-  return erro?.response?.data?.message || erro?.response?.data?.erro || erro?.message || fallback;
+  const data = erro?.response?.data;
+
+  if (typeof data === 'string' && data.trim()) return data;
+
+  return (
+    data?.mensagem ||
+    data?.message ||
+    data?.erro ||
+    erro?.message ||
+    fallback
+  );
 };
 
 export default function useEditarUsuarioAdmin() {

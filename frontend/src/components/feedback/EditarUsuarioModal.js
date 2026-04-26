@@ -3,10 +3,39 @@ import { Modal, View, StyleSheet, ScrollView, useWindowDimensions } from 'react-
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Input, Select } from '../ui';
 import { Spacer, ThemedText } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import useEditarUsuarioAdmin from '../../hooks/useEditarUsuarioAdmin';
+
+const REQUISITOS_SENHA = [
+  {
+    chave: 'minimoCaracteres',
+    texto: 'Pelo menos 8 caracteres',
+    validar: (senha) => senha.length >= 8,
+  },
+  {
+    chave: 'letraMaiuscula',
+    texto: 'Pelo menos 1 letra maiúscula',
+    validar: (senha) => /[A-Z]/.test(senha),
+  },
+  {
+    chave: 'letraMinuscula',
+    texto: 'Pelo menos 1 letra minúscula',
+    validar: (senha) => /[a-z]/.test(senha),
+  },
+  {
+    chave: 'numero',
+    texto: 'Pelo menos 1 número',
+    validar: (senha) => /[0-9]/.test(senha),
+  },
+  {
+    chave: 'caractereEspecial',
+    texto: 'Pelo menos 1 caractere especial',
+    validar: (senha) => /[!@#$%^&*(),.?":{}|<>]/.test(senha),
+  },
+];
 
 const schema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -15,7 +44,11 @@ const schema = z.object({
   senha: z
     .string()
     .optional()
-    .refine((valor) => !valor || valor.length >= 8, 'A nova senha deve ter no mínimo 8 caracteres'),
+    .refine((valor) => !valor || valor.length >= 8, 'A nova senha deve ter no mínimo 8 caracteres')
+    .refine((valor) => !valor || /[A-Z]/.test(valor), 'A nova senha deve conter ao menos uma letra maiúscula')
+    .refine((valor) => !valor || /[a-z]/.test(valor), 'A nova senha deve conter ao menos uma letra minúscula')
+    .refine((valor) => !valor || /[0-9]/.test(valor), 'A nova senha deve conter ao menos um número')
+    .refine((valor) => !valor || /[!@#$%^&*(),.?":{}|<>]/.test(valor), 'A nova senha deve conter ao menos um caractere especial'),
 });
 
 export default function EditarUsuarioModal({ visible, onClose, usuario, onSucesso, altoContraste = false }) {
@@ -29,9 +62,12 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     control,
     handleSubmit,
     reset,
-    formState: { errors },
+    watch,
+    formState: { errors, touchedFields },
   } = useForm({
     resolver: zodResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       nome: usuario?.nome || '',
       email: usuario?.email || '',
@@ -39,6 +75,10 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
       senha: '',
     },
   });
+
+  const senha = watch('senha') || '';
+  const senhaFoiDigitada = senha.length > 0;
+  const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(senha));
 
   useEffect(() => {
     const carregarDetalhesUsuario = async () => {
@@ -102,14 +142,15 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
             <Controller
               control={control}
               name="nome"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Nome"
                   placeholder="Digite o nome do usuário"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="person-outline"
-                  error={errors.nome?.message}
+                  error={touchedFields.nome ? errors.nome?.message : undefined}
                   altoContraste={altoContraste}
                 />
               )}
@@ -118,14 +159,15 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Email"
                   placeholder="Digite o email do usuário"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="mail-outline"
-                  error={errors.email?.message}
+                  error={touchedFields.email ? errors.email?.message : undefined}
                   altoContraste={altoContraste}
                 />
               )}
@@ -160,11 +202,29 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   onChangeText={onChange}
                   secureTextEntry
                   leftIcon="key-outline"
-                  error={errors.senha?.message}
+                  error={errors.senha ? 'Revise os requisitos abaixo.' : undefined}
                   altoContraste={altoContraste}
                 />
               )}
             />
+
+            {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
+              <View style={styles.passwordHintContainer}>
+                {requisitosPendentesSenha.map((requisito) => (
+                  <View key={requisito.chave} style={styles.passwordHintRow}>
+                    <Ionicons name="close-circle" size={16} color={t.colors.error} />
+                    <ThemedText
+                      variant="caption"
+                      color="error"
+                      style={styles.passwordHintText}
+                      altoContraste={altoContraste}
+                    >
+                      {requisito.texto}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             <Spacer size="sm" />
 
@@ -211,6 +271,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
+  passwordHintContainer: {
+    marginTop: 4,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  passwordHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  passwordHintText: {
+    marginLeft: 6,
+    flexShrink: 1,
+  },
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
