@@ -136,12 +136,26 @@ export default function Admin() {
   const confirmarApagarUsuario = (usuarioItem) => {
     Alert.alert(
       'Apagar usuário',
-      `Tem certeza que deseja apagar ${usuarioItem?.nome || 'este usuário'}?`,
+      `Tem certeza que deseja apagar ${usuarioItem?.nome || 'este usuário'}? Esta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Apagar', style: 'destructive', onPress: () => apagarUsuario(usuarioItem) },
       ]
     );
+  };
+
+  const tentarNovamente = () => {
+    if (abaAtiva === 'usuarios') {
+      carregarUsuarios();
+      return;
+    }
+
+    if (abaAtiva === 'locais') {
+      carregarLocais();
+      return;
+    }
+
+    carregarRelatorios();
   };
 
   const renderPaginacao = ({ paginaAtual, totalPaginas, onAnterior, onProxima }) => (
@@ -312,6 +326,15 @@ export default function Admin() {
       {erro ? (
         <Card style={styles.cardUsuario}>
           <ThemedText color="error" size="sm">{erro}</ThemedText>
+          <Spacer size="sm" />
+          <Button
+            variant="outline"
+            size="small"
+            onPress={tentarNovamente}
+            disabled={carregando}
+          >
+            Tentar novamente
+          </Button>
         </Card>
       ) : null}
 
