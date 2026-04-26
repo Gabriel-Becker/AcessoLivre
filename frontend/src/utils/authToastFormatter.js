@@ -114,3 +114,29 @@ export const formatarErroRedefinirSenha = (erro) => {
 
   return texto;
 };
+
+export const formatarErroTrocarSenha = (erro) => {
+  const texto = mensagemBase(erro);
+
+  if (!texto) {
+    return 'Não foi possível trocar sua senha agora. Tente novamente em instantes.';
+  }
+
+  if (ehErroDeConexao(texto)) {
+    return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
+  }
+
+  if (contem(texto, ['senha atual incorreta'])) {
+    return 'A senha atual informada está incorreta.';
+  }
+
+  if (contem(texto, ['token inválido', 'sessão expirou', 'sessao expirou', 'unauthorized', '401'])) {
+    return 'Sua sessão expirou. Faça login novamente para trocar a senha.';
+  }
+
+  if (contem(texto, ['senha', 'password'])) {
+    return 'A nova senha não atende aos requisitos. Revise os critérios e tente novamente.';
+  }
+
+  return texto;
+};

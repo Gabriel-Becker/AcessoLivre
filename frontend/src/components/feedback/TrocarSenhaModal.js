@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, StyleSheet } from 'react-native';
+import { Modal, View, StyleSheet, Pressable } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,6 +9,7 @@ import { Spacer, ThemedText } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import AuthService from '../../services/AuthService';
 import toastHelper from '../../utils/toastHelper';
+import { formatarErroTrocarSenha } from '../../utils/authToastFormatter';
 
 const REQUISITOS_SENHA = [
   {
@@ -104,7 +105,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
         return;
       }
 
-      const mensagemErro = String(resultado?.mensagem || 'Erro ao trocar senha');
+      const mensagemErro = formatarErroTrocarSenha(resultado?.mensagem || 'Erro ao trocar senha');
       const mensagemNormalizada = mensagemErro.toLowerCase();
       const senhaAtualIncorreta =
         mensagemNormalizada.includes('senha atual') && mensagemNormalizada.includes('incorreta');
@@ -114,9 +115,9 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
         return;
       }
 
-      toastHelper.showError(resultado?.mensagem || 'Erro ao trocar senha');
+      toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
     } catch (erro) {
-      const mensagemErro = String(erro?.message || 'Erro ao trocar senha');
+      const mensagemErro = formatarErroTrocarSenha(erro?.message || 'Erro ao trocar senha');
       const mensagemNormalizada = mensagemErro.toLowerCase();
       const senhaAtualIncorreta =
         mensagemNormalizada.includes('senha atual') && mensagemNormalizada.includes('incorreta');
@@ -127,7 +128,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
         return;
       }
 
-      toastHelper.showError(mensagemErro);
+      toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
     } finally {
       setSubmitting(false);
     }
@@ -147,8 +148,11 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: t.colors.surface }]}>
+      <Pressable style={styles.modalOverlay} onPress={handleClose}>
+        <Pressable
+          style={[styles.modalContainer, { backgroundColor: t.colors.surface }]}
+          onPress={(event) => event.stopPropagation?.()}
+        >
           <ThemedText variant="h2" weight="bold" align="center">
             Trocar Senha
           </ThemedText>
@@ -279,8 +283,8 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
           >
             Cancelar
           </Button>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

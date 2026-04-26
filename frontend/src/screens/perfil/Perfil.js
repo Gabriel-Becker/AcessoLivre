@@ -8,6 +8,7 @@ import { TrocarSenhaModal, TwoFactorModal } from '../../components/feedback';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
 import AuthService from '../../services/AuthService';
+import toastHelper from '../../utils/toastHelper';
 
 export default function Perfil() {
   const { usuario } = useAuth();
@@ -22,6 +23,8 @@ export default function Perfil() {
       setCarregandoTwoFactor(true);
       const status = await AuthService.get2FAStatus();
       setTwoFactorAtivo(Boolean(status?.enabled ?? status?.ativo ?? status));
+    } catch (erro) {
+      toastHelper.showError('Não foi possível carregar o status da autenticação em dois fatores.', 'Falha ao carregar segurança');
     } finally {
       setCarregandoTwoFactor(false);
     }
