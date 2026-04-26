@@ -189,34 +189,81 @@ export default function AdicionarLocal({ onNavigate }) {
     setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
   }, [isAuthenticated]);
 
-  useEffect(() => {
+   useEffect(() => {
     const carregarListas = async () => {
       setCarregandoListas(true);
       try {
-        const [categoriasResponse, tiposResponse] = await Promise.all([
-          api.get('/categorias'),
-          api.get('/tipos-acessibilidade'),
-        ]);
+        // Tentar carregar categorias do backend
+        let categoriasData = [];
+        try {
+          const categoriasResponse = await api.get('/categorias');
+          categoriasData = Array.isArray(categoriasResponse.data)
+            ? categoriasResponse.data
+            : [];
+          console.log('✅ Categorias carregadas do backend:', categoriasData.length);
+        } catch (erro) {
+          console.log('⚠️ Erro ao carregar categorias do backend:', erro.message);
+          categoriasData = [];
+        }
 
-        const categoriasData = Array.isArray(categoriasResponse.data)
-          ? categoriasResponse.data
-          : CATEGORIAS_FIXAS;
-        const tiposData = Array.isArray(tiposResponse.data)
-          ? tiposResponse.data
-          : TIPOS_ACESSIBILIDADE_FIXOS;
+        // Tentar carregar tipos de acessibilidade do backend
+        let tiposData = [];
+        try {
+          const tiposResponse = await api.get('/tipos-acessibilidade');
+          tiposData = Array.isArray(tiposResponse.data)
+            ? tiposResponse.data
+            : [];
+          console.log('✅ Tipos carregados do backend:', tiposData.length);
+        } catch (erro) {
+          console.log('⚠️ Erro ao carregar tipos do backend:', erro.message);
+          tiposData = [];
+        }
+
+        // ALTERAÇÃO 5: Fallback para os dados do enums.js se o backend não retornar dados
+        // Isso garante que o app funcione mesmo sem backend
+        if (categoriasData.length === 0) {
+          console.log('📋 Usando fallback de categorias do enums.js');
+          categoriasData = CATEGORIAS.map((nome, index) => ({
+            idCategoria: index + 1,
+            nome: nome
+          }));
+        }
+
+        if (tiposData.length === 0) {
+          console.log('📋 Usando fallback de tipos do enums.js');
+          tiposData = TIPO_ACESSIBILIDADE.map((nome, index) => ({
+            idTipoAcessibilidade: index + 1,
+            nome: nome
+          }));
+        }
 
         setCategorias(categoriasData);
         setTiposAcessibilidade(tiposData);
       } catch (erro) {
-        setCategorias(CATEGORIAS_FIXAS);
-        setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
+        console.error('❌ Erro fatal ao carregar listas:', erro);
+        // Fallback de último caso
+        setCategorias(CATEGORIAS.map((nome, index) => ({
+          idCategoria: index + 1,
+          nome: nome
+        })));
+        setTiposAcessibilidade(TIPO_ACESSIBILIDADE.map((nome, index) => ({
+          idTipoAcessibilidade: index + 1,
+          nome: nome
+        })));
       } finally {
         setCarregandoListas(false);
       }
     };
 
     carregarListas();
-  }, []);
+  }, []); // Dependência vazia = executa uma vez na montagem
+
+  const alternarRecurso = (id) => {
+    setRecursosSelecionados((anterior) => ({
+      ...anterior,
+      [id]: !anterior[id],
+    }));
+  };
 
   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
