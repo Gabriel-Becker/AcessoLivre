@@ -20,6 +20,8 @@ export default function Input({
   style,
   containerStyle,
   altoContraste = false,
+  onFocus,
+  onBlur,
   ...props
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -100,8 +102,14 @@ export default function Input({
           placeholder={placeholder}
           placeholderTextColor={t.colors.textTertiary}
           secureTextEntry={isPassword && !isPasswordVisible}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={(event) => {
+            setIsFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setIsFocused(false);
+            onBlur?.(event);
+          }}
           editable={!disabled}
           multiline={multiline}
           numberOfLines={numberOfLines}

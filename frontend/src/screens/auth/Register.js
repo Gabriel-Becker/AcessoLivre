@@ -14,6 +14,34 @@ import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 
+const REQUISITOS_SENHA = [
+  {
+    chave: 'minimoCaracteres',
+    texto: 'Pelo menos 8 caracteres',
+    validar: (senha) => senha.length >= 8,
+  },
+  {
+    chave: 'letraMaiuscula',
+    texto: 'Pelo menos 1 letra maiúscula',
+    validar: (senha) => /[A-Z]/.test(senha),
+  },
+  {
+    chave: 'letraMinuscula',
+    texto: 'Pelo menos 1 letra minúscula',
+    validar: (senha) => /[a-z]/.test(senha),
+  },
+  {
+    chave: 'numero',
+    texto: 'Pelo menos 1 número',
+    validar: (senha) => /[0-9]/.test(senha),
+  },
+  {
+    chave: 'caractereEspecial',
+    texto: 'Pelo menos 1 caractere especial',
+    validar: (senha) => /[!@#$%^&*(),.?":{}|<>]/.test(senha),
+  },
+];
+
 const schema = z
   .object({
     nome: z
@@ -49,9 +77,11 @@ export default function Register({ navigation }) {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useForm({
     resolver: zodResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       nome: '',
       email: '',
@@ -62,6 +92,19 @@ export default function Register({ navigation }) {
   });
 
   const terms = watch('terms');
+  const senha = watch('password') || '';
+  const confirmarSenha = watch('confirmPassword') || '';
+  const senhaFoiDigitada = senha.length > 0;
+  const confirmouSenha = confirmarSenha.length > 0;
+
+  const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(senha));
+
+  const senhasCoincidem = senhaFoiDigitada && confirmouSenha && senha === confirmarSenha;
+  const confirmarSenhaInvalida = senhaFoiDigitada && confirmouSenha && !senhasCoincidem;
+  const erroConfirmacaoCampo =
+    errors.confirmPassword?.message === authMessages.validation.passwordMismatch
+      ? undefined
+      : errors.confirmPassword?.message;
 
   const styles = useMemo(
     () =>
@@ -115,6 +158,23 @@ export default function Register({ navigation }) {
           textAlign: 'center',
           alignSelf: 'center',
           width: '100%',
+        },
+        passwordHintContainer: {
+          marginTop: t.spacing.xs,
+          marginBottom: t.spacing.sm,
+          paddingHorizontal: t.spacing.xs,
+        },
+        passwordHintTitle: {
+          marginBottom: t.spacing.xs,
+        },
+        passwordHintRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 6,
+        },
+        passwordHintText: {
+          marginLeft: t.spacing.xs,
+          flexShrink: 1,
         },
       }),
     [isHighContrast, t]
@@ -189,14 +249,15 @@ export default function Register({ navigation }) {
             <Controller
               control={control}
               name="nome"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Nome Completo"
                   placeholder="Seu nome completo"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="person-outline"
-                  error={errors.nome?.message}
+                  error={touchedFields.nome ? errors.nome?.message : undefined}
                   autoCapitalize="words"
                   altoContraste={isHighContrast}
                 />
@@ -206,14 +267,15 @@ export default function Register({ navigation }) {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="E-mail"
                   placeholder="seu@email.com"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="mail-outline"
-                  error={errors.email?.message}
+                  error={touchedFields.email ? errors.email?.message : undefined}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   altoContraste={isHighContrast}
@@ -232,11 +294,38 @@ export default function Register({ navigation }) {
                   onChangeText={onChange}
                   secureTextEntry
                   leftIcon="lock-closed-outline"
-                  error={errors.password?.message}
+                  error={errors.password ? 'Revise os requisitos abaixo.' : undefined}
                   altoContraste={isHighContrast}
                 />
               )}
             />
+
+            {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
+              <View style={styles.passwordHintContainer}>
+                <ThemedText
+                  variant="caption"
+                  color="textSecondary"
+                  style={styles.passwordHintTitle}
+                  altoContraste={isHighContrast}
+                >
+                  Faltam estes requisitos na senha
+                </ThemedText>
+
+                {requisitosPendentesSenha.map((requisito) => (
+                  <View key={requisito.chave} style={styles.passwordHintRow}>
+                    <Ionicons name="close-circle" size={16} color={t.colors.error} />
+                    <ThemedText
+                      variant="caption"
+                      color="error"
+                      style={styles.passwordHintText}
+                      altoContraste={isHighContrast}
+                    >
+                      {requisito.texto}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             <Controller
               control={control}
@@ -249,11 +338,31 @@ export default function Register({ navigation }) {
                   onChangeText={onChange}
                   secureTextEntry
                   leftIcon="lock-closed-outline"
-                  error={errors.confirmPassword?.message}
+                  error={erroConfirmacaoCampo}
                   altoContraste={isHighContrast}
                 />
               )}
             />
+
+            {confirmouSenha && senhaFoiDigitada ? (
+              <View style={styles.passwordHintContainer}>
+                <View style={styles.passwordHintRow}>
+                  <Ionicons
+                    name={senhasCoincidem ? 'checkmark-circle' : 'close-circle'}
+                    size={16}
+                    color={senhasCoincidem ? t.colors.success : t.colors.error}
+                  />
+                  <ThemedText
+                    variant="caption"
+                    color={senhasCoincidem ? 'success' : 'error'}
+                    style={styles.passwordHintText}
+                    altoContraste={isHighContrast}
+                  >
+                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
+                  </ThemedText>
+                </View>
+              </View>
+            ) : null}
 
             <Controller
               control={control}
