@@ -1,5 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  useWindowDimensions, 
+  ScrollView, 
+  Image, 
+  TouchableOpacity, 
+  Alert,
+  Platform
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { Container } from '../../components/layout';
 import {
@@ -22,7 +32,14 @@ import LocalService from '../../services/LocalService';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
 
+// ============================================
+// CONSTANTES E CONFIGURAÇÕES
+// ============================================
 
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
@@ -49,6 +66,162 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
+// ============================================
+// COMPONENTE DE UPLOAD DE IMAGENS
+// ============================================
+
+const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
+  const cameraRef = useRef(null);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length > 0) {
+      const newImages = await Promise.all(
+        imageFiles.map(async (file) => ({
+          uri: URL.createObjectURL(file),
+          file,
+          name: file.name,
+          size: file.size,
+        }))
+      );
+      onAddImages(newImages);
+    }
+  };
+
+  const handleSelectFiles = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets) {
+      const newImages = result.assets.map(asset => ({
+        uri: asset.uri,
+        base64: asset.base64,
+        name: asset.fileName || `image_${Date.now()}.jpg`,
+        size: asset.fileSize || 0,
+      }));
+      onAddImages(newImages);
+    }
+  };
+
+  const renderPreview = () => {
+    if (images.length === 0) return null;
+
+    return (
+      <View style={localStyles.previewContainer}>
+        {images.map((image, index) => (
+          <View key={index} style={localStyles.previewItem}>
+            <Image source={{ uri: image.uri }} style={localStyles.previewImage} />
+            <TouchableOpacity
+              style={localStyles.removeButton}
+              onPress={() => onRemoveImage(index)}
+            >
+              <Ionicons name="close" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  
+
+  if (Platform.OS === 'web') {
+    return (
+      <View>
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{
+            borderWidth: 2,
+            borderColor: isDragging ? theme.colors.primary : theme.colors.borderLight,
+            borderStyle: 'dashed',
+            borderRadius: theme.borderRadius.lg,
+            padding: theme.spacing.xl,
+            textAlign: 'center',
+            backgroundColor: isDragging ? `${theme.colors.primary}10` : theme.colors.surfaceSecondary,
+            cursor: 'pointer',
+            marginBottom: theme.spacing.md,
+          }}
+          onClick={handleSelectFiles}
+        >
+          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+          <ThemedText align="center">
+            {isDragging ? 'Solte as imagens aqui' : 'Arraste e solte imagens ou clique para selecionar'}
+          </ThemedText>
+          <ThemedText color="textTertiary" variant="caption" align="center">
+            PNG, JPG até 10MB cada
+          </ThemedText>
+        </div>
+        
+        {renderPreview()}
+        
+        <View style={localStyles.actionButtons}>
+          <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+            Selecionar
+          </Button>
+          <Button variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline">
+            Câmera
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
+        <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+        <ThemedText align="center">Clique para selecionar imagens</ThemedText>
+        <ThemedText color="textTertiary" variant="caption" align="center">
+          PNG, JPG até 10MB cada
+        </ThemedText>
+      </TouchableOpacity>
+
+      {renderPreview()}
+
+      <View style={localStyles.actionButtons}>
+        <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+          Galeria
+        </Button>
+        <Button variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline">
+          Câmera
+        </Button>
+      </View>
+    </View>
+  );
+};
+
+// Estilos locais para o componente de imagem
+
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
+
 export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario, isAuthenticated } = useAuth();
@@ -74,6 +247,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const [cepBuscado, setCepBuscado] = useState('');
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
   const [enviando, setEnviando] = useState(false);
+  const [imagens, setImagens] = useState([]);
   const [estatisticas] = useState({
     totalLocais: 0,
     totalAvaliacoes: 0,
@@ -103,10 +277,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     }),
     [isHighContrast, t]
   );
-
-  const atualizarCampo = (campo) => (valor) => {
-    setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
-  };
 
   const buscarCep = async (cepLimpo) => {
     if (!cepLimpo || cepLimpo.length !== 8) return;
@@ -164,6 +334,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     const recurso = RECURSOS_ACESSIBILIDADE.find(r => r.id === selecionados[0]);
     return recurso?.enumValue || null;
   };
+
+  // ============================================
+  // VALIDAÇÕES
+  // ============================================
 
   const validarFormulario = () => {
     if (!usuario?.idUsuario) {
@@ -226,6 +400,36 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return true;
   };
 
+  // ============================================
+  // UPLOAD DE IMAGEM
+  // ============================================
+
+  const uploadImagem = async (imagem) => {
+    try {
+      const formData = new FormData();
+      
+      if (imagem.base64) {
+        const blob = await fetch(`data:image/jpeg;base64,${imagem.base64}`).then(res => res.blob());
+        formData.append('file', blob, imagem.name);
+      } else if (imagem.file) {
+        formData.append('file', imagem.file);
+      } else {
+        const response = await fetch(imagem.uri);
+        const blob = await response.blob();
+        formData.append('file', blob, imagem.name);
+      }
+      
+      const uploadResponse = await axios.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      return uploadResponse.data.url;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      return null;
+    }
+  };
+
   const handleSalvarLocal = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -238,10 +442,21 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     try {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
+      // Upload das imagens primeiro
+      let imagensUrls = [];
+      if (imagens.length > 0) {
+        toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
+        const uploadPromises = imagens.map(img => uploadImagem(img));
+        const results = await Promise.all(uploadPromises);
+        imagensUrls = results.filter(url => url !== null);
+      }
+
+      // Salvar o local com as URLs das imagens
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
-        imagem: null,
+        imagem: imagensUrls[0] || null,
+        imagens: imagensUrls,
         categoria: formulario.categoria,
         tipoAcessibilidade: tipoAcessibilidade,
         idUsuario: usuario.idUsuario,
@@ -263,6 +478,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       await LocalService.cadastrarLocal(payloadLocal);
       toastHelper.showSuccess('Local adicionado com sucesso!');
       
+      // Reset do formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -276,8 +492,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         descricao: '',
       });
       setRecursosSelecionados({});
+      setImagens([]);
       
-      // Navegação de volta
       if (onNavigate) {
         onNavigate('Inicio');
       } else if (navigation) {
@@ -294,10 +510,25 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   };
 
   const handleVoltar = () => {
-    if (onNavigate) {
-      onNavigate('Inicio');
-    } else if (navigation) {
-      navigation.goBack();
+    if (imagens.length > 0) {
+      Alert.alert(
+        'Descartar imagens?',
+        'Você tem imagens não salvas. Deseja realmente voltar?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Voltar', 
+            style: 'destructive',
+            onPress: () => {
+              if (onNavigate) onNavigate('Inicio');
+              else if (navigation) navigation.goBack();
+            }
+          }
+        ]
+      );
+    } else {
+      if (onNavigate) onNavigate('Inicio');
+      else if (navigation) navigation.goBack();
     }
   };
 
@@ -317,253 +548,250 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         style={estilos.header}
       />
 
-      <View style={estilos.conteudo}>
-      
-        <View style={estilos.colunaPrincipal}>
-          <CardSecao
-            titulo="Informações Básicas"
-            icone="document-text-outline"
-            corIcone={t.colors.primary}
-            altoContraste={isHighContrast}
-          >
-            {/* Nome e Categoria */}
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Nome do Local *"
-                  placeholder="Ex: Shopping Center Norte"
-                  value={formulario.nome}
-                  onChangeText={atualizarCampo('nome')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Select
-                  label="Categoria *"
-                  placeholder="Selecione uma categoria"
-                  value={formulario.categoria}
-                  options={opcoesCategoria}
-                  onSelect={(valor) => atualizarCampo('categoria')(valor)}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
-
-            {/* CEP e Estado */}
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="CEP *"
-                  placeholder="88015-200"
-                  value={formulario.cep}
-                  onChangeText={handleCepChange}
-                  keyboardType="numeric"
-                  maxLength={9}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Estado *"
-                  placeholder="UF"
-                  value={formulario.estado}
-                  onChangeText={atualizarCampo('estado')}
-                  autoCapitalize="characters"
-                  maxLength={2}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
-
-            {/* Logradouro */}
-            <Input
-              label="Logradouro *"
-              placeholder="Ex: Av. Beira-Mar Norte"
-              value={formulario.logradouro}
-              onChangeText={atualizarCampo('logradouro')}
-              altoContraste={isHighContrast}
-            />
-
-            {/* Número e Complemento */}
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Número *"
-                  placeholder="Ex: 1230"
-                  value={formulario.numero}
-                  onChangeText={atualizarCampo('numero')}
-                  keyboardType="numeric"
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Complemento"
-                  placeholder="Ex: Apto 402"
-                  value={formulario.complemento}
-                  onChangeText={atualizarCampo('complemento')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
-
-            {/* Bairro e Cidade */}
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Bairro *"
-                  placeholder="Ex: Centro"
-                  value={formulario.bairro}
-                  onChangeText={atualizarCampo('bairro')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Cidade *"
-                  placeholder="Ex: Florianópolis"
-                  value={formulario.cidade}
-                  onChangeText={atualizarCampo('cidade')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
-
-            {/* Descrição */}
-            <Input
-              label="Descrição *"
-              placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
-              value={formulario.descricao}
-              onChangeText={atualizarCampo('descricao')}
-              multiline
-              numberOfLines={4}
-              altoContraste={isHighContrast}
-            />
-          </CardSecao>
-
-          {/* RECURSOS DE ACESSIBILIDADE */}
-          <CardSecao
-            titulo="Recursos de Acessibilidade"
-            descricao="Marque todos os recursos de acessibilidade disponíveis no local"
-            icone="accessibility-outline"
-            corIcone={t.colors.secondary}
-            altoContraste={isHighContrast}
-          >
-            <View style={estilos.recursosGrid}>
-              {RECURSOS_ACESSIBILIDADE.map((recurso) => (
-                <CartaoSelecao
-                  key={recurso.id}
-                  titulo={recurso.titulo}
-                  descricao={recurso.descricao}
-                  icone={recurso.icon}
-                  corDestaque={obterCorRecurso(recurso.cor)}
-                  selecionado={!!recursosSelecionados[recurso.id]}
-                  onPress={() => alternarRecurso(recurso.id)}
-                  altoContraste={isHighContrast}
-                  style={estilos.recursoItem}
-                />
-              ))}
-            </View>
-          </CardSecao>
-
-          {/* FOTOS (Placeholder) */}
-          <CardSecao
-            titulo="Fotos do Local"
-            descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
-            icone="camera-outline"
-            corIcone={t.colors.primary}
-            altoContraste={isHighContrast}
-          >
-            <AreaPlaceholder
-              icone="cloud-upload-outline"
-              titulo="Clique ou arraste para adicionar fotos"
-              subtitulo="PNG, JPG até 10MB cada"
-              altoContraste={isHighContrast}
-            />
-          </CardSecao>
-
-          {/* BOTÃO DE SUBMISSÃO */}
-          <View style={estilos.botaoContainer}>
-            <Button
-              variant="primary"
-              size="large"
-              onPress={handleSalvarLocal}
-              iconLeft="add"
-              loading={enviando}
-              fullWidth={!isDesktop}
-              style={estilos.botaoPrincipal}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={estilos.conteudo}>
+          {/* COLUNA PRINCIPAL - FORMULÁRIO */}
+          <View style={estilos.colunaPrincipal}>
+            <CardSecao
+              titulo="Informações Básicas"
+              icone="document-text-outline"
+              corIcone={t.colors.primary}
               altoContraste={isHighContrast}
             >
-              Adicionar Local
-            </Button>
-          </View>
-        </View>
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Nome do Local *"
+                    placeholder="Ex: Shopping Center Norte"
+                    value={formulario.nome}
+                    onChangeText={atualizarCampo('nome')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
 
-        {/* COLUNA LATERAL - INFORMAÇÕES E DICAS */}
-        <View style={estilos.colunaLateral}>
-          <CardInfoIcone
-            titulo="Próximos passos:"
-            icone="navigate-outline"
-            corIcone={t.colors.primary}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
-            altoContraste={isHighContrast}
-          >
-            <ListaMarcadores
-              itens={[
-                'Após adicionar, você poderá avaliar o local',
-                'Adicione fotos dos recursos de acessibilidade',
-                'Compartilhe com a comunidade',
+                <View style={estilos.colunaCampo}>
+                  <Select
+                    label="Categoria *"
+                    placeholder="Selecione uma categoria"
+                    value={formulario.categoria}
+                    options={opcoesCategoria}
+                    onSelect={(valor) => atualizarCampo('categoria')(valor)}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="CEP *"
+                    placeholder="88015-200"
+                    value={formulario.cep}
+                    onChangeText={handleCepChange}
+                    keyboardType="numeric"
+                    maxLength={9}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Estado *"
+                    placeholder="UF"
+                    value={formulario.estado}
+                    onChangeText={atualizarCampo('estado')}
+                    autoCapitalize="characters"
+                    maxLength={2}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <Input
+                label="Logradouro *"
+                placeholder="Ex: Av. Beira-Mar Norte"
+                value={formulario.logradouro}
+                onChangeText={atualizarCampo('logradouro')}
+                altoContraste={isHighContrast}
+              />
+
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Número *"
+                    placeholder="Ex: 1230"
+                    value={formulario.numero}
+                    onChangeText={atualizarCampo('numero')}
+                    keyboardType="numeric"
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Complemento"
+                    placeholder="Ex: Apto 402"
+                    value={formulario.complemento}
+                    onChangeText={atualizarCampo('complemento')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Bairro *"
+                    placeholder="Ex: Centro"
+                    value={formulario.bairro}
+                    onChangeText={atualizarCampo('bairro')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Cidade *"
+                    placeholder="Ex: Florianópolis"
+                    value={formulario.cidade}
+                    onChangeText={atualizarCampo('cidade')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <Input
+                label="Descrição *"
+                placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
+                value={formulario.descricao}
+                onChangeText={atualizarCampo('descricao')}
+                multiline
+                numberOfLines={4}
+                altoContraste={isHighContrast}
+              />
+            </CardSecao>
+
+            {/* RECURSOS DE ACESSIBILIDADE */}
+            <CardSecao
+              titulo="Recursos de Acessibilidade"
+              descricao="Marque todos os recursos de acessibilidade disponíveis no local"
+              icone="accessibility-outline"
+              corIcone={t.colors.secondary}
+              altoContraste={isHighContrast}
+            >
+              <View style={estilos.recursosGrid}>
+                {RECURSOS_ACESSIBILIDADE.map((recurso) => (
+                  <CartaoSelecao
+                    key={recurso.id}
+                    titulo={recurso.titulo}
+                    descricao={recurso.descricao}
+                    icone={recurso.icon}
+                    corDestaque={obterCorRecurso(recurso.cor)}
+                    selecionado={!!recursosSelecionados[recurso.id]}
+                    onPress={() => alternarRecurso(recurso.id)}
+                    altoContraste={isHighContrast}
+                    style={estilos.recursoItem}
+                  />
+                ))}
+              </View>
+            </CardSecao>
+
+            {/* FOTOS DO LOCAL COM DRAG & DROP */}
+            <CardSecao
+              titulo="Fotos do Local"
+              descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
+              icone="camera-outline"
+              corIcone={t.colors.primary}
+              altoContraste={isHighContrast}
+            >
+              <ImageUploadArea
+                images={imagens}
+                onAddImages={adicionarImagens}
+                onRemoveImage={removerImagem}
+                isHighContrast={isHighContrast}
+                theme={t}
+              />
+            </CardSecao>
+
+            {/* BOTÃO DE SUBMISSÃO */}
+            <View style={estilos.botaoContainer}>
+              <Button
+                variant="primary"
+                size="large"
+                onPress={handleSalvarLocal}
+                iconLeft="add"
+                loading={enviando}
+                fullWidth={!isDesktop}
+                style={estilos.botaoPrincipal}
+                altoContraste={isHighContrast}
+              >
+                Adicionar Local
+              </Button>
+            </View>
+          </View>
+
+          {/* COLUNA LATERAL - INFORMAÇÕES E DICAS */}
+          <View style={estilos.colunaLateral}>
+            <CardInfoIcone
+              titulo="Próximos passos:"
+              icone="navigate-outline"
+              corIcone={t.colors.primary}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
+              altoContraste={isHighContrast}
+            >
+              <ListaMarcadores
+                itens={[
+                  'Após adicionar, você poderá avaliar o local',
+                  'Adicione fotos dos recursos de acessibilidade',
+                  'Compartilhe com a comunidade',
+                ]}
+                corMarcador={t.colors.primary}
+                altoContraste={isHighContrast}
+              />
+            </CardInfoIcone>
+
+            <CardInfoIcone
+              titulo="Dica importante:"
+              icone="bulb-outline"
+              corIcone={t.colors.warning}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
+              fundo={fundos.fundoDica}
+              altoContraste={isHighContrast}
+            >
+              <ThemedText color="textSecondary">
+                Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
+                diferentes necessidades a encontrar locais adequados para elas.
+              </ThemedText>
+            </CardInfoIcone>
+
+            <CardInfoIcone
+              titulo="Contribua com a Comunidade"
+              icone="heart"
+              corIcone={t.colors.secondary}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
+              fundo={fundos.fundoComunidade}
+              layout="coluna"
+              centralizado
+              altoContraste={isHighContrast}
+            >
+              <ThemedText color="textSecondary" align="center">
+                Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
+                mundo mais inclusivo para todos.
+              </ThemedText>
+            </CardInfoIcone>
+
+            <CartaoMetricas
+              titulo="Impacto da Comunidade"
+              metricas={[
+                { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
+                { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
+                { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
               ]}
-              corMarcador={t.colors.primary}
               altoContraste={isHighContrast}
             />
-          </CardInfoIcone>
-
-          <CardInfoIcone
-            titulo="Dica importante:"
-            icone="bulb-outline"
-            corIcone={t.colors.warning}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
-            fundo={fundos.fundoDica}
-            altoContraste={isHighContrast}
-          >
-            <ThemedText color="textSecondary">
-              Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
-              diferentes necessidades a encontrar locais adequados para elas.
-            </ThemedText>
-          </CardInfoIcone>
-
-          <CardInfoIcone
-            titulo="Contribua com a Comunidade"
-            icone="heart"
-            corIcone={t.colors.secondary}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
-            fundo={fundos.fundoComunidade}
-            layout="coluna"
-            centralizado
-            altoContraste={isHighContrast}
-          >
-            <ThemedText color="textSecondary" align="center">
-              Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
-              mundo mais inclusivo para todos.
-            </ThemedText>
-          </CardInfoIcone>
-
-          <CartaoMetricas
-            titulo="Impacto da Comunidade"
-            metricas={[
-              { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
-              { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
-              { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
-            ]}
-            altoContraste={isHighContrast}
-          />
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </Container>
   );
 }
