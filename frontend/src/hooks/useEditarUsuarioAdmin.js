@@ -58,7 +58,9 @@ export default function useEditarUsuarioAdmin() {
     roleOriginal,
     imagemPerfil,
   }) => {
-    if (!usuarioId) return false;
+    if (!usuarioId) {
+      return { sucesso: false, mensagem: 'Usuário inválido para edição.' };
+    }
 
     setSubmitting(true);
     try {
@@ -87,10 +89,10 @@ export default function useEditarUsuarioAdmin() {
       }
 
       toastHelper.showSuccess('Usuário atualizado com sucesso');
-      return true;
+      return { sucesso: true };
     } catch (erro) {
-      toastHelper.showError(resolverMensagemErro(erro, 'Erro ao atualizar usuário'));
-      return false;
+      const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuário');
+      return { sucesso: false, mensagem };
     } finally {
       setSubmitting(false);
     }

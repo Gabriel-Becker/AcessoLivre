@@ -40,7 +40,9 @@ const REQUISITOS_SENHA = [
 const schema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   email: z.string().email('Email inválido'),
-  role: z.string(),
+  role: z.enum(['ROLE_ADMIN', 'ROLE_USER'], {
+    errorMap: () => ({ message: 'Selecione uma role válida' }),
+  }),
   senha: z
     .string()
     .optional()
@@ -62,6 +64,8 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     control,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     watch,
     formState: { errors, touchedFields },
   } = useForm({
@@ -101,22 +105,45 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   }, [usuario, visible, reset, carregarDadosUsuario]);
 
   const handleAtualizarUsuario = async (values) => {
-    const sucesso = await salvarEdicaoUsuario({
+    clearErrors('email');
+    const resultado = await salvarEdicaoUsuario({
       usuarioId: usuario?.idUsuario,
       values,
       roleOriginal,
       imagemPerfil: imagemPerfilAtual,
     });
 
-    if (sucesso) {
+    if (resultado?.sucesso) {
       reset();
       onClose();
       onSucesso?.();
+      return;
+    }
+
+    const mensagemErro = String(resultado?.mensagem || '').toLowerCase();
+    const erroEmailDuplicado =
+      mensagemErro.includes('email já') ||
+      mensagemErro.includes('e-mail já') ||
+      mensagemErro.includes('already exists') ||
+      mensagemErro.includes('duplicado');
+
+    if (erroEmailDuplicado) {
+      setError('email', {
+        type: 'server',
+        message: 'Este e-mail já está em uso. Informe outro e-mail.',
+      });
+    } else {
+      const mensagem = resultado?.mensagem || 'Não foi possível atualizar o usuário.';
+      setError('root', {
+        type: 'server',
+        message: mensagem,
+      });
     }
   };
 
   const handleClose = () => {
     reset();
+    clearErrors();
     setRoleOriginal('ROLE_USER');
     setImagemPerfilAtual(undefined);
     onClose();
@@ -226,6 +253,12 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               </View>
             ) : null}
 
+            {errors.root?.message ? (
+              <ThemedText color="error" variant="caption" align="center" style={styles.formError}>
+                {errors.root.message}
+              </ThemedText>
+            ) : null}
+
             <Spacer size="sm" />
 
             <Button
@@ -271,6 +304,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   passwordHintContainer: {
     marginTop: 4,
     marginBottom: 10,
@@ -285,9 +323,8 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     flexShrink: 1,
   },
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  formError: {
+    marginTop: 2,
+    marginBottom: 10,
   },
 });
