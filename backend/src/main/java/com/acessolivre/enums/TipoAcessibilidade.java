@@ -1,10 +1,14 @@
 package com.acessolivre.enums;
 
 public enum TipoAcessibilidade {
-    RAMPA,
-    ELEVADOR,
-    BANHEIRO_ADAPTADO,
-    PISO_TATIL,
-    SINALIZACAO_BRAILLE,
-    Estacionamento
+  Rampa de acesso ,
+  Banheiro adaptado, 
+  Elevador acessível ,
+  Piso tátil,
+  Sinalização em braille ,
+  Estacionamento acessível ,
+  Espaço amplo ,
+  Recursos audiovisuais ,
+  Atendimento especializado ,
+  Mobiliário adaptado
 }
