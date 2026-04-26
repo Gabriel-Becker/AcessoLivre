@@ -367,6 +367,11 @@ export default function AdicionarLocal({ onNavigate }) {
       toastHelper.showError('Categoria é obrigatória.');
       return false;
     }
+    const categoriaExiste = categorias.some(c => c.idCategoria === formulario.categoria);
+    if (!categoriaExiste) {
+      toastHelper.showError('Categoria selecionada é inválida.');
+      return false;
+    }
 
     if (!formulario.descricao?.trim()) {
       toastHelper.showError('Descrição é obrigatória.');
@@ -403,6 +408,13 @@ export default function AdicionarLocal({ onNavigate }) {
       return false;
     }
 
+     // Validar se pelo menos um recurso foi selecionado
+    const temRecursoSelecionado = Object.values(recursosSelecionados).some(v => v === true);
+    if (!temRecursoSelecionado) {
+      toastHelper.showError('Selecione pelo menos um recurso de acessibilidade.');
+      return false;
+    }
+
     const idTipoAcessibilidade = obterIdTipoAcessibilidade();
     if (!idTipoAcessibilidade) {
       toastHelper.showError('Selecione um recurso de acessibilidade válido.');
@@ -427,32 +439,68 @@ export default function AdicionarLocal({ onNavigate }) {
     setEnviando(true);
 
     try {
+       // Limpar formatação do CEP antes de enviar
+      const cepLimpo = formulario.cep.replace(/\D/g, '');
       const payloadLocal = {
-        nome: formulario.nome,
-        descricao: formulario.descricao,
+        nome: formulario.nome.trim(),
+        descricao: formulario.descricao.trim(),
         idCategoria: formulario.categoria,
         idTipoAcessibilidade,
         idUsuario: usuario.idUsuario,
         endereco: {
           idUsuario: usuario.idUsuario,
-          cep: formulario.cep,
-          logradouro: formulario.logradouro,
-          numero: formulario.numero,
-          complemento: formulario.complemento || '',
-          bairro: formulario.bairro,
-          cidade: formulario.cidade,
-          estado: formulario.estado,
+          cep: cepLimpo,
+          logradouro: formulario.logradouro.trim(),
+          numero: formulario.numero.trim(),
+          complemento: (formulario.complemento || '').trim(),
+          bairro: formulario.bairro.trim(),
+          cidade: formulario.cidade.trim(),
+          estado: formulario.estado.trim().toUpperCase(),
         },
       };
 
-      await LocalService.cadastrarLocal(payloadLocal);
+      console.log('📤 Enviando local para o backend:', JSON.stringify(payloadLocal, null, 2));
+      
+      const response = await LocalService.cadastrarLocal(payloadLocal);
+      console.log('✅ Resposta do servidor:', response);
+      
       toastHelper.showSuccess('Local adicionado com sucesso.');
+      
+      // ALTERAÇÃO 11: Resetar formulário após sucesso
+      setFormulario({
+        nome: '',
+        categoria: null,
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        descricao: '',
+      });
+      setRecursosSelecionados({});
+      
+      // Navegar de volta após 2 segundos
+      if (onNavigate) {
+        setTimeout(() => onNavigate('Inicio'), 2000);
+      }
+      
     } catch (erro) {
+      console.error('❌ Erro ao cadastrar local:', erro);
+      console.error('Detalhes do erro:', {
+        message: erro?.message,
+        response: erro?.response?.data,
+        status: erro?.response?.status
+      });
+      
       const mensagem =
         erro?.response?.data?.mensagem ||
+        erro?.response?.data?.message ||
         erro?.response?.data ||
         erro?.message ||
-        'Erro ao cadastrar local.';
+        'Erro ao cadastrar local. Verifique os dados e tente novamente.';
+      
       toastHelper.showError(mensagem);
     } finally {
       setEnviando(false);
