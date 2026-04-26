@@ -265,7 +265,7 @@ export default function AdicionarLocal({ onNavigate }) {
     }));
   };
 
-  const alternarRecurso = (id) => {
+   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
       ...anterior,
       [id]: !anterior[id],
@@ -299,21 +299,55 @@ export default function AdicionarLocal({ onNavigate }) {
     }
 
     // Usa o primeiro recurso selecionado que encontrar no cadastro de tipos
-    const recursosSelecionadosInfo = RECURSOS_ACESSIBILIDADE.filter((recurso) =>
-      selecionados.includes(recurso.id)
-    );
+     const mapeamentoRecursos = {
+      'rampa': 'Rampa de acesso',
+      'banheiro': 'Banheiro adaptado',
+      'elevador': 'Elevador acessível',
+      'piso': 'Piso tátil',
+      'braille': 'Sinalização em braille',
+      'estacionamento': 'Estacionamento acessível',
+      'espaco': 'Espaço amplo',
+      'audiovisual': 'Recursos audiovisuais',
+      'atendimento': 'Atendimento especializado',
+      'mobiliario': 'Mobiliário adaptado',
+    };
 
-    for (const recurso of recursosSelecionadosInfo) {
-      const recursoNormalizado = normalizarTexto(recurso.titulo);
-      const tipo = tiposAcessibilidade.find((item) => {
-        const tipoNormalizado = normalizarTexto(item.nome);
-        return tipoNormalizado?.includes(recursoNormalizado) || recursoNormalizado?.includes(tipoNormalizado);
-      });
-
-      if (tipo?.idTipoAcessibilidade) {
-        return tipo.idTipoAcessibilidade;
+    for (const recursoId of selecionadosIds) {
+      const nomeRecurso = mapeamentoRecursos[recursoId];
+      if (nomeRecurso) {
+        const tipoEncontrado = tiposAcessibilidade.find(
+          tipo => tipo.nome === nomeRecurso
+        );
+        
+        if (tipoEncontrado?.idTipoAcessibilidade) {
+          console.log(`✅ Recurso mapeado: ${recursoId} -> ${nomeRecurso} (ID: ${tipoEncontrado.idTipoAcessibilidade})`);
+          return tipoEncontrado.idTipoAcessibilidade;
+        }
       }
     }
+
+    // Segunda tentativa: correspondência textual (fallback)
+    for (const recursoId of selecionadosIds) {
+      const recursoInfo = RECURSOS_ACESSIBILIDADE.find(r => r.id === recursoId);
+      if (recursoInfo) {
+        const recursoNormalizado = normalizarTexto(recursoInfo.titulo);
+        const tipo = tiposAcessibilidade.find((item) => {
+          const tipoNormalizado = normalizarTexto(item.nome);
+          return tipoNormalizado === recursoNormalizado ||
+                 tipoNormalizado.includes(recursoNormalizado) ||
+                 recursoNormalizado.includes(tipoNormalizado);
+        });
+
+        if (tipo?.idTipoAcessibilidade) {
+          console.log(`⚠️ Recurso mapeado por texto: ${recursoInfo.titulo} -> ${tipo.nome} (ID: ${tipo.idTipoAcessibilidade})`);
+          return tipo.idTipoAcessibilidade;
+        }
+      }
+    }
+
+      console.warn('❌ Nenhum recurso válido encontrado para mapeamento');
+      return null;
+    };
 
     return null;
   };
