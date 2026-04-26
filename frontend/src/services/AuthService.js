@@ -113,6 +113,27 @@ const montarRespostaTwoFactor = (responseData, email, mensagemPadrao) => ({
     mensagemPadrao,
 });
 
+const aguardar = (milissegundos) => new Promise((resolve) => setTimeout(resolve, milissegundos));
+
+const erroEhTransitorioDeConexao = (erro) => {
+  const codigo = String(erro?.code || '').toUpperCase();
+  const mensagem = String(erro?.message || '').toLowerCase();
+
+  return (
+    codigo === 'ECONNABORTED' ||
+    codigo === 'ECONNRESET' ||
+    codigo === 'ECONNREFUSED' ||
+    codigo === 'ETIMEDOUT' ||
+    codigo === 'ERR_NETWORK' ||
+    codigo === 'ERR_EMPTY_RESPONSE' ||
+    mensagem.includes('network error') ||
+    mensagem.includes('empty response') ||
+    mensagem.includes('socket hang up') ||
+    mensagem.includes('timeout') ||
+    mensagem.includes('connection')
+  );
+};
+
 const AuthService = {
   async getToken() {
     try {
@@ -381,12 +402,30 @@ const AuthService = {
   },
 
   async register({ nome, email, senha }) {
-    const response = await api.post('/auth/register', { nome, email, senha });
-    return {
-      success: true,
-      message: response.data?.message || 'Conta criada com sucesso',
-      usuario: response.data,
-    };
+    const dadosCadastro = { nome, email, senha };
+    const tentativasMaximas = 2;
+
+    for (let tentativa = 1; tentativa <= tentativasMaximas; tentativa += 1) {
+      try {
+        const response = await api.post('/auth/register', dadosCadastro);
+        return {
+          success: true,
+          message: response.data?.message || 'Conta criada com sucesso',
+          usuario: response.data,
+        };
+      } catch (erro) {
+        const ultimaTentativa = tentativa === tentativasMaximas;
+
+        if (!ultimaTentativa && erroEhTransitorioDeConexao(erro)) {
+          await aguardar(1200);
+          continue;
+        }
+
+        throw erro;
+      }
+    }
+
+    throw new Error('Erro ao realizar cadastro');
   },
 
   async forgotPassword(email) {

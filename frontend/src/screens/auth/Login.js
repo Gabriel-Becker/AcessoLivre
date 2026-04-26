@@ -212,9 +212,14 @@ export default function Login({ navigation }) {
   };
 
   const handleNavigate = (screenName) => {
-    if (typeof navigation?.navigate === 'function') {
+    if (typeof navigation?.navigate !== 'function') return;
+
+    if (screenName === 'Login' || screenName === 'Register' || screenName === 'ForgotPassword' || screenName === 'ResetPassword') {
       navigation.navigate(screenName);
+      return;
     }
+
+    navigation.navigate('Main', { screen: screenName });
   };
 
   return (

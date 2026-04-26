@@ -25,14 +25,15 @@ function LoadingScreen() {
   );
 }
 
-function MainApp({ navigation }) {
+function MainApp({ navigation, route }) {
   const { usuario, isAuthenticated } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState('Inicio');
+  const screenInicial = route?.params?.screen || 'Inicio';
+  const [currentScreen, setCurrentScreen] = useState(screenInicial);
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
-  const handleNavigate = (screen) => {
-    if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword') {
+  const navegarInternamente = (screen) => {
+    if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword' || screen === 'ResetPassword') {
       navigation?.navigate?.(screen);
       return;
     }
@@ -46,7 +47,18 @@ function MainApp({ navigation }) {
       setCurrentScreen('Inicio');
       return;
     }
+
     setCurrentScreen(screen);
+  };
+
+  useEffect(() => {
+    if (route?.params?.screen) {
+      navegarInternamente(route.params.screen);
+    }
+  }, [route?.params?.screen, isAuthenticated, isAdmin]);
+
+  const handleNavigate = (screen) => {
+    navegarInternamente(screen);
   };
 
   useEffect(() => {
