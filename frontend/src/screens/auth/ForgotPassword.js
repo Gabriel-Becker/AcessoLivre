@@ -12,6 +12,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import AuthService from '../../services/AuthService';
+import { formatarErroEsqueciSenha } from '../../utils/authToastFormatter';
 
 const schema = z.object({
   email: z.string().email(authMessages.validation.invalidEmail),
@@ -61,10 +62,16 @@ export default function ForgotPassword({ navigation }) {
       const emailNormalizado = values.email.trim().toLowerCase();
       await AuthService.forgotPassword(emailNormalizado);
 
-      toastHelper.showSuccess(authMessages.success.forgotPasswordSuccess);
+      toastHelper.showSuccess(
+        `Enviamos um código para ${emailNormalizado}. Verifique sua caixa de entrada e spam.`,
+        'Código enviado'
+      );
       navigation?.navigate?.('ResetPassword', { email: emailNormalizado });
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao enviar e-mail de recuperação');
+      toastHelper.showError(
+        formatarErroEsqueciSenha(erro?.message || 'Erro ao enviar e-mail de recuperação'),
+        'Não foi possível enviar o código'
+      );
     } finally {
       setSubmitting(false);
     }

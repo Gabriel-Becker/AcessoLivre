@@ -13,6 +13,7 @@ import AuthActions from './components/AuthActions';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import { useThemeContext } from '../../context/ThemeContext';
+import { formatarErroLogin } from '../../utils/authToastFormatter';
 
 const schema = z
   .object({
@@ -194,7 +195,7 @@ export default function Login({ navigation }) {
           return;
         }
 
-        toastHelper.showError(result?.erro || authMessages.loginErrors.loginFailed);
+        toastHelper.showError(formatarErroLogin(result?.erro || authMessages.loginErrors.loginFailed), 'Não foi possível entrar');
         return;
       }
 
@@ -202,10 +203,10 @@ export default function Login({ navigation }) {
       setValue('twoFactorCode', '');
       setShowTwoFactor(false);
       setPendingCredentials(null);
-      toastHelper.showSuccess(result?.mensagem || authMessages.success.loginSuccess);
+      toastHelper.showSuccess('Você entrou na sua conta com sucesso.', 'Login realizado');
       redirecionarAposLogin();
     } catch (erro) {
-      toastHelper.showError(erro?.message || authMessages.loginErrors.serverError);
+      toastHelper.showError(formatarErroLogin(erro?.message || authMessages.loginErrors.serverError), 'Não foi possível entrar');
     } finally {
       setSubmitting(false);
     }

@@ -181,13 +181,7 @@ export const AuthProvider = ({ children }) => {
         setToken(novoToken);
         setUsuario(usuarioData);
         setIsAuthenticated(true);
-        
-        Toast.show({
-          type: 'success',
-          text1: 'Login realizado!',
-          text2: `Bem-vindo, ${usuarioData.nome}!`,
-        });
-        
+
         return { 
           sucesso: true,
           mensagem: result.message || 'Login realizado com sucesso'
@@ -210,13 +204,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const mensagem = obterMensagemLoginAmigavel(erro);
-      
-      Toast.show({
-        type: 'error',
-        text1: 'Erro no login',
-        text2: mensagem,
-      });
-      
+
       return { sucesso: false, erro: mensagem };
     } finally {
       setLoading(false);
@@ -231,13 +219,7 @@ export const AuthProvider = ({ children }) => {
         : { sucesso: false, erro: result?.message || 'Erro ao realizar cadastro' };
     } catch (erro) {
       const mensagem = erro.response?.data?.mensagem || erro.message || 'Erro ao realizar cadastro';
-      
-      Toast.show({
-        type: 'error',
-        text1: 'Erro no cadastro',
-        text2: mensagem,
-      });
-      
+
       return { sucesso: false, erro: mensagem };
     }
   };

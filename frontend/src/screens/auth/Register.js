@@ -13,6 +13,7 @@ import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
+import { formatarErroCadastro, formatarErroLogin } from '../../utils/authToastFormatter';
 
 const REQUISITOS_SENHA = [
   {
@@ -190,8 +191,6 @@ export default function Register({ navigation }) {
       });
 
       if (resultado?.sucesso) {
-        toastHelper.showSuccess(resultado?.mensagem || 'Conta criada com sucesso!');
-        
         const loginResult = await login({
           email: values.email.trim().toLowerCase(),
           senha: values.password,
@@ -199,6 +198,8 @@ export default function Register({ navigation }) {
         });
         
         if (loginResult?.sucesso) {
+          toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
+
           if (typeof navigation?.replace === 'function') {
             navigation.replace('Main');
             return;
@@ -207,15 +208,23 @@ export default function Register({ navigation }) {
           navigation?.navigate?.('Main');
           return;
         } else {
-          toastHelper.showInfo('Cadastro realizado! Por favor, faça login com suas credenciais.');
+          toastHelper.showInfo(
+            `Cadastro concluído. Faça login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
+            'Conta criada'
+          );
           navigation?.navigate?.('Login');
         }
         return;
       }
 
-      toastHelper.showError(resultado?.erro || authMessages.registerErrors.serverError);
+      toastHelper.showError(formatarErroCadastro(resultado?.erro || authMessages.registerErrors.serverError), 'Não foi possível concluir o cadastro');
     } catch (erro) {
-      toastHelper.showError(erro?.message || authMessages.registerErrors.serverError);
+      const mensagemErro = erro?.message || authMessages.registerErrors.serverError;
+      const mensagemTratada =
+        mensagemErro === authMessages.loginErrors.serverError
+          ? formatarErroLogin(mensagemErro)
+          : formatarErroCadastro(mensagemErro);
+      toastHelper.showError(mensagemTratada, 'Não foi possível concluir o cadastro');
     } finally {
       setSubmitting(false);
     }

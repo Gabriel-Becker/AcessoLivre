@@ -12,6 +12,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import AuthService from '../../services/AuthService';
+import { formatarErroRedefinirSenha } from '../../utils/authToastFormatter';
 
 const schema = z
   .object({
@@ -77,7 +78,7 @@ export default function ResetPassword({ navigation, route }) {
 
   const onSubmit = async (values) => {
     if (!email) {
-      toastHelper.showError('Email não informado para redefinição de senha');
+      toastHelper.showError('Não encontramos o e-mail desta solicitação. Volte e informe seu e-mail novamente.', 'Solicitação incompleta');
       return;
     }
 
@@ -90,9 +91,12 @@ export default function ResetPassword({ navigation, route }) {
       });
 
       setSenhaAtualizada(true);
-      toastHelper.showSuccess(authMessages.success.resetPasswordSuccess);
+      toastHelper.showSuccess('Sua senha foi atualizada. Agora você já pode entrar com a nova senha.', 'Senha redefinida com sucesso');
     } catch (erro) {
-      toastHelper.showError(erro?.message || 'Erro ao redefinir senha');
+      toastHelper.showError(
+        formatarErroRedefinirSenha(erro?.message || 'Erro ao redefinir senha'),
+        'Não foi possível redefinir a senha'
+      );
     } finally {
       setSubmitting(false);
     }
