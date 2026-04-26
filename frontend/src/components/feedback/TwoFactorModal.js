@@ -25,32 +25,33 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           backgroundColor: 'rgba(0,0,0,0.45)',
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: t.spacing.md,
+          paddingHorizontal: t.spacing.lg,
         },
         modalContainer: {
           width: '100%',
-          maxWidth: 520,
-          maxHeight: '88%',
+          maxWidth: 560,
+          maxHeight: '92%',
           borderRadius: t.borderRadius.xl,
-          padding: t.spacing.lg,
+          paddingHorizontal: t.spacing.lg,
+          paddingVertical: t.spacing.lg,
           backgroundColor: t.colors.surface,
           ...(isHighContrast ? t.shadows.none : t.shadows.lg),
         },
         scrollContent: {
-          paddingBottom: t.spacing.md,
+          paddingBottom: t.spacing.lg,
         },
         qrContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          padding: t.spacing.lg,
+          padding: t.spacing.md,
           backgroundColor: '#FFFFFF',
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
         },
         qrImage: {
-          width: 260,
-          height: 260,
+          width: 210,
+          height: 210,
         },
         secretBox: {
           padding: t.spacing.md,
@@ -58,24 +59,6 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           borderWidth: 1,
           borderColor: t.colors.borderLight,
           backgroundColor: t.colors.backgroundSecondary,
-        },
-        recoveryGrid: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: t.spacing.sm,
-        },
-        recoveryItem: {
-          minWidth: '48%',
-          paddingVertical: t.spacing.sm,
-          paddingHorizontal: t.spacing.md,
-          borderRadius: t.borderRadius.md,
-          borderWidth: 1,
-          borderColor: t.colors.borderLight,
-          backgroundColor: t.colors.surfaceSecondary,
-        },
-        recoveryText: {
-          textAlign: 'center',
-          fontWeight: '600',
         },
         copiedLink: {
           alignSelf: 'center',
@@ -194,18 +177,9 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
             <Spacer size="sm" />
             <ThemedText color="textSecondary" align="center">
               {enabled
-                ? 'Digite o código do seu aplicativo autenticador ou um código de recuperação para desativar.'
-                : 'Escaneie o QR Code com seu aplicativo autenticador e depois confirme com o código de 6 dígitos.'}
+                ? 'Digite o código de 6 dígitos do seu aplicativo autenticador para desativar.'
+                : 'Escaneie o QR Code e confirme com o código de 6 dígitos.'}
             </ThemedText>
-
-            {!enabled ? (
-              <>
-                <Spacer size="xs" />
-                <ThemedText color="textSecondary" size="sm" align="center">
-                  Se o app não conseguir ler o QR, use a chave manual abaixo.
-                </ThemedText>
-              </>
-            ) : null}
 
             {erroModal ? (
               <>
@@ -218,7 +192,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
 
             {!enabled ? (
               <>
-                <Spacer size="lg" />
+                <Spacer size="md" />
                 {carregandoSetup ? (
                   <Loading message="Preparando configuração..." />
                 ) : setupDados ? (
@@ -234,8 +208,6 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                     </View>
 
                     <Spacer size="md" />
-                    <ThemedText weight="semibold">Chave manual</ThemedText>
-                    <Spacer size="xs" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
                       <View style={estilos.secretBox}>
                         <ThemedText align="center" weight="semibold">
@@ -246,29 +218,9 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                     <Spacer size="xs" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
                       <ThemedText color="primary" align="center" style={estilos.copiedLink}>
-                        Tocar para copiar a chave
+                        Toque para copiar a chave
                       </ThemedText>
                     </TouchableOpacity>
-
-                    <Spacer size="lg" />
-                    <ThemedText weight="semibold">Códigos de recuperação</ThemedText>
-                    <Spacer size="xs" />
-                    <ThemedText color="textSecondary" size="sm">
-                      Guarde estes códigos em local seguro. Cada um pode ser usado uma vez para desativar a autenticação.
-                    </ThemedText>
-                    <Spacer size="sm" />
-                    <View style={estilos.recoveryGrid}>
-                      {setupDados.recoveryCodes?.map((item) => (
-                        <TouchableOpacity
-                          key={item}
-                          style={estilos.recoveryItem}
-                          onPress={() => copiarTexto(item)}
-                          activeOpacity={0.8}
-                        >
-                          <ThemedText style={estilos.recoveryText}>{item}</ThemedText>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
 
                     <Spacer size="lg" />
                     <Input
@@ -282,7 +234,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                       altoContraste={isHighContrast}
                     />
 
-                    <Spacer size="md" />
+                    <Spacer size="lg" />
                     <Button
                       variant="primary"
                       size="large"
@@ -304,19 +256,14 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                   label="Código de verificação"
                   placeholder="000000"
                   value={codigo}
-                  onChangeText={(text) => setCodigo(text.replace(/[^0-9A-Z]/gi, '').slice(0, 20))}
-                  keyboardType="default"
-                  autoCapitalize="characters"
+                  onChangeText={(text) => setCodigo(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                  keyboardType="number-pad"
+                  maxLength={6}
                   leftIcon="shield-checkmark-outline"
                   altoContraste={isHighContrast}
                 />
 
-                <Spacer size="sm" />
-                <ThemedText color="textSecondary" size="sm" align="center">
-                  Se não tiver acesso ao aplicativo autenticador, use um código de recuperação.
-                </ThemedText>
-
-                <Spacer size="md" />
+                <Spacer size="lg" />
                 <Button
                   variant="danger"
                   size="large"
@@ -331,7 +278,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
               </>
             )}
 
-            <Spacer size="sm" />
+            <Spacer size="md" />
             <Button
               variant="ghost"
               size="large"
