@@ -50,12 +50,40 @@ const LocalService = {
   /**
    * Cadastra um novo local (requer autenticação)
    */
+  /**
+ * Cadastra um novo local (requer autenticação)
+ */
   async cadastrarLocal(dados) {
     try {
+      console.log('📤 LocalService - Enviando dados:', JSON.stringify(dados, null, 2));
+      
       const response = await api.post('/locais', dados);
+      console.log('✅ LocalService - Resposta:', response.data);
       return response.data;
     } catch (erro) {
-      console.error('Erro ao cadastrar local:', erro);
+      // 🔥 LOG DETALHADO DO ERRO
+      console.error('❌ LocalService - Erro completo:', erro);
+      
+      if (erro.response) {
+        // O servidor respondeu com um status de erro
+        console.error('❌ Status:', erro.response.status);
+        console.error('❌ Headers:', erro.response.headers);
+        console.error('❌ Dados do erro (BACKEND):', erro.response.data);
+        
+        // Tenta extrair mensagem amigável
+        const mensagemBackend = erro.response.data?.mensagem || 
+                              erro.response.data?.message || 
+                              erro.response.data;
+        
+        console.error('❌ Mensagem do backend:', mensagemBackend);
+      } else if (erro.request) {
+        // A requisição foi feita mas não houve resposta
+        console.error('❌ Sem resposta do servidor:', erro.request);
+      } else {
+        // Algo aconteceu na configuração da requisição
+        console.error('❌ Erro de configuração:', erro.message);
+      }
+      
       throw erro;
     }
   },

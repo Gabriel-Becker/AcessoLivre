@@ -19,92 +19,45 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
-import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
-import { CATEGORIAS, TIPO_ACESSIBILIDADE } from '../../constants/enums';
+import { CATEGORIAS } from '../../constants/enums';
 
+
+const CATEGORIAS_LABELS = {
+  COMERCIAL: 'Comercial',
+  PUBLICO: 'Público',
+  SAUDE: 'Saúde',
+  EDUCACAO: 'Educação',
+  LAZER: 'Lazer',
+  TRANSPORTE: 'Transporte',
+  ALIMENTACAO: 'Alimentação',
+  HOSPEDAGEM: 'Hospedagem',
+  SERVICOS: 'Serviços',
+};
 
 const RECURSOS_ACESSIBILIDADE = [
-  {
-    id: 'rampa',
-    titulo: 'Rampa de acesso',
-    descricao: 'Rampa para cadeira de rodas na entrada',
-    icon: 'walk-outline',
-    cor: 'rampa',
-  },
-  {
-    id: 'banheiro',
-    titulo: 'Banheiro adaptado',
-    descricao: 'Banheiro com acessibilidade para PcD',
-    icon: 'man-outline',
-    cor: 'banheiro',
-  },
-  {
-    id: 'elevador',
-    titulo: 'Elevador acessível',
-    descricao: 'Elevador funcionando com botões em braille',
-    icon: 'business-outline',
-    cor: 'elevador',
-  },
-  {
-    id: 'piso',
-    titulo: 'Piso tátil',
-    descricao: 'Piso com textura para orientação',
-    icon: 'trail-sign-outline',
-    cor: 'audiovisual',
-  },
-  {
-    id: 'braille',
-    titulo: 'Sinalização em braille',
-    descricao: 'Placas e informações em braille',
-    icon: 'eye-outline',
-    cor: 'braile',
-  },
-  {
-    id: 'estacionamento',
-    titulo: 'Estacionamento acessível',
-    descricao: 'Vagas reservadas para PcD',
-    icon: 'car-outline',
-    cor: 'estacionamento',
-  },
-  {
-    id: 'espaco',
-    titulo: 'Espaço amplo',
-    descricao: 'Corredores largos para circulação',
-    icon: 'resize-outline',
-    cor: 'secondary',
-  },
-  {
-    id: 'audiovisual',
-    titulo: 'Recursos audiovisuais',
-    descricao: 'Sistemas de som e sinalização visual',
-    icon: 'volume-high-outline',
-    cor: 'audiovisual',
-  },
-  {
-    id: 'atendimento',
-    titulo: 'Atendimento especializado',
-    descricao: 'Staff treinado para atender PcD',
-    icon: 'heart-outline',
-    cor: 'secondary',
-  },
-  {
-    id: 'mobiliario',
-    titulo: 'Mobiliário adaptado',
-    descricao: 'Mesas, balcões e assentos adaptados',
-    icon: 'grid-outline',
-    cor: 'primary',
-  },
+  { id: 'rampa', titulo: 'Rampa de acesso', descricao: 'Rampa para cadeira de rodas na entrada', icon: 'walk-outline', cor: 'rampa', enumValue: 'RAMPA' },
+  { id: 'banheiro', titulo: 'Banheiro adaptado', descricao: 'Banheiro com acessibilidade para PcD', icon: 'man-outline', cor: 'banheiro', enumValue: 'BANHEIRO_ADAPTADO' },
+  { id: 'elevador', titulo: 'Elevador acessível', descricao: 'Elevador funcionando com botões em braille', icon: 'business-outline', cor: 'elevador', enumValue: 'ELEVADOR' },
+  { id: 'piso', titulo: 'Piso tátil', descricao: 'Piso com textura para orientação', icon: 'trail-sign-outline', cor: 'audiovisual', enumValue: 'PISO_TATIL' },
+  { id: 'braille', titulo: 'Sinalização em braille', descricao: 'Placas e informações em braille', icon: 'eye-outline', cor: 'braile', enumValue: 'SINALIZACAO_BRAILLE' },
+  { id: 'estacionamento', titulo: 'Estacionamento acessível', descricao: 'Vagas reservadas para PcD', icon: 'car-outline', cor: 'estacionamento', enumValue: 'ESTACIONAMENTO' },
+  { id: 'espaco', titulo: 'Espaço amplo', descricao: 'Corredores largos para circulação', icon: 'resize-outline', cor: 'secondary', enumValue: 'ESPACO_AMPLO' },
+  { id: 'audiovisual', titulo: 'Recursos audiovisuais', descricao: 'Sistemas de som e sinalização visual', icon: 'volume-high-outline', cor: 'audiovisual', enumValue: 'RECURSOS_AUDIOVISUAIS' },
+  { id: 'atendimento', titulo: 'Atendimento especializado', descricao: 'Staff treinado para atender PcD', icon: 'heart-outline', cor: 'secondary', enumValue: 'ATENDIMENTO_ESPECIALIZADO' },
+  { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
-export default function AdicionarLocal({ onNavigate }) {
+export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario, isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
+  
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet;
 
+  // Estados do formulário
   const [formulario, setFormulario] = useState({
     nome: '',
     categoria: null,
@@ -117,24 +70,32 @@ export default function AdicionarLocal({ onNavigate }) {
     estado: '',
     descricao: '',
   });
+  
   const [cepBuscado, setCepBuscado] = useState('');
-  const [categorias, setCategorias] = useState([]);
-  const [tiposAcessibilidade, setTiposAcessibilidade] = useState([]);
-  const [carregandoListas, setCarregandoListas] = useState(false);
-  const [enviando, setEnviando] = useState(false);
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
-  const [estatisticas, setEstatisticas] = useState({
+  const [enviando, setEnviando] = useState(false);
+  const [estatisticas] = useState({
     totalLocais: 0,
     totalAvaliacoes: 0,
     totalUsuarios: 0,
   });
 
+  // Opções para o Select de categorias
+  const opcoesCategoria = useMemo(() => {
+    return CATEGORIAS.map(categoria => ({
+      value: categoria,
+      label: CATEGORIAS_LABELS[categoria] || categoria,
+    }));
+  }, []);
+
+  // Estilos responsivos
   const estilos = useMemo(() => criarEstilos(t, isHighContrast, isDesktop, isTablet), [
     isDesktop,
     isHighContrast,
     isTablet,
     t,
   ]);
+  
   const fundos = useMemo(
     () => ({
       fundoDica: isHighContrast ? t.colors.surface : '#FFF5E1',
@@ -158,7 +119,6 @@ export default function AdicionarLocal({ onNavigate }) {
 
       if (response.data && !response.data.erro) {
         const endereco = response.data;
-
         setFormulario((anterior) => ({
           ...anterior,
           logradouro: endereco.logradouro || '',
@@ -166,11 +126,10 @@ export default function AdicionarLocal({ onNavigate }) {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
-        return;
+      } else {
+        toastHelper.showError('CEP não encontrado');
       }
-
-      toastHelper.showError('CEP não encontrado');
-    } catch (erro) {
+    } catch {
       toastHelper.showError('Erro ao consultar CEP. Verifique sua conexão.');
     }
   };
@@ -185,79 +144,6 @@ export default function AdicionarLocal({ onNavigate }) {
     }
   };
 
-  useEffect(() => {
-    setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
-  }, [isAuthenticated]);
-
-   useEffect(() => {
-    const carregarListas = async () => {
-      setCarregandoListas(true);
-      try {
-        // Tentar carregar categorias do backend
-        let categoriasData = [];
-        try {
-          const categoriasResponse = await api.get('/categorias');
-          categoriasData = Array.isArray(categoriasResponse.data)
-            ? categoriasResponse.data
-            : [];
-          console.log('✅ Categorias carregadas do backend:', categoriasData.length);
-        } catch (erro) {
-          console.log('⚠️ Erro ao carregar categorias do backend:', erro.message);
-          categoriasData = [];
-        }
-
-        // Tentar carregar tipos de acessibilidade do backend
-        let tiposData = [];
-        try {
-          const tiposResponse = await api.get('/tipos-acessibilidade');
-          tiposData = Array.isArray(tiposResponse.data)
-            ? tiposResponse.data
-            : [];
-          console.log('✅ Tipos carregados do backend:', tiposData.length);
-        } catch (erro) {
-          console.log('⚠️ Erro ao carregar tipos do backend:', erro.message);
-          tiposData = [];
-        }
-
-        // ALTERAÇÃO 5: Fallback para os dados do enums.js se o backend não retornar dados
-        // Isso garante que o app funcione mesmo sem backend
-        if (categoriasData.length === 0) {
-          console.log('📋 Usando fallback de categorias do enums.js');
-          categoriasData = CATEGORIAS.map((nome, index) => ({
-            idCategoria: index + 1,
-            nome: nome
-          }));
-        }
-
-        if (tiposData.length === 0) {
-          console.log('📋 Usando fallback de tipos do enums.js');
-          tiposData = TIPO_ACESSIBILIDADE.map((nome, index) => ({
-            idTipoAcessibilidade: index + 1,
-            nome: nome
-          }));
-        }
-
-        setCategorias(categoriasData);
-        setTiposAcessibilidade(tiposData);
-      } catch (erro) {
-        console.error('❌ Erro fatal ao carregar listas:', erro);
-        // Fallback de último caso
-        setCategorias(CATEGORIAS.map((nome, index) => ({
-          idCategoria: index + 1,
-          nome: nome
-        })));
-        setTiposAcessibilidade(TIPO_ACESSIBILIDADE.map((nome, index) => ({
-          idTipoAcessibilidade: index + 1,
-          nome: nome
-        })));
-      } finally {
-        setCarregandoListas(false);
-      }
-    };
-
-    carregarListas();
-  }, []); // Dependência vazia = executa uma vez na montagem
-
   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
       ...anterior,
@@ -265,91 +151,18 @@ export default function AdicionarLocal({ onNavigate }) {
     }));
   };
 
-   const alternarRecurso = (id) => {
-    setRecursosSelecionados((anterior) => ({
-      ...anterior,
-      [id]: !anterior[id],
-    }));
-  };
-
   const obterCorRecurso = (chave) => {
-    if (t.colors.accessibility?.[chave]) {
-      return t.colors.accessibility[chave];
-    }
-    if (t.colors[chave]) {
-      return t.colors[chave];
-    }
+    if (t.colors.accessibility?.[chave]) return t.colors.accessibility[chave];
+    if (t.colors[chave]) return t.colors[chave];
     return t.colors.primary;
   };
 
-  const normalizarTexto = (texto) =>
-    texto
-      ?.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
-
-  const obterIdTipoAcessibilidade = () => {
-    const selecionados = Object.keys(recursosSelecionados).filter(
-      (id) => recursosSelecionados[id]
-    );
-
-    if (!selecionados.length) {
-      return null;
-    }
-
-    // Usa o primeiro recurso selecionado que encontrar no cadastro de tipos
-     const mapeamentoRecursos = {
-      'rampa': 'Rampa de acesso',
-      'banheiro': 'Banheiro adaptado',
-      'elevador': 'Elevador acessível',
-      'piso': 'Piso tátil',
-      'braille': 'Sinalização em braille',
-      'estacionamento': 'Estacionamento acessível',
-      'espaco': 'Espaço amplo',
-      'audiovisual': 'Recursos audiovisuais',
-      'atendimento': 'Atendimento especializado',
-      'mobiliario': 'Mobiliário adaptado',
-    };
-
-    for (const recursoId of selecionadosIds) {
-      const nomeRecurso = mapeamentoRecursos[recursoId];
-      if (nomeRecurso) {
-        const tipoEncontrado = tiposAcessibilidade.find(
-          tipo => tipo.nome === nomeRecurso
-        );
-        
-        if (tipoEncontrado?.idTipoAcessibilidade) {
-          console.log(`✅ Recurso mapeado: ${recursoId} -> ${nomeRecurso} (ID: ${tipoEncontrado.idTipoAcessibilidade})`);
-          return tipoEncontrado.idTipoAcessibilidade;
-        }
-      }
-    }
-
-    // Segunda tentativa: correspondência textual (fallback)
-    for (const recursoId of selecionadosIds) {
-      const recursoInfo = RECURSOS_ACESSIBILIDADE.find(r => r.id === recursoId);
-      if (recursoInfo) {
-        const recursoNormalizado = normalizarTexto(recursoInfo.titulo);
-        const tipo = tiposAcessibilidade.find((item) => {
-          const tipoNormalizado = normalizarTexto(item.nome);
-          return tipoNormalizado === recursoNormalizado ||
-                 tipoNormalizado.includes(recursoNormalizado) ||
-                 recursoNormalizado.includes(tipoNormalizado);
-        });
-
-        if (tipo?.idTipoAcessibilidade) {
-          console.log(`⚠️ Recurso mapeado por texto: ${recursoInfo.titulo} -> ${tipo.nome} (ID: ${tipo.idTipoAcessibilidade})`);
-          return tipo.idTipoAcessibilidade;
-        }
-      }
-    }
-
-      console.warn('❌ Nenhum recurso válido encontrado para mapeamento');
-      return null;
-    };
-
-    return null;
+  const obterTipoAcessibilidade = () => {
+    const selecionados = Object.keys(recursosSelecionados).filter(id => recursosSelecionados[id]);
+    if (!selecionados.length) return null;
+    
+    const recurso = RECURSOS_ACESSIBILIDADE.find(r => r.id === selecionados[0]);
+    return recurso?.enumValue || null;
   };
 
   const validarFormulario = () => {
@@ -367,19 +180,15 @@ export default function AdicionarLocal({ onNavigate }) {
       toastHelper.showError('Categoria é obrigatória.');
       return false;
     }
-    const categoriaExiste = categorias.some(c => c.idCategoria === formulario.categoria);
-    if (!categoriaExiste) {
-      toastHelper.showError('Categoria selecionada é inválida.');
-      return false;
-    }
 
     if (!formulario.descricao?.trim()) {
       toastHelper.showError('Descrição é obrigatória.');
       return false;
     }
 
-    if (!formulario.cep || formulario.cep.replace(/\D/g, '').length !== 8) {
-      toastHelper.showError('CEP válido é obrigatório.');
+    const cepLimpo = formulario.cep.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) {
+      toastHelper.showError('CEP inválido. Deve conter 8 dígitos.');
       return false;
     }
 
@@ -408,16 +217,9 @@ export default function AdicionarLocal({ onNavigate }) {
       return false;
     }
 
-     // Validar se pelo menos um recurso foi selecionado
-    const temRecursoSelecionado = Object.values(recursosSelecionados).some(v => v === true);
-    if (!temRecursoSelecionado) {
-      toastHelper.showError('Selecione pelo menos um recurso de acessibilidade.');
-      return false;
-    }
-
-    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
-    if (!idTipoAcessibilidade) {
-      toastHelper.showError('Selecione um recurso de acessibilidade válido.');
+    const tipoAcessibilidade = obterTipoAcessibilidade();
+    if (!tipoAcessibilidade) {
+      toastHelper.showError('Selecione um recurso de acessibilidade.');
       return false;
     }
 
@@ -426,47 +228,41 @@ export default function AdicionarLocal({ onNavigate }) {
 
   const handleSalvarLocal = async () => {
     if (enviando) return;
+    if (!validarFormulario()) return;
 
-    if (!validarFormulario()) {
-      return;
-    }
-
-    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
-    if (!idTipoAcessibilidade) {
-      return;
-    }
+    const tipoAcessibilidade = obterTipoAcessibilidade();
+    if (!tipoAcessibilidade) return;
 
     setEnviando(true);
 
     try {
-       // Limpar formatação do CEP antes de enviar
       const cepLimpo = formulario.cep.replace(/\D/g, '');
+      
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
-        idCategoria: formulario.categoria,
-        idTipoAcessibilidade,
+        imagem: null,
+        categoria: formulario.categoria,
+        tipoAcessibilidade: tipoAcessibilidade,
         idUsuario: usuario.idUsuario,
+        idEndereco: null,
+        idLocalPrincipal: null,
+        status: null,
         endereco: {
-          idUsuario: usuario.idUsuario,
           cep: cepLimpo,
           logradouro: formulario.logradouro.trim(),
           numero: formulario.numero.trim(),
-          complemento: (formulario.complemento || '').trim(),
+          complemento: formulario.complemento?.trim() || '',
           bairro: formulario.bairro.trim(),
           cidade: formulario.cidade.trim(),
           estado: formulario.estado.trim().toUpperCase(),
+          idUsuario: usuario.idUsuario,
         },
       };
 
-      console.log('📤 Enviando local para o backend:', JSON.stringify(payloadLocal, null, 2));
+      await LocalService.cadastrarLocal(payloadLocal);
+      toastHelper.showSuccess('Local adicionado com sucesso!');
       
-      const response = await LocalService.cadastrarLocal(payloadLocal);
-      console.log('✅ Resposta do servidor:', response);
-      
-      toastHelper.showSuccess('Local adicionado com sucesso.');
-      
-      // ALTERAÇÃO 11: Resetar formulário após sucesso
       setFormulario({
         nome: '',
         categoria: null,
@@ -481,40 +277,29 @@ export default function AdicionarLocal({ onNavigate }) {
       });
       setRecursosSelecionados({});
       
-      // Navegar de volta após 2 segundos
+      // Navegação de volta
       if (onNavigate) {
-        setTimeout(() => onNavigate('Inicio'), 2000);
+        onNavigate('Inicio');
+      } else if (navigation) {
+        navigation.navigate('Main');
       }
-      
     } catch (erro) {
-      console.error('❌ Erro ao cadastrar local:', erro);
-      console.error('Detalhes do erro:', {
-        message: erro?.message,
-        response: erro?.response?.data,
-        status: erro?.response?.status
-      });
-      
-      const mensagem =
-        erro?.response?.data?.mensagem ||
-        erro?.response?.data?.message ||
-        erro?.response?.data ||
-        erro?.message ||
-        'Erro ao cadastrar local. Verifique os dados e tente novamente.';
-      
+      const mensagem = erro.response?.data?.mensagem || 
+                      erro.response?.data?.message || 
+                      'Erro ao cadastrar local. Tente novamente.';
       toastHelper.showError(mensagem);
     } finally {
       setEnviando(false);
     }
   };
 
-  const opcoesCategoria = useMemo(
-    () =>
-      categorias.map((categoria) => ({
-        label: categoria.nome,
-        value: categoria.idCategoria,
-      })),
-    [categorias]
-  );
+  const handleVoltar = () => {
+    if (onNavigate) {
+      onNavigate('Inicio');
+    } else if (navigation) {
+      navigation.goBack();
+    }
+  };
 
   return (
     <Container
@@ -525,13 +310,15 @@ export default function AdicionarLocal({ onNavigate }) {
     >
       <CabecalhoPagina
         titulo="Adicionar Local"
-        subtitulo="Encontre e avalie locais acessíveis"
-        onVoltar={() => onNavigate && onNavigate('Inicio')}
+        subtitulo="Cadastre um novo local acessível para a comunidade"
+        onVoltar={handleVoltar}
+        textoVoltar="Voltar"
         altoContraste={isHighContrast}
         style={estilos.header}
       />
 
       <View style={estilos.conteudo}>
+      
         <View style={estilos.colunaPrincipal}>
           <CardSecao
             titulo="Informações Básicas"
@@ -539,6 +326,7 @@ export default function AdicionarLocal({ onNavigate }) {
             corIcone={t.colors.primary}
             altoContraste={isHighContrast}
           >
+            {/* Nome e Categoria */}
             <View style={estilos.linhaCampos}>
               <View style={estilos.colunaCampo}>
                 <Input
@@ -558,16 +346,11 @@ export default function AdicionarLocal({ onNavigate }) {
                   options={opcoesCategoria}
                   onSelect={(valor) => atualizarCampo('categoria')(valor)}
                   altoContraste={isHighContrast}
-                  disabled={carregandoListas || !opcoesCategoria.length}
                 />
-                {!carregandoListas && !opcoesCategoria.length ? (
-                  <ThemedText variant="tiny" color="textTertiary">
-                    Nao foi possivel carregar categorias.
-                  </ThemedText>
-                ) : null}
               </View>
             </View>
 
+            {/* CEP e Estado */}
             <View style={estilos.linhaCampos}>
               <View style={estilos.colunaCampo}>
                 <Input
@@ -594,6 +377,7 @@ export default function AdicionarLocal({ onNavigate }) {
               </View>
             </View>
 
+            {/* Logradouro */}
             <Input
               label="Logradouro *"
               placeholder="Ex: Av. Beira-Mar Norte"
@@ -602,6 +386,7 @@ export default function AdicionarLocal({ onNavigate }) {
               altoContraste={isHighContrast}
             />
 
+            {/* Número e Complemento */}
             <View style={estilos.linhaCampos}>
               <View style={estilos.colunaCampo}>
                 <Input
@@ -625,6 +410,7 @@ export default function AdicionarLocal({ onNavigate }) {
               </View>
             </View>
 
+            {/* Bairro e Cidade */}
             <View style={estilos.linhaCampos}>
               <View style={estilos.colunaCampo}>
                 <Input
@@ -647,6 +433,7 @@ export default function AdicionarLocal({ onNavigate }) {
               </View>
             </View>
 
+            {/* Descrição */}
             <Input
               label="Descrição *"
               placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
@@ -658,6 +445,7 @@ export default function AdicionarLocal({ onNavigate }) {
             />
           </CardSecao>
 
+          {/* RECURSOS DE ACESSIBILIDADE */}
           <CardSecao
             titulo="Recursos de Acessibilidade"
             descricao="Marque todos os recursos de acessibilidade disponíveis no local"
@@ -666,27 +454,23 @@ export default function AdicionarLocal({ onNavigate }) {
             altoContraste={isHighContrast}
           >
             <View style={estilos.recursosGrid}>
-              {RECURSOS_ACESSIBILIDADE.map((recurso) => {
-                const selecionado = !!recursosSelecionados[recurso.id];
-                const corRecurso = obterCorRecurso(recurso.cor);
-
-                return (
-                  <CartaoSelecao
-                    key={recurso.id}
-                    titulo={recurso.titulo}
-                    descricao={recurso.descricao}
-                    icone={recurso.icon}
-                    corDestaque={corRecurso}
-                    selecionado={selecionado}
-                    onPress={() => alternarRecurso(recurso.id)}
-                    altoContraste={isHighContrast}
-                    style={estilos.recursoItem}
-                  />
-                );
-              })}
+              {RECURSOS_ACESSIBILIDADE.map((recurso) => (
+                <CartaoSelecao
+                  key={recurso.id}
+                  titulo={recurso.titulo}
+                  descricao={recurso.descricao}
+                  icone={recurso.icon}
+                  corDestaque={obterCorRecurso(recurso.cor)}
+                  selecionado={!!recursosSelecionados[recurso.id]}
+                  onPress={() => alternarRecurso(recurso.id)}
+                  altoContraste={isHighContrast}
+                  style={estilos.recursoItem}
+                />
+              ))}
             </View>
           </CardSecao>
 
+          {/* FOTOS (Placeholder) */}
           <CardSecao
             titulo="Fotos do Local"
             descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
@@ -702,6 +486,7 @@ export default function AdicionarLocal({ onNavigate }) {
             />
           </CardSecao>
 
+          {/* BOTÃO DE SUBMISSÃO */}
           <View style={estilos.botaoContainer}>
             <Button
               variant="primary"
@@ -709,7 +494,6 @@ export default function AdicionarLocal({ onNavigate }) {
               onPress={handleSalvarLocal}
               iconLeft="add"
               loading={enviando}
-              disabled={carregandoListas}
               fullWidth={!isDesktop}
               style={estilos.botaoPrincipal}
               altoContraste={isHighContrast}
@@ -719,6 +503,7 @@ export default function AdicionarLocal({ onNavigate }) {
           </View>
         </View>
 
+        {/* COLUNA LATERAL - INFORMAÇÕES E DICAS */}
         <View style={estilos.colunaLateral}>
           <CardInfoIcone
             titulo="Próximos passos:"
