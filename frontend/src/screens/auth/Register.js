@@ -165,9 +165,6 @@ export default function Register({ navigation }) {
           marginBottom: t.spacing.sm,
           paddingHorizontal: t.spacing.xs,
         },
-        passwordHintTitle: {
-          marginBottom: t.spacing.xs,
-        },
         passwordHintRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -311,15 +308,6 @@ export default function Register({ navigation }) {
 
             {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
               <View style={styles.passwordHintContainer}>
-                <ThemedText
-                  variant="caption"
-                  color="textSecondary"
-                  style={styles.passwordHintTitle}
-                  altoContraste={isHighContrast}
-                >
-                  Faltam estes requisitos na senha
-                </ThemedText>
-
                 {requisitosPendentesSenha.map((requisito) => (
                   <View key={requisito.chave} style={styles.passwordHintRow}>
                     <Ionicons name="close-circle" size={16} color={t.colors.error} />

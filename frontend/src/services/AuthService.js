@@ -596,9 +596,19 @@ const AuthService = {
       };
     } catch (error) {
       console.error('[AuthService] Erro ao trocar senha:', error);
+      const mensagemErro = extrairMensagemErro(error, 'Erro ao trocar senha. Verifique sua senha atual.');
+      const mensagemNormalizada = String(mensagemErro || '').toLowerCase();
+
+      if (mensagemNormalizada.includes('senha atual incorreta')) {
+        return {
+          sucesso: false,
+          mensagem: 'A senha atual informada está incorreta.',
+        };
+      }
+
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao trocar senha. Verifique sua senha atual.',
+        mensagem: mensagemErro,
       };
     }
   },

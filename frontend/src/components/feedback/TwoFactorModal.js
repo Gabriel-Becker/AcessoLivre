@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Input } from '../ui';
 import { Spacer, ThemedText } from '../commons';
@@ -168,9 +168,18 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={estilos.modalOverlay}>
-        <View style={estilos.modalContainer}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={estilos.scrollContent}>
+      <Pressable style={estilos.modalOverlay} onPress={onClose}>
+        <Pressable
+          style={estilos.modalContainer}
+          onPress={(event) => event.stopPropagation?.()}
+        >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={estilos.scrollContent}
+            scrollEnabled={false}
+            bounces={false}
+            alwaysBounceVertical={false}
+          >
             <ThemedText variant="h2" weight="bold" align="center">
               {enabled ? 'Desativar 2FA' : 'Autenticação de Dois Fatores'}
             </ThemedText>
@@ -234,7 +243,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                       altoContraste={isHighContrast}
                     />
 
-                    <Spacer size="lg" />
+                    <Spacer size="sm" />
                     <Button
                       variant="primary"
                       size="large"
@@ -290,8 +299,8 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
               Cancelar
             </Button>
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
