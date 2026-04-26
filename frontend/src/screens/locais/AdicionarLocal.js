@@ -22,6 +22,8 @@ import LocalService from '../../services/LocalService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
+import { CATEGORIAS, TIPO_ACESSIBILIDADE } from '../../constants/enums';
+
 
 const RECURSOS_ACESSIBILIDADE = [
   {
@@ -95,31 +97,6 @@ const RECURSOS_ACESSIBILIDADE = [
     cor: 'primary',
   },
 ];
-const CATEGORIAS_FIXAS = [
-  { idCategoria: 1, nome: 'Comercial' },
-  { idCategoria: 2, nome: 'Publico' },
-  { idCategoria: 3, nome: 'Saude' },
-  { idCategoria: 4, nome: 'Educacao' },
-  { idCategoria: 5, nome: 'Lazer' },
-  { idCategoria: 6, nome: 'Transporte' },
-  { idCategoria: 7, nome: 'Alimentacao' },
-  { idCategoria: 8, nome: 'Hospedagem' },
-  { idCategoria: 9, nome: 'Servicos' },
-];
-
-const TIPOS_ACESSIBILIDADE_FIXOS = [
-  { idTipoAcessibilidade: 1, nome: 'Rampa de acesso' },
-  { idTipoAcessibilidade: 2, nome: 'Banheiro adaptado' },
-  { idTipoAcessibilidade: 3, nome: 'Elevador acessível' },
-  { idTipoAcessibilidade: 4, nome: 'Piso tátil' },
-  { idTipoAcessibilidade: 5, nome: 'Sinalização em braille' },
-  { idTipoAcessibilidade: 6, nome: 'Estacionamento acessível' },
-  { idTipoAcessibilidade: 7, nome: 'Espaço amplo' },
-  { idTipoAcessibilidade: 8, nome: 'Recursos audiovisuais' },
-  { idTipoAcessibilidade: 9, nome: 'Atendimento especializado' },
-  { idTipoAcessibilidade: 10, nome: 'Mobiliário adaptado' },
-];
-
 
 export default function AdicionarLocal({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
