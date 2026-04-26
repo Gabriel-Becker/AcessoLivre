@@ -278,6 +278,34 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
+  const adicionarImagens = (novasImagens) => {
+    const MAX_IMAGES = 10;
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    
+    const validImages = novasImagens.filter(img => {
+      if (img.size > MAX_SIZE) {
+        toastHelper.showError(`Imagem ${img.name} excede 10MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (imagens.length + validImages.length > MAX_IMAGES) {
+      toastHelper.showError(`Máximo de ${MAX_IMAGES} imagens por local`);
+      return;
+    }
+
+    setImagens(prev => [...prev, ...validImages]);
+  };
+
+  const removerImagem = (index) => {
+    setImagens(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const atualizarCampo = (campo) => (valor) => {
+    setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
+  };
+
   const buscarCep = async (cepLimpo) => {
     if (!cepLimpo || cepLimpo.length !== 8) return;
     if (cepLimpo === cepBuscado) return;
