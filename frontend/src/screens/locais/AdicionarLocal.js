@@ -37,9 +37,6 @@ import * as FileSystem from 'expo-file-system';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 
-// ============================================
-// CONSTANTES E CONFIGURAÇÕES
-// ============================================
 
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
@@ -66,9 +63,6 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
-// ============================================
-// COMPONENTE DE UPLOAD DE IMAGENS
-// ============================================
 
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -272,7 +266,6 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
   );
 };
 
-// Estilos locais para o componente de imagem
 const localStyles = StyleSheet.create({
   dropArea: {
     borderWidth: 2,
@@ -321,10 +314,6 @@ const localStyles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 
 export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
@@ -382,10 +371,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
-  // ============================================
-  // FUNÇÕES DE IMAGEM
-  // ============================================
-
   const adicionarImagens = (novasImagens) => {
     const MAX_IMAGES = 10;
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -409,10 +394,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const removerImagem = (index) => {
     setImagens(prev => prev.filter((_, i) => i !== index));
   };
-
-  // ============================================
-  // FUNÇÕES AUXILIARES
-  // ============================================
 
   const atualizarCampo = (campo) => (valor) => {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
@@ -475,10 +456,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return recurso?.enumValue || null;
   };
 
-  // ============================================
-  // VALIDAÇÕES
-  // ============================================
-
   const validarFormulario = () => {
     if (!usuario?.idUsuario) {
       toastHelper.showError('Faça login para adicionar um local.');
@@ -540,10 +517,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return true;
   };
 
-  // ============================================
-  // UPLOAD DE IMAGEM
-  // ============================================
-
   const uploadImagem = async (imagem) => {
     try {
       const formData = new FormData();
@@ -569,10 +542,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       return null;
     }
   };
-
-  // ============================================
-  // SUBMISSÃO DO FORMULÁRIO COM IMAGENS
-  // ============================================
 
   const handleSalvarLocal = async () => {
     if (enviando) return;
@@ -675,10 +644,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       else if (navigation) navigation.goBack();
     }
   };
-
-  // ============================================
-  // RENDERIZAÇÃO
-  // ============================================
 
   return (
     <Container
