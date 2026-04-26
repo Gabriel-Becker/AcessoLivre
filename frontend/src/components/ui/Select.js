@@ -22,6 +22,7 @@ export default function Select({
   options = [],
   onSelect,
   disabled = false,
+  error,
   altoContraste,
   maxHeight = 280,
   style,
@@ -37,6 +38,7 @@ export default function Select({
   const estilos = useMemo(() => criarEstilos(t, contraste), [t, contraste]);
 
   const selecionado = options.find((opcao) => opcao.value === value);
+  const hasError = Boolean(error);
 
   const handleSelect = (opcao) => {
     setAberto(false);
@@ -78,6 +80,7 @@ export default function Select({
         onPress={abrirDropdown}
         style={[
           estilos.input,
+          hasError && estilos.inputError,
           disabled && estilos.inputDisabled,
           style,
         ]}
@@ -137,6 +140,15 @@ export default function Select({
           </Pressable>
         </Modal>
       ) : null}
+
+      {hasError ? (
+        <View style={estilos.errorContainer}>
+          <Ionicons name="alert-circle" size={14} color={t.colors.error} />
+          <ThemedText color="error" variant="caption" style={estilos.errorText}>
+            {error}
+          </ThemedText>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -166,6 +178,9 @@ function criarEstilos(t, contraste) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+    },
+    inputError: {
+      borderColor: t.colors.error,
     },
     inputDisabled: {
       backgroundColor: t.colors.backgroundTertiary,
@@ -217,6 +232,16 @@ function criarEstilos(t, contraste) {
     divisor: {
       height: 1,
       backgroundColor: t.colors.borderLight,
+    },
+    errorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: t.spacing.xs,
+      justifyContent: 'center',
+    },
+    errorText: {
+      marginLeft: t.spacing.xs,
+      textAlign: 'center',
     },
   });
 }

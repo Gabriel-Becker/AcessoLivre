@@ -58,6 +58,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   const { width } = useWindowDimensions();
   const [imagemPerfilAtual, setImagemPerfilAtual] = useState(undefined);
   const [roleOriginal, setRoleOriginal] = useState('ROLE_USER');
+  const [dadosOriginais, setDadosOriginais] = useState({
+    nome: '',
+    email: '',
+    role: 'ROLE_USER',
+  });
   const { carregandoDados, submitting, carregarDadosUsuario, salvarEdicaoUsuario } = useEditarUsuarioAdmin();
 
   const {
@@ -81,8 +86,17 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   });
 
   const senha = watch('senha') || '';
+  const nomeAtual = (watch('nome') || '').trim();
+  const emailAtual = (watch('email') || '').trim().toLowerCase();
+  const roleAtual = String(watch('role') || 'ROLE_USER').trim().toUpperCase();
   const senhaFoiDigitada = senha.length > 0;
   const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(senha));
+  const houveMudancaBasica =
+    nomeAtual !== dadosOriginais.nome ||
+    emailAtual !== dadosOriginais.email ||
+    roleAtual !== dadosOriginais.role;
+  const houveMudancaSenha = String(senha || '').trim().length > 0;
+  const podeSalvar = (houveMudancaBasica || houveMudancaSenha) && !(submitting || carregandoDados);
 
   useEffect(() => {
     const carregarDetalhesUsuario = async () => {
@@ -97,6 +111,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
         role: dados.role,
         senha: '',
       });
+      setDadosOriginais({
+        nome: String(dados.nome || '').trim(),
+        email: String(dados.email || '').trim().toLowerCase(),
+        role: String(dados.role || 'ROLE_USER').trim().toUpperCase(),
+      });
       setRoleOriginal(dados.role);
       setImagemPerfilAtual(dados.imagemPerfil);
     };
@@ -105,6 +124,15 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   }, [usuario, visible, reset, carregarDadosUsuario]);
 
   const handleAtualizarUsuario = async (values) => {
+    clearErrors('root');
+    if (!podeSalvar) {
+      setError('root', {
+        type: 'manual',
+        message: 'Nenhuma alteração detectada. Edite algum campo para salvar.',
+      });
+      return;
+    }
+
     clearErrors('email');
     const resultado = await salvarEdicaoUsuario({
       usuarioId: usuario?.idUsuario,
@@ -144,6 +172,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   const handleClose = () => {
     reset();
     clearErrors();
+    setDadosOriginais({
+      nome: '',
+      email: '',
+      role: 'ROLE_USER',
+    });
     setRoleOriginal('ROLE_USER');
     setImagemPerfilAtual(undefined);
     onClose();
@@ -209,6 +242,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   placeholder="Selecione a role"
                   value={value}
                   onSelect={onChange}
+                  error={errors.role?.message}
                   options={[
                     { label: 'Administrador', value: 'ROLE_ADMIN' },
                     { label: 'Usuário', value: 'ROLE_USER' },
@@ -267,11 +301,20 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               fullWidth
               onPress={handleSubmit(handleAtualizarUsuario)}
               loading={submitting || carregandoDados}
-              disabled={submitting || carregandoDados}
+              disabled={!podeSalvar}
               altoContraste={altoContraste}
             >
               Salvar Alterações
             </Button>
+
+            {!podeSalvar ? (
+              <>
+                <Spacer size="xs" />
+                <ThemedText color="textSecondary" variant="caption" align="center">
+                  Faça uma alteração para habilitar o salvamento.
+                </ThemedText>
+              </>
+            ) : null}
 
             <Spacer size="xs" />
 
