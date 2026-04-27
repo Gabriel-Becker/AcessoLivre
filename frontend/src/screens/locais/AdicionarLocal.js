@@ -590,6 +590,14 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
       await LocalService.cadastrarLocal(payloadLocal);
       toastHelper.showSuccess('Local adicionado com sucesso!');
+
+      if (onNavigate) {
+        onNavigate('Inicio');
+        // Disparar evento para recarregar a Home
+        navigation?.setParams({ refresh: Date.now() });
+      } else if (navigation) {
+        navigation.navigate('Main');
+      }
       
       // Reset do formulário
       setFormulario({
