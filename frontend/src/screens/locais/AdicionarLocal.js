@@ -323,7 +323,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet;
 
-  // Estados do formulário
   const [formulario, setFormulario] = useState({
     nome: '',
     categoria: null,
@@ -347,7 +346,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     totalUsuarios: 0,
   });
 
-  // Opções para o Select de categorias
   const opcoesCategoria = useMemo(() => {
     return CATEGORIAS.map(categoria => ({
       value: categoria,
@@ -355,7 +353,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     }));
   }, []);
 
-  // Estilos responsivos
   const estilos = useMemo(() => criarEstilos(t, isHighContrast, isDesktop, isTablet), [
     isDesktop,
     isHighContrast,
@@ -373,7 +370,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
   const adicionarImagens = (novasImagens) => {
     const MAX_IMAGES = 10;
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_SIZE = 10 * 1024 * 1024; 
     
     const validImages = novasImagens.filter(img => {
       if (img.size > MAX_SIZE) {
@@ -448,12 +445,16 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return t.colors.primary;
   };
 
-  const obterTipoAcessibilidade = () => {
+  const obterTiposAcessibilidadeArray = () => {
     const selecionados = Object.keys(recursosSelecionados).filter(id => recursosSelecionados[id]);
-    if (!selecionados.length) return null;
+    if (!selecionados.length) return [];
     
-    const recurso = RECURSOS_ACESSIBILIDADE.find(r => r.id === selecionados[0]);
-    return recurso?.enumValue || null;
+    const tipos = selecionados.map(id => {
+      const recurso = RECURSOS_ACESSIBILIDADE.find(r => r.id === id);
+      return recurso?.enumValue;
+    }).filter(Boolean);
+    
+    return tipos;
   };
 
   const validarFormulario = () => {
@@ -508,9 +509,9 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       return false;
     }
 
-    const tipoAcessibilidade = obterTipoAcessibilidade();
-    if (!tipoAcessibilidade) {
-      toastHelper.showError('Selecione um recurso de acessibilidade.');
+    const tiposAcessibilidade = obterTiposAcessibilidadeArray();
+    if (tiposAcessibilidade.length === 0) {
+      toastHelper.showError('Selecione pelo menos um recurso de acessibilidade.');
       return false;
     }
 
@@ -547,15 +548,14 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     if (enviando) return;
     if (!validarFormulario()) return;
 
-    const tipoAcessibilidade = obterTipoAcessibilidade();
-    if (!tipoAcessibilidade) return;
+    const tiposAcessibilidade = obterTiposAcessibilidadeArray();
+    if (tiposAcessibilidade.length === 0) return;
 
     setEnviando(true);
 
     try {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
-      // Upload das imagens primeiro
       let imagensUrls = [];
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
@@ -564,14 +564,13 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         imagensUrls = results.filter(url => url !== null);
       }
 
-      // Salvar o local com as URLs das imagens
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
         imagem: imagensUrls[0] || null,
         imagens: imagensUrls,
         categoria: formulario.categoria,
-        tipoAcessibilidade: tipoAcessibilidade,
+        
         idUsuario: usuario.idUsuario,
         idEndereco: null,
         idLocalPrincipal: null,
@@ -588,18 +587,11 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         },
       };
 
+      console.log('Payload enviado:', JSON.stringify(payloadLocal, null, 2)); // Debug
+
       await LocalService.cadastrarLocal(payloadLocal);
       toastHelper.showSuccess('Local adicionado com sucesso!');
 
-      if (onNavigate) {
-        onNavigate('Inicio');
-        // Disparar evento para recarregar a Home
-        navigation?.setParams({ refresh: Date.now() });
-      } else if (navigation) {
-        navigation.navigate('Main');
-      }
-      
-      // Reset do formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -617,6 +609,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       
       if (onNavigate) {
         onNavigate('Inicio');
+        navigation?.setParams({ refresh: Date.now() });
       } else if (navigation) {
         navigation.navigate('Main');
       }
@@ -625,6 +618,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                       erro.response?.data?.message || 
                       'Erro ao cadastrar local. Tente novamente.';
       toastHelper.showError(mensagem);
+      console.error('Erro detalhado:', erro.response?.data);
     } finally {
       setEnviando(false);
     }
@@ -671,7 +665,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={estilos.conteudo}>
-          {/* COLUNA PRINCIPAL - FORMULÁRIO */}
           <View style={estilos.colunaPrincipal}>
             <CardSecao
               titulo="Informações Básicas"
@@ -795,7 +788,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             {/* RECURSOS DE ACESSIBILIDADE */}
             <CardSecao
               titulo="Recursos de Acessibilidade"
-              descricao="Marque todos os recursos de acessibilidade disponíveis no local"
+              descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
               icone="accessibility-outline"
               corIcone={t.colors.secondary}
               altoContraste={isHighContrast}
@@ -815,9 +808,14 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                   />
                 ))}
               </View>
+              
+              <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.borderLight }}>
+                <ThemedText color="textSecondary" variant="caption">
+                  {Object.values(recursosSelecionados).filter(Boolean).length} recurso(s) selecionado(s)
+                </ThemedText>
+              </View>
             </CardSecao>
 
-            {/* FOTOS DO LOCAL COM DRAG & DROP */}
             <CardSecao
               titulo="Fotos do Local"
               descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
@@ -834,7 +832,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
               />
             </CardSecao>
 
-            {/* BOTÃO DE SUBMISSÃO */}
             <View style={estilos.botaoContainer}>
               <Button
                 variant="primary"
@@ -851,7 +848,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             </View>
           </View>
 
-          {/* COLUNA LATERAL - INFORMAÇÕES E DICAS */}
           <View style={estilos.colunaLateral}>
             <CardInfoIcone
               titulo="Próximos passos:"

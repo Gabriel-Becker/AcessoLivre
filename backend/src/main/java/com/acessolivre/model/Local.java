@@ -18,13 +18,16 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "local", indexes = {
     @Index(name = "idx_local_nome", columnList = "nome"),
     @Index(name = "idx_local_principal", columnList = "idlocal_principal"),
-    @Index(name = "idx_local_status", columnList = "status")
+    @Index(name = "idx_local_status", columnList = "status"),
+    @Index(name = "idx_local_categoria", columnList = "categoria")
 })
 @Data
 @Builder
@@ -64,10 +67,18 @@ public class Local {
     @NotNull(message = "Categoria é obrigatória")
     private Categoria categoria;
 
+    // ⭐ NOVO: Múltiplos tipos de acessibilidade usando @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+        name = "local_tipos_acessibilidade",
+        joinColumns = @JoinColumn(name = "id_local"),
+        foreignKey = @ForeignKey(name = "fk_local_tipos_acessibilidade"),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"id_local", "tipo_acessibilidade"})
+    )
+    @Column(name = "tipo_acessibilidade", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_acessibilidade", nullable = false)
-    @NotNull(message = "Tipo de acessibilidade é obrigatório")
-    private TipoAcessibilidade tipoAcessibilidade;
+    @Builder.Default
+    private Set<TipoAcessibilidade> tiposAcessibilidade = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
@@ -81,7 +92,6 @@ public class Local {
     private Endereco endereco;
     
     // AUTO-RELACIONAMENTO (Self-join)
-    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idlocal_principal")
     @JsonIgnore
@@ -99,7 +109,8 @@ public class Local {
     @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao;
     
-    // Métodos utilitários
+    
+    // Métodos para hierarquia
     public void adicionarSubLocal(Local subLocal) {
         if (subLocais == null) {
             subLocais = new ArrayList<>();
@@ -131,5 +142,48 @@ public class Local {
             atual = atual.getLocalPrincipal();
         }
         return nivel;
+    }
+    
+    // Métodos para tipos de acessibilidade
+    public void adicionarTipoAcessibilidade(TipoAcessibilidade tipo) {
+        if (tiposAcessibilidade == null) {
+            tiposAcessibilidade = new HashSet<>();
+        }
+        tiposAcessibilidade.add(tipo);
+    }
+    
+    public void adicionarTiposAcessibilidade(TipoAcessibilidade... tipos) {
+        if (tiposAcessibilidade == null) {
+            tiposAcessibilidade = new HashSet<>();
+        }
+        for (TipoAcessibilidade tipo : tipos) {
+            tiposAcessibilidade.add(tipo);
+        }
+    }
+    
+    public void removerTipoAcessibilidade(TipoAcessibilidade tipo) {
+        if (tiposAcessibilidade != null) {
+            tiposAcessibilidade.remove(tipo);
+        }
+    }
+    
+    public boolean possuiTipoAcessibilidade(TipoAcessibilidade tipo) {
+        return tiposAcessibilidade != null && tiposAcessibilidade.contains(tipo);
+    }
+    
+    public boolean possuiTodosTiposAcessibilidade(Set<TipoAcessibilidade> tipos) {
+        return tiposAcessibilidade != null && tiposAcessibilidade.containsAll(tipos);
+    }
+    
+    public boolean possuiQualquerTipoAcessibilidade(Set<TipoAcessibilidade> tipos) {
+        if (tiposAcessibilidade == null || tipos == null) {
+            return false;
+        }
+        for (TipoAcessibilidade tipo : tipos) {
+            if (tiposAcessibilidade.contains(tipo)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

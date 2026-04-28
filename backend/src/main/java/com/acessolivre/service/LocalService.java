@@ -62,17 +62,73 @@ public class LocalService {
         return localRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
-
     @Transactional(readOnly = true)
     public List<Local> buscarPorCategoria(Categoria categoria) {
         log.info("Buscando locais por categoria: {}", categoria);
         return localRepository.findByCategoria(categoria);
     }
 
+    // ⭐ NOVOS MÉTODOS PARA ACESSIBILIDADE
+    
     @Transactional(readOnly = true)
     public List<Local> buscarPorTipoAcessibilidade(TipoAcessibilidade tipoAcessibilidade) {
         log.info("Buscando locais por tipo de acessibilidade: {}", tipoAcessibilidade);
         return localRepository.findByTipoAcessibilidade(tipoAcessibilidade);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Local> buscarPorTipoAcessibilidadePaginado(TipoAcessibilidade tipoAcessibilidade, Pageable pageable) {
+        log.info("Buscando locais por tipo de acessibilidade com paginação: {}", tipoAcessibilidade);
+        return localRepository.findByTipoAcessibilidade(tipoAcessibilidade, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Local> buscarPorQualquerTipoAcessibilidade(Set<TipoAcessibilidade> tipos) {
+        log.info("Buscando locais que possuem qualquer um dos tipos: {}", tipos);
+        if (tipos == null || tipos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return localRepository.findByAnyTipoAcessibilidade(tipos);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Local> buscarPorQualquerTipoAcessibilidadePaginado(Set<TipoAcessibilidade> tipos, Pageable pageable) {
+        log.info("Buscando locais que possuem qualquer um dos tipos com paginação: {}", tipos);
+        if (tipos == null || tipos.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return localRepository.findByAnyTipoAcessibilidade(tipos, pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Local> buscarPorTodosTiposAcessibilidade(Set<TipoAcessibilidade> tipos) {
+        log.info("Buscando locais que possuem todos os tipos: {}", tipos);
+        if (tipos == null || tipos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return localRepository.findByAllTipoAcessibilidade(tipos, (long) tipos.size());
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Local> buscarPorTodosTiposAcessibilidadePaginado(Set<TipoAcessibilidade> tipos, Pageable pageable) {
+        log.info("Buscando locais que possuem todos os tipos com paginação: {}", tipos);
+        if (tipos == null || tipos.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return localRepository.findByAllTipoAcessibilidade(tipos, (long) tipos.size(), pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Local> buscarPorCategoriaETipoAcessibilidade(Categoria categoria, TipoAcessibilidade tipo) {
+        log.info("Buscando locais por categoria {} e tipo de acessibilidade {}", categoria, tipo);
+        return localRepository.findByCategoriaAndTipoAcessibilidade(categoria, tipo);
+    }
+    
+    @Transactional(readOnly = true)
+    public Integer contarTiposAcessibilidadePorLocal(Long idLocal) {
+        log.info("Contando tipos de acessibilidade do local ID: {}", idLocal);
+        validarExistenciaLocal(idLocal);
+        return localRepository.countTiposAcessibilidadeByLocalId(idLocal);
     }
     
     @Transactional(readOnly = true)
@@ -112,6 +168,11 @@ public class LocalService {
     public Local salvar(LocalRequestDTO dto) {
         log.info("Salvando novo local: nome={}", dto.getNome());
 
+        // Validação dos tipos de acessibilidade
+        if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
+            throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
+        }
+
         Usuario usuario = validarUsuario(dto.getIdUsuario());
         
         Endereco endereco = resolverEndereco(dto);
@@ -130,13 +191,19 @@ public class LocalService {
             localRepository.save(localPrincipal);
         }
         
-        log.info("Local salvo com sucesso. ID: {}", salvo.getIdLocal());
+        log.info("Local salvo com sucesso. ID: {}, Tipos de acessibilidade: {}", 
+            salvo.getIdLocal(), salvo.getTiposAcessibilidade());
         return salvo;
     }
     
     @Transactional
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
         log.info("Atualizando local: id={}", id);
+
+        // Validação dos tipos de acessibilidade
+        if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
+            throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
+        }
 
         return localRepository.findById(id).map(local -> {
     
@@ -152,21 +219,39 @@ public class LocalService {
                 localRepository.save(local.getLocalPrincipal());
             }
             
-            // Atualizar entidade via mapper estático
             LocalMapper.updateEntity(local, dto, usuario, endereco);
-            local.setLocalPrincipal(novoLocalPrincipal); // Atualiza o pai
+            local.setLocalPrincipal(novoLocalPrincipal);
             
             Local atualizado = localRepository.save(local);
             
-            // Adicionar à lista do novo pai
             if (novoLocalPrincipal != null) {
                 novoLocalPrincipal.adicionarSubLocal(atualizado);
                 localRepository.save(novoLocalPrincipal);
             }
             
-            log.info("Local atualizado com sucesso. ID: {}", atualizado.getIdLocal());
+            log.info("Local atualizado com sucesso. ID: {}, Tipos de acessibilidade: {}", 
+                atualizado.getIdLocal(), atualizado.getTiposAcessibilidade());
             return atualizado;
         });
+    }
+    
+    @Transactional
+    public Local atualizarTiposAcessibilidade(Long id, Set<TipoAcessibilidade> novosTipos) {
+        log.info("Atualizando tipos de acessibilidade do local ID: {} para {}", id, novosTipos);
+        
+        if (novosTipos == null || novosTipos.isEmpty()) {
+            throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
+        }
+        
+        Local local = localRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + id));
+        
+        local.getTiposAcessibilidade().clear();
+        local.getTiposAcessibilidade().addAll(novosTipos);
+        
+        Local atualizado = localRepository.save(local);
+        log.info("Tipos de acessibilidade atualizados para local ID: {}", id);
+        return atualizado;
     }
 
     @Transactional
@@ -176,7 +261,6 @@ public class LocalService {
         Local local = localRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + id));
         
-        // Verificar se o local tem sub-locais
         if (localRepository.hasSubLocais(id)) {
             long countSubLocais = localRepository.countSubLocais(id);
             throw new IllegalStateException(
@@ -185,7 +269,6 @@ public class LocalService {
             );
         }
          
-        // Remover da lista do pai
         if (local.getLocalPrincipal() != null) {
             local.getLocalPrincipal().getSubLocais().remove(local);
             localRepository.save(local.getLocalPrincipal());
@@ -230,7 +313,6 @@ public class LocalService {
             }
         }
         
-        // Remover do pai atual
         if (local.getLocalPrincipal() != null) {
             local.getLocalPrincipal().getSubLocais().remove(local);
             localRepository.save(local.getLocalPrincipal());
@@ -265,7 +347,6 @@ public class LocalService {
         stats.put("totalUsuarios", usuarioRepository.count());
         stats.put("totalLocais", localRepository.count());
         stats.put("totalAvaliacoes", avaliacaoRepository.count());
-        // Estatísticas adicionais podem ser reativadas se os métodos existirem no repositório
         return stats;
     }
     
@@ -280,16 +361,12 @@ public class LocalService {
         return stats;
     }
     
+    // Métodos privados de validação
     private Usuario validarUsuario(Long idUsuario) {
         return usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + idUsuario));
     }
     
-    /**
-     * Valida e retorna o Local principal (pai) a partir do ID, se fornecido.
-     * @param idLocalPrincipal ID do possível pai
-     * @param idLocalAtual ID do próprio local (para verificar auto-referência, pode ser null)
-     */
     private Local validarLocalPrincipal(Long idLocalPrincipal, Long idLocalAtual) {
         if (idLocalPrincipal == null) {
             return null;

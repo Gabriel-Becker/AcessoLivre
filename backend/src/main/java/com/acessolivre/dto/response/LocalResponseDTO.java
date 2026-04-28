@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -25,7 +26,7 @@ public class LocalResponseDTO {
     private Double avaliacaoMedia;
     private StatusLocal status;
     private Categoria categoria;
-    private TipoAcessibilidade tipoAcessibilidade;
+    private Set<TipoAcessibilidade> tiposAcessibilidade;
     private Long idUsuario;
     private String nomeUsuario;
     private EnderecoResponseDTO endereco;
@@ -40,4 +41,3 @@ public class LocalResponseDTO {
     private Boolean isRaiz;
     private Boolean isFolha;
 }
-
