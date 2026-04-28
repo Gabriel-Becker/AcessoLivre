@@ -570,7 +570,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         imagem: imagensUrls[0] || null,
         imagens: imagensUrls,
         categoria: formulario.categoria,
-        
+        tiposAcessibilidade: tiposAcessibilidade, 
         idUsuario: usuario.idUsuario,
         idEndereco: null,
         idLocalPrincipal: null,
