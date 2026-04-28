@@ -231,7 +231,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
                 onBlur={onBlur}
                 secureTextEntry
                 leftIcon="key-outline"
-                error={undefined}
+                error={errors.confirmarSenha?.message}
                 altoContraste={altoContraste}
               />
             )}

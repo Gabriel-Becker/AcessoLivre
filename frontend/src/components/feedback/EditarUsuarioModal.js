@@ -227,7 +227,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   onChangeText={onChange}
                   onBlur={onBlur}
                   leftIcon="mail-outline"
-                  error={touchedFields.email ? errors.email?.message : undefined}
+                  error={errors.email?.message}
                   altoContraste={altoContraste}
                 />
               )}

@@ -47,6 +47,12 @@ export default function Admin() {
     totalElements: Number(dados?.totalElements) || 0,
   });
 
+  const formatarRoleUsuario = (role) => {
+    const roleNormalizada = String(role || 'ROLE_USER').trim().toUpperCase();
+    if (roleNormalizada === 'ROLE_ADMIN') return 'Administrador';
+    return 'Usuário';
+  };
+
   const carregarUsuarios = async () => {
     setCarregando(true);
     setErro('');
@@ -195,7 +201,7 @@ export default function Admin() {
                 <Spacer size="xs" />
                 <ThemedText color="textSecondary" size="sm">{item.email || 'Email não informado'}</ThemedText>
                 <Spacer size="xs" />
-                <ThemedText color="textSecondary" size="sm">Role: {item.role || 'ROLE_USER'}</ThemedText>
+                <ThemedText color="textSecondary" size="sm">Role: {formatarRoleUsuario(item.role)}</ThemedText>
               </View>
 
               {usuario?.idUsuario !== item.idUsuario ? (
