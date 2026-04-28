@@ -35,177 +35,129 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public Page<Usuario> listarTodosUsuarios(Pageable pageable) {
-        log.info("Listando usuários com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
         return usuarioRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
-        log.info("Buscando usuário: id={}", id);
         return usuarioRepository.findById(id);
     }
 
     @Transactional
     public boolean alterarRoleUsuario(Long idUsuario, String novaRole) {
-        log.info("Alterando role do usuário: id={}, novaRole={}", idUsuario, novaRole);
-        
         Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
-        if (usuarioOpt.isEmpty()) {
-            log.warn("Usuário não encontrado para alteração de role: id={}", idUsuario);
-            return false;
-        }
-        
+        if (usuarioOpt.isEmpty()) return false;
+
         Usuario usuario = usuarioOpt.get();
         String normalized = (novaRole != null ? novaRole.trim().toUpperCase() : "USER");
         if (!normalized.startsWith("ROLE_")) {
             normalized = "ROLE_" + normalized;
         }
+
         usuario.setRole(com.acessolivre.enums.Role.valueOf(normalized));
         usuarioRepository.save(usuario);
-        log.info("Role alterada: id={}, role={}", idUsuario, normalized);
-        
         return true;
     }
 
     @Transactional
     public boolean deletarUsuario(Long idUsuario) {
-        log.info("Deletando usuário: id={}", idUsuario);
-        
-        if (!usuarioRepository.existsById(idUsuario)) {
-            log.warn("Usuário não encontrado para deletar: id={}", idUsuario);
-            return false;
-        }
-        
+        if (!usuarioRepository.existsById(idUsuario)) return false;
         usuarioRepository.deleteById(idUsuario);
-        log.info("Usuário deletado: id={}", idUsuario);
         return true;
     }
 
     @Transactional
     public boolean alterarSenhaUsuario(Long idUsuario, String novaSenha) {
-        log.info("Alterando senha do usuário: id={}", idUsuario);
-
-        if (!usuarioRepository.existsById(idUsuario)) {
-            log.warn("Usuário não encontrado para alterar senha: id={}", idUsuario);
-            return false;
-        }
+        if (!usuarioRepository.existsById(idUsuario)) return false;
 
         var usuarioAutenticarOpt = usuarioAutenticarRepository.findByUsuario_IdUsuario(idUsuario);
-        if (usuarioAutenticarOpt.isEmpty()) {
-            log.warn("Credenciais não encontradas para usuário: id={}", idUsuario);
-            return false;
-        }
+        if (usuarioAutenticarOpt.isEmpty()) return false;
 
         var usuarioAutenticar = usuarioAutenticarOpt.get();
         usuarioAutenticar.setSenhaHash(passwordEncoder.encode(novaSenha));
         usuarioAutenticarRepository.save(usuarioAutenticar);
 
-        log.info("Senha alterada com sucesso para usuário: id={}", idUsuario);
         return true;
     }
 
     @Transactional(readOnly = true)
     public List<Avaliacao> listarAvaliacoesPendentes() {
-        log.info("Listando avaliações pendentes");
         return avaliacaoRepository.findByModerado(false);
     }
 
     @Transactional
     public boolean aprovarAvaliacao(Long idAvaliacao) {
-        log.info("Aprovando avaliação: id={}", idAvaliacao);
-        
         Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(idAvaliacao);
-        if (avaliacaoOpt.isEmpty()) {
-            log.warn("Avaliação não encontrada para aprovar: id={}", idAvaliacao);
-            return false;
-        }
-        
+        if (avaliacaoOpt.isEmpty()) return false;
+
         Avaliacao avaliacao = avaliacaoOpt.get();
         avaliacao.setModerado(true);
         avaliacaoRepository.save(avaliacao);
-        log.info("Avaliação aprovada: id={}", idAvaliacao);
-        
         return true;
     }
 
     @Transactional
     public boolean rejeitarAvaliacao(Long idAvaliacao) {
-        log.info("Rejeitando avaliação: id={}", idAvaliacao);
-        
         Optional<Avaliacao> avaliacaoOpt = avaliacaoRepository.findById(idAvaliacao);
-        if (avaliacaoOpt.isEmpty()) {
-            log.warn("Avaliação não encontrada para rejeitar: id={}", idAvaliacao);
-            return false;
-        }
-        
+        if (avaliacaoOpt.isEmpty()) return false;
+
         Long idLocal = avaliacaoOpt.get().getLocal().getIdLocal();
         avaliacaoRepository.deleteById(idAvaliacao);
         recalcularMediaLocal(idLocal);
-        log.info("Avaliação rejeitada: id={}", idAvaliacao);
-        
         return true;
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> obterEstatisticasGerais() {
-        log.info("Obtendo estatísticas gerais");
-        
         Map<String, Object> stats = new HashMap<>();
-        
-        long totalUsuarios = usuarioRepository.count();
-        long totalLocais = localRepository.count();
-        long totalAvaliacoes = avaliacaoRepository.count();
-        long avaliacoesPendentes = avaliacaoRepository.findByModerado(false).size();
-        
-        stats.put("totalUsuarios", totalUsuarios);
-        stats.put("totalLocais", totalLocais);
-        stats.put("totalAvaliacoes", totalAvaliacoes);
-        stats.put("avaliacoesPendentes", avaliacoesPendentes);
-        
+
+        stats.put("totalUsuarios", usuarioRepository.count());
+        stats.put("totalLocais", localRepository.count());
+        stats.put("totalAvaliacoes", avaliacaoRepository.count());
+        stats.put("avaliacoesPendentes", avaliacaoRepository.findByModerado(false).size());
+
         return stats;
     }
 
     @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticasPorEstado() {
-        log.info("Obtendo estatísticas por estado");
-        
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
-        
+
         for (Local local : locais) {
             String estado = local.getEndereco().getEstado();
             estatisticas.put(estado, estatisticas.getOrDefault(estado, 0L) + 1);
         }
-        
+
         return estatisticas;
     }
 
     @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticasPorCategoria() {
-        log.info("Obtendo estatísticas por categoria");
-        
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
-        
-         for (Local local : locais) {
+
+        for (Local local : locais) {
             String categoria = local.getCategoria().name();
             estatisticas.put(categoria, estatisticas.getOrDefault(categoria, 0L) + 1);
         }
-        
+
         return estatisticas;
     }
 
+    // ✅ MÉTODO CORRIGIDO PARA SET<TipoAcessibilidade>
+    @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticasPorTipoAcessibilidade() {
-        log.info("Obtendo estatísticas por tipo de acessibilidade");
-        
         List<Local> locais = localRepository.findAll();
         Map<String, Long> estatisticas = new HashMap<>();
-        
-         for (Local local : locais) {
-            String tipo = local.getTipoAcessibilidade().name();
-            estatisticas.put(tipo, estatisticas.getOrDefault(tipo, 0L) + 1);
+
+        for (Local local : locais) {
+            local.getTiposAcessibilidade().forEach(tipo -> {
+                String nome = tipo.name();
+                estatisticas.put(nome, estatisticas.getOrDefault(nome, 0L) + 1);
+            });
         }
-        
+
         return estatisticas;
     }
 

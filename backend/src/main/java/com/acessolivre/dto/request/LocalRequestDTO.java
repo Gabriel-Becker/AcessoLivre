@@ -13,6 +13,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -33,18 +35,17 @@ public class LocalRequestDTO {
     @NotNull(message = "Categoria é obrigatória")
     private Categoria categoria;
 
-    @NotNull(message = "Tipo de acessibilidade é obrigatório")
-    private TipoAcessibilidade tipoAcessibilidade;
+    @NotNull(message = "Tipos de acessibilidade são obrigatórios")
+    @Size(min = 1, message = "Pelo menos um tipo de acessibilidade deve ser informado")
+    private Set<TipoAcessibilidade> tiposAcessibilidade;
 
     @NotNull(message = "ID do usuário é obrigatório")
     private Long idUsuario;
 
     private Long idEndereco;
     
-    // ID do local principal (opcional)
     private Long idLocalPrincipal;
     
-    // Status do local (opcional, padrão será EM_ANALISE)
     private StatusLocal status;
 
     @Valid
