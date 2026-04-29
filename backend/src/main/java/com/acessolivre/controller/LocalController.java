@@ -48,6 +48,7 @@ public class LocalController {
             @RequestParam(defaultValue = CAMPO_ORDENACAO_PADRAO) String sort,
             @RequestParam(defaultValue = "asc") String direction) {
         
+        // Validação de parâmetros
         int pageSize = validatePageSize(size);
         String sortField = validateSortField(sort);
         Sort.Direction sortDirection = validateSortDirection(direction);

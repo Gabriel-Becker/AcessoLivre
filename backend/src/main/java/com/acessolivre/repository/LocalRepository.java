@@ -20,6 +20,8 @@ import java.util.Set;
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
+    // ==================== MÉTODOS BÁSICOS COM PAGINAÇÃO CORRIGIDA ====================
+    
     @Override
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario"})
     Page<Local> findAll(Pageable pageable);
@@ -30,14 +32,19 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
     Page<Local> findByLocalPrincipalIdLocal(Long idLocalPrincipal, Pageable pageable);
     
+    // ==================== BUSCAS BÁSICAS ====================
+    
     List<Local> findByUsuarioIdUsuario(Long idUsuario);
     List<Local> findByCategoria(Categoria categoria);
     Page<Local> findByStatus(StatusLocal status, Pageable pageable);
+    
+    // ==================== BUSCAS POR HIERARQUIA ====================
     
     List<Local> findByLocalPrincipalIsNull();
     List<Local> findByLocalPrincipalIdLocal(Long idLocalPrincipal);
     Optional<Local> findByIdLocalAndLocalPrincipalIsNull(Long idLocal);
     
+    // ==================== BUSCAS POR TIPO DE ACESSIBILIDADE COM PAGINAÇÃO ====================
     
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t = :tipo")
@@ -46,12 +53,16 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t = :tipo")
     List<Local> findByTipoAcessibilidade(@Param("tipo") TipoAcessibilidade tipo);
     
+    // ==================== BUSCAS POR QUALQUER TIPO (OR) ====================
+    
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     Page<Local> findByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos, Pageable pageable);
     
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     List<Local> findByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos);
+    
+    // ==================== MÉTODOS AUXILIARES PARA COUNT (NÃO USAM FETCH) ====================
     
     @Query("SELECT COUNT(DISTINCT l) FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     long countByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos);
