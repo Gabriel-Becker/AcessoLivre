@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   StyleSheet, 
-  ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  FlatList,
+  useWindowDimensions
 } from 'react-native';
 import { StatsBanner, LocalCard, Button } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
@@ -13,9 +14,11 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import HomeService from '../../services/HomeService';
 import toastHelper from '../../utils/toastHelper';
+
 export default function Home({ navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { isAuthenticated } = useAuth();
+  const { width } = useWindowDimensions(); // Hook para largura da tela
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,6 +30,13 @@ export default function Home({ navigation }) {
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [error, setError] = useState(null);
 
+  // Função para determinar número de colunas baseado na largura da tela
+  const getNumColumns = useCallback(() => {
+    if (width >= 1200) return 4;   
+  }, [width]);
+
+  const numColumns = getNumColumns();
+
   const carregarDados = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
@@ -34,15 +44,19 @@ export default function Home({ navigation }) {
       setLoading(true);
     }
     setError(null);
+    
     try {
-      console.log(' Home: Buscando dados do backend...');
+      console.log('🏠 Home: Buscando dados do backend...');
       
       const [stats, locais] = await Promise.all([
         HomeService.obterEstatisticas(),
-        HomeService.obterLocaisEmDestaque(4),
+        HomeService.obterLocaisEmDestaque(8), // Aumentado para 8 para grid
       ]);
-      console.log(`📊 Home: ${stats.totalLocais} locais cadastrados`);
-      console.log(`📋 Home: ${locais.length} locais em destaque`);
+      
+      console.log(` Home: ${stats.totalLocais} locais cadastrados`);
+      console.log(` Home: ${locais.length} locais em destaque`);
+      console.log(` Layout: ${numColumns} colunas (largura: ${width})`);
+      
       setEstatisticas(stats);
       setLocaisDestaque(locais);
     } catch (erro) {
@@ -53,30 +67,96 @@ export default function Home({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [numColumns, width]);
   
   useEffect(() => {
     carregarDados();
     
     const unsubscribe = navigation?.addListener?.('focus', () => {
-      console.log(' Home: Tela em foco, recarregando dados...');
+      console.log('🏠 Home: Tela em foco, recarregando dados...');
       carregarDados();
     });
     
     return unsubscribe;
   }, [carregarDados, navigation]);
+
   // Pull-to-refresh
   const handleRefresh = () => {
     carregarDados(true);
   };
+
   // Navegar para tela de busca
   const handleVerTodos = () => {
     navigation?.navigate?.('Buscar');
   };
+
   // Navegar para detalhes do local
   const handleLocalPress = (local) => {
     navigation?.navigate?.('LocalDetalhes', { id: local.id });
   };
+
+  const renderHeader = () => (
+    <>
+      <StatsBanner
+        totalLocais={estatisticas.totalLocais}
+        totalAvaliacoes={estatisticas.totalAvaliacoes}
+        altoContraste={isHighContrast}
+      />
+      
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionHeaderText}>
+          <ThemedText variant="h2" weight="bold" altoContraste={isHighContrast}>
+            Locais em Destaque
+          </ThemedText>
+          <ThemedText color="textSecondary" altoContraste={isHighContrast}>
+            {locaisDestaque.length > 0 
+              ? `Conheça os ${locaisDestaque.length} locais mais recentes da comunidade` 
+              : 'Seja o primeiro a cadastrar um local'}
+          </ThemedText>
+        </View>
+        {locaisDestaque.length > 0 && (
+          <TouchableOpacity onPress={handleVerTodos}>
+            <ThemedText color="primary" weight="semibold" altoContraste={isHighContrast}>
+              Ver Todos →
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+      </View>
+    </>
+  );
+
+  // Footer do FlatList
+  const renderFooter = () => (
+    <>
+      {estatisticas.totalLocais > 0 && (
+        <View style={styles.footerInfo}>
+          <ThemedText color="textTertiary" variant="caption" align="center" altoContraste={isHighContrast}>
+            Total de {estatisticas.totalLocais} local(is) cadastrado(s)
+          </ThemedText>
+        </View>
+      )}
+      <Spacer size="xl" />
+    </>
+  );
+
+  // Estado vazio (quando não há locais)
+  const renderEmptyState = () => (
+    <View style={[styles.emptyState, { backgroundColor: t.colors.surfaceSecondary }]}>
+      <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+        Nenhum local cadastrado ainda.
+      </ThemedText>
+      <Spacer size="md" />
+      <Button 
+        variant="primary" 
+        onPress={handleVerTodos}
+        iconLeft="add-outline"
+        altoContraste={isHighContrast}
+      >
+        Cadastrar primeiro local
+      </Button>
+    </View>
+  );
+
   // Tela de loading
   if (loading) {
     return (
@@ -89,6 +169,7 @@ export default function Home({ navigation }) {
       </View>
     );
   }
+
   // Tela de erro
   if (error && locaisDestaque.length === 0) {
     return (
@@ -108,10 +189,19 @@ export default function Home({ navigation }) {
       </View>
     );
   }
+
   return (
-    <ScrollView
-      contentContainerStyle={[styles.scroll, { backgroundColor: t.colors.background }]}
+    <FlatList
+      data={locaisDestaque}
+      key={numColumns} 
+      numColumns={numColumns}
+      keyExtractor={(item) => item.id?.toString() || item.localId?.toString()}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={[
+        styles.scroll, 
+        { backgroundColor: t.colors.background },
+        locaisDestaque.length === 0 && styles.emptyContainer
+      ]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -120,40 +210,37 @@ export default function Home({ navigation }) {
           tintColor={t.colors.primary}
         />
       }
-    >
-      {/* Banner com estatísticas */}
-      <StatsBanner
-        totalLocais={estatisticas.totalLocais}
-        totalAvaliacoes={estatisticas.totalAvaliacoes}
-        altoContraste={isHighContrast}
-      />
-      <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-        Conheça os locais mais recentes da comunidade
-      </ThemedText>
-      {locaisDestaque.map((local, index) => (
-        <LocalCard
-          key={local.id}
-          local={local}
-          onPress={() => handleLocalPress(local)}
-          showNewBadge={index === 0}
-          altoContraste={isHighContrast}
-        />
-      ))}
-      {/* Rodapé com total de locais */}
-      {estatisticas.totalLocais > 0 && (
-        <View style={styles.footerInfo}>
-          <ThemedText color="textTertiary" variant="caption" align="center" altoContraste={isHighContrast}>
-            Total de {estatisticas.totalLocais} local(is) cadastrado(s)
-          </ThemedText>
+      ListHeaderComponent={renderHeader()}
+      ListFooterComponent={renderFooter()}
+      ListEmptyComponent={renderEmptyState()}
+      renderItem={({ item, index }) => (
+        <View style={styles.cardWrapper}>
+          <LocalCard
+            local={item}
+            onPress={() => handleLocalPress(item)}
+            showNewBadge={index === 0 && numColumns === 1} 
+            altoContraste={isHighContrast}
+          />
         </View>
       )}
-    </ScrollView>
+      // Otimizações de performance
+      initialNumToRender={4}
+      maxToRenderPerBatch={8}
+      windowSize={10}
+      removeClippedSubviews={true}
+    />
   );
 }
+
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -173,9 +260,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 16,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  locaisGrid: {
-    gap: 16,
+  sectionHeaderText: {
+    flex: 1,
+  },
+  cardWrapper: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    minWidth: 260, 
+    maxWidth: 400, 
+  },
+  emptyState: {
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 32,
   },
   footerInfo: {
     marginTop: 24,
