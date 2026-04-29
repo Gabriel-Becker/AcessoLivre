@@ -31,7 +31,7 @@ const HomeService = {
         params: { 
           page: 0, 
           size: limite,
-          sort: 'idLocal,desc'
+          sort: 'dataCriacao,desc' 
         }
       });
       

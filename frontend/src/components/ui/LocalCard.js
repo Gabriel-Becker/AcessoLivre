@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
 import theme from '../../config/theme';
 
-export default function LocalCard({ local, onPress, showNewBadge = false }) {
+export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
   const {
     nome,
     categoria,
@@ -12,8 +12,10 @@ export default function LocalCard({ local, onPress, showNewBadge = false }) {
     avaliacaoMedia,
     totalAvaliacoes,
     imagemUrl,
+    tiposAcessibilidade = [],
   } = local || {};
 
+  // ===== FUNÇÕES AUXILIARES =====
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating || 0);
@@ -22,15 +24,15 @@ export default function LocalCard({ local, onPress, showNewBadge = false }) {
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
-          <Ionicons key={i} name="star" size={16} color={theme.colors.warning} />
+          <Ionicons key={i} name="star" size={14} color={theme.colors.warning} />
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
-          <Ionicons key={i} name="star-half" size={16} color={theme.colors.warning} />
+          <Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />
         );
       } else {
         stars.push(
-          <Ionicons key={i} name="star-outline" size={16} color={theme.colors.textSecondary} />
+          <Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />
         );
       }
     }
@@ -43,66 +45,141 @@ export default function LocalCard({ local, onPress, showNewBadge = false }) {
       Saúde: theme.colors.secondary,
       Educação: theme.colors.info,
       Público: theme.colors.success,
+      Lazer: theme.colors.warning,
     };
     return colors[cat] || theme.colors.textSecondary;
   };
 
+  // ✅ Função para formatar endereço completo
+  const formatEnderecoCompleto = (end) => {
+    if (!end) return '';
+    
+    const partes = [];
+    
+    if (end.logradouro) partes.push(end.logradouro);
+    if (end.numero) partes.push(end.numero);
+    if (end.bairro) partes.push(end.bairro);
+    if (end.cidade) partes.push(end.cidade);
+    if (end.estado) partes.push(end.estado);
+    
+    return partes.join(', ');
+  };
+
+  const getAccessibilityIcon = (tipo) => {
+    const icons = {
+      ACESSO_RAMPAS: 'logo-usd',
+      ACESSO_ELEVADOR: 'arrow-up-outline',
+      ACESSO_BANHEIRO_ADAPTADO: 'body-outline',
+      ACESSO_VAGA_PCD: 'car-outline',
+      ACESSO_GUIA_VISUAL: 'eye-outline',
+      ACESSO_LIBRAS: 'hand-left-outline',
+      ACESSO_AUDIO_DESCRICAO: 'mic-outline',
+      ACESSO_BRAILE: 'braille-outline',
+    };
+    return icons[tipo] || 'construct-outline';
+  };
+
+  const getAccessibilityLabel = (tipo) => {
+    const labels = {
+      ACESSO_RAMPAS: 'Rampa',
+      ACESSO_ELEVADOR: 'Elevador',
+      ACESSO_BANHEIRO_ADAPTADO: 'Sanitário adaptado',
+      ACESSO_VAGA_PCD: 'Estacionamento PCD',
+      ACESSO_GUIA_VISUAL: 'Piso tátil',
+      ACESSO_LIBRAS: 'Atendimento em Libras',
+      ACESSO_AUDIO_DESCRICAO: 'Áudio-descrição',
+      ACESSO_BRAILE: 'Sinalização em Braile',
+    };
+    return labels[tipo] || tipo;
+  };
+
+  // ===== RENDERIZAÇÃO PRINCIPAL =====
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, altoContraste && styles.containerHighContrast]}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
+      accessible={true}
+      accessibilityLabel={`${nome || 'Local sem nome'}, ${categoria || ''}, avaliação ${(avaliacaoMedia || 0).toFixed(1)} estrelas`}
     >
-      {showNewBadge && (
-        <View style={styles.newBadge}>
-          <ThemedText color="textOnSecondary" weight="semibold" style={styles.newBadgeText}>
-            Novo
-          </ThemedText>
-        </View>
-      )}
-
-      <View style={styles.imagePlaceholder}>
+      {/* Área da imagem com badge NOVO sobreposto */}
+      <View style={styles.imageContainer}>
         {imagemUrl ? (
           <Image source={{ uri: imagemUrl }} style={styles.image} />
         ) : (
-          <Ionicons name="image-outline" size={48} color={theme.colors.textSecondary} />
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
+            <ThemedText color="textTertiary" style={styles.placeholderText}>
+              Sem imagem
+            </ThemedText>
+          </View>
+        )}
+        
+        {/* Badge "NOVO" posicionado sobre a imagem */}
+        {showNewBadge && (
+          <View style={styles.newBadge}>
+            <ThemedText color="textOnSecondary" weight="bold" style={styles.newBadgeText}>
+              NOVO
+            </ThemedText>
+          </View>
         )}
       </View>
 
+      {/* Conteúdo textual */}
       <View style={styles.content}>
+        {/* Cabeçalho: título + categoria */}
         <View style={styles.header}>
           <ThemedText variant="h3" weight="bold" numberOfLines={1} style={styles.title}>
             {nome || 'Local sem nome'}
           </ThemedText>
           {categoria && (
-            <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(categoria) }]}>
-              <ThemedText color="textOnPrimary" style={styles.categoryText}>
+            <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(categoria) + '20' }]}>
+              <ThemedText style={[styles.categoryText, { color: getCategoryColor(categoria) }]}>
                 {categoria}
               </ThemedText>
             </View>
           )}
         </View>
 
+        {/* Avaliação: estrelas + nota + total */}
         <View style={styles.ratingRow}>
           <View style={styles.stars}>{renderStars(avaliacaoMedia)}</View>
           <ThemedText weight="bold" style={styles.ratingNumber}>
             {(avaliacaoMedia || 0).toFixed(1)}
           </ThemedText>
           <ThemedText color="textSecondary" style={styles.reviewCount}>
-            {totalAvaliacoes || 0} avaliações
+            ({totalAvaliacoes || 0})
           </ThemedText>
         </View>
 
+        {/* ✅ Endereço COMPLETO (logradouro, número, bairro, cidade, estado) */}
         {endereco && (
           <View style={styles.addressRow}>
-            <Ionicons
-              name="location-outline"
-              size={14}
-              color={theme.colors.primary}
-            />
+            <Ionicons name="location-outline" size={14} color={theme.colors.primary} />
             <ThemedText color="textSecondary" numberOfLines={2} style={styles.address}>
-              {`${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}`}
+              {formatEnderecoCompleto(endereco)}
             </ThemedText>
+          </View>
+        )}
+
+        {/* Ícones de acessibilidade (até 4) */}
+        {tiposAcessibilidade && tiposAcessibilidade.length > 0 && (
+          <View style={styles.accessibilityRow}>
+            {tiposAcessibilidade.slice(0, 4).map((tipo, index) => (
+              <View key={index} style={styles.accessibilityIconWrapper}>
+                <Ionicons
+                  name={getAccessibilityIcon(tipo)}
+                  size={14}
+                  color={theme.colors.primary}
+                />
+                <ThemedText style={styles.accessibilityLabel} numberOfLines={1}>
+                  {getAccessibilityLabel(tipo)}
+                </ThemedText>
+              </View>
+            ))}
+            {tiposAcessibilidade.length > 4 && (
+              <ThemedText style={styles.moreBadge}>+{tiposAcessibilidade.length - 4}</ThemedText>
+            )}
           </View>
         )}
       </View>
@@ -110,39 +187,65 @@ export default function LocalCard({ local, onPress, showNewBadge = false }) {
   );
 }
 
+// ===== ESTILOS =====
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: theme.colors.border,
     overflow: 'hidden',
     marginBottom: theme.spacing.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  newBadge: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    backgroundColor: theme.colors.secondary,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    zIndex: 1,
+  containerHighContrast: {
+    borderWidth: 2,
+    borderColor: '#000',
+    backgroundColor: '#FFF',
   },
-  newBadgeText: {
-    fontSize: theme.typography.fontSize.xs,
-  },
-  imagePlaceholder: {
+  imageContainer: {
+    position: 'relative',
     width: '100%',
-    height: 180,
-    backgroundColor: theme.colors.backgroundTertiary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: 160,
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: theme.colors.backgroundTertiary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  placeholderText: {
+    fontSize: 12,
+  },
+  newBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    zIndex: 10,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  newBadgeText: {
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
   content: {
     padding: theme.spacing.md,
@@ -150,44 +253,78 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.sm,
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
   },
   title: {
     flex: 1,
+    fontSize: 16,
   },
   categoryBadge: {
-    borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   categoryText: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: 11,
+    fontWeight: '600',
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    marginBottom: 8,
+    gap: 6,
   },
   stars: {
     flexDirection: 'row',
     gap: 2,
   },
   ratingNumber: {
-    marginLeft: theme.spacing.xs,
+    fontSize: 13,
+    marginLeft: 2,
   },
   reviewCount: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: 11,
   },
   addressRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.xs,
+    alignItems: 'flex-start', // Mudado para flex-start para suportar 2 linhas
+    gap: 6,
+    marginBottom: 12,
   },
   address: {
     flex: 1,
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: 12,
+    lineHeight: 16, // Melhor legibilidade para endereços longos
+  },
+  accessibilityRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  accessibilityIconWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: theme.colors.surfaceSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  accessibilityLabel: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+  },
+  moreBadge: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    backgroundColor: theme.colors.surfaceSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
 });
