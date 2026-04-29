@@ -13,7 +13,6 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import HomeService from '../../services/HomeService';
 import toastHelper from '../../utils/toastHelper';
-
 export default function Home({ navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { isAuthenticated } = useAuth();
@@ -28,7 +27,6 @@ export default function Home({ navigation }) {
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [error, setError] = useState(null);
 
-
   const carregarDados = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
@@ -36,7 +34,6 @@ export default function Home({ navigation }) {
       setLoading(true);
     }
     setError(null);
-
     try {
       console.log(' Home: Buscando dados do backend...');
       
@@ -44,10 +41,8 @@ export default function Home({ navigation }) {
         HomeService.obterEstatisticas(),
         HomeService.obterLocaisEmDestaque(4),
       ]);
-
       console.log(`📊 Home: ${stats.totalLocais} locais cadastrados`);
       console.log(`📋 Home: ${locais.length} locais em destaque`);
-
       setEstatisticas(stats);
       setLocaisDestaque(locais);
     } catch (erro) {
@@ -59,7 +54,6 @@ export default function Home({ navigation }) {
       setRefreshing(false);
     }
   }, []);
-
   
   useEffect(() => {
     carregarDados();
@@ -71,29 +65,18 @@ export default function Home({ navigation }) {
     
     return unsubscribe;
   }, [carregarDados, navigation]);
-
   // Pull-to-refresh
   const handleRefresh = () => {
     carregarDados(true);
   };
-
   // Navegar para tela de busca
   const handleVerTodos = () => {
     navigation?.navigate?.('Buscar');
   };
-
   // Navegar para detalhes do local
   const handleLocalPress = (local) => {
     navigation?.navigate?.('LocalDetalhes', { id: local.id });
   };
-
-  // Navegar para cadastro de local
-  const handleAdicionarLocal = () => {
-    if (navigation?.navigate) {
-      navigation.navigate('Adicionar');
-    }
-  };
-
   // Tela de loading
   if (loading) {
     return (
@@ -106,7 +89,6 @@ export default function Home({ navigation }) {
       </View>
     );
   }
-
   // Tela de erro
   if (error && locaisDestaque.length === 0) {
     return (
@@ -126,7 +108,6 @@ export default function Home({ navigation }) {
       </View>
     );
   }
-
   return (
     <ScrollView
       contentContainerStyle={[styles.scroll, { backgroundColor: t.colors.background }]}
@@ -146,11 +127,9 @@ export default function Home({ navigation }) {
         totalAvaliacoes={estatisticas.totalAvaliacoes}
         altoContraste={isHighContrast}
       />
-
       <ThemedText color="textSecondary" altoContraste={isHighContrast}>
         Conheça os locais mais recentes da comunidade
       </ThemedText>
-
       {locaisDestaque.map((local, index) => (
         <LocalCard
           key={local.id}
@@ -160,7 +139,6 @@ export default function Home({ navigation }) {
           altoContraste={isHighContrast}
         />
       ))}
-
       {/* Rodapé com total de locais */}
       {estatisticas.totalLocais > 0 && (
         <View style={styles.footerInfo}>
@@ -172,7 +150,6 @@ export default function Home({ navigation }) {
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
@@ -199,12 +176,6 @@ const styles = StyleSheet.create({
   },
   locaisGrid: {
     gap: 16,
-  },
-  emptyState: {
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
   },
   footerInfo: {
     marginTop: 24,
