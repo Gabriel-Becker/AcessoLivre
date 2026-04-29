@@ -102,6 +102,23 @@ public class LocalController {
         return ResponseEntity.ok(dtos);
     }
 
+    @PostMapping("/tipo-acessibilidade/buscar-por-todos-tipos")
+    public ResponseEntity<List<LocalResponseDTO>> buscarPorTodosTiposAcessibilidade(
+            @RequestBody Set<TipoAcessibilidade> tipos) {
+        log.info("Buscando locais que possuem todos os tipos: {}", tipos);
+        
+        if (tipos == null || tipos.isEmpty()) {
+            log.warn("Lista de tipos vazia, retornando lista vazia");
+            return ResponseEntity.ok(List.of());
+        }
+        
+        List<Local> locais = localService.buscarPorTodosTiposAcessibilidade(tipos);
+        List<LocalResponseDTO> dtos = locais.stream()
+                .map(LocalMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @PostMapping("/tipo-acessibilidade/buscar-por-todos-tipos/paginado")
     public ResponseEntity<Page<LocalResponseDTO>> buscarPorTodosTiposAcessibilidadePaginado(
             @RequestBody Set<TipoAcessibilidade> tipos,
