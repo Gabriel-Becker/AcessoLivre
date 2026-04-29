@@ -1,6 +1,4 @@
-// src/services/HomeService.js
 import api from '../api/axios';
-
 const HomeService = {
   /**
    * Busca estatísticas gerais do sistema
@@ -23,7 +21,6 @@ const HomeService = {
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },
-
   /**
    * Busca locais em destaque (os mais recentes)
    * @param {number} limite - Quantidade de locais a buscar
@@ -34,7 +31,7 @@ const HomeService = {
         params: { 
           page: 0, 
           size: limite,
-          sort: 'dataCriacao,desc'
+          sort: 'idLocal,desc'
         }
       });
       
@@ -45,7 +42,6 @@ const HomeService = {
       return [];
     }
   },
-
   /**
    * Busca todos os locais (para a página de buscar)
    * @param {number} page - Número da página
@@ -70,7 +66,6 @@ const HomeService = {
       return { locais: [], totalPages: 0, totalElements: 0, currentPage: page };
     }
   },
-
   /**
    * Formata os dados do local para o padrão do frontend
    * @param {Object} local - Local vindo do backend
@@ -101,5 +96,4 @@ const HomeService = {
     };
   },
 };
-
 export default HomeService;
