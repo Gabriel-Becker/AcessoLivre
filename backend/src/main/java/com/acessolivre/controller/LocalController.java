@@ -48,7 +48,6 @@ public class LocalController {
             @RequestParam(defaultValue = CAMPO_ORDENACAO_PADRAO) String sort,
             @RequestParam(defaultValue = "asc") String direction) {
         
-        // Validação de parâmetros
         int pageSize = validatePageSize(size);
         String sortField = validateSortField(sort);
         Sort.Direction sortDirection = validateSortDirection(direction);
@@ -64,25 +63,6 @@ public class LocalController {
         return ResponseEntity.ok(responseDTOs);
     }
     
-    @GetMapping("/todos")
-    public ResponseEntity<Page<LocalResponseDTO>> listarTodosLocais(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size,
-            @RequestParam(defaultValue = CAMPO_ORDENACAO_PADRAO) String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
-        
-        int pageSize = validatePageSize(size);
-        String sortField = validateSortField(sort);
-        Sort.Direction sortDirection = validateSortDirection(direction);
-        
-        log.info("Listando TODOS os locais com paginação: página={}, tamanho={}", page, pageSize);
-        
-        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortField));
-        Page<Local> locais = localService.listarTodos(pageable);
-        Page<LocalResponseDTO> responseDTOs = locais.map(LocalMapper::toResponse);
-        
-        return ResponseEntity.ok(responseDTOs);
-    }
 
     @GetMapping("/categoria/{categoria}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorCategoria(@PathVariable Categoria categoria) {
@@ -119,57 +99,6 @@ public class LocalController {
         Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
         
         log.info("Encontrados {} locais com tipo de acessibilidade {}", dtos.getTotalElements(), tipo);
-        return ResponseEntity.ok(dtos);
-    }
-
-    @PostMapping("/tipo-acessibilidade/buscar-por-qualquer-tipo")
-    public ResponseEntity<List<LocalResponseDTO>> buscarPorQualquerTipoAcessibilidade(
-            @RequestBody Set<TipoAcessibilidade> tipos) {
-        log.info("Buscando locais por qualquer um dos tipos: {}", tipos);
-        List<Local> locais = localService.buscarPorQualquerTipoAcessibilidade(tipos);
-        List<LocalResponseDTO> dtos = locais.stream()
-                .map(LocalMapper::toResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
-
-    @PostMapping("/tipo-acessibilidade/buscar-por-qualquer-tipo/paginado")
-    public ResponseEntity<Page<LocalResponseDTO>> buscarPorQualquerTipoAcessibilidadePaginado(
-            @RequestBody Set<TipoAcessibilidade> tipos,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size) {
-        
-        int pageSize = validatePageSize(size);
-        log.info("Buscando locais por qualquer um dos tipos com paginação: {}, página={}, tamanho={}", 
-                 tipos, page, pageSize);
-        
-        if (tipos == null || tipos.isEmpty()) {
-            log.warn("Lista de tipos vazia, retornando página vazia");
-            return ResponseEntity.ok(Page.empty());
-        }
-        
-        Pageable pageable = PageRequest.of(page, pageSize);
-        Page<Local> locais = localService.buscarPorQualquerTipoAcessibilidadePaginado(tipos, pageable);
-        Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
-        
-        log.info("Encontrados {} locais com qualquer um dos tipos {}", dtos.getTotalElements(), tipos);
-        return ResponseEntity.ok(dtos);
-    }
-
-    @PostMapping("/tipo-acessibilidade/buscar-por-todos-tipos")
-    public ResponseEntity<List<LocalResponseDTO>> buscarPorTodosTiposAcessibilidade(
-            @RequestBody Set<TipoAcessibilidade> tipos) {
-        log.info("Buscando locais que possuem todos os tipos: {}", tipos);
-        
-        if (tipos == null || tipos.isEmpty()) {
-            log.warn("Lista de tipos vazia, retornando lista vazia");
-            return ResponseEntity.ok(List.of());
-        }
-        
-        List<Local> locais = localService.buscarPorTodosTiposAcessibilidade(tipos);
-        List<LocalResponseDTO> dtos = locais.stream()
-                .map(LocalMapper::toResponse)
-                .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
@@ -310,8 +239,6 @@ public class LocalController {
         log.info("Local ID: {} deletado com sucesso", id);
         return ResponseEntity.noContent().build();
     }
-    
-    // ==================== MÉTODOS PRIVADOS DE VALIDAÇÃO ====================
     
     private int validatePageSize(int size) {
         if (size <= 0) {
