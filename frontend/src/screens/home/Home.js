@@ -147,57 +147,19 @@ export default function Home({ navigation }) {
         altoContraste={isHighContrast}
       />
 
-      {/* Seção de Locais em Destaque */}
-      <View style={styles.sectionHeader}>
-        <View>
-          <ThemedText variant="h2" weight="bold" altoContraste={isHighContrast}>
-            Locais em Destaque
-          </ThemedText>
-          <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-            {locaisDestaque.length > 0 
-              ? 'Conheça os locais mais recentes da comunidade' 
-              : 'Seja o primeiro a cadastrar um local'}
-          </ThemedText>
-        </View>
-        {locaisDestaque.length > 0 && (
-          <TouchableOpacity onPress={handleVerTodos}>
-            <ThemedText color="primary" weight="semibold" altoContraste={isHighContrast}>
-              Ver Todos →
-            </ThemedText>
-          </TouchableOpacity>
-        )}
-      </View>
+      <ThemedText color="textSecondary" altoContraste={isHighContrast}>
+        Conheça os locais mais recentes da comunidade
+      </ThemedText>
 
-      {/* Grid de Cards com Locais */}
-      <View style={styles.locaisGrid}>
-        {locaisDestaque.length > 0 ? (
-          locaisDestaque.map((local, index) => (
-            <LocalCard
-              key={local.id}
-              local={local}
-              onPress={() => handleLocalPress(local)}
-              showNewBadge={index === 0} // Mostra "Novo" no primeiro item
-              altoContraste={isHighContrast}
-            />
-          ))
-        ) : (
-          // Estado vazio - incentiva o usuário a cadastrar
-          <View style={[styles.emptyState, { backgroundColor: t.colors.surfaceSecondary }]}>
-            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-              Nenhum local cadastrado ainda.
-            </ThemedText>
-            <Spacer size="md" />
-            <Button 
-              variant="primary" 
-              onPress={handleAdicionarLocal}
-              iconLeft="add-outline"
-              altoContraste={isHighContrast}
-            >
-              Cadastrar primeiro local
-            </Button>
-          </View>
-        )}
-      </View>
+      {locaisDestaque.map((local, index) => (
+        <LocalCard
+          key={local.id}
+          local={local}
+          onPress={() => handleLocalPress(local)}
+          showNewBadge={index === 0}
+          altoContraste={isHighContrast}
+        />
+      ))}
 
       {/* Rodapé com total de locais */}
       {estatisticas.totalLocais > 0 && (
