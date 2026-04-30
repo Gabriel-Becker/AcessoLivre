@@ -1,17 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Modal, useWindowDimensions } from 'react-native';
 import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeContext } from '../../context/ThemeContext';
 import AdminService from '../../services/AdminService';
 import theme from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 
 export default function Admin() {
   const { usuario } = useAuth();
+  const { theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
   const [abaAtiva, setAbaAtiva] = useState('usuarios');
 
   const [usuarios, setUsuarios] = useState([]);
@@ -31,6 +33,8 @@ export default function Admin() {
 
   const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [modalDeleteVisivel, setModalDeleteVisivel] = useState(false);
+  const [usuarioParaDeletar, setUsuarioParaDeletar] = useState(null);
 
   const abas = useMemo(
     () => [
@@ -140,14 +144,8 @@ export default function Admin() {
   };
 
   const confirmarApagarUsuario = (usuarioItem) => {
-    Alert.alert(
-      'Apagar usuário',
-      `Tem certeza que deseja apagar ${usuarioItem?.nome || 'este usuário'}? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Apagar', style: 'destructive', onPress: () => apagarUsuario(usuarioItem) },
-      ]
-    );
+    setUsuarioParaDeletar(usuarioItem);
+    setModalDeleteVisivel(true);
   };
 
   const tentarNovamente = () => {
@@ -357,6 +355,67 @@ export default function Admin() {
           carregarUsuarios();
         }}
       />
+
+      <Modal
+        visible={modalDeleteVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setModalDeleteVisivel(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: width < 768 ? '88%' : '35%' }]}>
+            <ThemedText variant="h2" weight="bold" align="center" color="text">
+              Apagar usuário
+            </ThemedText>
+
+            <Spacer size="lg" />
+
+            <View style={styles.modalMessage}>
+              <ThemedText color="textSecondary" align="center" size="sm">
+                Tem certeza que deseja apagar{' '}
+                <ThemedText weight="bold" color="textSecondary">
+                  {usuarioParaDeletar?.nome || ''}
+                </ThemedText>
+                ? Esta ação não pode ser desfeita.
+              </ThemedText>
+            </View>
+
+            <Spacer size="xl" />
+
+            <View style={styles.modalBotoes}>
+              <Button
+                variant="danger"
+                size="medium"
+                fullWidth
+                onPress={async () => {
+                  await apagarUsuario(usuarioParaDeletar);
+                  setModalDeleteVisivel(false);
+                }}
+                loading={carregandoAcao}
+                disabled={carregandoAcao}
+              >
+                Deletar
+              </Button>
+
+              <Spacer size="xs" />
+
+              <Button
+                variant="outline"
+                size="medium"
+                fullWidth
+                onPress={() => {
+                  setModalDeleteVisivel(false);
+                }}
+                disabled={carregandoAcao}
+              >
+                Cancelar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Container>
   );
 }
@@ -400,5 +459,27 @@ const styles = StyleSheet.create({
   },
   botaoIcon: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalMessage: {
+    marginHorizontal: 4,
+  },
+  modalBotoes: {
+    flexDirection: 'column',
+    gap: 8,
   },
 });

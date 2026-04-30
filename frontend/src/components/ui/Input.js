@@ -102,7 +102,7 @@ export default function Input({
           placeholder={placeholder}
           placeholderTextColor={t.colors.textTertiary}
           secureTextEntry={isPassword && !isPasswordVisible}
-          onFocus={(event) => {
+           onFocus={(event) => {
             setIsFocused(true);
             onFocus?.(event);
           }}
