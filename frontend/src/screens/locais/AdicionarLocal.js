@@ -29,6 +29,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
+import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
@@ -36,7 +37,6 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
-
 
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
@@ -62,7 +62,6 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'atendimento', titulo: 'Atendimento especializado', descricao: 'Staff treinado para atender PcD', icon: 'heart-outline', cor: 'secondary', enumValue: 'ATENDIMENTO_ESPECIALIZADO' },
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
-
 
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -105,7 +104,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.8,
+      quality: 0.7,
       base64: true,
     });
 
@@ -143,7 +142,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
   const handleCapture = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 0.7,
         base64: true,
       });
       
@@ -224,7 +223,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
             {isDragging ? 'Solte as imagens aqui' : 'Arraste e solte imagens ou clique para selecionar'}
           </ThemedText>
           <ThemedText color="textTertiary" variant="caption" align="center">
-            PNG, JPG até 10MB cada
+            PNG, JPG até 10MB cada (máx. 5 imagens)
           </ThemedText>
         </div>
         
@@ -248,7 +247,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
         <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
         <ThemedText align="center">Clique para selecionar imagens</ThemedText>
         <ThemedText color="textTertiary" variant="caption" align="center">
-          PNG, JPG até 10MB cada
+          PNG, JPG até 10MB cada (máx. 5 imagens)
         </ThemedText>
       </TouchableOpacity>
 
@@ -315,6 +314,129 @@ const localStyles = StyleSheet.create({
   },
 });
 
+// ============================================================
+// FUNÇÃO CORRIGIDA PARA CONVERTER IMAGEM PARA BASE64
+// ============================================================
+const getImageBase64WithPrefix = async (image) => {
+  // Verificação de segurança
+  if (!image) {
+    console.error('❌ getImageBase64WithPrefix: image é undefined ou null');
+    return null;
+  }
+
+  console.log('📸 Processando imagem:', { 
+    hasBase64: !!image.base64, 
+    hasUri: !!image.uri, 
+    hasFile: !!image.file,
+    name: image.name,
+    uriPreview: image.uri ? image.uri.substring(0, 100) : null
+  });
+
+  // Caso 1: Já tem base64 (vindo do ImagePicker)
+  if (image.base64 && typeof image.base64 === 'string' && image.base64.length > 0) {
+    if (image.base64.startsWith('data:image')) {
+      console.log('✅ Imagem já tem prefixo data:image');
+      return image.base64;
+    }
+    console.log('✅ Adicionando prefixo data:image ao base64');
+    return `data:image/jpeg;base64,${image.base64}`;
+  }
+  
+  // Caso 2: Tem URI, precisa ler o arquivo
+  if (image.uri && typeof image.uri === 'string') {
+    try {
+      console.log('📂 Lendo arquivo da URI:', image.uri.substring(0, 100));
+      
+      // Para blob URIs na web
+      if (image.uri.startsWith('blob:')) {
+        console.log('📂 Detectado blob URI, usando fetch');
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            console.log('✅ Blob lido com sucesso');
+            resolve(reader.result);
+          };
+          reader.onerror = (error) => {
+            console.error('❌ Erro ao ler blob:', error);
+            reject(null);
+          };
+          reader.readAsDataURL(blob);
+        });
+      }
+      
+      // Para arquivos nativos (mobile)
+      let base64File = null;
+      
+      // Tenta com a constante do Expo
+      try {
+        base64File = await FileSystem.readAsStringAsync(image.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch (error) {
+        console.log('Erro com FileSystem.EncodingType.Base64, tentando com string literal');
+        // Tenta com string literal como fallback
+        base64File = await FileSystem.readAsStringAsync(image.uri, {
+          encoding: 'base64',
+        });
+      }
+      
+      if (!base64File) {
+        console.error('❌ Falha ao ler o arquivo: base64 vazio');
+        return null;
+      }
+      
+      // Detecta o tipo da imagem pela extensão ou pelo conteúdo
+      let mimeType = 'image/jpeg';
+      const extension = image.name?.split('.').pop()?.toLowerCase() || '';
+      
+      if (extension === 'png') {
+        mimeType = 'image/png';
+      } else if (extension === 'gif') {
+        mimeType = 'image/gif';
+      } else if (extension === 'webp') {
+        mimeType = 'image/webp';
+      }
+      
+      const result = `data:${mimeType};base64,${base64File}`;
+      console.log(`✅ Imagem convertida com sucesso (${mimeType}), tamanho: ${Math.round(result.length / 1024)} KB`);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Erro ao ler arquivo de imagem:', error);
+      return null;
+    }
+  }
+  
+  // Caso 3: Tem file (para web)
+  if (image.file) {
+    try {
+      console.log('📂 Processando arquivo File:', image.file.name);
+      
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          console.log('✅ File lido com sucesso');
+          resolve(reader.result);
+        };
+        reader.onerror = (error) => {
+          console.error('❌ Erro ao ler File:', error);
+          resolve(null);
+        };
+        reader.readAsDataURL(image.file);
+      });
+    } catch (error) {
+      console.error('❌ Erro ao processar File:', error);
+      return null;
+    }
+  }
+  
+  console.error('❌ Imagem sem base64, uri ou file:', image);
+  return null;
+};
+
 export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario, isAuthenticated } = useAuth();
@@ -340,7 +462,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [imagens, setImagens] = useState([]);
-  const [estatisticas] = useState({
+  const [progressoImagens, setProgressoImagens] = useState({ atual: 0, total: 0 });
+  const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
     totalAvaliacoes: 0,
     totalUsuarios: 0,
@@ -368,13 +491,22 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
+  // Carregar estatísticas
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      const stats = await LocalService.obterEstatisticas();
+      setEstatisticas(stats);
+    };
+    carregarEstatisticas();
+  }, []);
+
   const adicionarImagens = (novasImagens) => {
-    const MAX_IMAGES = 10;
-    const MAX_SIZE = 10 * 1024 * 1024; 
+    const MAX_IMAGES = 5;
+    const MAX_SIZE = 10 * 1024 * 1024;
     
     const validImages = novasImagens.filter(img => {
       if (img.size > MAX_SIZE) {
-        toastHelper.showError(`Imagem ${img.name} excede 10MB`);
+        toastHelper.showError(`Imagem ${img.name || 'sem nome'} excede 10MB`);
         return false;
       }
       return true;
@@ -518,32 +650,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return true;
   };
 
-  const uploadImagem = async (imagem) => {
-    try {
-      const formData = new FormData();
-      
-      if (imagem.base64) {
-        const blob = await fetch(`data:image/jpeg;base64,${imagem.base64}`).then(res => res.blob());
-        formData.append('file', blob, imagem.name);
-      } else if (imagem.file) {
-        formData.append('file', imagem.file);
-      } else {
-        const response = await fetch(imagem.uri);
-        const blob = await response.blob();
-        formData.append('file', blob, imagem.name);
-      }
-      
-      const uploadResponse = await axios.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      
-      return uploadResponse.data.url;
-    } catch (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
-      return null;
-    }
-  };
-
   const handleSalvarLocal = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -552,29 +658,20 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     if (tiposAcessibilidade.length === 0) return;
 
     setEnviando(true);
+    setProgressoImagens({ atual: 0, total: imagens.length });
 
     try {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
-      let imagensUrls = [];
-      if (imagens.length > 0) {
-        toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
-        const uploadPromises = imagens.map(img => uploadImagem(img));
-        const results = await Promise.all(uploadPromises);
-        imagensUrls = results.filter(url => url !== null);
-      }
-
+      // ==========================================
+      // PASSO 1: Cadastrar o Local (sem imagens)
+      // ==========================================
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
-        imagem: imagensUrls[0] || null,
-        imagens: imagensUrls,
         categoria: formulario.categoria,
-        tiposAcessibilidade: tiposAcessibilidade, 
+        tiposAcessibilidade: tiposAcessibilidade,
         idUsuario: usuario.idUsuario,
-        idEndereco: null,
-        idLocalPrincipal: null,
-        status: null,
         endereco: {
           cep: cepLimpo,
           logradouro: formulario.logradouro.trim(),
@@ -587,11 +684,55 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         },
       };
 
-      console.log('Payload enviado:', JSON.stringify(payloadLocal, null, 2)); // Debug
+      console.log('📤 Cadastrando local...');
+      const localResponse = await LocalService.cadastrarLocal(payloadLocal);
+      const localId = localResponse.idLocal || localResponse.id;
+      
+      console.log('✅ Local criado com ID:', localId);
 
-      await LocalService.cadastrarLocal(payloadLocal);
+      // ==========================================
+      // PASSO 2: Enviar as imagens uma por uma
+      // ==========================================
+      if (imagens.length > 0) {
+        toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
+        
+        let imagensEnviadas = 0;
+        let imagensComErro = 0;
+
+        for (let i = 0; i < imagens.length; i++) {
+          try {
+            setProgressoImagens({ atual: i + 1, total: imagens.length });
+            
+            console.log(`📸 Processando imagem ${i + 1}/${imagens.length}...`);
+            const imagemBase64 = await getImageBase64WithPrefix(imagens[i]);
+            
+            if (!imagemBase64) {
+              console.error(`❌ Não foi possível obter base64 da imagem ${i + 1}`);
+              imagensComErro++;
+              continue;
+            }
+            
+            console.log(`📤 Enviando imagem ${i + 1}/${imagens.length} (tamanho: ${Math.round(imagemBase64.length / 1024)} KB)...`);
+            await LocalService.enviarImagem(localId, imagemBase64);
+            imagensEnviadas++;
+            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
+            
+          } catch (erroImagem) {
+            console.error(`❌ Erro ao enviar imagem ${i + 1}:`, erroImagem);
+            imagensComErro++;
+          }
+        }
+        
+        if (imagensComErro > 0) {
+          toastHelper.showWarning(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`);
+        } else if (imagensEnviadas > 0) {
+          toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
+        }
+      }
+
       toastHelper.showSuccess('Local adicionado com sucesso!');
 
+      // Limpar formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -606,21 +747,26 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       });
       setRecursosSelecionados({});
       setImagens([]);
+      setProgressoImagens({ atual: 0, total: 0 });
       
+      // Navegar de volta
       if (onNavigate) {
         onNavigate('Inicio');
         navigation?.setParams({ refresh: Date.now() });
       } else if (navigation) {
         navigation.navigate('Main');
       }
+      
     } catch (erro) {
       const mensagem = erro.response?.data?.mensagem || 
                       erro.response?.data?.message || 
+                      erro.message ||
                       'Erro ao cadastrar local. Tente novamente.';
       toastHelper.showError(mensagem);
-      console.error('Erro detalhado:', erro.response?.data);
+      console.error('Erro detalhado:', erro.response?.data || erro);
     } finally {
       setEnviando(false);
+      setProgressoImagens({ atual: 0, total: 0 });
     }
   };
 
@@ -818,7 +964,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
             <CardSecao
               titulo="Fotos do Local"
-              descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
+              descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (máx. 5 fotos)"
               icone="camera-outline"
               corIcone={t.colors.primary}
               altoContraste={isHighContrast}
@@ -830,6 +976,28 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 isHighContrast={isHighContrast}
                 theme={t}
               />
+              
+              {/* Indicador de progresso do upload */}
+              {enviando && progressoImagens.total > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <ThemedText variant="caption" align="center">
+                    Enviando imagens: {progressoImagens.atual} de {progressoImagens.total}
+                  </ThemedText>
+                  <View style={{ 
+                    height: 4, 
+                    backgroundColor: t.colors.borderLight, 
+                    borderRadius: 2, 
+                    marginTop: 8,
+                    overflow: 'hidden'
+                  }}>
+                    <View style={{ 
+                      width: `${(progressoImagens.atual / progressoImagens.total) * 100}%`, 
+                      height: '100%', 
+                      backgroundColor: t.colors.primary 
+                    }} />
+                  </View>
+                </View>
+              )}
             </CardSecao>
 
             <View style={estilos.botaoContainer}>
@@ -843,7 +1011,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 style={estilos.botaoPrincipal}
                 altoContraste={isHighContrast}
               >
-                Adicionar Local
+                {enviando ? 'Salvando...' : 'Adicionar Local'}
               </Button>
             </View>
           </View>

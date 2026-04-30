@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "imagem")
@@ -31,4 +34,12 @@ public class Imagem {
     @NotNull(message = "Local é obrigatório")
     @JsonIgnore
     private Local local;
+
+    @Column(name = "ordem")
+    @Builder.Default
+    private Integer ordem = 0;
+
+    @CreationTimestamp
+    @Column(name = "data_criacao", updatable = false)
+    private LocalDateTime dataCriacao;
 }

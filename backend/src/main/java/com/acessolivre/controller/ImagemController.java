@@ -13,12 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Controller responsável pelos endpoints de Imagem
- */
 @RestController
 @RequestMapping("/api/imagens")
 @RequiredArgsConstructor
@@ -27,138 +23,122 @@ public class ImagemController {
 
     private final ImagemService imagemService;
 
-    /**
-     * Lista todas as imagens
-     * @return ResponseEntity com lista de imagens
-     */
     @GetMapping
     public ResponseEntity<List<ImagemResponseDTO>> listarTodos() {
-        log.info("Endpoint GET /api/imagens - Listando todas as imagens");
-        try {
-            List<Imagem> imagens = imagemService.listarTodos();
-            List<ImagemResponseDTO> responseDTOs = imagens.stream()
-                    .map(ImagemMapper::toResponse)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responseDTOs);
-        } catch (Exception e) {
-            log.error("Erro ao listar imagens", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        log.info("GET /api/imagens - Listando todas as imagens");
+        List<Imagem> imagens = imagemService.listarTodos();
+        List<ImagemResponseDTO> response = imagens.stream()
+                .map(ImagemMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Busca uma imagem pelo ID
-     * @param id ID da imagem
-     * @return ResponseEntity com imagem se encontrada ou 404 se não encontrada
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ImagemResponseDTO> buscarPorId(@PathVariable Long id) {
-        log.info("Endpoint GET /api/imagens/{} - Buscando imagem por ID", id);
-        try {
-            Optional<Imagem> imagem = imagemService.buscarPorId(id);
-            return imagem.map(i -> ResponseEntity.ok(ImagemMapper.toResponse(i)))
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (Exception e) {
-            log.error("Erro ao buscar imagem por ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        log.info("GET /api/imagens/{} - Buscando imagem", id);
+        return imagemService.buscarPorId(id)
+                .map(ImagemMapper::toResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Busca imagens por local
-     * @param idLocal ID do local
-     * @return ResponseEntity com lista de imagens do local
-     */
+    // ✅ Endpoint para buscar imagem COMPLETA (sem truncamento)
+    @GetMapping("/{id}/completa")
+    public ResponseEntity<String> buscarImagemCompleta(@PathVariable Long id) {
+        log.info("GET /api/imagens/{}/completa - Buscando imagem completa", id);
+        return imagemService.buscarPorId(id)
+                .map(Imagem::getImagemBase64)  // ✅ Pega diretamente do objeto
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/local/{idLocal}")
     public ResponseEntity<List<ImagemResponseDTO>> buscarPorLocal(@PathVariable Long idLocal) {
-        log.info("Endpoint GET /api/imagens/local/{} - Buscando imagens por local", idLocal);
-        try {
-            List<Imagem> imagens = imagemService.buscarPorLocal(idLocal);
-            List<ImagemResponseDTO> responseDTOs = imagens.stream()
-                    .map(ImagemMapper::toResponse)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responseDTOs);
-        } catch (Exception e) {
-            log.error("Erro ao buscar imagens por local ID: {}", idLocal, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        log.info("GET /api/imagens/local/{} - Buscando imagens por local", idLocal);
+        List<Imagem> imagens = imagemService.buscarPorLocal(idLocal);
+        List<ImagemResponseDTO> response = imagens.stream()
+                .map(ImagemMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Salva uma nova imagem
-     * @param requestDTO Dados da imagem a ser salva
-     * @return ResponseEntity com imagem salva
-     */
     @PostMapping
     public ResponseEntity<?> salvar(@Valid @RequestBody ImagemRequestDTO requestDTO) {
-        log.info("Endpoint POST /api/imagens - Salvando nova imagem");
+        log.info("POST /api/imagens - Salvando imagem para local: {}", requestDTO.getIdLocal());
         try {
             Imagem imagem = imagemService.salvar(requestDTO);
-            log.info("Imagem salva com sucesso. ID: {}", imagem.getIdImagem());
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ImagemMapper.toResponse(imagem));
         } catch (IllegalArgumentException e) {
-            log.warn("Erro de validação ao salvar imagem: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
+            log.warn("Erro de validação: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao salvar imagem", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao salvar imagem");
+            return ResponseEntity.internalServerError().body("Erro ao salvar imagem");
         }
     }
 
-    /**
-     * Atualiza uma imagem existente
-     * @param id ID da imagem a ser atualizada
-     * @param requestDTO Dados atualizados da imagem
-     * @return ResponseEntity com imagem atualizada ou 404 se não encontrada
-     */
+    @PostMapping("/batch")
+    public ResponseEntity<?> salvarBatch(
+            @RequestParam Long idLocal,
+            @Valid @RequestBody List<ImagemRequestDTO> requestDTOs) {
+        
+        log.info("POST /api/imagens/batch - Salvando {} imagens para local: {}", requestDTOs.size(), idLocal);
+        
+        if (requestDTOs == null || requestDTOs.isEmpty()) {
+            return ResponseEntity.badRequest().body("Lista de imagens não pode ser vazia");
+        }
+        
+        if (requestDTOs.size() > 10) {
+            return ResponseEntity.badRequest().body("Máximo de 10 imagens por requisição");
+        }
+        
+        try {
+            for (ImagemRequestDTO dto : requestDTOs) {
+                dto.setIdLocal(idLocal);
+            }
+            
+            List<Imagem> imagens = imagemService.salvarBatch(idLocal, requestDTOs);
+            List<ImagemResponseDTO> response = imagens.stream()
+                    .map(ImagemMapper::toResponse)
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Erro ao salvar imagens em batch", e);
+            return ResponseEntity.internalServerError().body("Erro ao salvar imagens");
+        }
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody ImagemRequestDTO requestDTO) {
-        log.info("Endpoint PUT /api/imagens/{} - Atualizando imagem", id);
+        log.info("PUT /api/imagens/{} - Atualizando imagem", id);
         try {
-            Optional<Imagem> imagemAtualizada = imagemService.atualizar(id, requestDTO);
-            
-            if (imagemAtualizada.isPresent()) {
-                log.info("Imagem atualizada com sucesso. ID: {}", id);
-                return ResponseEntity.ok(ImagemMapper.toResponse(imagemAtualizada.get()));
-            } else {
-                log.warn("Imagem não encontrada para atualização. ID: {}", id);
-                return ResponseEntity.notFound().build();
-            }
+            return imagemService.atualizar(id, requestDTO)
+                    .map(ImagemMapper::toResponse)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException e) {
-            log.warn("Erro de validação ao atualizar imagem: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            log.error("Erro ao atualizar imagem ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao atualizar imagem");
+            log.error("Erro ao atualizar imagem", e);
+            return ResponseEntity.internalServerError().body("Erro ao atualizar imagem");
         }
     }
 
-    /**
-     * Deleta uma imagem pelo ID
-     * @param id ID da imagem a ser deletada
-     * @return ResponseEntity com status 204 se deletada ou 404 se não encontrada
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        log.info("Endpoint DELETE /api/imagens/{} - Deletando imagem", id);
-        try {
-            boolean deletado = imagemService.deletar(id);
-            
-            if (deletado) {
-                log.info("Imagem deletada com sucesso. ID: {}", id);
-                return ResponseEntity.noContent().build();
-            } else {
-                log.warn("Imagem não encontrada para deletar. ID: {}", id);
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            log.error("Erro ao deletar imagem ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        log.info("DELETE /api/imagens/{} - Deletando imagem", id);
+        boolean deletado = imagemService.deletar(id);
+        return deletado ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/local/{idLocal}")
+    public ResponseEntity<Void> deletarImagensDoLocal(@PathVariable Long idLocal) {
+        log.info("DELETE /api/imagens/local/{} - Deletando todas as imagens do local", idLocal);
+        imagemService.deletarImagensDoLocal(idLocal);
+        return ResponseEntity.noContent().build();
     }
 }

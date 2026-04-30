@@ -14,4 +14,6 @@ public class ImagemResponseDTO {
     private Long idImagem;
     private String imagemBase64;
     private Long idLocal;
+    private Integer ordem;
+    private String dataCriacao;
 }

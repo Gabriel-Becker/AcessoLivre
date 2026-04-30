@@ -1,21 +1,52 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
 import theme from '../../config/theme';
 
 export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
+  // ===== EXTRAI OS DADOS DO LOCAL =====
   const {
     nome,
     categoria,
     endereco,
     avaliacaoMedia,
     totalAvaliacoes,
-    imagemUrl,
+    imagemPrincipal,  // ← CAMPO QUE O BACKEND ENVIA COM A PRIMEIRA IMAGEM
+    imagens,          // ← LISTA COMPLETA DE IMAGENS
     tiposAcessibilidade = [],
   } = local || {};
 
-  // ===== FUNÇÕES AUXILIARES =====
+  // ===== PEGA A IMAGEM PARA EXIBIR =====
+  const imagemParaExibir = useMemo(() => {
+    // Prioridade 1: imagemPrincipal (enviada pelo backend)
+    if (imagemPrincipal) {
+      return imagemPrincipal;
+    }
+    
+    // Prioridade 2: primeira imagem da lista 'imagens'
+    if (imagens && Array.isArray(imagens) && imagens.length > 0) {
+      const primeira = imagens[0];
+      if (primeira?.imagemBase64) {
+        return primeira.imagemBase64;
+      }
+      if (primeira?.url) {
+        return primeira.url;
+      }
+      if (typeof primeira === 'string') {
+        return primeira;
+      }
+    }
+    
+    // Prioridade 3: campo 'imagem' (singular) legado
+    if (local?.imagem) {
+      return local.imagem;
+    }
+    
+    return null;
+  }, [imagemPrincipal, imagens, local]);
+
+  // ===== RENDERIZA AS ESTRELAS =====
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating || 0);
@@ -23,89 +54,95 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(
-          <Ionicons key={i} name="star" size={14} color={theme.colors.warning} />
-        );
+        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(
-          <Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />
-        );
+        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
       } else {
-        stars.push(
-          <Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />
-        );
+        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
       }
     }
     return stars;
   };
 
+  // ===== COR DA CATEGORIA =====
   const getCategoryColor = (cat) => {
     const colors = {
-      Comercial: theme.colors.primary,
-      Saúde: theme.colors.secondary,
-      Educação: theme.colors.info,
-      Público: theme.colors.success,
-      Lazer: theme.colors.warning,
+      COMERCIAL: theme.colors.primary,
+      PUBLICO: theme.colors.success,
+      SAUDE: theme.colors.secondary,
+      EDUCACAO: theme.colors.info,
+      LAZER: theme.colors.warning,
+      TRANSPORTE: theme.colors.primary,
+      ALIMENTACAO: theme.colors.success,
+      HOSPEDAGEM: theme.colors.info,
+      SERVICOS: theme.colors.secondary,
     };
-    return colors[cat] || theme.colors.textSecondary;
+    const normalizedCat = cat?.toUpperCase();
+    return colors[normalizedCat] || theme.colors.textSecondary;
   };
 
-  // ✅ Função para formatar endereço completo
+  // ===== FORMATA ENDEREÇO =====
   const formatEnderecoCompleto = (end) => {
     if (!end) return '';
-    
     const partes = [];
-    
     if (end.logradouro) partes.push(end.logradouro);
     if (end.numero) partes.push(end.numero);
     if (end.bairro) partes.push(end.bairro);
     if (end.cidade) partes.push(end.cidade);
     if (end.estado) partes.push(end.estado);
-    
     return partes.join(', ');
   };
 
+  // ===== ÍCONES DE ACESSIBILIDADE =====
   const getAccessibilityIcon = (tipo) => {
     const icons = {
-      ACESSO_RAMPAS: 'logo-usd',
-      ACESSO_ELEVADOR: 'arrow-up-outline',
-      ACESSO_BANHEIRO_ADAPTADO: 'body-outline',
-      ACESSO_VAGA_PCD: 'car-outline',
-      ACESSO_GUIA_VISUAL: 'eye-outline',
-      ACESSO_LIBRAS: 'hand-left-outline',
-      ACESSO_AUDIO_DESCRICAO: 'mic-outline',
-      ACESSO_BRAILE: 'braille-outline',
+      RAMPA: 'logo-usd',
+      ELEVADOR: 'arrow-up-outline',
+      BANHEIRO_ADAPTADO: 'body-outline',
+      ESTACIONAMENTO: 'car-outline',
+      PISO_TATIL: 'eye-outline',
+      ATENDIMENTO_ESPECIALIZADO: 'hand-left-outline',
+      RECURSOS_AUDIOVISUAIS: 'mic-outline',
+      SINALIZACAO_BRAILLE: 'braille-outline',
+      ESPACO_AMPLO: 'resize-outline',
+      MOBILIARIO_ADAPTADO: 'grid-outline',
     };
     return icons[tipo] || 'construct-outline';
   };
 
   const getAccessibilityLabel = (tipo) => {
     const labels = {
-      ACESSO_RAMPAS: 'Rampa',
-      ACESSO_ELEVADOR: 'Elevador',
-      ACESSO_BANHEIRO_ADAPTADO: 'Sanitário adaptado',
-      ACESSO_VAGA_PCD: 'Estacionamento PCD',
-      ACESSO_GUIA_VISUAL: 'Piso tátil',
-      ACESSO_LIBRAS: 'Atendimento em Libras',
-      ACESSO_AUDIO_DESCRICAO: 'Áudio-descrição',
-      ACESSO_BRAILE: 'Sinalização em Braile',
+      RAMPA: 'Rampa',
+      ELEVADOR: 'Elevador',
+      BANHEIRO_ADAPTADO: 'Sanitário',
+      ESTACIONAMENTO: 'Estacionamento',
+      PISO_TATIL: 'Piso tátil',
+      ATENDIMENTO_ESPECIALIZADO: 'Atendimento',
+      RECURSOS_AUDIOVISUAIS: 'Áudio-visual',
+      SINALIZACAO_BRAILLE: 'Braile',
+      ESPACO_AMPLO: 'Espaço amplo',
+      MOBILIARIO_ADAPTADO: 'Mobiliário',
     };
     return labels[tipo] || tipo;
   };
 
-  // ===== RENDERIZAÇÃO PRINCIPAL =====
+  // ===== RENDER =====
   return (
     <TouchableOpacity
       style={[styles.container, altoContraste && styles.containerHighContrast]}
       onPress={onPress}
       activeOpacity={0.7}
       accessible={true}
-      accessibilityLabel={`${nome || 'Local sem nome'}, ${categoria || ''}, avaliação ${(avaliacaoMedia || 0).toFixed(1)} estrelas`}
+      accessibilityLabel={`${nome || 'Local'}, ${categoria || ''}, avaliação ${(avaliacaoMedia || 0).toFixed(1)} estrelas`}
     >
-      {/* Área da imagem com badge NOVO sobreposto */}
+      {/* IMAGEM */}
       <View style={styles.imageContainer}>
-        {imagemUrl ? (
-          <Image source={{ uri: imagemUrl }} style={styles.image} />
+        {imagemParaExibir ? (
+          <Image 
+            source={{ uri: imagemParaExibir }} 
+            style={styles.image}
+            onError={(e) => console.log('Erro imagem:', e.nativeEvent.error)}
+          />
         ) : (
           <View style={styles.imagePlaceholder}>
             <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
@@ -115,7 +152,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
         
-        {/* Badge "NOVO" posicionado sobre a imagem */}
         {showNewBadge && (
           <View style={styles.newBadge}>
             <ThemedText color="textOnSecondary" weight="bold" style={styles.newBadgeText}>
@@ -125,9 +161,8 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
         )}
       </View>
 
-      {/* Conteúdo textual */}
+      {/* CONTEÚDO */}
       <View style={styles.content}>
-        {/* Cabeçalho: título + categoria */}
         <View style={styles.header}>
           <ThemedText variant="h3" weight="bold" numberOfLines={1} style={styles.title}>
             {nome || 'Local sem nome'}
@@ -141,7 +176,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           )}
         </View>
 
-        {/* Avaliação: estrelas + nota + total */}
         <View style={styles.ratingRow}>
           <View style={styles.stars}>{renderStars(avaliacaoMedia)}</View>
           <ThemedText weight="bold" style={styles.ratingNumber}>
@@ -152,7 +186,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </ThemedText>
         </View>
 
-        {/* ✅ Endereço COMPLETO (logradouro, número, bairro, cidade, estado) */}
         {endereco && (
           <View style={styles.addressRow}>
             <Ionicons name="location-outline" size={14} color={theme.colors.primary} />
@@ -162,16 +195,11 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
 
-        {/* Ícones de acessibilidade (até 4) */}
         {tiposAcessibilidade && tiposAcessibilidade.length > 0 && (
           <View style={styles.accessibilityRow}>
             {tiposAcessibilidade.slice(0, 4).map((tipo, index) => (
               <View key={index} style={styles.accessibilityIconWrapper}>
-                <Ionicons
-                  name={getAccessibilityIcon(tipo)}
-                  size={14}
-                  color={theme.colors.primary}
-                />
+                <Ionicons name={getAccessibilityIcon(tipo)} size={14} color={theme.colors.primary} />
                 <ThemedText style={styles.accessibilityLabel} numberOfLines={1}>
                   {getAccessibilityLabel(tipo)}
                 </ThemedText>
@@ -238,10 +266,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     zIndex: 10,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
   newBadgeText: {
     fontSize: 11,
@@ -289,14 +313,14 @@ const styles = StyleSheet.create({
   },
   addressRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Mudado para flex-start para suportar 2 linhas
+    alignItems: 'flex-start',
     gap: 6,
     marginBottom: 12,
   },
   address: {
     flex: 1,
     fontSize: 12,
-    lineHeight: 16, // Melhor legibilidade para endereços longos
+    lineHeight: 16,
   },
   accessibilityRow: {
     flexDirection: 'row',

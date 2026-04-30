@@ -1,14 +1,11 @@
 package com.acessolivre.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.acessolivre.enums.Categoria;
 import com.acessolivre.enums.StatusLocal;
 import com.acessolivre.enums.TipoAcessibilidade;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,16 +20,12 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "local", indexes = {
-    @Index(name = "idx_local_nome", columnList = "nome"),
-    @Index(name = "idx_local_principal", columnList = "idlocal_principal"),
-    @Index(name = "idx_local_status", columnList = "status"),
-    @Index(name = "idx_local_categoria", columnList = "categoria")
-})
+@Table(name = "local")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Local {
 
     @Id
@@ -40,150 +33,158 @@ public class Local {
     @Column(name = "idlocal")
     private Long idLocal;
 
-    @NotBlank(message = "Nome é obrigatório")
-    @Size(max = 150, message = "Nome deve ter no máximo 150 caracteres")
-    @Column(name = "nome", length = 150, nullable = false)
+    @Column(name = "nome", nullable = false, length = 200)
     private String nome;
 
-    @NotBlank(message = "Descrição é obrigatória")
-    @Size(max = 350, message = "Descrição deve ter no máximo 350 caracteres")
-    @Column(name = "descricao", length = 350, nullable = false)
+    @Column(name = "descricao", columnDefinition = "TEXT")
     private String descricao;
+
+    @Column(name = "imagem", columnDefinition = "TEXT")
+    private String imagem;
 
     @Column(name = "avaliacao_media")
     private Double avaliacaoMedia;
-    
-    @Size(max = 120, message = "Nome da imagem deve ter no máximo 120 caracteres")
-    @Column(name = "imagem", length = 120)
-    private String imagem;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    @Builder.Default
-    private StatusLocal status = StatusLocal.EM_ANALISE;
+    @Column(name = "status")
+    private StatusLocal status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "categoria", nullable = false)
-    @NotNull(message = "Categoria é obrigatória")
+    @Column(name = "categoria")
     private Categoria categoria;
 
-    // ⭐ NOVO: Múltiplos tipos de acessibilidade usando @ElementCollection
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-        name = "local_tipos_acessibilidade",
-        joinColumns = @JoinColumn(name = "id_local"),
-        foreignKey = @ForeignKey(name = "fk_local_tipos_acessibilidade"),
-        uniqueConstraints = @UniqueConstraint(columnNames = {"id_local", "tipo_acessibilidade"})
-    )
-    @Column(name = "tipo_acessibilidade", nullable = false, length = 50)
+    @ElementCollection(targetClass = TipoAcessibilidade.class)
+    @CollectionTable(name = "local_tipos_acessibilidade", 
+                     joinColumns = @JoinColumn(name = "idlocal"))
+    @Column(name = "tipo_acessibilidade")
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Set<TipoAcessibilidade> tiposAcessibilidade = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idusuario", referencedColumnName = "idusuario", nullable = false)
-    @NotNull(message = "Usuário é obrigatório")
+    @JoinColumn(name = "idusuario")
     @JsonIgnore
     private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idendereco", referencedColumnName = "idendereco")
-    @NotNull(message = "Endereço é obrigatório")
+    @JoinColumn(name = "idendereco")
     private Endereco endereco;
-    
-    // AUTO-RELACIONAMENTO (Self-join)
+
+    // ===== AUTO-RELACIONAMENTO (Hierarquia) =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idlocal_principal")
     @JsonIgnore
     private Local localPrincipal;
-    
+
     @OneToMany(mappedBy = "localPrincipal", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Local> subLocais = new ArrayList<>();
-    
-    @CreationTimestamp
+
+    @Column(name = "nivel_hierarquia")
+    @Builder.Default
+    private Integer nivelHierarquia = 0;
+
     @Column(name = "data_criacao", updatable = false)
+    @CreationTimestamp
     private LocalDateTime dataCriacao;
-    
-    @UpdateTimestamp
+
     @Column(name = "data_atualizacao")
+    @UpdateTimestamp
     private LocalDateTime dataAtualizacao;
+
+    // ===== RELACIONAMENTO COM IMAGENS =====
+    @OneToMany(mappedBy = "local", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Imagem> imagens = new ArrayList<>();
+
+    // ===== MÉTODOS AUXILIARES PARA HIERARQUIA =====
     
-    
-    // Métodos para hierarquia
+    /**
+     * Adiciona um sub-local a este local
+     * @param subLocal o local filho
+     */
     public void adicionarSubLocal(Local subLocal) {
-        if (subLocais == null) {
-            subLocais = new ArrayList<>();
+        if (subLocal != null) {
+            subLocais.add(subLocal);
+            subLocal.setLocalPrincipal(this);
+            subLocal.setNivelHierarquia(this.nivelHierarquia + 1);
         }
-        subLocais.add(subLocal);
-        subLocal.setLocalPrincipal(this);
     }
     
+    /**
+     * Remove um sub-local deste local
+     * @param subLocal o local filho
+     */
     public void removerSubLocal(Local subLocal) {
-        if (subLocais != null) {
+        if (subLocal != null) {
             subLocais.remove(subLocal);
             subLocal.setLocalPrincipal(null);
+            subLocal.setNivelHierarquia(0);
         }
     }
     
+    /**
+     * Verifica se é um local raiz (não tem pai)
+     */
     public boolean isRaiz() {
         return localPrincipal == null;
     }
     
+    /**
+     * Verifica se é um local folha (não tem filhos)
+     */
     public boolean isFolha() {
         return subLocais == null || subLocais.isEmpty();
     }
     
-    public int getNivelHierarquia() {
-        int nivel = 0;
-        Local atual = this;
-        while (atual.getLocalPrincipal() != null) {
-            nivel++;
-            atual = atual.getLocalPrincipal();
-        }
-        return nivel;
-    }
+    // ===== MÉTODOS AUXILIARES PARA IMAGENS =====
     
-    // Métodos para tipos de acessibilidade
-    public void adicionarTipoAcessibilidade(TipoAcessibilidade tipo) {
-        if (tiposAcessibilidade == null) {
-            tiposAcessibilidade = new HashSet<>();
-        }
-        tiposAcessibilidade.add(tipo);
-    }
-    
-    public void adicionarTiposAcessibilidade(TipoAcessibilidade... tipos) {
-        if (tiposAcessibilidade == null) {
-            tiposAcessibilidade = new HashSet<>();
-        }
-        for (TipoAcessibilidade tipo : tipos) {
-            tiposAcessibilidade.add(tipo);
+    /**
+     * Adiciona uma imagem ao local
+     * @param imagem a imagem a ser adicionada
+     */
+    public void addImagem(Imagem imagem) {
+        if (imagem != null) {
+            imagens.add(imagem);
+            imagem.setLocal(this);
         }
     }
     
-    public void removerTipoAcessibilidade(TipoAcessibilidade tipo) {
-        if (tiposAcessibilidade != null) {
-            tiposAcessibilidade.remove(tipo);
+    /**
+     * Remove uma imagem do local
+     * @param imagem a imagem a ser removida
+     */
+    public void removeImagem(Imagem imagem) {
+        if (imagem != null) {
+            imagens.remove(imagem);
+            imagem.setLocal(null);
         }
     }
     
-    public boolean possuiTipoAcessibilidade(TipoAcessibilidade tipo) {
-        return tiposAcessibilidade != null && tiposAcessibilidade.contains(tipo);
-    }
-    
-    public boolean possuiTodosTiposAcessibilidade(Set<TipoAcessibilidade> tipos) {
-        return tiposAcessibilidade != null && tiposAcessibilidade.containsAll(tipos);
-    }
-    
-    public boolean possuiQualquerTipoAcessibilidade(Set<TipoAcessibilidade> tipos) {
-        if (tiposAcessibilidade == null || tipos == null) {
-            return false;
-        }
-        for (TipoAcessibilidade tipo : tipos) {
-            if (tiposAcessibilidade.contains(tipo)) {
-                return true;
+    /**
+     * Retorna a primeira imagem (thumbnail)
+     */
+    public String getImagemPrincipal() {
+        if (imagens != null && !imagens.isEmpty()) {
+            Imagem primeira = imagens.stream()
+                    .sorted((a, b) -> {
+                        int ordemA = a.getOrdem() != null ? a.getOrdem() : 0;
+                        int ordemB = b.getOrdem() != null ? b.getOrdem() : 0;
+                        return Integer.compare(ordemA, ordemB);
+                    })
+                    .findFirst()
+                    .orElse(null);
+            if (primeira != null) {
+                return primeira.getImagemBase64();
             }
         }
-        return false;
+        return imagem;
+    }
+    
+    /**
+     * Retorna a quantidade de imagens
+     */
+    public int getTotalImagens() {
+        return imagens != null ? imagens.size() : 0;
     }
 }

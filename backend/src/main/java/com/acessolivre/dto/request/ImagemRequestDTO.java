@@ -18,4 +18,6 @@ public class ImagemRequestDTO {
 
     @NotNull(message = "ID do local é obrigatório")
     private Long idLocal;
+    
+    private Integer ordem;
 }

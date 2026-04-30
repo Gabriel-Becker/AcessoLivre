@@ -7,18 +7,14 @@ const LocalService = {
    */
   async cadastrarLocal(dados) {
     try {
-      console.log('📤 Cadastrando local:', dados);
+      console.log('📤 Cadastrando local:', JSON.stringify(dados, null, 2));
       
-      // Remove o campo 'imagens' se existir (backend pode não aceitar)
-      const { imagens, ...payload } = dados;
-      
-      const response = await api.post('/locais', payload);
+      const response = await api.post('/locais', dados);
       console.log('✅ Local cadastrado com sucesso:', response.data);
       return response.data;
     } catch (erro) {
       console.error('❌ Erro ao cadastrar local:', erro);
       
-      // Log detalhado do erro
       if (erro.response) {
         console.error('❌ Status:', erro.response.status);
         console.error('❌ Dados do erro:', erro.response.data);
@@ -29,11 +25,81 @@ const LocalService = {
   },
 
   /**
+   * Envia uma imagem para um local específico
+   * @param {number} idLocal - ID do local
+   * @param {string} imagemBase64 - Imagem em base64
+   */
+  async enviarImagem(idLocal, imagemBase64) {
+    try {
+      const response = await api.post('/imagens', {
+        imagemBase64: imagemBase64,
+        idLocal: idLocal
+      });
+      console.log(`✅ Imagem enviada para local ${idLocal}:`, response.data);
+      return response.data;
+    } catch (erro) {
+      console.error(`❌ Erro ao enviar imagem para local ${idLocal}:`, erro);
+      throw erro;
+    }
+  },
+
+  /**
+   * Envia múltiplas imagens para um local (uma por uma)
+   * @param {number} idLocal - ID do local
+   * @param {Array} imagens - Array de objetos com base64
+   * @param {Function} onProgress - Callback de progresso (opcional)
+   */
+  async enviarMultiplasImagens(idLocal, imagens, onProgress = null) {
+    const resultados = [];
+    const erros = [];
+
+    for (let i = 0; i < imagens.length; i++) {
+      try {
+        if (onProgress) {
+          onProgress(i + 1, imagens.length);
+        }
+        
+        const resultado = await this.enviarImagem(idLocal, imagens[i]);
+        resultados.push(resultado);
+      } catch (erro) {
+        erros.push({ index: i, erro });
+      }
+    }
+
+    return { resultados, erros };
+  },
+
+  /**
+   * Busca todas as imagens de um local
+   * @param {number} idLocal - ID do local
+   */
+  async buscarImagensDoLocal(idLocal) {
+    try {
+      const response = await api.get(`/imagens/local/${idLocal}`);
+      return response.data;
+    } catch (erro) {
+      console.error(`❌ Erro ao buscar imagens do local ${idLocal}:`, erro);
+      return [];
+    }
+  },
+
+  /**
+   * Remove uma imagem pelo ID
+   * @param {number} idImagem - ID da imagem
+   */
+  async removerImagem(idImagem) {
+    try {
+      await api.delete(`/imagens/${idImagem}`);
+      console.log(`✅ Imagem ${idImagem} removida`);
+      return true;
+    } catch (erro) {
+      console.error(`❌ Erro ao remover imagem ${idImagem}:`, erro);
+      return false;
+    }
+  },
+
+  /**
    * Busca todos os locais com paginação
-   * @param {Object} params - Parâmetros de paginação
-   * @param {number} params.page - Número da página (padrão: 0)
-   * @param {number} params.size - Itens por página (padrão: 20)
-   * @param {string} params.sort - Campo para ordenação (padrão: nome)
    */
   async listarLocais({ page = 0, size = 20, sort = 'nome' } = {}) {
     try {
@@ -49,7 +115,6 @@ const LocalService = {
 
   /**
    * Busca locais em destaque (os mais recentes)
-   * @param {number} limite - Quantidade de locais a buscar (padrão: 4)
    */
   async obterLocaisEmDestaque(limite = 4) {
     try {
@@ -74,7 +139,6 @@ const LocalService = {
    */
   async obterEstatisticas() {
     try {
-      // Busca a primeira página para contar o total de elementos
       const response = await api.get('/locais', {
         params: { page: 0, size: 1 }
       });
@@ -98,7 +162,6 @@ const LocalService = {
 
   /**
    * Busca detalhes de um local específico
-   * @param {number} id - ID do local
    */
   async obterLocal(id) {
     try {
@@ -111,9 +174,7 @@ const LocalService = {
   },
 
   /**
-   * Atualiza um local existente (requer autenticação)
-   * @param {number} id - ID do local
-   * @param {Object} dados - Dados atualizados
+   * Atualiza um local existente
    */
   async atualizarLocal(id, dados) {
     try {
@@ -126,8 +187,7 @@ const LocalService = {
   },
 
   /**
-   * Remove um local (requer autenticação de admin)
-   * @param {number} id - ID do local
+   * Remove um local
    */
   async removerLocal(id) {
     try {
@@ -141,7 +201,6 @@ const LocalService = {
 
   /**
    * Busca locais por categoria
-   * @param {string} categoria - Categoria do local (COMERCIAL, LAZER, etc.)
    */
   async buscarPorCategoria(categoria) {
     try {
@@ -155,7 +214,6 @@ const LocalService = {
 
   /**
    * Busca locais por tipo de acessibilidade
-   * @param {string} tipo - Tipo de acessibilidade (RAMPA, ELEVADOR, etc.)
    */
   async buscarPorTipoAcessibilidade(tipo) {
     try {
@@ -169,7 +227,6 @@ const LocalService = {
 
   /**
    * Formata os dados do local para o padrão do frontend
-   * @param {Object} local - Local vindo do backend
    */
   formatarLocal(local) {
     if (!local) return null;
@@ -199,7 +256,6 @@ const LocalService = {
 
   /**
    * Formata uma lista de locais
-   * @param {Array} locais - Lista de locais do backend
    */
   formatarLocais(locais) {
     if (!Array.isArray(locais)) return [];
