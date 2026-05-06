@@ -8,9 +8,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.acessolivre.exception.UsuarioException;
 import com.acessolivre.model.TokenRevogado;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.exception.UsuarioException;
 import com.acessolivre.repository.TokenRevogadoRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.service.TwoFactorService;

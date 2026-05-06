@@ -49,7 +49,7 @@ public class AdminService {
     public boolean alterarRoleUsuario(Long idUsuario, String novaRole) {
         log.info("Alterando role do usuário: id={}, novaRole={}", idUsuario, novaRole);
         
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdAndAtivoTrue(idUsuario);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdUsuarioAndAtivoTrue(idUsuario);
         if (usuarioOpt.isEmpty()) {
             log.warn("Usuário não encontrado para alteração de role: id={}", idUsuario);
             return false;
@@ -71,7 +71,7 @@ public class AdminService {
     public boolean deletarUsuario(Long idUsuario) {
         log.info("Deletando usuário: id={}", idUsuario);
         
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdAndAtivoTrue(idUsuario);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdUsuarioAndAtivoTrue(idUsuario);
         if (usuarioOpt.isEmpty()) {
             log.warn("Usuário não encontrado para deletar: id={}", idUsuario);
             return false;
@@ -89,7 +89,7 @@ public class AdminService {
     public boolean alterarSenhaUsuario(Long idUsuario, String novaSenha) {
         log.info("Alterando senha do usuário: id={}", idUsuario);
 
-        if (usuarioRepository.findByIdAndAtivoTrue(idUsuario).isEmpty()) {
+        if (usuarioRepository.findByIdUsuarioAndAtivoTrue(idUsuario).isEmpty()) {
             log.warn("Usuário não encontrado para alterar senha: id={}", idUsuario);
             return false;
         }

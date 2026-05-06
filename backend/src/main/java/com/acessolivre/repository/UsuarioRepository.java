@@ -20,7 +20,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmailAndAtivoTrue(String email);
 
-    Optional<Usuario> findByIdAndAtivoTrue(Long idUsuario);
+    Optional<Usuario> findByIdUsuarioAndAtivoTrue(Long idUsuario);
 
     java.util.List<Usuario> findAllByAtivoTrue();
 

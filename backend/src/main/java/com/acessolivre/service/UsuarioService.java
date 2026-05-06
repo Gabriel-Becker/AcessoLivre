@@ -35,7 +35,7 @@ public class UsuarioService {
      */
     public Optional<Usuario> buscarPorId(Long id) {
         log.info("Buscando usuário por ID: {}", id);
-        return usuarioRepository.findByIdAndAtivoTrue(id);
+        return usuarioRepository.findByIdUsuarioAndAtivoTrue(id);
     }
 
     /**
@@ -70,7 +70,7 @@ public class UsuarioService {
         log.info("Atualizando usuário ID: {}", usuario.getIdUsuario());
         
         // Verifica se o usuário existe
-        if (usuarioRepository.findByIdAndAtivoTrue(usuario.getIdUsuario()).isEmpty()) {
+        if (usuarioRepository.findByIdUsuarioAndAtivoTrue(usuario.getIdUsuario()).isEmpty()) {
             log.warn("Tentativa de atualização de usuário inexistente. ID: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + usuario.getIdUsuario());
         }
@@ -87,7 +87,7 @@ public class UsuarioService {
     @Transactional
     public void deletar(Long id) {
         log.info("Deletando usuário ID: {}", id);
-        Usuario usuario = usuarioRepository.findByIdAndAtivoTrue(id)
+        Usuario usuario = usuarioRepository.findByIdUsuarioAndAtivoTrue(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + id));
         usuario.setAtivo(false);
         usuario.setTokenAtual(null);
