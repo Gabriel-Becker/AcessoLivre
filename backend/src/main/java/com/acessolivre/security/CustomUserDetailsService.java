@@ -28,6 +28,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         UsuarioAutenticar ua = repository.findByUsuario_Email(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Não encontramos nenhum usuário com o e-mail informado: " + email));
 
+        if (ua.getUsuario() == null || !Boolean.TRUE.equals(ua.getUsuario().getAtivo())) {
+            throw new UsernameNotFoundException("Usuário inativo ou inexistente: " + email);
+        }
+
         // Usamos a senha já armazenada (hash) e a role do usuário
         String role = "USER";
         if (ua.getUsuario() != null && ua.getUsuario().getRole() != null) {

@@ -37,7 +37,7 @@ public class AuthenticationService {
         }
 
         try {
-            Usuario usuario = usuarioRepository.findByEmail(email)
+            Usuario usuario = usuarioRepository.findByEmailAndAtivoTrue(email)
                 .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
 
             if (!Boolean.TRUE.equals(usuario.getAtivo())) {
@@ -135,7 +135,7 @@ public class AuthenticationService {
                 return false;
             }
             
-            Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmailAndAtivoTrue(username).orElse(null);
             if (usuario == null || !Boolean.TRUE.equals(usuario.getAtivo())) {
                 return false;
             }
