@@ -130,6 +130,12 @@ public class JwtService {
             log.warn("JWT revogado");
             return false;
         }
+
+        Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
+        if (usuario == null || !Boolean.TRUE.equals(usuario.getAtivo())) {
+            log.warn("JWT rejeitado porque o usuário está inativo ou inexistente");
+            return false;
+        }
         return true;
     }
 }

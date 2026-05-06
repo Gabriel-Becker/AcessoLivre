@@ -1,17 +1,16 @@
 package com.acessolivre.service;
 
-import com.acessolivre.model.Usuario;
-import com.acessolivre.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.acessolivre.model.Usuario;
+import com.acessolivre.repository.UsuarioRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -26,7 +25,7 @@ public class UsuarioService {
      */
     public List<Usuario> listarTodos() {
         log.info("Listando todos os usuários");
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAllByAtivoTrue();
     }
 
     /**
@@ -36,7 +35,7 @@ public class UsuarioService {
      */
     public Optional<Usuario> buscarPorId(Long id) {
         log.info("Buscando usuário por ID: {}", id);
-        return usuarioRepository.findById(id);
+        return usuarioRepository.findByIdAndAtivoTrue(id);
     }
 
     /**
@@ -71,7 +70,7 @@ public class UsuarioService {
         log.info("Atualizando usuário ID: {}", usuario.getIdUsuario());
         
         // Verifica se o usuário existe
-        if (!usuarioRepository.existsById(usuario.getIdUsuario())) {
+        if (usuarioRepository.findByIdAndAtivoTrue(usuario.getIdUsuario()).isEmpty()) {
             log.warn("Tentativa de atualização de usuário inexistente. ID: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + usuario.getIdUsuario());
         }
@@ -88,7 +87,11 @@ public class UsuarioService {
     @Transactional
     public void deletar(Long id) {
         log.info("Deletando usuário ID: {}", id);
-        usuarioRepository.deleteById(id);
+        Usuario usuario = usuarioRepository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + id));
+        usuario.setAtivo(false);
+        usuario.setTokenAtual(null);
+        usuarioRepository.save(usuario);
         log.info("Usuário deletado com sucesso. ID: {}", id);
     }
 

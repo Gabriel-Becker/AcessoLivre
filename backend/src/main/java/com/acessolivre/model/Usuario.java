@@ -74,6 +74,10 @@ public class Usuario {
     @Column(name = "token_atual", length = 2000)
     private String tokenAtual;
 
+    @Column(name = "ativo", nullable = false)
+    @Builder.Default
+    private Boolean ativo = true;
+
     @CreationTimestamp
     @Column(name = "data_cadastro")
     private LocalDateTime dataCadastro;

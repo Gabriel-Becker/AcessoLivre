@@ -49,7 +49,7 @@ public class AdminService {
     public boolean alterarRoleUsuario(Long idUsuario, String novaRole) {
         log.info("Alterando role do usuário: id={}, novaRole={}", idUsuario, novaRole);
         
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdAndAtivoTrue(idUsuario);
         if (usuarioOpt.isEmpty()) {
             log.warn("Usuário não encontrado para alteração de role: id={}", idUsuario);
             return false;
@@ -71,12 +71,16 @@ public class AdminService {
     public boolean deletarUsuario(Long idUsuario) {
         log.info("Deletando usuário: id={}", idUsuario);
         
-        if (!usuarioRepository.existsById(idUsuario)) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdAndAtivoTrue(idUsuario);
+        if (usuarioOpt.isEmpty()) {
             log.warn("Usuário não encontrado para deletar: id={}", idUsuario);
             return false;
         }
         
-        usuarioRepository.deleteById(idUsuario);
+        Usuario usuario = usuarioOpt.get();
+        usuario.setAtivo(false);
+        usuario.setTokenAtual(null);
+        usuarioRepository.save(usuario);
         log.info("Usuário deletado: id={}", idUsuario);
         return true;
     }
@@ -85,7 +89,7 @@ public class AdminService {
     public boolean alterarSenhaUsuario(Long idUsuario, String novaSenha) {
         log.info("Alterando senha do usuário: id={}", idUsuario);
 
-        if (!usuarioRepository.existsById(idUsuario)) {
+        if (usuarioRepository.findByIdAndAtivoTrue(idUsuario).isEmpty()) {
             log.warn("Usuário não encontrado para alterar senha: id={}", idUsuario);
             return false;
         }
@@ -152,7 +156,7 @@ public class AdminService {
         
         Map<String, Object> stats = new HashMap<>();
         
-        long totalUsuarios = usuarioRepository.count();
+        long totalUsuarios = usuarioRepository.countByAtivoTrue();
         long totalLocais = localRepository.count();
         long totalAvaliacoes = avaliacaoRepository.count();
         long avaliacoesPendentes = avaliacaoRepository.findByModerado(false).size();

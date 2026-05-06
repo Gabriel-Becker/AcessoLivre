@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.acessolivre.model.TokenRevogado;
 import com.acessolivre.model.Usuario;
+import com.acessolivre.exception.UsuarioException;
 import com.acessolivre.repository.TokenRevogadoRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.service.TwoFactorService;
@@ -38,6 +39,10 @@ public class AuthenticationService {
         try {
             Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
+
+            if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+                throw new UsuarioException.UsuarioInativoException();
+            }
             
             if (!usuario.getEmailVerified()) {
                 throw new EmailNotVerifiedException("Email não verificado. Verifique seu email antes de fazer login.");
@@ -131,7 +136,7 @@ public class AuthenticationService {
             }
             
             Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
-            if (usuario == null) {
+            if (usuario == null || !Boolean.TRUE.equals(usuario.getAtivo())) {
                 return false;
             }
             
@@ -144,6 +149,10 @@ public class AuthenticationService {
     public String reautenticar(Long userId) {
         Usuario usuario = usuarioRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            throw new UsuarioException.UsuarioInativoException();
+        }
         
         Authentication authentication = new UsernamePasswordAuthenticationToken(
             usuario.getEmail(),

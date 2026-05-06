@@ -1,11 +1,12 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.enums.Role;
-import com.acessolivre.model.Usuario;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.acessolivre.enums.Role;
+import com.acessolivre.model.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
@@ -16,6 +17,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return Optional contendo o usuário se encontrado
      */
     Optional<Usuario> findByEmail(String email);
+
+    Optional<Usuario> findByEmailAndAtivoTrue(String email);
+
+    Optional<Usuario> findByIdAndAtivoTrue(Long idUsuario);
+
+    java.util.List<Usuario> findAllByAtivoTrue();
+
+    long countByAtivoTrue();
 
     /**
      * Verifica se existe pelo menos um usuário com a role informada.
