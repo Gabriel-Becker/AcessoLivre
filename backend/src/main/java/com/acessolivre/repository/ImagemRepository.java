@@ -1,3 +1,4 @@
+// repository/ImagemRepository.java
 package com.acessolivre.repository;
 
 import com.acessolivre.model.Imagem;
@@ -9,13 +10,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ImagemRepository extends JpaRepository<Imagem, Long> {
     
-    List<Imagem> findByLocalIdLocal(Long idLocal);
-    
     List<Imagem> findByLocalIdLocalOrderByOrdemAsc(Long idLocal);
+    
+    Optional<Imagem> findFirstByLocalIdLocalOrderByOrdemDesc(Long idLocal);
     
     @Modifying
     @Transactional
@@ -24,8 +26,13 @@ public interface ImagemRepository extends JpaRepository<Imagem, Long> {
     
     @Modifying
     @Transactional
-    @Query("UPDATE Imagem i SET i.ordem = :ordem WHERE i.idImagem = :idImagem")
-    void updateOrdem(@Param("idImagem") Long idImagem, @Param("ordem") Integer ordem);
+    @Query("UPDATE Imagem i SET i.ordem = i.ordem + 1 WHERE i.local.idLocal = :idLocal AND i.ordem >= :ordem")
+    void incrementarOrdem(@Param("idLocal") Long idLocal, @Param("ordem") Integer ordem);
     
     long countByLocalIdLocal(Long idLocal);
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Imagem i WHERE i.idImagem = :id")
+    void deleteById(@Param("id") Long id);
 }

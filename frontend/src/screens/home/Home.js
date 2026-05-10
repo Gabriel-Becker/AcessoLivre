@@ -8,6 +8,7 @@ import {
   FlatList,
   useWindowDimensions
 } from 'react-native';
+
 import { StatsBanner, LocalCard, Button } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -18,8 +19,8 @@ import toastHelper from '../../utils/toastHelper';
 export default function Home({ navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { isAuthenticated } = useAuth();
-  const { width } = useWindowDimensions(); // Hook para largura da tela
-  
+  const { width } = useWindowDimensions();
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [estatisticas, setEstatisticas] = useState({ 
@@ -30,71 +31,63 @@ export default function Home({ navigation }) {
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [error, setError] = useState(null);
 
-  // Função para determinar número de colunas baseado na largura da tela
+  // ✅ Corrigido: agora sempre retorna valor
   const getNumColumns = useCallback(() => {
-    if (width >= 1200) return 4;   
+    if (width >= 1400) return 4;
+    if (width >= 1000) return 3;
+    if (width >= 600) return 2;
+    return 1;
   }, [width]);
 
   const numColumns = getNumColumns();
 
   const carregarDados = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
     setError(null);
-    
+
     try {
       console.log('🏠 Home: Buscando dados do backend...');
-      
+
       const [stats, locais] = await Promise.all([
         HomeService.obterEstatisticas(),
-        HomeService.obterLocaisEmDestaque(8), // Aumentado para 8 para grid
+        HomeService.obterLocaisEmDestaque(8),
       ]);
-      
-      console.log(` Home: ${stats.totalLocais} locais cadastrados`);
-      console.log(` Home: ${locais.length} locais em destaque`);
-      console.log(` Layout: ${numColumns} colunas (largura: ${width})`);
-      
+
       setEstatisticas(stats);
       setLocaisDestaque(locais);
     } catch (erro) {
       console.error('❌ Home: Erro ao carregar dados:', erro);
-      setError('Não foi possível carregar os dados. Tente novamente.');
+      setError('Não foi possível carregar os dados.');
       toastHelper.showError('Erro ao carregar página inicial');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [numColumns, width]);
-  
+  }, []);
+
   useEffect(() => {
     carregarDados();
-    
+
     const unsubscribe = navigation?.addListener?.('focus', () => {
-      console.log('🏠 Home: Tela em foco, recarregando dados...');
       carregarDados();
     });
-    
+
     return unsubscribe;
   }, [carregarDados, navigation]);
 
-  // Pull-to-refresh
-  const handleRefresh = () => {
-    carregarDados(true);
-  };
+  const handleRefresh = () => carregarDados(true);
 
-  // Navegar para tela de busca
   const handleVerTodos = () => {
     navigation?.navigate?.('Buscar');
   };
 
-  // Navegar para detalhes do local
   const handleLocalPress = (local) => {
     navigation?.navigate?.('LocalDetalhes', { id: local.id });
   };
 
+  // ✅ Header
   const renderHeader = () => (
     <>
       <StatsBanner
@@ -102,18 +95,20 @@ export default function Home({ navigation }) {
         totalAvaliacoes={estatisticas.totalAvaliacoes}
         altoContraste={isHighContrast}
       />
-      
+
       <View style={styles.sectionHeader}>
         <View style={styles.sectionHeaderText}>
           <ThemedText variant="h2" weight="bold" altoContraste={isHighContrast}>
             Locais em Destaque
           </ThemedText>
+
           <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-            {locaisDestaque.length > 0 
-              ? `Conheça os ${locaisDestaque.length} locais mais recentes da comunidade` 
+            {locaisDestaque.length > 0
+              ? `Conheça os ${locaisDestaque.length} locais mais recentes`
               : 'Seja o primeiro a cadastrar um local'}
           </ThemedText>
         </View>
+
         {locaisDestaque.length > 0 && (
           <TouchableOpacity onPress={handleVerTodos}>
             <ThemedText color="primary" weight="semibold" altoContraste={isHighContrast}>
@@ -125,13 +120,18 @@ export default function Home({ navigation }) {
     </>
   );
 
-  // Footer do FlatList
+  // ✅ Footer
   const renderFooter = () => (
     <>
       {estatisticas.totalLocais > 0 && (
         <View style={styles.footerInfo}>
-          <ThemedText color="textTertiary" variant="caption" align="center" altoContraste={isHighContrast}>
-            Total de {estatisticas.totalLocais} local(is) cadastrado(s)
+          <ThemedText
+            color="textTertiary"
+            variant="caption"
+            align="center"
+            altoContraste={isHighContrast}
+          >
+            Total de {estatisticas.totalLocais} local(is)
           </ThemedText>
         </View>
       )}
@@ -139,25 +139,36 @@ export default function Home({ navigation }) {
     </>
   );
 
-  // Estado vazio (quando não há locais)
+  // ✅ Empty State (a causa do crash)
   const renderEmptyState = () => (
-    <View style={[styles.emptyState, { backgroundColor: t.colors.surfaceSecondary }]}>
-      <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-        Nenhum local cadastrado ainda.
+    <View style={[styles.emptyState, { backgroundColor: t.colors.surface }]}>
+      <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+        Nenhum local cadastrado ainda
       </ThemedText>
-      <Spacer size="md" />
-      <Button 
-        variant="primary" 
-        onPress={handleVerTodos}
-        iconLeft="add-outline"
-        altoContraste={isHighContrast}
-      >
-        Cadastrar primeiro local
-      </Button>
+
+      <Spacer size="sm" />
+
+      <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+        Seja o primeiro da comunidade a cadastrar um local acessível!
+      </ThemedText>
+
+      {isAuthenticated && (
+        <>
+          <Spacer size="md" />
+          <Button
+            variant="primary"
+            onPress={() => navigation?.navigate?.('CadastrarLocal')}
+            iconLeft="add-outline"
+            altoContraste={isHighContrast}
+          >
+            Cadastrar local
+          </Button>
+        </>
+      )}
     </View>
   );
 
-  // Tela de loading
+  // Loading
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: t.colors.background }]}>
@@ -170,7 +181,7 @@ export default function Home({ navigation }) {
     );
   }
 
-  // Tela de erro
+  // Erro
   if (error && locaisDestaque.length === 0) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: t.colors.background }]}>
@@ -178,9 +189,9 @@ export default function Home({ navigation }) {
           {error}
         </ThemedText>
         <Spacer size="md" />
-        <Button 
-          variant="primary" 
-          onPress={() => carregarDados()} 
+        <Button
+          variant="primary"
+          onPress={() => carregarDados()}
           iconLeft="refresh-outline"
           altoContraste={isHighContrast}
         >
@@ -193,12 +204,12 @@ export default function Home({ navigation }) {
   return (
     <FlatList
       data={locaisDestaque}
-      key={numColumns} 
+      key={numColumns}
       numColumns={numColumns}
       keyExtractor={(item) => item.id?.toString() || item.localId?.toString()}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[
-        styles.scroll, 
+        styles.scroll,
         { backgroundColor: t.colors.background },
         locaisDestaque.length === 0 && styles.emptyContainer
       ]}
@@ -210,20 +221,19 @@ export default function Home({ navigation }) {
           tintColor={t.colors.primary}
         />
       }
-      ListHeaderComponent={renderHeader()}
-      ListFooterComponent={renderFooter()}
-      ListEmptyComponent={renderEmptyState()}
+      ListHeaderComponent={renderHeader}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={renderEmptyState}
       renderItem={({ item, index }) => (
         <View style={styles.cardWrapper}>
           <LocalCard
             local={item}
             onPress={() => handleLocalPress(item)}
-            showNewBadge={index === 0 && numColumns === 1} 
+            showNewBadge={index === 0 && numColumns === 1}
             altoContraste={isHighContrast}
           />
         </View>
       )}
-      // Otimizações de performance
       initialNumToRender={4}
       maxToRenderPerBatch={8}
       windowSize={10}
@@ -246,7 +256,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
   },
   errorContainer: {
     flex: 1,
@@ -270,8 +279,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 6,
     paddingVertical: 8,
-    minWidth: 260, 
-    maxWidth: 400, 
+    minWidth: 260,
+    maxWidth: 400,
   },
   emptyState: {
     paddingVertical: 48,
