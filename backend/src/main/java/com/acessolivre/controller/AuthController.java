@@ -132,7 +132,9 @@ public class AuthController {
 
             log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
             return ResponseEntity.ok(response);
-        } catch (com.acessolivre.security.TwoFactorRequiredException e) {
+        } 
+        
+        catch (com.acessolivre.security.TwoFactorRequiredException e) {
             log.info("2FA requerido para email={}", request.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(AuthResponseDTO.builder()

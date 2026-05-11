@@ -316,8 +316,6 @@ const AuthService = {
   async login({ email, senha, rememberMe = false, twoFactorCode }) {
     let twoFactorCodeInformado = false;
     try {
-      // Antes de um novo login, limpa apenas estado local para evitar chamada remota
-      // de logout que pode falhar com token antigo e interromper o fluxo de 2FA.
       await this.removeToken();
       await this.setUserData(null);
       
