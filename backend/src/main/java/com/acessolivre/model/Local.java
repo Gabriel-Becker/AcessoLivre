@@ -1,3 +1,4 @@
+// model/Local.java - Corrigir o método getImagemPrincipal()
 package com.acessolivre.model;
 
 import com.acessolivre.enums.Categoria;
@@ -162,7 +163,8 @@ public class Local {
     }
     
     /**
-     * Retorna a primeira imagem (thumbnail)
+     * Retorna a primeira imagem (thumbnail) - CORRIGIDO
+     * Agora usa getUrl() em vez de getImagemBase64()
      */
     public String getImagemPrincipal() {
         if (imagens != null && !imagens.isEmpty()) {
@@ -175,7 +177,7 @@ public class Local {
                     .findFirst()
                     .orElse(null);
             if (primeira != null) {
-                return primeira.getImagemBase64();
+                return primeira.getUrl();  // ← CORRIGIDO: getUrl() em vez de getImagemBase64()
             }
         }
         return imagem;

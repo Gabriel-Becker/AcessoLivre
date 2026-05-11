@@ -2,19 +2,15 @@ package com.acessolivre.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "imagem", indexes = {
-    @Index(name = "idx_local_id", columnList = "idlocal"),
-    @Index(name = "idx_ordem", columnList = "idlocal, ordem")
+    @Index(name = "idx_imagem_local", columnList = "idlocal")
 })
 @Data
 @Builder
@@ -27,41 +23,28 @@ public class Imagem {
     @Column(name = "idimagem")
     private Long idImagem;
 
-    @Column(name = "storage_key", nullable = false, length = 500)
-    private String storageKey;  // Path no S3: "locais/123/foto_abc123.jpg"
+    @NotBlank(message = "URL da imagem é obrigatória")
+    @Column(name = "url", length = 500)
+    private String url;
 
-    @Column(name = "url_publica", length = 1000)
-    private String urlPublica;  // URL do CloudFront ou S3
+    @Column(name = "idlocal", nullable = false)
+    private Long idLocal;
 
-    @Column(name = "thumbnail_key", length = 500)
-    private String thumbnailKey;  // Path da thumbnail no S3
-
-    @Column(name = "thumbnail_url", length = 1000)
-    private String thumbnailUrl;  // URL da thumbnail
+    @Column(name = "nome_original")
+    private String nomeOriginal;
 
     @Column(name = "tamanho_bytes")
     private Long tamanhoBytes;
 
-    @Column(name = "content_type", length = 100)
+    @Column(name = "content_type")
     private String contentType;
-
-    @Column(name = "largura")
-    private Integer largura;
-
-    @Column(name = "altura")
-    private Integer altura;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idlocal", referencedColumnName = "idlocal")
-    @NotNull(message = "Local é obrigatório")
-    @JsonIgnore
-    private Local local;
 
     @Column(name = "ordem")
     @Builder.Default
     private Integer ordem = 0;
 
-    @CreationTimestamp
-    @Column(name = "data_criacao", updatable = false)
-    private LocalDateTime dataCriacao;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idlocal", referencedColumnName = "idlocal", insertable = false, updatable = false)
+    @JsonIgnore
+    private Local local;
 }

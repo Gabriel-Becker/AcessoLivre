@@ -1,3 +1,4 @@
+// mapper/LocalMapper.java
 package com.acessolivre.mapper;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
@@ -18,7 +19,6 @@ public class LocalMapper {
         Local local = Local.builder()
                 .nome(dto.getNome())
                 .descricao(dto.getDescricao())
-                .imagem(dto.getImagem())
                 .categoria(dto.getCategoria())
                 .usuario(usuario)
                 .endereco(endereco)
@@ -57,17 +57,17 @@ public class LocalMapper {
                     .map(ImagemMapper::toResponse)
                     .collect(Collectors.toList());
             
-            // Pega a primeira imagem para thumbnail
+            // Pega a primeira imagem para thumbnail (USANDO getUrl())
             Imagem primeiraImagem = imagensOrdenadas.get(0);
-            imagemPrincipal = primeiraImagem.getImagemBase64();
-            primeiraImagemCompatibilidade = imagemPrincipal; // Para campo 'imagem' legado
+            imagemPrincipal = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
+            primeiraImagemCompatibilidade = imagemPrincipal;
         }
 
         LocalResponseDTO.LocalResponseDTOBuilder builder = LocalResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
                 .descricao(entity.getDescricao())
-                .imagem(primeiraImagemCompatibilidade != null ? primeiraImagemCompatibilidade : entity.getImagem())
+                .imagem(primeiraImagemCompatibilidade)  // Agora é URL
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .categoria(entity.getCategoria())
@@ -107,7 +107,7 @@ public class LocalMapper {
             return null;
         }
         
-        // Para o resumo, também pega a primeira imagem
+        // Para o resumo, também pega a primeira imagem (USANDO getUrl())
         String imagemResumo = null;
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
             Imagem primeiraImagem = entity.getImagens().stream()
@@ -115,12 +115,8 @@ public class LocalMapper {
                     .findFirst()
                     .orElse(null);
             if (primeiraImagem != null) {
-                imagemResumo = primeiraImagem.getImagemBase64();
+                imagemResumo = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
             }
-        }
-        
-        if (imagemResumo == null) {
-            imagemResumo = entity.getImagem();
         }
         
         return LocalResumoResponseDTO.builder()
@@ -144,7 +140,6 @@ public class LocalMapper {
     public static void updateEntity(Local entity, LocalRequestDTO dto, Usuario usuario, Endereco endereco) {
         entity.setNome(dto.getNome());
         entity.setDescricao(dto.getDescricao());
-        entity.setImagem(dto.getImagem());
         entity.setCategoria(dto.getCategoria());
         entity.setUsuario(usuario);
         entity.setEndereco(endereco);

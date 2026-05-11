@@ -11,10 +11,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImagemUploadDTO {
+public class ImagemRequestDTO {
     
-    @NotNull(message = "Arquivo é obrigatório")
+    @NotNull(message = "Arquivo da imagem é obrigatório")
     private MultipartFile arquivo;
     
-    private Integer ordem;
+    @NotNull(message = "ID do local é obrigatório")
+    private Long idLocal;
 }

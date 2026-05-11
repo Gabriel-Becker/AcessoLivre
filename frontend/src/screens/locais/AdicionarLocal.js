@@ -34,8 +34,6 @@ import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 
 const CATEGORIAS_LABELS = {
@@ -63,12 +61,9 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
+// Componente de upload de imagens
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
-  const cameraRef = useRef(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -94,6 +89,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
           file,
           name: file.name,
           size: file.size,
+          type: file.type,
         }))
       );
       onAddImages(newImages);
@@ -104,57 +100,43 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.7,
-      base64: true,
+      quality: 0.8,
+      base64: false,
     });
 
     if (!result.canceled && result.assets) {
       const newImages = result.assets.map(asset => ({
         uri: asset.uri,
-        base64: asset.base64,
         name: asset.fileName || `image_${Date.now()}.jpg`,
         size: asset.fileSize || 0,
+        type: asset.mimeType || 'image/jpeg',
       }));
       onAddImages(newImages);
     }
   };
 
   const handleTakePhoto = async () => {
-    if (!cameraPermission?.granted) {
-      const result = await requestCameraPermission();
-      if (!result.granted) {
-        toastHelper.showError('Permissão de câmera negada');
-        return;
-      }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      toastHelper.showError('Permissão de câmera negada');
+      return;
     }
 
-    if (!mediaPermission?.granted) {
-      const result = await requestMediaPermission();
-      if (!result.granted) {
-        toastHelper.showError('Permissão de galeria negada');
-        return;
-      }
-    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+      base64: false,
+    });
 
-    setShowCamera(true);
-  };
-
-  const handleCapture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
-        base64: true,
-      });
-      
+    if (!result.canceled && result.assets && result.assets[0]) {
+      const asset = result.assets[0];
       const newImage = {
-        uri: photo.uri,
-        base64: photo.base64,
-        name: `photo_${Date.now()}.jpg`,
-        size: photo.fileSize || 0,
+        uri: asset.uri,
+        name: asset.fileName || `photo_${Date.now()}.jpg`,
+        size: asset.fileSize || 0,
+        type: asset.mimeType || 'image/jpeg',
       };
-      
       onAddImages([newImage]);
-      setShowCamera(false);
     }
   };
 
@@ -178,29 +160,9 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     );
   };
 
-  if (showCamera) {
-    return (
-      <View style={{ flex: 1, height: 400 }}>
-        <CameraView
-          ref={cameraRef}
-          style={{ flex: 1 }}
-          facing="back"
-        />
-        <View style={{ flexDirection: 'row', gap: 16, padding: 16 }}>
-          <Button variant="danger" onPress={() => setShowCamera(false)}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onPress={handleCapture}>
-            Tirar Foto
-          </Button>
-        </View>
-      </View>
-    );
-  }
-
-  if (Platform.OS === 'web') {
-    return (
-      <View>
+  return (
+    <View>
+      {Platform.OS === 'web' ? (
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -226,30 +188,15 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
             PNG, JPG até 10MB cada (máx. 5 imagens)
           </ThemedText>
         </div>
-        
-        {renderPreview()}
-        
-        <View style={localStyles.actionButtons}>
-          <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
-            Selecionar
-          </Button>
-          <Button variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline">
-            Câmera
-          </Button>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View>
-      <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
-        <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
-        <ThemedText align="center">Clique para selecionar imagens</ThemedText>
-        <ThemedText color="textTertiary" variant="caption" align="center">
-          PNG, JPG até 10MB cada (máx. 5 imagens)
-        </ThemedText>
-      </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
+          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+          <ThemedText align="center">Clique para selecionar imagens</ThemedText>
+          <ThemedText color="textTertiary" variant="caption" align="center">
+            PNG, JPG até 10MB cada (máx. 5 imagens)
+          </ThemedText>
+        </TouchableOpacity>
+      )}
 
       {renderPreview()}
 
@@ -313,129 +260,6 @@ const localStyles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-// ============================================================
-// FUNÇÃO CORRIGIDA PARA CONVERTER IMAGEM PARA BASE64
-// ============================================================
-const getImageBase64WithPrefix = async (image) => {
-  // Verificação de segurança
-  if (!image) {
-    console.error('❌ getImageBase64WithPrefix: image é undefined ou null');
-    return null;
-  }
-
-  console.log('📸 Processando imagem:', { 
-    hasBase64: !!image.base64, 
-    hasUri: !!image.uri, 
-    hasFile: !!image.file,
-    name: image.name,
-    uriPreview: image.uri ? image.uri.substring(0, 100) : null
-  });
-
-  // Caso 1: Já tem base64 (vindo do ImagePicker)
-  if (image.base64 && typeof image.base64 === 'string' && image.base64.length > 0) {
-    if (image.base64.startsWith('data:image')) {
-      console.log('✅ Imagem já tem prefixo data:image');
-      return image.base64;
-    }
-    console.log('✅ Adicionando prefixo data:image ao base64');
-    return `data:image/jpeg;base64,${image.base64}`;
-  }
-  
-  // Caso 2: Tem URI, precisa ler o arquivo
-  if (image.uri && typeof image.uri === 'string') {
-    try {
-      console.log('📂 Lendo arquivo da URI:', image.uri.substring(0, 100));
-      
-      // Para blob URIs na web
-      if (image.uri.startsWith('blob:')) {
-        console.log('📂 Detectado blob URI, usando fetch');
-        const response = await fetch(image.uri);
-        const blob = await response.blob();
-        
-        return await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            console.log('✅ Blob lido com sucesso');
-            resolve(reader.result);
-          };
-          reader.onerror = (error) => {
-            console.error('❌ Erro ao ler blob:', error);
-            reject(null);
-          };
-          reader.readAsDataURL(blob);
-        });
-      }
-      
-      // Para arquivos nativos (mobile)
-      let base64File = null;
-      
-      // Tenta com a constante do Expo
-      try {
-        base64File = await FileSystem.readAsStringAsync(image.uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      } catch (error) {
-        console.log('Erro com FileSystem.EncodingType.Base64, tentando com string literal');
-        // Tenta com string literal como fallback
-        base64File = await FileSystem.readAsStringAsync(image.uri, {
-          encoding: 'base64',
-        });
-      }
-      
-      if (!base64File) {
-        console.error('❌ Falha ao ler o arquivo: base64 vazio');
-        return null;
-      }
-      
-      // Detecta o tipo da imagem pela extensão ou pelo conteúdo
-      let mimeType = 'image/jpeg';
-      const extension = image.name?.split('.').pop()?.toLowerCase() || '';
-      
-      if (extension === 'png') {
-        mimeType = 'image/png';
-      } else if (extension === 'gif') {
-        mimeType = 'image/gif';
-      } else if (extension === 'webp') {
-        mimeType = 'image/webp';
-      }
-      
-      const result = `data:${mimeType};base64,${base64File}`;
-      console.log(`✅ Imagem convertida com sucesso (${mimeType}), tamanho: ${Math.round(result.length / 1024)} KB`);
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Erro ao ler arquivo de imagem:', error);
-      return null;
-    }
-  }
-  
-  // Caso 3: Tem file (para web)
-  if (image.file) {
-    try {
-      console.log('📂 Processando arquivo File:', image.file.name);
-      
-      return await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          console.log('✅ File lido com sucesso');
-          resolve(reader.result);
-        };
-        reader.onerror = (error) => {
-          console.error('❌ Erro ao ler File:', error);
-          resolve(null);
-        };
-        reader.readAsDataURL(image.file);
-      });
-    } catch (error) {
-      console.error('❌ Erro ao processar File:', error);
-      return null;
-    }
-  }
-  
-  console.error('❌ Imagem sem base64, uri ou file:', image);
-  return null;
-};
 
 export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
@@ -664,7 +488,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
       // ==========================================
-      // PASSO 1: Cadastrar o Local (sem imagens)
+      // PASSO 1: Cadastrar o Local
       // ==========================================
       const payloadLocal = {
         nome: formulario.nome.trim(),
@@ -691,7 +515,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       console.log('✅ Local criado com ID:', localId);
 
       // ==========================================
-      // PASSO 2: Enviar as imagens uma por uma
+      // PASSO 2: Enviar imagens via Multipart FormData
       // ==========================================
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
@@ -703,17 +527,23 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
           try {
             setProgressoImagens({ atual: i + 1, total: imagens.length });
             
-            console.log(`📸 Processando imagem ${i + 1}/${imagens.length}...`);
-            const imagemBase64 = await getImageBase64WithPrefix(imagens[i]);
+            const imagem = imagens[i];
+            console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
             
-            if (!imagemBase64) {
-              console.error(`❌ Não foi possível obter base64 da imagem ${i + 1}`);
-              imagensComErro++;
-              continue;
-            }
+            const formData = new FormData();
+            formData.append('idLocal', localId.toString());
+            formData.append('arquivo', {
+              uri: imagem.uri,
+              name: imagem.name || `image_${Date.now()}.jpg`,
+              type: imagem.type || 'image/jpeg',
+            });
             
-            console.log(`📤 Enviando imagem ${i + 1}/${imagens.length} (tamanho: ${Math.round(imagemBase64.length / 1024)} KB)...`);
-            await LocalService.enviarImagem(localId, imagemBase64);
+            await api.post('/imagens', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            });
+            
             imagensEnviadas++;
             console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
             
@@ -752,18 +582,16 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       // Navegar de volta
       if (onNavigate) {
         onNavigate('Inicio');
-        navigation?.setParams({ refresh: Date.now() });
       } else if (navigation) {
-        navigation.navigate('Main');
+        navigation.goBack();
       }
       
     } catch (erro) {
-      const mensagem = erro.response?.data?.mensagem || 
-                      erro.response?.data?.message || 
+      const mensagem = erro.response?.data || 
                       erro.message ||
                       'Erro ao cadastrar local. Tente novamente.';
-      toastHelper.showError(mensagem);
-      console.error('Erro detalhado:', erro.response?.data || erro);
+      toastHelper.showError(typeof mensagem === 'string' ? mensagem : JSON.stringify(mensagem));
+      console.error('Erro detalhado:', erro);
     } finally {
       setEnviando(false);
       setProgressoImagens({ atual: 0, total: 0 });
