@@ -539,54 +539,60 @@ export default function Admin() {
 
   return (
     <Container background="backgroundSecondary" scroll contentStyle={styles.scrollContent}>
-      <ThemedText variant="h1" weight="bold">Painel Administrativo</ThemedText>
-      <Spacer size="sm" />
-      <ThemedText color="textSecondary">
-        Área restrita para gestão geral do sistema. Bem-vindo, {usuario?.nome || 'Administrador'}.
-      </ThemedText>
-
-      <Spacer size="lg" />
-
-      <View style={styles.abasContainer}>
-        {abas.map((aba) => (
-          <Button
-            key={aba.key}
-            variant={abaAtiva === aba.key ? 'primary' : 'outline'}
-            size="small"
-            onPress={() => setAbaAtiva(aba.key)}
-            style={styles.botaoAba}
-          >
-            {aba.label}
-          </Button>
-        ))}
-      </View>
-
-      <Spacer size="md" />
-
-      {carregando ? (
-        <Card style={styles.cardUsuario}>
-          <ThemedText size="sm">Carregando dados...</ThemedText>
-        </Card>
-      ) : null}
-
-      {erro ? (
-        <Card style={styles.cardUsuario}>
-          <ThemedText color="error" size="sm">{erro}</ThemedText>
+      <View style={styles.pageShell}>
+        <View style={styles.cabecalhoPagina}>
+          <ThemedText variant="h1" weight="bold" align="center">
+            Painel Administrativo
+          </ThemedText>
           <Spacer size="sm" />
-          <Button
-            variant="outline"
-            size="small"
-            onPress={tentarNovamente}
-            disabled={carregando}
-          >
-            Tentar novamente
-          </Button>
-        </Card>
-      ) : null}
+          <ThemedText color="textSecondary" align="center">
+            Área restrita para gestão geral do sistema. Bem-vindo, {usuario?.nome || 'Administrador'}.
+          </ThemedText>
+        </View>
 
-      {!carregando && !erro && abaAtiva === 'usuarios' ? renderUsuarios() : null}
-      {!carregando && !erro && abaAtiva === 'locais' ? renderLocais() : null}
-      {!carregando && !erro && abaAtiva === 'relatorios' ? renderRelatorios() : null}
+        <Spacer size="lg" />
+
+        <View style={styles.abasContainer}>
+          {abas.map((aba) => (
+            <Button
+              key={aba.key}
+              variant={abaAtiva === aba.key ? 'primary' : 'outline'}
+              size="small"
+              onPress={() => setAbaAtiva(aba.key)}
+              style={styles.botaoAba}
+            >
+              {aba.label}
+            </Button>
+          ))}
+        </View>
+
+        <Spacer size="md" />
+
+        {carregando ? (
+          <Card style={styles.cardUsuario}>
+            <ThemedText size="sm">Carregando dados...</ThemedText>
+          </Card>
+        ) : null}
+
+        {erro ? (
+          <Card style={styles.cardUsuario}>
+            <ThemedText color="error" size="sm">{erro}</ThemedText>
+            <Spacer size="sm" />
+            <Button
+              variant="outline"
+              size="small"
+              onPress={tentarNovamente}
+              disabled={carregando}
+            >
+              Tentar novamente
+            </Button>
+          </Card>
+        ) : null}
+
+        {!carregando && !erro && abaAtiva === 'usuarios' ? renderUsuarios() : null}
+        {!carregando && !erro && abaAtiva === 'locais' ? renderLocais() : null}
+        {!carregando && !erro && abaAtiva === 'relatorios' ? renderRelatorios() : null}
+      </View>
 
       <EditarUsuarioModal
         visible={modalEditarVisivel}
@@ -665,11 +671,22 @@ export default function Admin() {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: theme.spacing.xxl,
+    paddingTop: theme.spacing.md,
+  },
+  pageShell: {
+    width: '100%',
+    maxWidth: 1280,
+    alignSelf: 'center',
+  },
+  cabecalhoPagina: {
+    width: '100%',
+    alignItems: 'center',
   },
   abasContainer: {
     flexDirection: 'row',
     gap: theme.spacing.sm,
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   botaoAba: {
     minWidth: 110,
@@ -683,24 +700,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
   },
-  containerUsuario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  infoUsuario: {
-    flex: 1,
-  },
   cardUsuario: {
     padding: theme.spacing.md,
   },
-  botoesMiniatura: {
-    flexDirection: 'column',
+  acoesLinha: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    marginLeft: theme.spacing.md,
-  },
-  botaoIcon: {
-    flex: 1,
   },
   modalOverlay: {
     flex: 1,
