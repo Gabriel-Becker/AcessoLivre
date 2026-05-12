@@ -1,25 +1,15 @@
-/**
- * Opções padrão de filtro para Perfil de usuários
- */
 export const opcoesRoleUsuarios = [
   { label: 'Todas as roles', value: 'todos' },
   { label: 'Administrador', value: 'ROLE_ADMIN' },
   { label: 'Usuário', value: 'ROLE_USER' },
 ];
 
-/**
- * Opções padrão de filtro para Status de usuários
- */
 export const opcoesStatusUsuarios = [
   { label: 'Todos os status', value: 'todos' },
   { label: 'Ativos', value: 'ativo' },
   { label: 'Inativos', value: 'inativo' },
 ];
 
-/**
- * Configuração dos filtros para usuários
- * Recebe callbacks de setter para estado
- */
 export const filtrosUsuarios = (filtroRole, setFiltroRole, filtroStatus, setFiltroStatus) => [
   {
     chave: 'role',
@@ -37,9 +27,6 @@ export const filtrosUsuarios = (filtroRole, setFiltroRole, filtroStatus, setFilt
   },
 ];
 
-/**
- * Gera opções de filtro de Categoria dinamicamente a partir dos locais
- */
 export const gerarOpcoesCategoriaLocais = (locais) => {
   const categorias = Array.from(
     new Set(locais.map((item) => item?.categoria?.nome).filter(Boolean))
@@ -51,10 +38,6 @@ export const gerarOpcoesCategoriaLocais = (locais) => {
   ];
 };
 
-/**
- * Configuração dos filtros para locais
- * Recebe callback de setter e lista de locais para gerar opções
- */
 export const filtrosLocais = (filtroCategoria, setFiltroCategoria, locais) => [
   {
     chave: 'categoria',

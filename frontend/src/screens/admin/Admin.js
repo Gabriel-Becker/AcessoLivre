@@ -17,6 +17,7 @@ export default function Admin() {
   const { usuario } = useAuth();
   const { theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
+  const ehMobile = width < 768;
   const [abaAtiva, setAbaAtiva] = useState('usuarios');
 
   const [usuarios, setUsuarios] = useState([]);
@@ -233,7 +234,7 @@ export default function Admin() {
   };
 
   const renderPaginacao = ({ paginaAtual, totalPaginas, onAnterior, onProxima }) => (
-    <View style={styles.paginacao}>
+    <View style={[styles.paginacao, ehMobile && styles.paginacaoEmpilhada]}>
       <Button variant="outline" size="small" onPress={onAnterior} disabled={carregando || paginaAtual <= 0}>
         Anterior
       </Button>
@@ -365,7 +366,7 @@ export default function Admin() {
 
   return (
     <Container background="backgroundSecondary" scroll contentStyle={styles.scrollContent}>
-      <View style={styles.pageShell}>
+      <View style={[styles.pageShell, { paddingHorizontal: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
         <View style={styles.cabecalhoPagina}>
           <ThemedText variant="h1" weight="bold" align="center">
             Painel Administrativo
@@ -395,13 +396,13 @@ export default function Admin() {
         <Spacer size="md" />
 
         {carregando ? (
-          <Card style={styles.cardUsuario}>
+          <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
             <ThemedText size="sm">Carregando dados...</ThemedText>
           </Card>
         ) : null}
 
         {erro ? (
-          <Card style={styles.cardUsuario}>
+          <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
             <ThemedText color="error" size="sm">{erro}</ThemedText>
             <Spacer size="sm" />
             <Button
@@ -439,7 +440,15 @@ export default function Admin() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: width < 768 ? '88%' : '35%' }]}>
+          <View
+            style={[
+              styles.modalContainer,
+              {
+                backgroundColor: t.colors.surface,
+                width: width < 768 ? '88%' : width < 1024 ? '52%' : '35%',
+              },
+            ]}
+          >
             <ThemedText variant="h2" weight="bold" align="center" color="text">
               Apagar usuário
             </ThemedText>
@@ -525,6 +534,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
+  },
+  paginacaoEmpilhada: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
   cardUsuario: {
     padding: theme.spacing.md,

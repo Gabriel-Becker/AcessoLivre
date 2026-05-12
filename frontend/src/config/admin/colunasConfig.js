@@ -4,9 +4,6 @@ import { ThemedText, Spacer } from '../../components/commons';
 import { EtiquetaStatus } from '../../components/admin';
 import { Button } from '../../components/ui';
 
-/**
- * Renderizador de coluna Nome para usuários
- */
 export const renderNomeUsuario = (item) => (
   <View>
     <ThemedText weight="bold" size="sm">
@@ -19,18 +16,12 @@ export const renderNomeUsuario = (item) => (
   </View>
 );
 
-/**
- * Renderizador de coluna E-mail para usuários
- */
 export const renderEmailUsuario = (item) => (
   <ThemedText color="textSecondary" size="sm">
     {item.email || 'E-mail não informado'}
   </ThemedText>
 );
 
-/**
- * Renderizador de coluna Perfil para usuários
- */
 export const renderRoleUsuario = (item, formatarRoleUsuario) => (
   <EtiquetaStatus
     texto={formatarRoleUsuario(item.role)}
@@ -38,25 +29,16 @@ export const renderRoleUsuario = (item, formatarRoleUsuario) => (
   />
 );
 
-/**
- * Renderizador de coluna Status para usuários
- */
 export const renderStatusUsuario = (item) => (
   <EtiquetaStatus texto={item?.ativo ? 'Ativo' : 'Inativo'} tipo={item?.ativo ? 'sucesso' : 'perigo'} />
 );
 
-/**
- * Renderizador de coluna Cadastro para usuários
- */
 export const renderDataCadastroUsuario = (item) => (
   <ThemedText color="textSecondary" size="sm">
     {item?.dataCadastro || 'Sem data'}
   </ThemedText>
 );
 
-/**
- * Renderizador de coluna Ações para usuários
- */
 export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEditar, onExcluir) => (
   usuario?.idUsuario !== item.idUsuario ? (
     <View style={styles.acoesLinha}>
@@ -88,9 +70,6 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
   )
 );
 
-/**
- * Configuração de colunas para tabela de usuários
- */
 export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsuario, onEditar, onExcluir) => [
   {
     chave: 'nome',
@@ -137,9 +116,6 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
   },
 ];
 
-/**
- * Renderizador de coluna Local para locais
- */
 export const renderNomeLocal = (item) => (
   <View>
     <ThemedText weight="bold" size="sm">
@@ -152,25 +128,16 @@ export const renderNomeLocal = (item) => (
   </View>
 );
 
-/**
- * Renderizador de coluna Categoria para locais
- */
 export const renderCategoriaLocal = (item) => (
   <EtiquetaStatus texto={item?.categoria?.nome || 'Não informada'} tipo="neutro" />
 );
 
-/**
- * Renderizador de coluna Cidade para locais
- */
 export const renderCidadeLocal = (item) => (
   <ThemedText color="textSecondary" size="sm">
     {item?.endereco?.cidade || 'N/I'} - {item?.endereco?.estado || 'N/I'}
   </ThemedText>
 );
 
-/**
- * Configuração de colunas para tabela de locais
- */
 export const colunasLocais = () => [
   {
     chave: 'nome',
