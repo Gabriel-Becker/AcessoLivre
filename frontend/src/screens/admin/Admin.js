@@ -4,12 +4,14 @@ import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
-import { BarraFiltroAdmin, EtiquetaStatus, TabelaPlanilhaAdmin } from '../../components/admin';
+import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
 import AdminService from '../../services/AdminService';
 import theme from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
+import { colunasUsuarios, colunasLocais } from '../../config/admin/colunasConfig';
+import { filtrosUsuarios, filtrosLocais } from '../../config/admin/filtrosConfig';
 
 export default function Admin() {
   const { usuario } = useAuth();
@@ -144,33 +146,14 @@ export default function Admin() {
   }, [abaAtiva, paginaUsuarios, paginaLocais]);
 
   const opcoesRoleUsuarios = useMemo(
-    () => [
-      { label: 'Todas as roles', value: 'todos' },
-      { label: 'Administrador', value: 'ROLE_ADMIN' },
-      { label: 'Usuário', value: 'ROLE_USER' },
-    ],
+    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios).find(f => f.chave === 'role')?.opcoes || [],
     []
   );
 
   const opcoesStatusUsuarios = useMemo(
-    () => [
-      { label: 'Todos os status', value: 'todos' },
-      { label: 'Ativos', value: 'ativo' },
-      { label: 'Inativos', value: 'inativo' },
-    ],
+    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios).find(f => f.chave === 'status')?.opcoes || [],
     []
   );
-
-  const opcoesCategoriaLocais = useMemo(() => {
-    const categorias = Array.from(
-      new Set(locais.map((item) => item?.categoria?.nome).filter(Boolean))
-    );
-
-    return [
-      { label: 'Todas as categorias', value: 'todos' },
-      ...categorias.map((categoria) => ({ label: categoria, value: categoria })),
-    ];
-  }, [locais]);
 
   const usuariosFiltrados = useMemo(() => {
     const termo = normalizarTexto(buscaUsuarios);
@@ -269,105 +252,8 @@ export default function Admin() {
   );
 
   const renderUsuarios = () => {
-    const colunas = [
-      {
-        chave: 'nome',
-        titulo: 'Nome',
-        flex: 1.4,
-        minWidth: 180,
-        render: (item) => (
-          <View>
-            <ThemedText weight="bold" size="sm">
-              {item.nome || 'Usuário sem nome'}
-            </ThemedText>
-            <Spacer size="xs" />
-            <ThemedText color="textSecondary" size="xs">
-              ID #{item.idUsuario}
-            </ThemedText>
-          </View>
-        ),
-      },
-      {
-        chave: 'email',
-        titulo: 'E-mail',
-        flex: 1.8,
-        minWidth: 240,
-        render: (item) => (
-          <ThemedText color="textSecondary" size="sm">
-            {item.email || 'E-mail não informado'}
-          </ThemedText>
-        ),
-      },
-      {
-        chave: 'role',
-        titulo: 'Perfil',
-        flex: 0.9,
-        minWidth: 130,
-        render: (item) => (
-          <EtiquetaStatus
-            texto={formatarRoleUsuario(item.role)}
-            tipo={String(item?.role || 'ROLE_USER').toUpperCase() === 'ROLE_ADMIN' ? 'info' : 'neutro'}
-          />
-        ),
-      },
-      {
-        chave: 'status',
-        titulo: 'Status',
-        flex: 0.8,
-        minWidth: 110,
-        render: (item) => (
-          <EtiquetaStatus texto={item?.ativo ? 'Ativo' : 'Inativo'} tipo={item?.ativo ? 'sucesso' : 'perigo'} />
-        ),
-      },
-      {
-        chave: 'cadastro',
-        titulo: 'Cadastro',
-        flex: 1.1,
-        minWidth: 150,
-        render: (item) => (
-          <ThemedText color="textSecondary" size="sm">
-            {item?.dataCadastro || 'Sem data'}
-          </ThemedText>
-        ),
-      },
-      {
-        chave: 'acoes',
-        titulo: 'Ações',
-        flex: 1.2,
-        minWidth: 190,
-        alinhamento: 'center',
-        render: (item) =>
-          usuario?.idUsuario !== item.idUsuario ? (
-            <View style={styles.acoesLinha}>
-              <Button
-                variant="outline"
-                size="small"
-                iconLeft="create-outline"
-                loading={carregandoAcao}
-                disabled={carregandoAcao}
-                onPress={() => confirmarEdicaoUsuario(item)}
-              >
-                Editar
-              </Button>
-
-              <Button
-                variant="danger"
-                size="small"
-                iconLeft="trash-outline"
-                loading={carregandoAcao}
-                disabled={carregandoAcao}
-                onPress={() => confirmarApagarUsuario(item)}
-              >
-                Excluir
-              </Button>
-            </View>
-          ) : (
-            <ThemedText color="textSecondary" size="sm" align="center">
-              Conta atual
-            </ThemedText>
-          ),
-      },
-    ];
+    const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario);
+    const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios);
 
     return (
       <>
@@ -377,22 +263,7 @@ export default function Admin() {
           pesquisa={buscaUsuarios}
           onChangePesquisa={setBuscaUsuarios}
           pesquisaPlaceholder="Pesquisar por nome ou e-mail"
-          filtros={[
-            {
-              chave: 'role',
-              label: 'Perfil',
-              valor: filtroRoleUsuarios,
-              opcoes: opcoesRoleUsuarios,
-              onSelect: setFiltroRoleUsuarios,
-            },
-            {
-              chave: 'status',
-              label: 'Status',
-              valor: filtroStatusUsuarios,
-              opcoes: opcoesStatusUsuarios,
-              onSelect: setFiltroStatusUsuarios,
-            },
-          ]}
+          filtros={filtros}
           onLimparFiltros={limparFiltrosUsuarios}
         />
 
@@ -430,45 +301,8 @@ export default function Admin() {
   };
 
   const renderLocais = () => {
-    const colunas = [
-      {
-        chave: 'nome',
-        titulo: 'Local',
-        flex: 1.7,
-        minWidth: 220,
-        render: (item) => (
-          <View>
-            <ThemedText weight="bold" size="sm">
-              {item.nome || 'Local sem nome'}
-            </ThemedText>
-            <Spacer size="xs" />
-            <ThemedText color="textSecondary" size="xs">
-              ID #{item.idLocal}
-            </ThemedText>
-          </View>
-        ),
-      },
-      {
-        chave: 'categoria',
-        titulo: 'Categoria',
-        flex: 1,
-        minWidth: 160,
-        render: (item) => (
-          <EtiquetaStatus texto={item?.categoria?.nome || 'Não informada'} tipo="neutro" />
-        ),
-      },
-      {
-        chave: 'cidade',
-        titulo: 'Cidade / UF',
-        flex: 1.1,
-        minWidth: 180,
-        render: (item) => (
-          <ThemedText color="textSecondary" size="sm">
-            {item?.endereco?.cidade || 'N/I'} - {item?.endereco?.estado || 'N/I'}
-          </ThemedText>
-        ),
-      },
-    ];
+    const colunas = colunasLocais();
+    const filtros = filtrosLocais(filtroCategoriaLocais, setFiltroCategoriaLocais, locais);
 
     return (
       <>
@@ -478,15 +312,7 @@ export default function Admin() {
           pesquisa={buscaLocais}
           onChangePesquisa={setBuscaLocais}
           pesquisaPlaceholder="Pesquisar por nome ou cidade"
-          filtros={[
-            {
-              chave: 'categoria',
-              label: 'Categoria',
-              valor: filtroCategoriaLocais,
-              opcoes: opcoesCategoriaLocais,
-              onSelect: setFiltroCategoriaLocais,
-            },
-          ]}
+          filtros={filtros}
           onLimparFiltros={limparFiltrosLocais}
         />
 
