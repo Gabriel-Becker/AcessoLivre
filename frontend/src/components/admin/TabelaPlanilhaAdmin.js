@@ -34,7 +34,13 @@ export default function TabelaPlanilhaAdmin({
                   },
                 ]}
               >
-                <ThemedText size="xs" weight="bold" color="textSecondary" style={styles.tituloColuna}>
+                <ThemedText
+                  size="xs"
+                  weight="bold"
+                  color="textSecondary"
+                  align={coluna.alinhamento === 'center' ? 'center' : 'left'}
+                  style={styles.tituloColuna}
+                >
                   {coluna.titulo}
                 </ThemedText>
               </View>
@@ -59,6 +65,7 @@ export default function TabelaPlanilhaAdmin({
             ) : (
               dados.map((item, indice) => {
                 const chave = chaveExtractor ? chaveExtractor(item, indice) : String(indice);
+                const fundoLinha = indice % 2 === 0 ? t.colors.surface : t.colors.surfaceSecondary;
 
                 return (
                   <View
@@ -66,7 +73,7 @@ export default function TabelaPlanilhaAdmin({
                     style={[
                       styles.linha,
                       styles.linhaDados,
-                      { borderBottomColor: t.colors.borderLight },
+                      { borderBottomColor: t.colors.borderLight, backgroundColor: fundoLinha },
                     ]}
                   >
                     {colunas.map((coluna) => (
@@ -100,6 +107,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 14,
   },
   tabela: {
     width: '100%',
@@ -107,27 +115,27 @@ const styles = StyleSheet.create({
   linha: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
   cabecalho: {
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
     borderBottomWidth: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   linhaDados: {
     borderBottomWidth: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   celula: {
     justifyContent: 'center',
-    paddingRight: 12,
+    paddingRight: 10,
   },
   tituloColuna: {
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
   },
   estadoVazio: {
-    paddingVertical: 28,
-    paddingHorizontal: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 14,
   },
 });

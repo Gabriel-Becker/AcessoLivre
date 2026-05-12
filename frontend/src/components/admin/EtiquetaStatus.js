@@ -18,7 +18,7 @@ export default function EtiquetaStatus({
 
   return (
     <View style={[estilos.container, { backgroundColor: corFundo, borderColor: corTexto }]}>
-      <ThemedText size="xs" weight="bold" style={{ color: corTexto }}>
+      <ThemedText size="xs" weight="bold" align="center" style={{ color: corTexto }}>
         {texto}
       </ThemedText>
     </View>
@@ -62,7 +62,10 @@ function criarEstilos(t) {
       borderRadius: t.borderRadius.full,
       borderWidth: 1,
       paddingHorizontal: t.spacing.sm,
-      paddingVertical: 5,
+      paddingVertical: 6,
+      minWidth: 92,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });
 }
