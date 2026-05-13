@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Share, Alert } from 'react-native';
-import { Button } from '../ui';
+import { Button } from '../ui/Button';
 import toastHelper from '../../utils/toastHelper';
 
 export default function LocalActions({ 
