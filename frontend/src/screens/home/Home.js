@@ -25,7 +25,7 @@ const BREAKPOINTS = {
 };
 const LOCAIS_POR_TELA = 8;
 
-export default function Home({ navigation }) {
+export default function Home({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
@@ -41,7 +41,7 @@ export default function Home({ navigation }) {
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [error, setError] = useState(null);
 
-  // ✅ CORREÇÃO 1: useMemo para número de colunas
+  // ✅ useMemo para número de colunas
   const numColumns = useMemo(() => {
     if (width >= BREAKPOINTS.DESKTOP) return 4;
     if (width >= BREAKPOINTS.TABLET) return 3;
@@ -49,9 +49,8 @@ export default function Home({ navigation }) {
     return DEFAULT_NUM_COLUMNS;
   }, [width]);
 
-  // ✅ CORREÇÃO 2: keyExtractor robusto com fallback
+  // ✅ keyExtractor robusto com fallback
   const getItemKey = useCallback((item, index) => {
-    // Prioridade: id -> localId -> fallback com índice
     if (item?.id) return `local_${item.id}`;
     if (item?.localId) {
       console.warn(`⚠️ Home: Item usando 'localId' em vez de 'id': ${item.localId}`);
@@ -101,19 +100,18 @@ export default function Home({ navigation }) {
   useEffect(() => {
     carregarDados();
 
-    const unsubscribe = navigation?.addListener?.('focus', () => {
-      carregarDados(true); // Refresh silencioso ao focar
-    });
-
+    // Se tiver listener de foco, adiciona
+    const unsubscribe = () => {};
+    
     return unsubscribe;
-  }, [carregarDados, navigation]);
+  }, [carregarDados]);
 
   // Handlers memoizados
   const handleRefresh = useCallback(() => carregarDados(true), [carregarDados]);
   
   const handleVerTodos = useCallback(() => {
-    navigation?.navigate?.('Buscar');
-  }, [navigation]);
+    onNavigate?.('Buscar');
+  }, [onNavigate]);
 
   const handleLocalPress = useCallback((local) => {
     if (!local?.id && !local?.localId) {
@@ -122,10 +120,10 @@ export default function Home({ navigation }) {
       return;
     }
     const localId = local.id || local.localId;
-    navigation?.navigate?.('LocalDetalhes', { id: localId });
-  }, [navigation]);
+    onNavigate?.('LocalDetalhes', { id: localId });
+  }, [onNavigate]);
 
-  // ✅ Componentes de layout (sem memoização desnecessária)
+  // Componentes de layout
   const renderBannerFixo = () => (
     <View style={styles.bannerContainer}>
       <StatsBanner
@@ -160,7 +158,7 @@ export default function Home({ navigation }) {
     </View>
   );
 
-  // ✅ renderItem memoizado para performance
+  // renderItem memoizado para performance
   const renderItem = useCallback(({ item, index }) => (
     <View style={styles.cardWrapper}>
       <LocalCard
@@ -172,7 +170,7 @@ export default function Home({ navigation }) {
     </View>
   ), [handleLocalPress, isHighContrast, numColumns]);
 
-  // ✅ Empty state memoizado
+  // Empty state memoizado
   const renderEmptyState = useCallback(() => (
     <View style={[styles.emptyState, { backgroundColor: t.colors.surface }]}>
       <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
@@ -219,7 +217,7 @@ export default function Home({ navigation }) {
     );
   }
 
-  // ✅ LAYOUT CORRIGIDO: Banner fixo + FlatList com scroll apenas nos cards
+  // Layout corrigido: Banner fixo + FlatList com scroll apenas nos cards
   return (
     <View style={[styles.container, { backgroundColor: t.colors.background }]}>
       {/* Parte fixa (não rola) */}
@@ -259,7 +257,7 @@ export default function Home({ navigation }) {
   );
 }
 
-// ✅ Estilos refatorados com melhor organização
+// Estilos refatorados com melhor organização
 const styles = StyleSheet.create({
   container: {
     flex: 1,

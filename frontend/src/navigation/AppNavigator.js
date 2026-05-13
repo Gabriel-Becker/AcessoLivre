@@ -8,6 +8,7 @@ import { Login, Register, ForgotPassword, ResetPassword } from '../screens/auth'
 import Home from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
+import LocalDetalhes from '../screens/locais/LocalDetalhes';
 import Sobre from '../screens/sobre/Sobre';
 import Perfil from '../screens/perfil/Perfil';
 import Admin from '../screens/admin/Admin';
@@ -32,9 +33,9 @@ function MainApp({ navigation, route }) {
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
-  const navegarInternamente = (screen) => {
+  const navegarInternamente = (screen, params = {}) => {
     if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword' || screen === 'ResetPassword') {
-      navigation?.navigate?.(screen);
+      navigation?.navigate?.(screen, params);
       return;
     }
 
@@ -48,17 +49,22 @@ function MainApp({ navigation, route }) {
       return;
     }
 
+    // Armazena os params para a próxima renderização
+    if (params && Object.keys(params).length > 0) {
+      navigation?.setParams({ ...route?.params, screen, ...params });
+    }
+    
     setCurrentScreen(screen);
   };
 
   useEffect(() => {
     if (route?.params?.screen) {
-      navegarInternamente(route.params.screen);
+      navegarInternamente(route.params.screen, route.params);
     }
   }, [route?.params?.screen, isAuthenticated, isAdmin]);
 
-  const handleNavigate = (screen) => {
-    navegarInternamente(screen);
+  const handleNavigate = (screen, params = {}) => {
+    navegarInternamente(screen, params);
   };
 
   useEffect(() => {
@@ -70,19 +76,21 @@ function MainApp({ navigation, route }) {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'Inicio':
-        return <Home />;
+        return <Home onNavigate={handleNavigate} />;
       case 'Buscar':
-        return <Buscar />;
+        return <Buscar onNavigate={handleNavigate} />;
       case 'Adicionar':
         return <AdicionarLocal onNavigate={handleNavigate} />;
+      case 'LocalDetalhes':
+        return <LocalDetalhes onNavigate={handleNavigate} route={route} />;
       case 'Sobre':
-        return <Sobre />;
+        return <Sobre onNavigate={handleNavigate} />;
       case 'Perfil':
-        return <Perfil />;
+        return <Perfil onNavigate={handleNavigate} />;
       case 'Admin':
-        return isAdmin ? <Admin /> : <Home />;
+        return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
       default:
-        return <Home />;
+        return <Home onNavigate={handleNavigate} />;
     }
   };
 
