@@ -4,26 +4,13 @@ export const opcoesRoleUsuarios = [
   { label: 'Usuário', value: 'ROLE_USER' },
 ];
 
-export const opcoesStatusUsuarios = [
-  { label: 'Todos os status', value: 'todos' },
-  { label: 'Ativos', value: 'ativo' },
-  { label: 'Inativos', value: 'inativo' },
-];
-
-export const filtrosUsuarios = (filtroRole, setFiltroRole, filtroStatus, setFiltroStatus) => [
+export const filtrosUsuarios = (filtroRole, setFiltroRole) => [
   {
     chave: 'role',
     label: 'Perfil',
     valor: filtroRole,
     opcoes: opcoesRoleUsuarios,
     onSelect: setFiltroRole,
-  },
-  {
-    chave: 'status',
-    label: 'Status',
-    valor: filtroStatus,
-    opcoes: opcoesStatusUsuarios,
-    onSelect: setFiltroStatus,
   },
 ];
 
