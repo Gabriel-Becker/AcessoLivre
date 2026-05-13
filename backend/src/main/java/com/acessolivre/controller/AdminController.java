@@ -51,8 +51,11 @@ public class AdminController {
     public ResponseEntity<Page<UsuarioAdminResponseDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "dataCadastro") String sort) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+            @RequestParam(defaultValue = "dataCadastro") String sort,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        String dirStr = direction == null ? "DESC" : direction;
+        Sort.Direction dir = Sort.Direction.fromString(dirStr);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
         Page<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios(pageable)
                 .map(this::toUsuarioAdminResponse);
         return ResponseEntity.ok(usuarios);

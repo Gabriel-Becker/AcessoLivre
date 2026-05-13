@@ -29,10 +29,6 @@ export const renderRoleUsuario = (item, formatarRoleUsuario) => (
   />
 );
 
-export const renderStatusUsuario = (item) => (
-  <EtiquetaStatus texto={item?.ativo ? 'Ativo' : 'Inativo'} tipo={item?.ativo ? 'sucesso' : 'perigo'} />
-);
-
 export const renderDataCadastroUsuario = (item) => (
   <ThemedText color="textSecondary" size="sm">
     {item?.dataCadastro || 'Sem data'}
@@ -73,6 +69,7 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
 export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsuario, onEditar, onExcluir) => [
   {
     chave: 'nome',
+    sortKey: 'nome',
     titulo: 'Nome',
     flex: 1.4,
     minWidth: 180,
@@ -80,6 +77,7 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
   },
   {
     chave: 'email',
+    sortKey: 'email',
     titulo: 'E-mail',
     flex: 1.8,
     minWidth: 240,
@@ -87,20 +85,15 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
   },
   {
     chave: 'role',
+    sortKey: 'role',
     titulo: 'Perfil',
     flex: 0.9,
     minWidth: 130,
     render: (item) => renderRoleUsuario(item, formatarRoleUsuario),
   },
   {
-    chave: 'status',
-    titulo: 'Status',
-    flex: 0.8,
-    minWidth: 110,
-    render: (item) => renderStatusUsuario(item),
-  },
-  {
     chave: 'cadastro',
+    sortKey: 'dataCadastro',
     titulo: 'Cadastro',
     flex: 1.1,
     minWidth: 150,

@@ -36,7 +36,7 @@ public class AdminService {
     @Transactional(readOnly = true)
     public Page<Usuario> listarTodosUsuarios(Pageable pageable) {
         log.info("Listando usuários com paginação: página={}, tamanho={}", pageable.getPageNumber(), pageable.getPageSize());
-        return usuarioRepository.findAll(pageable);
+        return usuarioRepository.findAllByAtivoTrue(pageable);
     }
 
     @Transactional(readOnly = true)

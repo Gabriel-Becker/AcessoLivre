@@ -1,9 +1,9 @@
 import api from '../api/axios';
 
 const AdminService = {
-  async listarUsuarios({ page = 0, size = 8, sort = 'dataCadastro' } = {}) {
+  async listarUsuarios({ page = 0, size = 8, sort = 'dataCadastro', direction = 'DESC' } = {}) {
     const response = await api.get('/admin/usuarios', {
-      params: { page, size, sort },
+      params: { page, size, sort, direction },
     });
     return response.data;
   },

@@ -24,6 +24,8 @@ export default function Admin() {
   const [paginaUsuarios, setPaginaUsuarios] = useState(0);
   const [totalPaginasUsuarios, setTotalPaginasUsuarios] = useState(1);
   const [totalUsuarios, setTotalUsuarios] = useState(0);
+  const [sortField, setSortField] = useState('dataCadastro');
+  const [sortDirection, setSortDirection] = useState('DESC');
 
   const [locais, setLocais] = useState([]);
   const [paginaLocais, setPaginaLocais] = useState(0);
@@ -32,7 +34,6 @@ export default function Admin() {
 
   const [buscaUsuarios, setBuscaUsuarios] = useState('');
   const [filtroRoleUsuarios, setFiltroRoleUsuarios] = useState('todos');
-  const [filtroStatusUsuarios, setFiltroStatusUsuarios] = useState('todos');
 
   const [buscaLocais, setBuscaLocais] = useState('');
   const [filtroCategoriaLocais, setFiltroCategoriaLocais] = useState('todos');
@@ -78,7 +79,6 @@ export default function Admin() {
   const limparFiltrosUsuarios = () => {
     setBuscaUsuarios('');
     setFiltroRoleUsuarios('todos');
-    setFiltroStatusUsuarios('todos');
   };
 
   const limparFiltrosLocais = () => {
@@ -90,7 +90,7 @@ export default function Admin() {
     setCarregando(true);
     setErro('');
     try {
-      const dados = await AdminService.listarUsuarios({ page: paginaUsuarios, size: 8, sort: 'dataCadastro' });
+      const dados = await AdminService.listarUsuarios({ page: paginaUsuarios, size: 8, sort: sortField, direction: sortDirection });
       const pagina = normalizarPaginacao(dados);
       setUsuarios(pagina.content);
       setTotalPaginasUsuarios(pagina.totalPages);
@@ -144,15 +144,20 @@ export default function Admin() {
       return;
     }
     carregarRelatorios();
-  }, [abaAtiva, paginaUsuarios, paginaLocais]);
+  }, [abaAtiva, paginaUsuarios, paginaLocais, sortField, sortDirection]);
+
+  const handleSortChange = (novaChave) => {
+    if (sortField === novaChave) {
+      setSortDirection((d) => (String(d).toUpperCase() === 'ASC' ? 'DESC' : 'ASC'));
+    } else {
+      setSortField(novaChave);
+      setSortDirection('ASC');
+    }
+    setPaginaUsuarios(0);
+  };
 
   const opcoesRoleUsuarios = useMemo(
-    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios).find(f => f.chave === 'role')?.opcoes || [],
-    []
-  );
-
-  const opcoesStatusUsuarios = useMemo(
-    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios).find(f => f.chave === 'status')?.opcoes || [],
+    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios).find(f => f.chave === 'role')?.opcoes || [],
     []
   );
 
@@ -163,15 +168,13 @@ export default function Admin() {
       const nome = normalizarTexto(item?.nome);
       const email = normalizarTexto(item?.email);
       const role = String(item?.role || 'ROLE_USER').toUpperCase();
-      const status = item?.ativo ? 'ativo' : 'inativo';
 
       const atendeBusca = !termo || nome.includes(termo) || email.includes(termo);
       const atendeRole = filtroRoleUsuarios === 'todos' || role === filtroRoleUsuarios;
-      const atendeStatus = filtroStatusUsuarios === 'todos' || status === filtroStatusUsuarios;
 
-      return atendeBusca && atendeRole && atendeStatus;
+      return atendeBusca && atendeRole;
     });
-  }, [usuarios, buscaUsuarios, filtroRoleUsuarios, filtroStatusUsuarios]);
+  }, [usuarios, buscaUsuarios, filtroRoleUsuarios]);
 
   const locaisFiltrados = useMemo(() => {
     const termo = normalizarTexto(buscaLocais);
@@ -254,7 +257,7 @@ export default function Admin() {
 
   const renderUsuarios = () => {
     const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario);
-    const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios, filtroStatusUsuarios, setFiltroStatusUsuarios);
+    const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios);
 
     return (
       <>
@@ -287,6 +290,9 @@ export default function Admin() {
           }
           carregando={carregando}
           larguraMinima={1120}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onChangeSort={handleSortChange}
         />
 
         <Spacer size="sm" />

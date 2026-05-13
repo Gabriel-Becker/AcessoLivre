@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Card } from '../ui';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
@@ -12,6 +12,9 @@ export default function TabelaPlanilhaAdmin({
   renderVazio,
   carregando = false,
   larguraMinima = 920,
+  sortField,
+  sortDirection,
+  onChangeSort,
 }) {
   const { isHighContrast } = useThemeContext();
   const t = getTheme(isHighContrast);
@@ -21,30 +24,50 @@ export default function TabelaPlanilhaAdmin({
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={[styles.tabela, { minWidth: larguraMinima }]}>
           <View style={[styles.linha, styles.cabecalho, { borderBottomColor: t.colors.border }]}>
-            {colunas.map((coluna) => (
-              <View
-                key={coluna.chave}
-                style={[
-                  styles.celula,
-                  {
-                    flex: coluna.flex ?? 1,
-                    minWidth: coluna.minWidth ?? 120,
-                    maxWidth: coluna.maxWidth,
-                    alignItems: coluna.alinhamento === 'center' ? 'center' : 'flex-start',
-                  },
-                ]}
-              >
-                <ThemedText
-                  size="xs"
-                  weight="bold"
-                  color="textSecondary"
-                  align={coluna.alinhamento === 'center' ? 'center' : 'left'}
-                  style={styles.tituloColuna}
+            {colunas.map((coluna) => {
+              const isSortable = Boolean(coluna.sortKey);
+              const isActive = isSortable && sortField && (coluna.sortKey === sortField || coluna.chave === sortField);
+              const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? '▲' : '▼') : '';
+
+              return (
+                <View
+                  key={coluna.chave}
+                  style={[
+                    styles.celula,
+                    {
+                      flex: coluna.flex ?? 1,
+                      minWidth: coluna.minWidth ?? 120,
+                      maxWidth: coluna.maxWidth,
+                      alignItems: coluna.alinhamento === 'center' ? 'center' : 'flex-start',
+                    },
+                  ]}
                 >
-                  {coluna.titulo}
-                </ThemedText>
-              </View>
-            ))}
+                  {isSortable ? (
+                    <TouchableOpacity onPress={() => onChangeSort && onChangeSort(coluna.sortKey || coluna.chave)}>
+                      <ThemedText
+                        size="xs"
+                        weight="bold"
+                        color="textSecondary"
+                        align={coluna.alinhamento === 'center' ? 'center' : 'left'}
+                        style={styles.tituloColuna}
+                      >
+                        {coluna.titulo} {indicator}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ) : (
+                    <ThemedText
+                      size="xs"
+                      weight="bold"
+                      color="textSecondary"
+                      align={coluna.alinhamento === 'center' ? 'center' : 'left'}
+                      style={styles.tituloColuna}
+                    >
+                      {coluna.titulo}
+                    </ThemedText>
+                  )}
+                </View>
+              );
+            })}
           </View>
 
           <View>
