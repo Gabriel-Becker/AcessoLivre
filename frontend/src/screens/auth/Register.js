@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Container, DesktopLayout } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
+import TermsModal from '../../components/feedback/TermsModal';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
@@ -106,6 +107,9 @@ export default function Register({ navigation }) {
     errors.confirmPassword?.message === authMessages.validation.passwordMismatch
       ? undefined
       : errors.confirmPassword?.message;
+
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [modalType, setModalType] = useState('terms');
 
   const styles = useMemo(
     () =>
@@ -365,28 +369,27 @@ export default function Register({ navigation }) {
               control={control}
               name="terms"
               render={({ field: { value } }) => (
-                <Pressable
-                  style={styles.checkboxRow}
-                  onPress={() => setValue('terms', !value, { shouldValidate: true })}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: value }}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      value && styles.checkboxChecked,
-                    ]}
+                <View style={styles.checkboxRow}>
+                  <Pressable
+                    onPress={() => setValue('terms', !value, { shouldValidate: true })}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: value }}
+                    style={[styles.checkbox, value && styles.checkboxChecked]}
                   >
                     {value ? <Ionicons name="checkmark" size={14} color={t.colors.textOnPrimary} /> : null}
-                  </View>
-                  <ThemedText
-                    color="textSecondary"
-                    altoContraste={isHighContrast}
-                    style={styles.checkboxLabel}
-                  >
-                    Aceito os termos de uso e política de privacidade
+                  </Pressable>
+
+                  <ThemedText color="textSecondary" altoContraste={isHighContrast} style={[styles.checkboxLabel, { flexShrink: 1 }]}> 
+                    Aceito os {' '}
+                    <Pressable onPress={() => { setModalType('terms'); setShowTermsModal(true); }} accessibilityRole="link">
+                      <ThemedText color="primary" weight="bold">termos de uso</ThemedText>
+                    </Pressable>
+                    {' '}e{' '}
+                    <Pressable onPress={() => { setModalType('privacy'); setShowTermsModal(true); }} accessibilityRole="link">
+                      <ThemedText color="primary" weight="bold">política de privacidade</ThemedText>
+                    </Pressable>
                   </ThemedText>
-                </Pressable>
+                </View>
               )}
             />
             {errors.terms?.message ? (
@@ -414,6 +417,7 @@ export default function Register({ navigation }) {
               actionLabel="Entrar"
               onPress={() => navigation?.navigate?.('Login')}
             />
+            <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} />
           </Card>
         </View>
       </ScrollView>
