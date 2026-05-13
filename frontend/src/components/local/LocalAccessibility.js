@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, CardSecao } from '../ui';
+import { CardSecao } from '../ui/CardSecao';
+import { ThemedText } from '../commons/ThemedText';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
