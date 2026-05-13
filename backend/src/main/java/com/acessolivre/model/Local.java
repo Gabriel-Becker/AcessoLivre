@@ -1,4 +1,3 @@
-// model/Local.java - Corrigir o método getImagemPrincipal()
 package com.acessolivre.model;
 
 import com.acessolivre.enums.Categoria;
