@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Share, Alert } from 'react-native';
-import { Button } from '../ui/Button';
+import { Button } from '../ui';
 import toastHelper from '../../utils/toastHelper';
 
 export default function LocalActions({ 
@@ -15,7 +15,6 @@ export default function LocalActions({
     try {
       await Share.share({
         message: `Confira o local ${local.nome} - um lugar acessível!`,
-        url: local.linkCompartilhamento || `https://meuapp.com/local/${local.id}`,
         title: `Compartilhar ${local.nome}`,
       });
     } catch (error) {
@@ -97,6 +96,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     gap: 12,
     marginVertical: 16,
+    paddingHorizontal: 16,
   },
   button: {
     flex: 1,
