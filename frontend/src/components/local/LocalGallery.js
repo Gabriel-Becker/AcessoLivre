@@ -1,9 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList, Image, TouchableOpacity, Modal } from 'react-native';
+import { 
+  View, 
+  StyleSheet, 
+  FlatList, 
+  Image, 
+  TouchableOpacity, 
+  Modal 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons/ThemedText';
-import { getTheme } from '../../config/theme';
+import { ThemedText } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
+import { getTheme } from '../../config/theme';
 
 export default function LocalGallery({ imagens = [], imagemPrincipal, altoContraste }) {
   const { isHighContrast } = useThemeContext();
@@ -53,7 +60,7 @@ export default function LocalGallery({ imagens = [], imagemPrincipal, altoContra
         resizeMode="cover"
       />
       {index === 0 && imagensParaExibir.length > 1 && (
-        <View style={styles.badge}>
+        <View style={[styles.badge, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
           <ThemedText variant="caption" color="textOnPrimary">
             +{imagensParaExibir.length - 1}
           </ThemedText>
@@ -66,7 +73,9 @@ export default function LocalGallery({ imagens = [], imagemPrincipal, altoContra
     return (
       <View style={[styles.placeholderContainer, { backgroundColor: t.colors.backgroundTertiary }]}>
         <Ionicons name="image-outline" size={48} color={t.colors.textTertiary} />
-        <ThemedText color="textTertiary">Nenhuma imagem disponível</ThemedText>
+        <ThemedText color="textTertiary" style={styles.placeholderText}>
+          Nenhuma imagem disponível
+        </ThemedText>
       </View>
     );
   }
@@ -133,7 +142,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -145,6 +153,10 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     marginHorizontal: 16,
     borderRadius: 12,
+  },
+  placeholderText: {
+    marginTop: 8,
+    fontSize: 12,
   },
   modalContainer: {
     flex: 1,

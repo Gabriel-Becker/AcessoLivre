@@ -9,28 +9,23 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { 
-  ThemedText, 
-  Spacer, 
   CabecalhoPagina,
   Card,
   Button 
 } from '../../components/ui';
+import { ThemedText, Spacer } from '../../components/commons';
 import LocalGallery from '../../components/local/LocalGallery';
 import LocalAccessibility from '../../components/local/LocalAccessibility';
 import LocalActions from '../../components/local/LocalActions';
 import LocalReviews from '../../components/local/LocalReviews';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import LocaisService from '../../services/LocalService';
+import LocalService from '../../services/LocalService';
 import toastHelper from '../../utils/toastHelper';
 
 export default function LocalDetalhes({ onNavigate, route }) {
- /* console.log('🔵 LocalDetalhes montou!');
-  console.log('🔵 route recebido:', route);
-  console.log('🔵 params:', route?.params);
-  console.log('🔵 ID extraído:', route?.params?.id);*/
   const { isHighContrast, theme: t } = useThemeContext();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { id } = route?.params || {};
 
   const [loading, setLoading] = useState(true);
@@ -53,8 +48,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
     try {
       console.log('📋 LocalDetalhes: Buscando detalhes do local ID:', id);
-      const dados = await LocaisService.obterDetalhes(id);
-      setLocal(dados);
+      // ✅ CORREÇÃO: usar obterLocal em vez de obterDetalhes
+      const dados = await LocalService.obterLocal(id);
+      
+      // Processa os dados para garantir que os campos existem
+      setLocal({
+        ...dados,
+        avaliacaoMedia: dados.avaliacaoMedia || 0,
+        totalAvaliacoes: dados.totalAvaliacoes || 0,
+        tiposAcessibilidade: dados.tiposAcessibilidade || [],
+        imagens: dados.imagens || [],
+        avaliacoes: dados.avaliacoes || []
+      });
       setError(null);
     } catch (err) {
       console.error('❌ LocalDetalhes: Erro ao carregar detalhes:', err);
