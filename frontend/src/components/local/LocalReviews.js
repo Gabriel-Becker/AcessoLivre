@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, CardSecao, Button } from '../ui';
-import { getTheme } from '../../config/theme';
+import { ThemedText } from '../commons';
+import { CardSecao, Button } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
+import { getTheme } from '../../config/theme';
 
 const ReviewItem = ({ review, altoContraste }) => {
   const { isHighContrast } = useThemeContext();
@@ -35,15 +36,15 @@ const ReviewItem = ({ review, altoContraste }) => {
           </View>
         </View>
         <ThemedText variant="caption" color="textTertiary">
-          {review.dataCriacao || review.data}
+          {review.dataCriacao || review.data || ''}
         </ThemedText>
       </View>
       
-      {review.comentario && (
+      {review.comentario ? (
         <ThemedText color="textSecondary" style={styles.comentario}>
           {review.comentario}
         </ThemedText>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -51,7 +52,6 @@ const ReviewItem = ({ review, altoContraste }) => {
 export default function LocalReviews({ 
   avaliacoes = [], 
   totalAvaliacoes,
-  avaliacaoMedia,
   onVerTodas,
   onAdicionarAvaliacao,
   isAuthenticated,
@@ -61,6 +61,7 @@ export default function LocalReviews({
   const t = getTheme(altoContraste ?? isHighContrast);
 
   const primeirasAvaliacoes = avaliacoes.slice(0, 3);
+  const total = totalAvaliacoes || avaliacoes.length;
 
   if (avaliacoes.length === 0) {
     return (
@@ -91,7 +92,7 @@ export default function LocalReviews({
 
   return (
     <CardSecao
-      titulo={`Avaliações (${totalAvaliacoes || avaliacoes.length})`}
+      titulo={`Avaliações (${total})`}
       icone="star-outline"
       altoContraste={altoContraste ?? isHighContrast}
     >
@@ -101,7 +102,7 @@ export default function LocalReviews({
           <ReviewItem review={item} altoContraste={altoContraste ?? isHighContrast} />
         )}
         keyExtractor={(_, index) => `review_${index}`}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: t.colors.borderLight }]} />}
         scrollEnabled={false}
       />
       
@@ -146,7 +147,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: '#E0E0E0',
   },
   emptyContainer: {
     alignItems: 'center',
