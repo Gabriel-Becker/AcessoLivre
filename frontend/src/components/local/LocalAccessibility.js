@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CardSecao } from '../ui/CardSecao';
-import { ThemedText } from '../commons/ThemedText';
-import { getTheme } from '../../config/theme';
+import { ThemedText } from '../commons';
+import { CardSecao } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
+import { getTheme } from '../../config/theme';
 
-// Mapeamento de ícones e labels (reaproveitado do LocalCard)
+// Mapeamento de ícones e labels
 const ACCESSIBILITY_CONFIG = {
   RAMPA: { icon: 'logo-usd', label: 'Rampa' },
   ELEVADOR: { icon: 'arrow-up-outline', label: 'Elevador' },
@@ -25,6 +25,7 @@ export default function LocalAccessibility({ tiposAcessibilidade = [], altoContr
   const t = getTheme(altoContraste ?? isHighContrast);
 
   const recursos = useMemo(() => {
+    if (!tiposAcessibilidade || tiposAcessibilidade.length === 0) return [];
     return tiposAcessibilidade.map(tipo => ({
       tipo,
       ...ACCESSIBILITY_CONFIG[tipo] || { icon: 'construct-outline', label: tipo }
@@ -47,7 +48,7 @@ export default function LocalAccessibility({ tiposAcessibilidade = [], altoContr
             <View style={[styles.iconWrapper, { backgroundColor: t.colors.backgroundSecondary }]}>
               <Ionicons name={recurso.icon} size={20} color={t.colors.primary} />
             </View>
-            <ThemedText>{recurso.label}</ThemedText>
+            <ThemedText style={styles.recursoLabel}>{recurso.label}</ThemedText>
           </View>
         ))}
       </View>
@@ -73,5 +74,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  recursoLabel: {
+    fontSize: 13,
   },
 });
