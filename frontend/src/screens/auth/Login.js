@@ -29,6 +29,7 @@ export default function Login({ navigation }) {
   const [submitting, setSubmitting] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState(null);
+  const [showAccountDisabled, setShowAccountDisabled] = useState(false);
 
   const redirecionarAposLogin = () => {
     if (!navigation) return;
@@ -176,6 +177,12 @@ export default function Login({ navigation }) {
         }
 
         const textoErro = String(result?.erro || '').toLowerCase();
+        const erroContaInativa = textoErro.includes('inativo') || textoErro.includes('desativ');
+
+        if (erroContaInativa) {
+          setShowAccountDisabled(true);
+          return;
+        }
         const erroIndicaTwoFactor =
           textoErro.includes('2fa') ||
           textoErro.includes('dois fatores') ||
@@ -206,7 +213,13 @@ export default function Login({ navigation }) {
       toastHelper.showSuccess('Você entrou na sua conta com sucesso.', 'Login realizado');
       redirecionarAposLogin();
     } catch (erro) {
-      toastHelper.showError(formatarErroLogin(erro?.message || authMessages.loginErrors.serverError), 'Não foi possível entrar');
+      const mensagem = formatarErroLogin(erro?.message || authMessages.loginErrors.serverError);
+      const mensagemNormalizada = String(mensagem || '').toLowerCase();
+      if (mensagemNormalizada.includes('inativo') || mensagemNormalizada.includes('desativ')) {
+        setShowAccountDisabled(true);
+      } else {
+        toastHelper.showError(mensagem, 'Não foi possível entrar');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -425,6 +438,35 @@ export default function Login({ navigation }) {
               altoContraste={isHighContrast}
             >
               Cancelar
+            </Button>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showAccountDisabled}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAccountDisabled(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+              Conta desativada
+            </ThemedText>
+            <Spacer size="xs" />
+            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+              Sua conta foi desativada, Contate um administrador para mais informações
+            </ThemedText>
+
+            <Spacer size="md" />
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={() => setShowAccountDisabled(false)}
+              altoContraste={isHighContrast}
+            >
+              OK
             </Button>
           </View>
         </View>
