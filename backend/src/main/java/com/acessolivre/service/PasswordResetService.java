@@ -7,10 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.acessolivre.exception.PasswordResetException;
 import com.acessolivre.model.PasswordResetCode;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
-import com.acessolivre.exception.PasswordResetException;
 import com.acessolivre.repository.PasswordResetCodeRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
@@ -46,6 +46,10 @@ public class PasswordResetService {
             // Resposta neutra para não permitir enumeração de contas.
             log.info("Solicitação de recuperação para email não encontrado");
             return MENSAGEM_RETORNO_NEUTRA;
+        }
+
+        if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            throw new com.acessolivre.exception.UsuarioException.UsuarioInativoException();
         }
 
         LocalDateTime janelaInicio = LocalDateTime.now().minusMinutes(MINUTOS_JANELA);

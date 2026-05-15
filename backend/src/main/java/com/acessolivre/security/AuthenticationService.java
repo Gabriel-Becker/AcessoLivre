@@ -29,19 +29,22 @@ public class AuthenticationService {
     private final TwoFactorService twoFactorService;
 
     public String login(String email, String senha, Boolean rememberMe, String twoFactorCode) {
-        if (loginAttemptService.estaBloqueado(email)) {
-            LocalDateTime bloqueioExpira = loginAttemptService.getBloqueioExpiraEm(email);
-            throw new RuntimeException(
-                String.format("Conta temporariamente bloqueada. Tente novamente após %s", bloqueioExpira)
-            );
-        }
-
         try {
-            Usuario usuario = usuarioRepository.findByEmailAndAtivoTrue(email)
-                .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
+            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
 
-            if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            if (usuario != null && !Boolean.TRUE.equals(usuario.getAtivo())) {
                 throw new UsuarioException.UsuarioInativoException();
+            }
+
+            if (loginAttemptService.estaBloqueado(email)) {
+                LocalDateTime bloqueioExpira = loginAttemptService.getBloqueioExpiraEm(email);
+                throw new RuntimeException(
+                    String.format("Conta temporariamente bloqueada. Tente novamente após %s", bloqueioExpira)
+                );
+            }
+
+            if (usuario == null) {
+                throw new RuntimeException("Credenciais inválidas");
             }
             
             if (!usuario.getEmailVerified()) {

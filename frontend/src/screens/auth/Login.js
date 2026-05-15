@@ -176,7 +176,7 @@ export default function Login({ navigation }) {
           return;
         }
 
-        const textoErro = String(result?.erro || '').toLowerCase();
+        const textoErro = String(result?.erro || result?.message || result?.mensagem || result?.error || '').toLowerCase();
         const erroContaInativa = textoErro.includes('inativo') || textoErro.includes('desativ');
 
         if (erroContaInativa) {

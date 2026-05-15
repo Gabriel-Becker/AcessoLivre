@@ -134,6 +134,11 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } 
         
+        catch (com.acessolivre.exception.UsuarioException.UsuarioInativoException e) {
+            log.warn("Tentativa de login com usuário inativo: {}", request.getEmail());
+            return erro(HttpStatus.FORBIDDEN, e.getMessage());
+        }
+        
         catch (com.acessolivre.security.TwoFactorRequiredException e) {
             log.info("2FA requerido para email={}", request.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

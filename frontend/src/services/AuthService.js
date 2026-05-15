@@ -42,6 +42,8 @@ const extrairMensagemErro = (error, fallback) => {
   if (typeof data === 'string' && data.trim()) return data;
   if (data?.mensagem) return data.mensagem;
   if (data?.message) return data.message;
+  if (data?.erro) return data.erro;
+  if (data?.error) return data.error;
   if (error?.message) return error.message;
   return fallback;
 };

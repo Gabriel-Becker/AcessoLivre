@@ -7,7 +7,11 @@ import useTokenMonitor from '../hooks/useTokenMonitor';
 const AuthContext = createContext({});
 
 const obterMensagemLoginAmigavel = (erro) => {
-  const mensagemBackend = erro?.response?.data?.mensagem || erro?.response?.data?.message;
+  const mensagemBackend =
+    erro?.response?.data?.mensagem ||
+    erro?.response?.data?.message ||
+    erro?.response?.data?.erro ||
+    erro?.response?.data?.error;
   const mensagemErro = erro?.message;
   const mensagem = mensagemBackend || mensagemErro || '';
   const mensagemNormalizada = String(mensagem).toLowerCase();

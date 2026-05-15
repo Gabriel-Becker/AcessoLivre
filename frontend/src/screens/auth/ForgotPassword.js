@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,7 @@ const schema = z.object({
 export default function ForgotPassword({ navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
+  const [showAccountDisabled, setShowAccountDisabled] = useState(false);
 
   const {
     control,
@@ -52,6 +53,23 @@ export default function ForgotPassword({ navigation }) {
           borderRadius: t.borderRadius.lg,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
+        modalOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: t.spacing.lg,
+        },
+        modalCard: {
+          width: '100%',
+          maxWidth: 420,
+          backgroundColor: t.colors.surface,
+          borderRadius: t.borderRadius.lg,
+          borderWidth: isHighContrast ? 2 : 1,
+          borderColor: t.colors.borderLight,
+          padding: t.spacing.lg,
+          ...(isHighContrast ? t.shadows.none : t.shadows.md),
+        },
       }),
     [isHighContrast, t]
   );
@@ -68,10 +86,24 @@ export default function ForgotPassword({ navigation }) {
       );
       navigation?.navigate?.('ResetPassword', { email: emailNormalizado });
     } catch (erro) {
-      toastHelper.showError(
-        formatarErroEsqueciSenha(erro?.message || 'Erro ao enviar e-mail de recuperação'),
-        'Não foi possível enviar o código'
-      );
+      const raw =
+        erro?.response?.data?.mensagem ||
+        erro?.response?.data?.message ||
+        erro?.response?.data?.erro ||
+        erro?.response?.data?.error ||
+        erro?.message ||
+        '';
+
+      const isAccountDisabled = String(raw).toLowerCase().includes('inativo') || String(raw).toLowerCase().includes('desativ');
+
+      if (isAccountDisabled) {
+        setShowAccountDisabled(true);
+      } else {
+        toastHelper.showError(
+          formatarErroEsqueciSenha(erro),
+          'Não foi possível enviar o código'
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -153,7 +185,38 @@ export default function ForgotPassword({ navigation }) {
           </Card>
         </View>
       </KeyboardAvoidingView>
+      <Modal
+        visible={showAccountDisabled}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAccountDisabled(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+              Conta desativada
+            </ThemedText>
+            <Spacer size="xs" />
+            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+              Sua conta foi desativada, Contate um administrador para mais informações
+            </ThemedText>
+
+            <Spacer size="md" />
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={() => setShowAccountDisabled(false)}
+              altoContraste={isHighContrast}
+            >
+              OK
+            </Button>
+          </View>
+        </View>
+      </Modal>
       </Container>
     </DesktopLayout>
   );
 }
+
+
