@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import { useThemeContext } from '../../context/ThemeContext';
 import { formatarErroLogin } from '../../utils/authToastFormatter';
+import { breakpoints } from '../../config/theme';
 
 const schema = z
   .object({
@@ -26,6 +27,8 @@ const schema = z
 export default function Login({ navigation }) {
   const { login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= breakpoints.desktop;
   const [submitting, setSubmitting] = useState(false);
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingCredentials, setPendingCredentials] = useState(null);
@@ -236,9 +239,8 @@ export default function Login({ navigation }) {
     navigation.navigate('Main', { screen: screenName });
   };
 
-  return (
-    <DesktopLayout current="Login" onNavigate={handleNavigate} altoContraste={isHighContrast}>
-      <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
+  const conteudoLogin = (
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -471,7 +473,16 @@ export default function Login({ navigation }) {
           </View>
         </View>
       </Modal>
-      </Container>
+    </Container>
+  );
+
+  if (!isDesktop) {
+    return conteudoLogin;
+  }
+
+  return (
+    <DesktopLayout current="Login" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      {conteudoLogin}
     </DesktopLayout>
   );
 }
