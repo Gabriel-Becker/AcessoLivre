@@ -20,6 +20,7 @@ import { Container } from '../../components/layout';
 import LocalGallery from '../../components/local/LocalGallery';
 import LocalAccessibility from '../../components/local/LocalAccessibility';
 import LocalActions from '../../components/local/LocalActions';
+import AvaliacaoModal from '../../components/local/AvaliacaoModal';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -108,6 +109,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   // Estado para controle visual dos botões
   const [botaoAtivo, setBotaoAtivo] = useState(null);
+  const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
 
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -168,18 +170,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
     setBotaoAtivo('avaliar');
     resetBotaoAtivo();
     
-    if (isAuthenticated) {
-      onNavigate?.('AvaliarLocal', { localId: id });
-    } else {
+    if (!isAuthenticated) {
       onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
+      return;
     }
+    
+    setModalAvaliacaoVisible(true);
   };
 
   const handleCompartilhar = () => {
     setBotaoAtivo('compartilhar');
     resetBotaoAtivo();
     
-    // Implementar compartilhamento nativo
     toastHelper.showInfo('Compartilhar em breve');
   };
 
@@ -192,6 +194,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleVerTodasAvaliacoes = () => {
     onNavigate?.('TodasAvaliacoes', { localId: id, localNome: local?.nome });
+  };
+
+  const handleEnviarAvaliacao = async (avaliacao) => {
+    try {
+      // TODO: Chamar API para salvar avaliação
+      console.log('Avaliação enviada:', avaliacao);
+      toastHelper.showSuccess('Avaliação enviada com sucesso!');
+      setModalAvaliacaoVisible(false);
+      carregar(true);
+    } catch (error) {
+      toastHelper.showError('Erro ao enviar avaliação');
+    }
   };
 
   const renderMediaStars = (rating = 0) => {
@@ -341,12 +355,20 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
         <Spacer size="xl" />
       </ScrollView>
+
+      {/* Modal de Avaliação */}
+      <AvaliacaoModal
+        visible={modalAvaliacaoVisible}
+        onClose={() => setModalAvaliacaoVisible(false)}
+        local={local}
+        onSubmit={handleEnviarAvaliacao}
+      />
     </Container>
   );
 }
 
 // ============================================
-// FUNÇÕES DE RENDERIZAÇÃO (organização do código)
+// FUNÇÕES DE RENDERIZAÇÃO
 // ============================================
 
 function renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto) {
@@ -387,7 +409,6 @@ function renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatE
 }
 
 function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo) {
-  // Define variant do botão baseado no estado ativo (feedback visual)
   const getButtonVariant = (botaoNome) => {
     return botaoAtivo === botaoNome ? 'primary' : 'outline';
   };
