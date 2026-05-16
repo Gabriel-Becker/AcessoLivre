@@ -23,7 +23,7 @@ const CRITERIOS_ACESSIBILIDADE = [
 ];
 
 export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast} = useThemeContext();
   const theme = getTheme(isHighContrast);
 
   const [nota, setNota] = useState(0);
