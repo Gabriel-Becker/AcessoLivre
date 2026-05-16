@@ -41,6 +41,7 @@ export default function LocalAccessibility({ tiposAcessibilidade = [], altoContr
       titulo="Recursos de Acessibilidade"
       icone="accessibility-outline"
       altoContraste={altoContraste ?? isHighContrast}
+      style={{ elevation: 0, shadowOpacity: 0, shadowRadius: 0 }} // ✅ Remove todas as sombras
     >
       <View style={styles.container}>
         {recursos.map((recurso, index) => (

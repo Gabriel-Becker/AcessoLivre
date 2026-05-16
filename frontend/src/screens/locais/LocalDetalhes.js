@@ -1,68 +1,154 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
   ActivityIndicator,
-  RefreshControl 
+  RefreshControl,
+  useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { 
+import {
   CabecalhoPagina,
   Card,
-  Button 
+  Button
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
+import { Container } from '../../components/layout';
+
 import LocalGallery from '../../components/local/LocalGallery';
 import LocalAccessibility from '../../components/local/LocalAccessibility';
 import LocalActions from '../../components/local/LocalActions';
-import LocalReviews from '../../components/local/LocalReviews';
+
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import LocalService from '../../services/LocalService';
 import toastHelper from '../../utils/toastHelper';
+import { breakpoints } from '../../config/theme';
 
+// ============================================
+// COMPONENTE DE AVALIAÇÃO INDIVIDUAL
+// ============================================
+const AvaliacaoItem = ({ avaliacao, theme }) => {
+  const renderStars = (nota = 0) => {
+    const stars = [];
+    const fullStars = Math.floor(nota);
+    const hasHalfStar = nota % 1 >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
+      } else {
+        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
+      }
+    }
+    return stars;
+  };
+
+  const formatarData = (dataString) => {
+    if (!dataString) return '';
+    try {
+      const data = new Date(dataString);
+      return data.toLocaleDateString('pt-BR');
+    } catch {
+      return dataString;
+    }
+  };
+
+  const primeiraLetra = (avaliacao.usuarioNome || 'U').charAt(0).toUpperCase();
+
+  return (
+    <View style={styles.avaliacaoItem}>
+      <View style={styles.avaliacaoHeader}>
+        <View style={styles.usuarioInfo}>
+          <View style={[styles.avatar, { backgroundColor: theme.colors.primary + '20' }]}>
+            <ThemedText weight="bold" style={{ color: theme.colors.primary, fontSize: 16 }}>
+              {primeiraLetra}
+            </ThemedText>
+          </View>
+          <View>
+            <ThemedText weight="semibold" style={styles.usuarioNome}>
+              {avaliacao.usuarioNome || 'Usuário'}
+            </ThemedText>
+            <View style={styles.estrelasRow}>
+              {renderStars(avaliacao.nota || 0)}
+            </View>
+          </View>
+        </View>
+        <ThemedText variant="caption" color="textTertiary" style={styles.dataAvaliacao}>
+          {formatarData(avaliacao.dataCriacao || avaliacao.data)}
+        </ThemedText>
+      </View>
+      
+      {avaliacao.comentario ? (
+        <ThemedText color="textSecondary" style={styles.comentario}>
+          {avaliacao.comentario}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+};
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { isAuthenticated } = useAuth();
+  const { width } = useWindowDimensions();
   const { id } = route?.params || {};
 
+  // Breakpoints responsivos
+  const isDesktop = width >= breakpoints.desktop;
+  const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
+  const isMobile = width < breakpoints.tablet;
+
+  // Estado para controle visual dos botões
+  const [botaoAtivo, setBotaoAtivo] = useState(null);
+
+  const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [local, setLocal] = useState(null);
   const [error, setError] = useState(null);
 
-  const carregarDetalhes = useCallback(async (isRefresh = false) => {
+  // Reset botão ativo após 300ms (feedback tátil)
+  const resetBotaoAtivo = useCallback(() => {
+    setTimeout(() => setBotaoAtivo(null), 300);
+  }, []);
+
+  const carregar = useCallback(async (refresh = false) => {
     if (!id) {
       setError('ID do local não informado');
       setLoading(false);
       return;
     }
 
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
 
     try {
-      console.log('📋 LocalDetalhes: Buscando detalhes do local ID:', id);
-      // ✅ CORREÇÃO: usar obterLocal em vez de obterDetalhes
       const dados = await LocalService.obterLocal(id);
       
-      // Processa os dados para garantir que os campos existem
+      const avaliacoesOrdenadas = [...(dados.avaliacoes || [])].sort((a, b) => {
+        const dataA = new Date(a.dataCriacao || a.data || 0);
+        const dataB = new Date(b.dataCriacao || b.data || 0);
+        return dataB - dataA;
+      });
+
       setLocal({
         ...dados,
-        avaliacaoMedia: dados.avaliacaoMedia || 0,
-        totalAvaliacoes: dados.totalAvaliacoes || 0,
-        tiposAcessibilidade: dados.tiposAcessibilidade || [],
         imagens: dados.imagens || [],
-        avaliacoes: dados.avaliacoes || []
+        avaliacoes: avaliacoesOrdenadas,
+        tiposAcessibilidade: dados.tiposAcessibilidade || [],
+        avaliacaoMedia: dados.avaliacaoMedia || 0,
+        totalAvaliacoes: dados.totalAvaliacoes || avaliacoesOrdenadas.length,
       });
-      setError(null);
     } catch (err) {
-      console.error('❌ LocalDetalhes: Erro ao carregar detalhes:', err);
+      console.error('❌ Erro ao carregar local:', err);
       setError('Não foi possível carregar os detalhes do local');
       toastHelper.showError('Erro ao carregar detalhes');
     } finally {
@@ -72,36 +158,47 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }, [id]);
 
   useEffect(() => {
-    carregarDetalhes();
-  }, [carregarDetalhes]);
+    carregar();
+  }, [carregar]);
 
-  const handleRefresh = () => carregarDetalhes(true);
+  const handleRefresh = () => carregar(true);
 
-  const handleAvaliar = (action) => {
-    if (action === 'login') {
+  // Handlers com feedback visual
+  const handleAvaliar = () => {
+    setBotaoAtivo('avaliar');
+    resetBotaoAtivo();
+    
+    if (isAuthenticated) {
+      onNavigate?.('AvaliarLocal', { localId: id });
+    } else {
       onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
-      return;
     }
-    onNavigate?.('AvaliarLocal', { localId: id });
   };
 
-  const handleReportar = (local) => {
-    onNavigate?.('ReportarProblema', { localId: local.id, localNome: local.nome });
+  const handleCompartilhar = () => {
+    setBotaoAtivo('compartilhar');
+    resetBotaoAtivo();
+    
+    // Implementar compartilhamento nativo
+    toastHelper.showInfo('Compartilhar em breve');
+  };
+
+  const handleReportar = () => {
+    setBotaoAtivo('reportar');
+    resetBotaoAtivo();
+    
+    onNavigate?.('ReportarProblema', { localId: id, localNome: local?.nome });
   };
 
   const handleVerTodasAvaliacoes = () => {
     onNavigate?.('TodasAvaliacoes', { localId: id, localNome: local?.nome });
   };
 
-  const handleVoltar = () => {
-    onNavigate?.('Inicio');
-  };
-
-  const renderStars = (rating) => {
+  const renderMediaStars = (rating = 0) => {
     const stars = [];
-    const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 >= 0.5;
-
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(<Ionicons key={i} name="star" size={18} color={t.colors.warning} />);
@@ -127,22 +224,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: t.colors.background }]}>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
-        <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-          Carregando detalhes...
-        </ThemedText>
+        <ThemedText color="textSecondary">Carregando detalhes...</ThemedText>
       </View>
     );
   }
 
   if (error || !local) {
     return (
-      <View style={[styles.errorContainer, { backgroundColor: t.colors.background }]}>
-        <ThemedText color="error" align="center" altoContraste={isHighContrast}>
-          {error || 'Local não encontrado'}
-        </ThemedText>
+      <View style={styles.centerContainer}>
+        <ThemedText color="error" align="center">{error || 'Local não encontrado'}</ThemedText>
         <Spacer size="md" />
         <Button
           variant="primary"
@@ -155,7 +248,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <Spacer size="sm" />
         <Button
           variant="outline"
-          onPress={handleVoltar}
+          onPress={() => onNavigate?.('Inicio')}
           altoContraste={isHighContrast}
         >
           Voltar
@@ -165,121 +258,425 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: t.colors.background }]}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          colors={[t.colors.primary]}
-          tintColor={t.colors.primary}
-        />
-      }
+    <Container
+      scroll
+      background={isHighContrast ? 'background' : 'backgroundSecondary'}
+      altoContraste={isHighContrast}
     >
-      {/* Header com botão voltar */}
       <CabecalhoPagina
-        titulo={local.nome || 'Local sem nome'}
-        subtitulo={local.categoria}
-        onVoltar={handleVoltar}
+        titulo="Detalhes do Local"
+        subtitulo="Encontre e avalie locais acessíveis"
+        onVoltar={() => onNavigate?.('Inicio')}
+        textoVoltar="Voltar"
         altoContraste={isHighContrast}
       />
 
-      {/* Galeria de imagens */}
-      <LocalGallery 
-        imagens={local.imagens}
-        imagemPrincipal={local.imagemPrincipal}
-        altoContraste={isHighContrast}
-      />
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[t.colors.primary]}
+            tintColor={t.colors.primary}
+          />
+        }
+      >
+        {/* ============================================ */}
+        {/* LAYOUT RESPONSIVO */}
+        {/* ============================================ */}
+        
+        {isDesktop ? (
+          // ========== DESKTOP: Cards lado a lado ==========
+          <>
+            <View style={styles.linhaSuperior}>
+              {/* CARD PRINCIPAL - ESQUERDA */}
+              <View style={styles.cardPrincipalWrapper}>
+                <Card altoContraste={isHighContrast} style={styles.cardPrincipal}>
+                  {renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto)}
+                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo)}
+                </Card>
+              </View>
 
-      {/* Avaliação e endereço */}
-      <Card altoContraste={isHighContrast} style={styles.infoCard}>
-        <View style={styles.ratingSection}>
-          <View style={styles.stars}>{renderStars(local.avaliacaoMedia)}</View>
-          <ThemedText variant="h2" weight="bold" altoContraste={isHighContrast}>
+              {/* CARD AVALIAÇÕES - DIREITA */}
+              <View style={styles.cardAvaliacoesWrapper}>
+                <Card altoContraste={isHighContrast} style={styles.cardAvaliacoes}>
+                  {renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated)}
+                </Card>
+              </View>
+            </View>
+
+            <Spacer size="lg" />
+
+            {/* CARD DE FOTOS */}
+            <Card altoContraste={isHighContrast} style={styles.cardFotos}>
+              {renderFotos(local, t, isHighContrast)}
+            </Card>
+          </>
+        ) : (
+          // ========== TABLET / MOBILE: Cards empilhados ==========
+          <>
+            {/* CARD PRINCIPAL */}
+            <Card altoContraste={isHighContrast} style={styles.cardPrincipalMobile}>
+              {renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto)}
+              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo)}
+            </Card>
+
+            <Spacer size="lg" />
+
+            {/* CARD DE FOTOS */}
+            <Card altoContraste={isHighContrast} style={styles.cardFotos}>
+              {renderFotos(local, t, isHighContrast)}
+            </Card>
+
+            <Spacer size="lg" />
+
+            {/* CARD AVALIAÇÕES */}
+            <Card altoContraste={isHighContrast} style={styles.cardAvaliacoesMobile}>
+              {renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated)}
+            </Card>
+          </>
+        )}
+
+        <Spacer size="xl" />
+      </ScrollView>
+    </Container>
+  );
+}
+
+// ============================================
+// FUNÇÕES DE RENDERIZAÇÃO (organização do código)
+// ============================================
+
+function renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto) {
+  return (
+    <>
+      <View style={styles.headerLocal}>
+        <View style={styles.infoLocal}>
+          <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>
+            {local.nome}
+          </ThemedText>
+          
+          <View style={styles.categoriaBadge}>
+            <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
+              {local.categoria}
+            </ThemedText>
+          </View>
+          
+          <View style={styles.enderecoRow}>
+            <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
+            <ThemedText color="textSecondary" style={styles.endereco}>
+              {formatEnderecoCompleto(local.endereco)}
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={styles.ratingBox}>
+          <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
+          <ThemedText variant="h2" weight="bold" style={styles.notaMedia}>
             {(local.avaliacaoMedia || 0).toFixed(1)}
           </ThemedText>
-          <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-            ({local.totalAvaliacoes || 0} avaliações)
+          <ThemedText variant="caption" color="textSecondary">
+            {local.totalAvaliacoes || 0} avaliações
           </ThemedText>
         </View>
+      </View>
+    </>
+  );
+}
 
-        <Spacer size="md" />
+function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo) {
+  // Define variant do botão baseado no estado ativo (feedback visual)
+  const getButtonVariant = (botaoNome) => {
+    return botaoAtivo === botaoNome ? 'primary' : 'outline';
+  };
 
-        <View style={styles.addressSection}>
-          <Ionicons name="location-outline" size={20} color={t.colors.primary} />
-          <ThemedText style={styles.address} altoContraste={isHighContrast}>
-            {formatEnderecoCompleto(local.endereco)}
-          </ThemedText>
-        </View>
-      </Card>
+  return (
+    <>
+      <Spacer size="lg" />
 
-      {/* Botões de ação */}
-      <LocalActions
-        local={local}
-        onAvaliar={handleAvaliar}
-        onReportar={handleReportar}
-        isAuthenticated={isAuthenticated}
-        altoContraste={isHighContrast}
-      />
-
-      {/* Recursos de acessibilidade */}
+      {/* Recursos de Acessibilidade */}
       <LocalAccessibility
         tiposAcessibilidade={local.tiposAcessibilidade}
         altoContraste={isHighContrast}
       />
 
-      {/* Avaliações */}
-      <LocalReviews
-        avaliacoes={local.avaliacoes || []}
-        totalAvaliacoes={local.totalAvaliacoes}
-        avaliacaoMedia={local.avaliacaoMedia}
-        onVerTodas={handleVerTodasAvaliacoes}
-        onAdicionarAvaliacao={() => handleAvaliar('login')}
-        isAuthenticated={isAuthenticated}
-        altoContraste={isHighContrast}
-      />
+      <Spacer size="lg" />
 
-      <Spacer size="xl" />
-    </ScrollView>
+      {/* Botões de Ação com feedback visual */}
+      <View style={styles.botoesContainer}>
+        <Button
+          variant={getButtonVariant('avaliar')}
+          size="medium"
+          iconLeft="star-outline"
+          onPress={handleAvaliar}
+          altoContraste={isHighContrast}
+          style={styles.botaoAcao}
+          accessibilityLabel="Avaliar este local"
+          accessibilityHint="Clique para avaliar o local com nota e comentário"
+        >
+          Avaliar
+        </Button>
+        
+        <Button
+          variant={getButtonVariant('compartilhar')}
+          size="medium"
+          iconLeft="share-social-outline"
+          onPress={handleCompartilhar}
+          altoContraste={isHighContrast}
+          style={styles.botaoAcao}
+          accessibilityLabel="Compartilhar este local"
+          accessibilityHint="Compartilhe este local com amigos e familiares"
+        >
+          Compartilhar
+        </Button>
+        
+        <Button
+          variant={getButtonVariant('reportar')}
+          size="medium"
+          iconLeft="flag-outline"
+          onPress={handleReportar}
+          altoContraste={isHighContrast}
+          style={styles.botaoAcao}
+          accessibilityLabel="Reportar problema"
+          accessibilityHint="Reporte informações incorretas ou problemas no local"
+        >
+          Reportar
+        </Button>
+      </View>
+    </>
   );
 }
 
+function renderFotos(local, t, isHighContrast) {
+  return (
+    <>
+      <View style={styles.headerFotos}>
+        <Ionicons name="images-outline" size={22} color={t.colors.primary} />
+        <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>
+          Fotos do Local
+        </ThemedText>
+      </View>
+      <Spacer size="sm" />
+      <LocalGallery
+        imagens={local.imagens}
+        imagemPrincipal={local.imagemPrincipal}
+        altoContraste={isHighContrast}
+      />
+    </>
+  );
+}
+
+function renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated) {
+  return (
+    <>
+      <View style={styles.headerAvaliacoes}>
+        <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
+        <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>
+          Avaliações Recentes
+        </ThemedText>
+      </View>
+
+      <Spacer size="sm" />
+
+      {local.avaliacoes && local.avaliacoes.length > 0 ? (
+        <>
+          {local.avaliacoes.slice(0, 3).map((avaliacao, index) => (
+            <React.Fragment key={index}>
+              <AvaliacaoItem avaliacao={avaliacao} theme={t} />
+              {index < local.avaliacoes.slice(0, 3).length - 1 && (
+                <View style={[styles.divisor, { backgroundColor: t.colors.borderLight }]} />
+              )}
+            </React.Fragment>
+          ))}
+          
+          {local.avaliacoes.length > 3 && (
+            <Button
+              variant="ghost"
+              size="small"
+              onPress={handleVerTodasAvaliacoes}
+              style={styles.verMaisButton}
+              altoContraste={false}
+            >
+              Ver todas as {local.avaliacoes.length} avaliações →
+            </Button>
+          )}
+        </>
+      ) : (
+        <View style={styles.semAvaliacoes}>
+          <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
+          <ThemedText color="textSecondary" align="center">
+            Nenhuma avaliação ainda.
+          </ThemedText>
+        </View>
+      )}
+    </>
+  );
+}
+
+// ============================================
+// ESTILOS RESPONSIVOS
+// ============================================
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
-  infoCard: {
-    marginHorizontal: 16,
-    marginVertical: 8,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
-  ratingSection: {
+  // Layout Desktop
+  linhaSuperior: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cardPrincipalWrapper: {
+    flex: 2,
+    minWidth: 280,
+  },
+  cardAvaliacoesWrapper: {
+    flex: 1,
+    minWidth: 260,
+  },
+  // Cards
+  cardPrincipal: {
+    padding: 20,
+    height: '100%',
+  },
+  cardPrincipalMobile: {
+    padding: 20,
+  },
+  cardAvaliacoes: {
+    padding: 20,
+    height: '100%',
+  },
+  cardAvaliacoesMobile: {
+    padding: 20,
+  },
+  cardFotos: {
+    padding: 20,
+  },
+  // Header Local
+  headerLocal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  infoLocal: {
+    flex: 1,
+    gap: 8,
+  },
+  nomeLocal: {
+    fontSize: 20,
+  },
+  categoriaBadge: {
+    backgroundColor: '#E8F0FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+  },
+  enderecoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
   },
-  stars: {
+  endereco: {
+    fontSize: 12,
+    flex: 1,
+  },
+  ratingBox: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  starsRow: {
     flexDirection: 'row',
     gap: 4,
   },
-  addressSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+  notaMedia: {
+    fontSize: 22,
   },
-  address: {
+  // Botões
+  botoesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 12,
+  },
+  botaoAcao: {
     flex: 1,
+  },
+  // Avaliações
+  headerAvaliacoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  tituloAvaliacoes: {
+    fontSize: 18,
+  },
+  headerFotos: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  tituloFotos: {
+    fontSize: 18,
+  },
+  avaliacaoItem: {
+    paddingVertical: 12,
+  },
+  avaliacaoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  usuarioInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  usuarioNome: {
     fontSize: 14,
-    lineHeight: 20,
+    marginBottom: 4,
+  },
+  estrelasRow: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  dataAvaliacao: {
+    fontSize: 11,
+  },
+  comentario: {
+    marginLeft: 50,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  divisor: {
+    height: 1,
+    marginVertical: 8,
+  },
+  verMaisButton: {
+    marginTop: 8,
+  },
+  semAvaliacoes: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    gap: 16,
   },
 });
