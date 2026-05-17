@@ -589,4 +589,81 @@ const styles = StyleSheet.create({
     paddingVertical: 48,
     gap: 12,
   },
+  filtroGrupo: {
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingTop: 12,
+  },
+  filtroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  filtroTitulo: {
+    flex: 1,
+    fontSize: 15,
+  },
+  filtroContent: {
+    paddingLeft: 30,
+    paddingTop: 8,
+    gap: 8,
+  },
+  filtroItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  filtroIcon: {
+    marginLeft: 4,
+  },
+  filtroItemLabel: {
+    fontSize: 14,
+    flex: 1,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  limparButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  notaContainer: {
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  notaStars: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  notaValor: {
+    fontSize: 14,
+  },
+  notaSliderContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  notaBotao: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  notaBotaoAtivo: {
+    backgroundColor: '#E8F0FF',
+  },
+  notaBotaoTexto: {
+    fontSize: 12,
+  },
 });
