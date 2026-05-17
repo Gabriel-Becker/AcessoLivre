@@ -7,7 +7,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   useWindowDimensions,
-  TextInput
+  TextInput,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -219,6 +220,7 @@ export default function Buscar({ onNavigate }) {
   const theme = getTheme(isHighContrast);
 
   const isDesktop = width >= breakpoints.desktop;
+  const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
 
   const [searchText, setSearchText] = useState('');
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
@@ -228,6 +230,12 @@ export default function Buscar({ onNavigate }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [totalResultados, setTotalResultados] = useState(0);
+
+  const numColumns = useMemo(() => {
+    if (isDesktop) return 2;
+    if (isTablet) return 2;
+    return 1;
+  }, [isDesktop, isTablet]);
 
   const temFiltrosAtivos = useMemo(() => {
     return searchText !== '' || 
@@ -328,6 +336,16 @@ export default function Buscar({ onNavigate }) {
       </ThemedText>
     </View>
   );
+
+  const renderItem = useCallback(({ item }) => (
+    <View style={styles.cardWrapper}>
+      <LocalCard
+        local={item}
+        onPress={() => handleLocalPress(item)}
+        altoContraste={isHighContrast}
+      />
+    </View>
+  ), [handleLocalPress, isHighContrast]);
 
   if (loading && resultados.length === 0) {
     return (
@@ -453,16 +471,16 @@ export default function Buscar({ onNavigate }) {
             {resultados.length === 0 ? (
               renderEmptyState()
             ) : (
-              <View style={styles.resultadosLista}>
-                {resultados.map((item) => (
-                  <LocalCard
-                    key={BuscarService.getLocalId(item)}
-                    local={item}
-                    onPress={() => handleLocalPress(item)}
-                    altoContraste={isHighContrast}
-                  />
-                ))}
-              </View>
+              <FlatList
+                data={resultados}
+                key={numColumns}
+                numColumns={numColumns}
+                keyExtractor={(item) => String(BuscarService.getLocalId(item))}
+                renderItem={renderItem}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.resultadosGrid}
+              />
             )}
           </View>
         </View>
@@ -608,9 +626,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  resultadosLista: {
-    gap: 16,
+  resultadosGrid: {
+    paddingBottom: 16,
+  },
+  cardWrapper: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
   },
   loadingContainer: {
     flex: 1,
