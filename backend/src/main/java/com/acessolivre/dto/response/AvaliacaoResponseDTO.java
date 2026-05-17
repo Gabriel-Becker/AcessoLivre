@@ -1,4 +1,8 @@
-mport lombok.Data;
+package com.acessolivre.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
