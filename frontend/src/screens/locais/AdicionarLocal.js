@@ -1,5 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  useWindowDimensions, 
+  ScrollView, 
+  Image, 
+  TouchableOpacity, 
+  Alert,
+  Platform
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { Container } from '../../components/layout';
 import {
@@ -22,109 +32,240 @@ import LocalService from '../../services/LocalService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
+import { CATEGORIAS } from '../../constants/enums';
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+
+const CATEGORIAS_LABELS = {
+  COMERCIAL: 'Comercial',
+  PUBLICO: 'Público',
+  SAUDE: 'Saúde',
+  EDUCACAO: 'Educação',
+  LAZER: 'Lazer',
+  TRANSPORTE: 'Transporte',
+  ALIMENTACAO: 'Alimentação',
+  HOSPEDAGEM: 'Hospedagem',
+  SERVICOS: 'Serviços',
+};
 
 const RECURSOS_ACESSIBILIDADE = [
-  {
-    id: 'rampa',
-    titulo: 'Rampa de acesso',
-    descricao: 'Rampa para cadeira de rodas na entrada',
-    icon: 'walk-outline',
-    cor: 'rampa',
-  },
-  {
-    id: 'banheiro',
-    titulo: 'Banheiro adaptado',
-    descricao: 'Banheiro com acessibilidade para PcD',
-    icon: 'man-outline',
-    cor: 'banheiro',
-  },
-  {
-    id: 'elevador',
-    titulo: 'Elevador acessível',
-    descricao: 'Elevador funcionando com botões em braille',
-    icon: 'business-outline',
-    cor: 'elevador',
-  },
-  {
-    id: 'piso',
-    titulo: 'Piso tátil',
-    descricao: 'Piso com textura para orientação',
-    icon: 'trail-sign-outline',
-    cor: 'audiovisual',
-  },
-  {
-    id: 'braille',
-    titulo: 'Sinalização em braille',
-    descricao: 'Placas e informações em braille',
-    icon: 'eye-outline',
-    cor: 'braile',
-  },
-  {
-    id: 'estacionamento',
-    titulo: 'Estacionamento acessível',
-    descricao: 'Vagas reservadas para PcD',
-    icon: 'car-outline',
-    cor: 'estacionamento',
-  },
-  {
-    id: 'espaco',
-    titulo: 'Espaço amplo',
-    descricao: 'Corredores largos para circulação',
-    icon: 'resize-outline',
-    cor: 'secondary',
-  },
-  {
-    id: 'audiovisual',
-    titulo: 'Recursos audiovisuais',
-    descricao: 'Sistemas de som e sinalização visual',
-    icon: 'volume-high-outline',
-    cor: 'audiovisual',
-  },
-  {
-    id: 'atendimento',
-    titulo: 'Atendimento especializado',
-    descricao: 'Staff treinado para atender PcD',
-    icon: 'heart-outline',
-    cor: 'secondary',
-  },
-  {
-    id: 'mobiliario',
-    titulo: 'Mobiliário adaptado',
-    descricao: 'Mesas, balcões e assentos adaptados',
-    icon: 'grid-outline',
-    cor: 'primary',
-  },
-];
-const CATEGORIAS_FIXAS = [
-  { idCategoria: 1, nome: 'Comercial' },
-  { idCategoria: 2, nome: 'Publico' },
-  { idCategoria: 3, nome: 'Saude' },
-  { idCategoria: 4, nome: 'Educacao' },
-  { idCategoria: 5, nome: 'Lazer' },
-  { idCategoria: 6, nome: 'Transporte' },
-  { idCategoria: 7, nome: 'Alimentacao' },
-  { idCategoria: 8, nome: 'Hospedagem' },
-  { idCategoria: 9, nome: 'Servicos' },
+  { id: 'rampa', titulo: 'Rampa de acesso', descricao: 'Rampa para cadeira de rodas na entrada', icon: 'walk-outline', cor: 'rampa', enumValue: 'RAMPA' },
+  { id: 'banheiro', titulo: 'Banheiro adaptado', descricao: 'Banheiro com acessibilidade para PcD', icon: 'man-outline', cor: 'banheiro', enumValue: 'BANHEIRO_ADAPTADO' },
+  { id: 'elevador', titulo: 'Elevador acessível', descricao: 'Elevador funcionando com botões em braille', icon: 'business-outline', cor: 'elevador', enumValue: 'ELEVADOR' },
+  { id: 'piso', titulo: 'Piso tátil', descricao: 'Piso com textura para orientação', icon: 'trail-sign-outline', cor: 'audiovisual', enumValue: 'PISO_TATIL' },
+  { id: 'braille', titulo: 'Sinalização em braille', descricao: 'Placas e informações em braille', icon: 'eye-outline', cor: 'braile', enumValue: 'SINALIZACAO_BRAILLE' },
+  { id: 'estacionamento', titulo: 'Estacionamento acessível', descricao: 'Vagas reservadas para PcD', icon: 'car-outline', cor: 'estacionamento', enumValue: 'ESTACIONAMENTO' },
+  { id: 'espaco', titulo: 'Espaço amplo', descricao: 'Corredores largos para circulação', icon: 'resize-outline', cor: 'secondary', enumValue: 'ESPACO_AMPLO' },
+  { id: 'audiovisual', titulo: 'Recursos audiovisuais', descricao: 'Sistemas de som e sinalização visual', icon: 'volume-high-outline', cor: 'audiovisual', enumValue: 'RECURSOS_AUDIOVISUAIS' },
+  { id: 'atendimento', titulo: 'Atendimento especializado', descricao: 'Staff treinado para atender PcD', icon: 'heart-outline', cor: 'secondary', enumValue: 'ATENDIMENTO_ESPECIALIZADO' },
+  { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
-const TIPOS_ACESSIBILIDADE_FIXOS = [
-  { idTipoAcessibilidade: 1, nome: 'Rampa de acesso' },
-  { idTipoAcessibilidade: 2, nome: 'Banheiro adaptado' },
-  { idTipoAcessibilidade: 3, nome: 'Elevador acessível' },
-  { idTipoAcessibilidade: 4, nome: 'Piso tátil' },
-  { idTipoAcessibilidade: 5, nome: 'Sinalização em braille' },
-  { idTipoAcessibilidade: 6, nome: 'Estacionamento acessível' },
-  { idTipoAcessibilidade: 7, nome: 'Espaço amplo' },
-  { idTipoAcessibilidade: 8, nome: 'Recursos audiovisuais' },
-  { idTipoAcessibilidade: 9, nome: 'Atendimento especializado' },
-  { idTipoAcessibilidade: 10, nome: 'Mobiliário adaptado' },
-];
+// Componente de upload de imagens
+const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
+  const [isDragging, setIsDragging] = useState(false);
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-export default function AdicionarLocal({ onNavigate }) {
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length > 0) {
+      const newImages = await Promise.all(
+        imageFiles.map(async (file) => ({
+          uri: URL.createObjectURL(file),
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        }))
+      );
+      onAddImages(newImages);
+    }
+  };
+
+  const handleSelectFiles = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets) {
+      const newImages = result.assets.map(asset => ({
+        uri: asset.uri,
+        name: asset.fileName || `image_${Date.now()}.jpg`,
+        size: asset.fileSize || 0,
+        type: asset.mimeType || 'image/jpeg',
+      }));
+      onAddImages(newImages);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      toastHelper.showError('Permissão de câmera negada');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.8,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets && result.assets[0]) {
+      const asset = result.assets[0];
+      const newImage = {
+        uri: asset.uri,
+        name: asset.fileName || `photo_${Date.now()}.jpg`,
+        size: asset.fileSize || 0,
+        type: asset.mimeType || 'image/jpeg',
+      };
+      onAddImages([newImage]);
+    }
+  };
+
+  const renderPreview = () => {
+    if (images.length === 0) return null;
+
+    return (
+      <View style={localStyles.previewContainer}>
+        {images.map((image, index) => (
+          <View key={index} style={localStyles.previewItem}>
+            <Image source={{ uri: image.uri }} style={localStyles.previewImage} />
+            <TouchableOpacity
+              style={localStyles.removeButton}
+              onPress={() => onRemoveImage(index)}
+            >
+              <Ionicons name="close" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <View>
+      {Platform.OS === 'web' ? (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{
+            borderWidth: 2,
+            borderColor: isDragging ? theme.colors.primary : theme.colors.borderLight,
+            borderStyle: 'dashed',
+            borderRadius: theme.borderRadius.lg,
+            padding: theme.spacing.xl,
+            textAlign: 'center',
+            backgroundColor: isDragging ? `${theme.colors.primary}10` : theme.colors.surfaceSecondary,
+            cursor: 'pointer',
+            marginBottom: theme.spacing.md,
+          }}
+          onClick={handleSelectFiles}
+        >
+          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+          <ThemedText align="center">
+            {isDragging ? 'Solte as imagens aqui' : 'Arraste e solte imagens ou clique para selecionar'}
+          </ThemedText>
+          <ThemedText color="textTertiary" variant="caption" align="center">
+            PNG, JPG até 10MB cada (máx. 5 imagens)
+          </ThemedText>
+        </div>
+      ) : (
+        <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
+          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+          <ThemedText align="center">Clique para selecionar imagens</ThemedText>
+          <ThemedText color="textTertiary" variant="caption" align="center">
+            PNG, JPG até 10MB cada (máx. 5 imagens)
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+
+      {renderPreview()}
+
+      <View style={localStyles.actionButtons}>
+        <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+          Galeria
+        </Button>
+        <Button variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline">
+          Câmera
+        </Button>
+      </View>
+    </View>
+  );
+};
+
+const localStyles = StyleSheet.create({
+  dropArea: {
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    marginBottom: 16,
+  },
+  previewContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  previewItem: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+});
+
+export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario, isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
+  
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet;
 
@@ -140,17 +281,24 @@ export default function AdicionarLocal({ onNavigate }) {
     estado: '',
     descricao: '',
   });
+  
   const [cepBuscado, setCepBuscado] = useState('');
-  const [categorias, setCategorias] = useState([]);
-  const [tiposAcessibilidade, setTiposAcessibilidade] = useState([]);
-  const [carregandoListas, setCarregandoListas] = useState(false);
-  const [enviando, setEnviando] = useState(false);
   const [recursosSelecionados, setRecursosSelecionados] = useState({});
+  const [enviando, setEnviando] = useState(false);
+  const [imagens, setImagens] = useState([]);
+  const [progressoImagens, setProgressoImagens] = useState({ atual: 0, total: 0 });
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
     totalAvaliacoes: 0,
     totalUsuarios: 0,
   });
+
+  const opcoesCategoria = useMemo(() => {
+    return CATEGORIAS.map(categoria => ({
+      value: categoria,
+      label: CATEGORIAS_LABELS[categoria] || categoria,
+    }));
+  }, []);
 
   const estilos = useMemo(() => criarEstilos(t, isHighContrast, isDesktop, isTablet), [
     isDesktop,
@@ -158,6 +306,7 @@ export default function AdicionarLocal({ onNavigate }) {
     isTablet,
     t,
   ]);
+  
   const fundos = useMemo(
     () => ({
       fundoDica: isHighContrast ? t.colors.surface : '#FFF5E1',
@@ -165,6 +314,39 @@ export default function AdicionarLocal({ onNavigate }) {
     }),
     [isHighContrast, t]
   );
+
+  // Carregar estatísticas
+  useEffect(() => {
+    const carregarEstatisticas = async () => {
+      const stats = await LocalService.obterEstatisticas();
+      setEstatisticas(stats);
+    };
+    carregarEstatisticas();
+  }, []);
+
+  const adicionarImagens = (novasImagens) => {
+    const MAX_IMAGES = 5;
+    const MAX_SIZE = 10 * 1024 * 1024;
+    
+    const validImages = novasImagens.filter(img => {
+      if (img.size > MAX_SIZE) {
+        toastHelper.showError(`Imagem ${img.name || 'sem nome'} excede 10MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (imagens.length + validImages.length > MAX_IMAGES) {
+      toastHelper.showError(`Máximo de ${MAX_IMAGES} imagens por local`);
+      return;
+    }
+
+    setImagens(prev => [...prev, ...validImages]);
+  };
+
+  const removerImagem = (index) => {
+    setImagens(prev => prev.filter((_, i) => i !== index));
+  };
 
   const atualizarCampo = (campo) => (valor) => {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
@@ -181,7 +363,6 @@ export default function AdicionarLocal({ onNavigate }) {
 
       if (response.data && !response.data.erro) {
         const endereco = response.data;
-
         setFormulario((anterior) => ({
           ...anterior,
           logradouro: endereco.logradouro || '',
@@ -189,11 +370,10 @@ export default function AdicionarLocal({ onNavigate }) {
           cidade: endereco.localidade || '',
           estado: endereco.uf || '',
         }));
-        return;
+      } else {
+        toastHelper.showError('CEP não encontrado');
       }
-
-      toastHelper.showError('CEP não encontrado');
-    } catch (erro) {
+    } catch {
       toastHelper.showError('Erro ao consultar CEP. Verifique sua conexão.');
     }
   };
@@ -208,39 +388,6 @@ export default function AdicionarLocal({ onNavigate }) {
     }
   };
 
-  useEffect(() => {
-    setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 });
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    const carregarListas = async () => {
-      setCarregandoListas(true);
-      try {
-        const [categoriasResponse, tiposResponse] = await Promise.all([
-          api.get('/categorias'),
-          api.get('/tipos-acessibilidade'),
-        ]);
-
-        const categoriasData = Array.isArray(categoriasResponse.data)
-          ? categoriasResponse.data
-          : CATEGORIAS_FIXAS;
-        const tiposData = Array.isArray(tiposResponse.data)
-          ? tiposResponse.data
-          : TIPOS_ACESSIBILIDADE_FIXOS;
-
-        setCategorias(categoriasData);
-        setTiposAcessibilidade(tiposData);
-      } catch (erro) {
-        setCategorias(CATEGORIAS_FIXAS);
-        setTiposAcessibilidade(TIPOS_ACESSIBILIDADE_FIXOS);
-      } finally {
-        setCarregandoListas(false);
-      }
-    };
-
-    carregarListas();
-  }, []);
-
   const alternarRecurso = (id) => {
     setRecursosSelecionados((anterior) => ({
       ...anterior,
@@ -249,49 +396,21 @@ export default function AdicionarLocal({ onNavigate }) {
   };
 
   const obterCorRecurso = (chave) => {
-    if (t.colors.accessibility?.[chave]) {
-      return t.colors.accessibility[chave];
-    }
-    if (t.colors[chave]) {
-      return t.colors[chave];
-    }
+    if (t.colors.accessibility?.[chave]) return t.colors.accessibility[chave];
+    if (t.colors[chave]) return t.colors[chave];
     return t.colors.primary;
   };
 
-  const normalizarTexto = (texto) =>
-    texto
-      ?.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
-
-  const obterIdTipoAcessibilidade = () => {
-    const selecionados = Object.keys(recursosSelecionados).filter(
-      (id) => recursosSelecionados[id]
-    );
-
-    if (!selecionados.length) {
-      return null;
-    }
-
-    // Usa o primeiro recurso selecionado que encontrar no cadastro de tipos
-    const recursosSelecionadosInfo = RECURSOS_ACESSIBILIDADE.filter((recurso) =>
-      selecionados.includes(recurso.id)
-    );
-
-    for (const recurso of recursosSelecionadosInfo) {
-      const recursoNormalizado = normalizarTexto(recurso.titulo);
-      const tipo = tiposAcessibilidade.find((item) => {
-        const tipoNormalizado = normalizarTexto(item.nome);
-        return tipoNormalizado?.includes(recursoNormalizado) || recursoNormalizado?.includes(tipoNormalizado);
-      });
-
-      if (tipo?.idTipoAcessibilidade) {
-        return tipo.idTipoAcessibilidade;
-      }
-    }
-
-    return null;
+  const obterTiposAcessibilidadeArray = () => {
+    const selecionados = Object.keys(recursosSelecionados).filter(id => recursosSelecionados[id]);
+    if (!selecionados.length) return [];
+    
+    const tipos = selecionados.map(id => {
+      const recurso = RECURSOS_ACESSIBILIDADE.find(r => r.id === id);
+      return recurso?.enumValue;
+    }).filter(Boolean);
+    
+    return tipos;
   };
 
   const validarFormulario = () => {
@@ -315,8 +434,9 @@ export default function AdicionarLocal({ onNavigate }) {
       return false;
     }
 
-    if (!formulario.cep || formulario.cep.replace(/\D/g, '').length !== 8) {
-      toastHelper.showError('CEP válido é obrigatório.');
+    const cepLimpo = formulario.cep.replace(/\D/g, '');
+    if (cepLimpo.length !== 8) {
+      toastHelper.showError('CEP inválido. Deve conter 8 dígitos.');
       return false;
     }
 
@@ -345,9 +465,9 @@ export default function AdicionarLocal({ onNavigate }) {
       return false;
     }
 
-    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
-    if (!idTipoAcessibilidade) {
-      toastHelper.showError('Selecione um recurso de acessibilidade válido.');
+    const tiposAcessibilidade = obterTiposAcessibilidadeArray();
+    if (tiposAcessibilidade.length === 0) {
+      toastHelper.showError('Selecione pelo menos um recurso de acessibilidade.');
       return false;
     }
 
@@ -356,59 +476,150 @@ export default function AdicionarLocal({ onNavigate }) {
 
   const handleSalvarLocal = async () => {
     if (enviando) return;
+    if (!validarFormulario()) return;
 
-    if (!validarFormulario()) {
-      return;
-    }
-
-    const idTipoAcessibilidade = obterIdTipoAcessibilidade();
-    if (!idTipoAcessibilidade) {
-      return;
-    }
+    const tiposAcessibilidade = obterTiposAcessibilidadeArray();
+    if (tiposAcessibilidade.length === 0) return;
 
     setEnviando(true);
+    setProgressoImagens({ atual: 0, total: imagens.length });
 
     try {
+      const cepLimpo = formulario.cep.replace(/\D/g, '');
+      
+      // ==========================================
+      // PASSO 1: Cadastrar o Local
+      // ==========================================
       const payloadLocal = {
-        nome: formulario.nome,
-        descricao: formulario.descricao,
-        idCategoria: formulario.categoria,
-        idTipoAcessibilidade,
+        nome: formulario.nome.trim(),
+        descricao: formulario.descricao.trim(),
+        categoria: formulario.categoria,
+        tiposAcessibilidade: tiposAcessibilidade,
         idUsuario: usuario.idUsuario,
         endereco: {
+          cep: cepLimpo,
+          logradouro: formulario.logradouro.trim(),
+          numero: formulario.numero.trim(),
+          complemento: formulario.complemento?.trim() || '',
+          bairro: formulario.bairro.trim(),
+          cidade: formulario.cidade.trim(),
+          estado: formulario.estado.trim().toUpperCase(),
           idUsuario: usuario.idUsuario,
-          cep: formulario.cep,
-          logradouro: formulario.logradouro,
-          numero: formulario.numero,
-          complemento: formulario.complemento || '',
-          bairro: formulario.bairro,
-          cidade: formulario.cidade,
-          estado: formulario.estado,
         },
       };
 
-      await LocalService.cadastrarLocal(payloadLocal);
-      toastHelper.showSuccess('Local adicionado com sucesso.');
+      console.log('📤 Cadastrando local...');
+      const localResponse = await LocalService.cadastrarLocal(payloadLocal);
+      const localId = localResponse.idLocal || localResponse.id;
+      
+      console.log('✅ Local criado com ID:', localId);
+
+      // ==========================================
+      // PASSO 2: Enviar imagens via Multipart FormData
+      // ==========================================
+      if (imagens.length > 0) {
+        toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
+        
+        let imagensEnviadas = 0;
+        let imagensComErro = 0;
+
+        for (let i = 0; i < imagens.length; i++) {
+          try {
+            setProgressoImagens({ atual: i + 1, total: imagens.length });
+            
+            const imagem = imagens[i];
+            console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
+            
+            const formData = new FormData();
+            formData.append('idLocal', localId.toString());
+            formData.append('arquivo', {
+              uri: imagem.uri,
+              name: imagem.name || `image_${Date.now()}.jpg`,
+              type: imagem.type || 'image/jpeg',
+            });
+            
+            await api.post('/imagens', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            });
+            
+            imagensEnviadas++;
+            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
+            
+          } catch (erroImagem) {
+            console.error(`❌ Erro ao enviar imagem ${i + 1}:`, erroImagem);
+            imagensComErro++;
+          }
+        }
+        
+        if (imagensComErro > 0) {
+          toastHelper.showWarning(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`);
+        } else if (imagensEnviadas > 0) {
+          toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
+        }
+      }
+
+      toastHelper.showSuccess('Local adicionado com sucesso!');
+
+      // Limpar formulário
+      setFormulario({
+        nome: '',
+        categoria: null,
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        descricao: '',
+      });
+      setRecursosSelecionados({});
+      setImagens([]);
+      setProgressoImagens({ atual: 0, total: 0 });
+      
+      // Navegar de volta
+      if (onNavigate) {
+        onNavigate('Inicio');
+      } else if (navigation) {
+        navigation.goBack();
+      }
+      
     } catch (erro) {
-      const mensagem =
-        erro?.response?.data?.mensagem ||
-        erro?.response?.data ||
-        erro?.message ||
-        'Erro ao cadastrar local.';
-      toastHelper.showError(mensagem);
+      const mensagem = erro.response?.data || 
+                      erro.message ||
+                      'Erro ao cadastrar local. Tente novamente.';
+      toastHelper.showError(typeof mensagem === 'string' ? mensagem : JSON.stringify(mensagem));
+      console.error('Erro detalhado:', erro);
     } finally {
       setEnviando(false);
+      setProgressoImagens({ atual: 0, total: 0 });
     }
   };
 
-  const opcoesCategoria = useMemo(
-    () =>
-      categorias.map((categoria) => ({
-        label: categoria.nome,
-        value: categoria.idCategoria,
-      })),
-    [categorias]
-  );
+  const handleVoltar = () => {
+    if (imagens.length > 0) {
+      Alert.alert(
+        'Descartar imagens?',
+        'Você tem imagens não salvas. Deseja realmente voltar?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Voltar', 
+            style: 'destructive',
+            onPress: () => {
+              if (onNavigate) onNavigate('Inicio');
+              else if (navigation) navigation.goBack();
+            }
+          }
+        ]
+      );
+    } else {
+      if (onNavigate) onNavigate('Inicio');
+      else if (navigation) navigation.goBack();
+    }
+  };
 
   return (
     <Container
@@ -419,260 +630,281 @@ export default function AdicionarLocal({ onNavigate }) {
     >
       <CabecalhoPagina
         titulo="Adicionar Local"
-        subtitulo="Encontre e avalie locais acessíveis"
-        onVoltar={() => onNavigate && onNavigate('Inicio')}
+        subtitulo="Cadastre um novo local acessível para a comunidade"
+        onVoltar={handleVoltar}
+        textoVoltar="Voltar"
         altoContraste={isHighContrast}
         style={estilos.header}
       />
 
-      <View style={estilos.conteudo}>
-        <View style={estilos.colunaPrincipal}>
-          <CardSecao
-            titulo="Informações Básicas"
-            icone="document-text-outline"
-            corIcone={t.colors.primary}
-            altoContraste={isHighContrast}
-          >
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Nome do Local *"
-                  placeholder="Ex: Shopping Center Norte"
-                  value={formulario.nome}
-                  onChangeText={atualizarCampo('nome')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Select
-                  label="Categoria *"
-                  placeholder="Selecione uma categoria"
-                  value={formulario.categoria}
-                  options={opcoesCategoria}
-                  onSelect={(valor) => atualizarCampo('categoria')(valor)}
-                  altoContraste={isHighContrast}
-                  disabled={carregandoListas || !opcoesCategoria.length}
-                />
-                {!carregandoListas && !opcoesCategoria.length ? (
-                  <ThemedText variant="tiny" color="textTertiary">
-                    Nao foi possivel carregar categorias.
-                  </ThemedText>
-                ) : null}
-              </View>
-            </View>
-
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="CEP *"
-                  placeholder="88015-200"
-                  value={formulario.cep}
-                  onChangeText={handleCepChange}
-                  keyboardType="numeric"
-                  maxLength={9}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Estado *"
-                  placeholder="UF"
-                  value={formulario.estado}
-                  onChangeText={atualizarCampo('estado')}
-                  autoCapitalize="characters"
-                  maxLength={2}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
-
-            <Input
-              label="Logradouro *"
-              placeholder="Ex: Av. Beira-Mar Norte"
-              value={formulario.logradouro}
-              onChangeText={atualizarCampo('logradouro')}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={estilos.conteudo}>
+          <View style={estilos.colunaPrincipal}>
+            <CardSecao
+              titulo="Informações Básicas"
+              icone="document-text-outline"
+              corIcone={t.colors.primary}
               altoContraste={isHighContrast}
-            />
+            >
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Nome do Local *"
+                    placeholder="Ex: Shopping Center Norte"
+                    value={formulario.nome}
+                    onChangeText={atualizarCampo('nome')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
 
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Número *"
-                  placeholder="Ex: 1230"
-                  value={formulario.numero}
-                  onChangeText={atualizarCampo('numero')}
-                  keyboardType="numeric"
-                  altoContraste={isHighContrast}
-                />
+                <View style={estilos.colunaCampo}>
+                  <Select
+                    label="Categoria *"
+                    placeholder="Selecione uma categoria"
+                    value={formulario.categoria}
+                    options={opcoesCategoria}
+                    onSelect={(valor) => atualizarCampo('categoria')(valor)}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
               </View>
 
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Complemento"
-                  placeholder="Ex: Apto 402"
-                  value={formulario.complemento}
-                  onChangeText={atualizarCampo('complemento')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="CEP *"
+                    placeholder="88015-200"
+                    value={formulario.cep}
+                    onChangeText={handleCepChange}
+                    keyboardType="numeric"
+                    maxLength={9}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
 
-            <View style={estilos.linhaCampos}>
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Bairro *"
-                  placeholder="Ex: Centro"
-                  value={formulario.bairro}
-                  onChangeText={atualizarCampo('bairro')}
-                  altoContraste={isHighContrast}
-                />
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Estado *"
+                    placeholder="UF"
+                    value={formulario.estado}
+                    onChangeText={atualizarCampo('estado')}
+                    autoCapitalize="characters"
+                    maxLength={2}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
               </View>
 
-              <View style={estilos.colunaCampo}>
-                <Input
-                  label="Cidade *"
-                  placeholder="Ex: Florianópolis"
-                  value={formulario.cidade}
-                  onChangeText={atualizarCampo('cidade')}
-                  altoContraste={isHighContrast}
-                />
-              </View>
-            </View>
+              <Input
+                label="Logradouro *"
+                placeholder="Ex: Av. Beira-Mar Norte"
+                value={formulario.logradouro}
+                onChangeText={atualizarCampo('logradouro')}
+                altoContraste={isHighContrast}
+              />
 
-            <Input
-              label="Descrição *"
-              placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
-              value={formulario.descricao}
-              onChangeText={atualizarCampo('descricao')}
-              multiline
-              numberOfLines={4}
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Número *"
+                    placeholder="Ex: 1230"
+                    value={formulario.numero}
+                    onChangeText={atualizarCampo('numero')}
+                    keyboardType="numeric"
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Complemento"
+                    placeholder="Ex: Apto 402"
+                    value={formulario.complemento}
+                    onChangeText={atualizarCampo('complemento')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <View style={estilos.linhaCampos}>
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Bairro *"
+                    placeholder="Ex: Centro"
+                    value={formulario.bairro}
+                    onChangeText={atualizarCampo('bairro')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+
+                <View style={estilos.colunaCampo}>
+                  <Input
+                    label="Cidade *"
+                    placeholder="Ex: Florianópolis"
+                    value={formulario.cidade}
+                    onChangeText={atualizarCampo('cidade')}
+                    altoContraste={isHighContrast}
+                  />
+                </View>
+              </View>
+
+              <Input
+                label="Descrição *"
+                placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
+                value={formulario.descricao}
+                onChangeText={atualizarCampo('descricao')}
+                multiline
+                numberOfLines={4}
+                altoContraste={isHighContrast}
+              />
+            </CardSecao>
+
+            {/* RECURSOS DE ACESSIBILIDADE */}
+            <CardSecao
+              titulo="Recursos de Acessibilidade"
+              descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
+              icone="accessibility-outline"
+              corIcone={t.colors.secondary}
               altoContraste={isHighContrast}
-            />
-          </CardSecao>
-
-          <CardSecao
-            titulo="Recursos de Acessibilidade"
-            descricao="Marque todos os recursos de acessibilidade disponíveis no local"
-            icone="accessibility-outline"
-            corIcone={t.colors.secondary}
-            altoContraste={isHighContrast}
-          >
-            <View style={estilos.recursosGrid}>
-              {RECURSOS_ACESSIBILIDADE.map((recurso) => {
-                const selecionado = !!recursosSelecionados[recurso.id];
-                const corRecurso = obterCorRecurso(recurso.cor);
-
-                return (
+            >
+              <View style={estilos.recursosGrid}>
+                {RECURSOS_ACESSIBILIDADE.map((recurso) => (
                   <CartaoSelecao
                     key={recurso.id}
                     titulo={recurso.titulo}
                     descricao={recurso.descricao}
                     icone={recurso.icon}
-                    corDestaque={corRecurso}
-                    selecionado={selecionado}
+                    corDestaque={obterCorRecurso(recurso.cor)}
+                    selecionado={!!recursosSelecionados[recurso.id]}
                     onPress={() => alternarRecurso(recurso.id)}
                     altoContraste={isHighContrast}
                     style={estilos.recursoItem}
                   />
-                );
-              })}
-            </View>
-          </CardSecao>
+                ))}
+              </View>
+              
+              <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.borderLight }}>
+                <ThemedText color="textSecondary" variant="caption">
+                  {Object.values(recursosSelecionados).filter(Boolean).length} recurso(s) selecionado(s)
+                </ThemedText>
+              </View>
+            </CardSecao>
 
-          <CardSecao
-            titulo="Fotos do Local"
-            descricao="Adicione fotos que mostrem os recursos de acessibilidade do local"
-            icone="camera-outline"
-            corIcone={t.colors.primary}
-            altoContraste={isHighContrast}
-          >
-            <AreaPlaceholder
-              icone="cloud-upload-outline"
-              titulo="Clique ou arraste para adicionar fotos"
-              subtitulo="PNG, JPG até 10MB cada"
-              altoContraste={isHighContrast}
-            />
-          </CardSecao>
-
-          <View style={estilos.botaoContainer}>
-            <Button
-              variant="primary"
-              size="large"
-              onPress={handleSalvarLocal}
-              iconLeft="add"
-              loading={enviando}
-              disabled={carregandoListas}
-              fullWidth={!isDesktop}
-              style={estilos.botaoPrincipal}
+            <CardSecao
+              titulo="Fotos do Local"
+              descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (máx. 5 fotos)"
+              icone="camera-outline"
+              corIcone={t.colors.primary}
               altoContraste={isHighContrast}
             >
-              Adicionar Local
-            </Button>
-          </View>
-        </View>
+              <ImageUploadArea
+                images={imagens}
+                onAddImages={adicionarImagens}
+                onRemoveImage={removerImagem}
+                isHighContrast={isHighContrast}
+                theme={t}
+              />
+              
+              {/* Indicador de progresso do upload */}
+              {enviando && progressoImagens.total > 0 && (
+                <View style={{ marginTop: 16 }}>
+                  <ThemedText variant="caption" align="center">
+                    Enviando imagens: {progressoImagens.atual} de {progressoImagens.total}
+                  </ThemedText>
+                  <View style={{ 
+                    height: 4, 
+                    backgroundColor: t.colors.borderLight, 
+                    borderRadius: 2, 
+                    marginTop: 8,
+                    overflow: 'hidden'
+                  }}>
+                    <View style={{ 
+                      width: `${(progressoImagens.atual / progressoImagens.total) * 100}%`, 
+                      height: '100%', 
+                      backgroundColor: t.colors.primary 
+                    }} />
+                  </View>
+                </View>
+              )}
+            </CardSecao>
 
-        <View style={estilos.colunaLateral}>
-          <CardInfoIcone
-            titulo="Próximos passos:"
-            icone="navigate-outline"
-            corIcone={t.colors.primary}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
-            altoContraste={isHighContrast}
-          >
-            <ListaMarcadores
-              itens={[
-                'Após adicionar, você poderá avaliar o local',
-                'Adicione fotos dos recursos de acessibilidade',
-                'Compartilhe com a comunidade',
+            <View style={estilos.botaoContainer}>
+              <Button
+                variant="primary"
+                size="large"
+                onPress={handleSalvarLocal}
+                iconLeft="add"
+                loading={enviando}
+                fullWidth={!isDesktop}
+                style={estilos.botaoPrincipal}
+                altoContraste={isHighContrast}
+              >
+                {enviando ? 'Salvando...' : 'Adicionar Local'}
+              </Button>
+            </View>
+          </View>
+
+          <View style={estilos.colunaLateral}>
+            <CardInfoIcone
+              titulo="Próximos passos:"
+              icone="navigate-outline"
+              corIcone={t.colors.primary}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
+              altoContraste={isHighContrast}
+            >
+              <ListaMarcadores
+                itens={[
+                  'Após adicionar, você poderá avaliar o local',
+                  'Adicione fotos dos recursos de acessibilidade',
+                  'Compartilhe com a comunidade',
+                ]}
+                corMarcador={t.colors.primary}
+                altoContraste={isHighContrast}
+              />
+            </CardInfoIcone>
+
+            <CardInfoIcone
+              titulo="Dica importante:"
+              icone="bulb-outline"
+              corIcone={t.colors.warning}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
+              fundo={fundos.fundoDica}
+              altoContraste={isHighContrast}
+            >
+              <ThemedText color="textSecondary">
+                Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
+                diferentes necessidades a encontrar locais adequados para elas.
+              </ThemedText>
+            </CardInfoIcone>
+
+            <CardInfoIcone
+              titulo="Contribua com a Comunidade"
+              icone="heart"
+              corIcone={t.colors.secondary}
+              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
+              fundo={fundos.fundoComunidade}
+              layout="coluna"
+              centralizado
+              altoContraste={isHighContrast}
+            >
+              <ThemedText color="textSecondary" align="center">
+                Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
+                mundo mais inclusivo para todos.
+              </ThemedText>
+            </CardInfoIcone>
+
+            <CartaoMetricas
+              titulo="Impacto da Comunidade"
+              metricas={[
+                { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
+                { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
+                { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
               ]}
-              corMarcador={t.colors.primary}
               altoContraste={isHighContrast}
             />
-          </CardInfoIcone>
-
-          <CardInfoIcone
-            titulo="Dica importante:"
-            icone="bulb-outline"
-            corIcone={t.colors.warning}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
-            fundo={fundos.fundoDica}
-            altoContraste={isHighContrast}
-          >
-            <ThemedText color="textSecondary">
-              Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
-              diferentes necessidades a encontrar locais adequados para elas.
-            </ThemedText>
-          </CardInfoIcone>
-
-          <CardInfoIcone
-            titulo="Contribua com a Comunidade"
-            icone="heart"
-            corIcone={t.colors.secondary}
-            corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
-            fundo={fundos.fundoComunidade}
-            layout="coluna"
-            centralizado
-            altoContraste={isHighContrast}
-          >
-            <ThemedText color="textSecondary" align="center">
-              Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
-              mundo mais inclusivo para todos.
-            </ThemedText>
-          </CardInfoIcone>
-
-          <CartaoMetricas
-            titulo="Impacto da Comunidade"
-            metricas={[
-              { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
-              { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
-              { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
-            ]}
-            altoContraste={isHighContrast}
-          />
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </Container>
   );
 }

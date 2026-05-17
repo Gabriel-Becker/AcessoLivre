@@ -1,81 +1,96 @@
+// mapper/LocalMapper.java
 package com.acessolivre.mapper;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
+import com.acessolivre.dto.response.ImagemResponseDTO;
 import com.acessolivre.dto.response.LocalResponseDTO;
 import com.acessolivre.dto.response.LocalResumoResponseDTO;
 import com.acessolivre.model.*;
 import com.acessolivre.enums.StatusLocal;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Mapper para a entidade Local.
- * Agora trabalha com os enums Categoria e TipoAcessibilidade diretamente,
- * sem depender de repositórios ou mapeadores externos.
- */
 public class LocalMapper {
 
-    // Construtor privado para classe utilitária
     private LocalMapper() {}
 
-    /**
-     * Converte um DTO de requisição em uma entidade Local.
-     * @param dto DTO com os dados do local
-     * @param usuario Usuario proprietário do local
-     * @param endereco Endereço associado (já salvo ou a ser salvo)
-     * @return Entidade Local pronta para persistência
-     */
     public static Local toEntity(LocalRequestDTO dto, Usuario usuario, Endereco endereco) {
-        return Local.builder()
+        Local local = Local.builder()
                 .nome(dto.getNome())
                 .descricao(dto.getDescricao())
-                .imagem(dto.getImagem())
-                .categoria(dto.getCategoria())               
-                .tipoAcessibilidade(dto.getTipoAcessibilidade()) 
+                .categoria(dto.getCategoria())
                 .usuario(usuario)
                 .endereco(endereco)
                 .status(dto.getStatus() != null ? dto.getStatus() : StatusLocal.EM_ANALISE)
                 .avaliacaoMedia(0.0)
-                .localPrincipal(null)   
+                .localPrincipal(null)
+                .tiposAcessibilidade(new HashSet<>())
                 .build();
+        
+        // Adicionar tipos de acessibilidade
+        if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
+            local.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());
+        }
+        
+        return local;
     }
 
-    /**
-     * Converte uma entidade Local em um DTO de resposta completo.
-     * @param entity Entidade Local
-     * @return DTO de resposta
-     */
     public static LocalResponseDTO toResponse(Local entity) {
         if (entity == null) {
             return null;
+        }
+
+        // ===== PROCESSAR IMAGENS =====
+        List<ImagemResponseDTO> imagensDTO = new ArrayList<>();
+        String imagemPrincipal = null;
+        String primeiraImagemCompatibilidade = null;
+        
+        if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
+            // Ordena as imagens por ordem
+            List<Imagem> imagensOrdenadas = entity.getImagens().stream()
+                    .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .collect(Collectors.toList());
+            
+            // Converte todas as imagens
+            imagensDTO = imagensOrdenadas.stream()
+                    .map(ImagemMapper::toResponse)
+                    .collect(Collectors.toList());
+            
+            // Pega a primeira imagem para thumbnail (USANDO getUrl())
+            Imagem primeiraImagem = imagensOrdenadas.get(0);
+            imagemPrincipal = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
+            primeiraImagemCompatibilidade = imagemPrincipal;
         }
 
         LocalResponseDTO.LocalResponseDTOBuilder builder = LocalResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
                 .descricao(entity.getDescricao())
-                .imagem(entity.getImagem())
+                .imagem(primeiraImagemCompatibilidade)  // Agora é URL
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
-                .categoria(entity.getCategoria())                     
-                .tipoAcessibilidade(entity.getTipoAcessibilidade())   
-                .idUsuario(entity.getUsuario().getIdUsuario())
-                .nomeUsuario(entity.getUsuario().getNome())
+                .categoria(entity.getCategoria())
+                .tiposAcessibilidade(entity.getTiposAcessibilidade() != null ? 
+                        new HashSet<>(entity.getTiposAcessibilidade()) : new HashSet<>())
+                .idUsuario(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
+                .nomeUsuario(entity.getUsuario() != null ? entity.getUsuario().getNome() : null)
                 .endereco(EnderecoMapper.toResponse(entity.getEndereco()))
                 .dataCriacao(entity.getDataCriacao())
                 .dataAtualizacao(entity.getDataAtualizacao())
                 .nivelHierarquia(entity.getNivelHierarquia())
                 .isRaiz(entity.isRaiz())
-                .isFolha(entity.isFolha());
+                .isFolha(entity.isFolha())
+                // NOVOS CAMPOS DE IMAGEM
+                .imagens(imagensDTO)
+                .imagemPrincipal(imagemPrincipal)
+                .totalImagens(imagensDTO.size());
 
         if (entity.getLocalPrincipal() != null) {
             builder.idLocalPrincipal(entity.getLocalPrincipal().getIdLocal());
             builder.nomeLocalPrincipal(entity.getLocalPrincipal().getNome());
         }
 
-        // Sublocais (apenas resumo)
         if (entity.getSubLocais() != null && !entity.getSubLocais().isEmpty()) {
             builder.subLocais(entity.getSubLocais().stream()
                     .map(LocalMapper::toResumoResponse)
@@ -87,29 +102,32 @@ public class LocalMapper {
         return builder.build();
     }
 
-    /**
-     * Converte uma entidade Local em um DTO resumido (sem hierarquia completa).
-     * @param entity Entidade Local
-     * @return DTO resumido
-     */
     public static LocalResumoResponseDTO toResumoResponse(Local entity) {
         if (entity == null) {
             return null;
         }
+        
+        // Para o resumo, também pega a primeira imagem (USANDO getUrl())
+        String imagemResumo = null;
+        if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
+            Imagem primeiraImagem = entity.getImagens().stream()
+                    .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .findFirst()
+                    .orElse(null);
+            if (primeiraImagem != null) {
+                imagemResumo = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
+            }
+        }
+        
         return LocalResumoResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
-                .imagem(entity.getImagem())
+                .imagem(imagemResumo)
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .build();
     }
 
-    /**
-     * Converte uma lista de entidades em uma lista de DTOs de resposta.
-     * @param entities Lista de entidades
-     * @return Lista de DTOs
-     */
     public static List<LocalResponseDTO> toResponseList(List<Local> entities) {
         if (entities == null) {
             return Collections.emptyList();
@@ -119,23 +137,20 @@ public class LocalMapper {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * @param entity Entidade a ser atualizada
-     * @param dto DTO com os novos dados
-     * @param usuario Novo usuário proprietário (se houver alteração)
-     * @param endereco Novo endereço (se houver alteração)
-     */
     public static void updateEntity(Local entity, LocalRequestDTO dto, Usuario usuario, Endereco endereco) {
         entity.setNome(dto.getNome());
         entity.setDescricao(dto.getDescricao());
-        entity.setImagem(dto.getImagem());
-        entity.setCategoria(dto.getCategoria());             
-        entity.setTipoAcessibilidade(dto.getTipoAcessibilidade()); 
+        entity.setCategoria(dto.getCategoria());
         entity.setUsuario(usuario);
         entity.setEndereco(endereco);
         if (dto.getStatus() != null) {
             entity.setStatus(dto.getStatus());
         }
-       
+        
+        // Atualizar tipos de acessibilidade
+        entity.getTiposAcessibilidade().clear();
+        if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
+            entity.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());
+        }
     }
 }

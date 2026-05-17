@@ -1,49 +1,24 @@
 package com.acessolivre.enums;
 
 public enum Categoria {
-    RESTAURANTE,
-    LANCHONETE,
-    CAFETERIA,
-    BAR,
 
-    HOSPITAL,
-    CLINICA,
-    FARMACIA,
-    LABORATORIO,
+    COMERCIAL("Comercial"),
+    PUBLICO("Publico"),
+    SAUDE("Saude"),
+    EDUCACAO("Educacao"),
+    LAZER("Lazer"),
+    TRANSPORTE("Transporte"),
+    ALIMENTACAO("Alimentacao"),
+    HOSPEDAGEM("Hospedagem"),
+    SERVICOS("Servicos");
 
-    ESCOLA,
-    UNIVERSIDADE,
-    CRECHE,
-    BIBLIOTECA,
+    private final String descricao;
 
-    ORGAO_PUBLICO,
-    PREFEITURA,
-    FORUM,
-    DELEGACIA,
-    CORREIOS,
-    BANCO,
+    Categoria(String descricao) {
+        this.descricao = descricao;
+    }
 
-    PRACA,
-    PARQUE,
-    PRAIA,
-    SHOPPING,
-    CINEMA,
-    TEATRO,
-    MUSEU,
-    GINASIO,
-
-    HOTEL,
-    POUSADA,
-
-    SUPERMERCADO,
-    MERCADO,
-    PADARIA,
-    LOJA,
-
-    IGREJA,
-    TEMPLO,
-
-    ESTACAO_ONIBUS,
-    AEROPORTO,
-    ESTACAO_TREM
+    public String getDescricao() {
+        return descricao;
+    }
 }

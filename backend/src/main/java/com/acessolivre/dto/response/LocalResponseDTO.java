@@ -1,3 +1,4 @@
+// dto/response/LocalResponseDTO.java
 package com.acessolivre.dto.response;
 
 import com.acessolivre.enums.Categoria;
@@ -10,7 +11,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,11 +24,11 @@ public class LocalResponseDTO {
     private Long idLocal;
     private String nome;
     private String descricao;
-    private String imagem;
+    private String imagem;  // URL da primeira imagem (thumbnail)
     private Double avaliacaoMedia;
     private StatusLocal status;
     private Categoria categoria;
-    private TipoAcessibilidade tipoAcessibilidade;
+    private Set<TipoAcessibilidade> tiposAcessibilidade;
     private Long idUsuario;
     private String nomeUsuario;
     private EnderecoResponseDTO endereco;
@@ -39,5 +42,9 @@ public class LocalResponseDTO {
     private Integer nivelHierarquia;
     private Boolean isRaiz;
     private Boolean isFolha;
+    
+    // NOVOS CAMPOS PARA MÚLTIPLAS IMAGENS
+    private List<ImagemResponseDTO> imagens;      // Lista completa de imagens
+    private String imagemPrincipal;                // Primeira imagem (thumbnail)
+    private Integer totalImagens;                  // Quantidade total de imagens
 }
-

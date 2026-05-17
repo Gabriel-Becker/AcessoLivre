@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImagemResponseDTO {
-
+    
     private Long idImagem;
-    private String imagemBase64;
+    private String url; // URL completa ou caminho relativo
     private Long idLocal;
 }

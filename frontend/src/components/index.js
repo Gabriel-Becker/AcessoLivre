@@ -2,3 +2,8 @@ export * from './layout';
 export * from './ui';
 export * from './feedback';
 export * from './commons';
+export * from './local/LocalActions'
+export * from './local/LocalAccessibility'
+export * from './local/LocalGallery'
+export * from './local/LocalReviews'
+export * from './local/LocalHeader'
