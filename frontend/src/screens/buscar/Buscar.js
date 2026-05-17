@@ -43,6 +43,72 @@ const CATEGORIAS_LABELS = {
   SERVICOS: 'Serviços',
 };
 
+// Adicione após CATEGORIAS_LABELS
+const RECURSOS_ACESSIBILIDADE = [
+  { id: 'RAMPA', label: 'Rampa', icon: 'logo-usd' },
+  { id: 'ELEVADOR', label: 'Elevador', icon: 'arrow-up-outline' },
+  { id: 'BANHEIRO_ADAPTADO', label: 'Banheiro adaptado', icon: 'body-outline' },
+  { id: 'ESTACIONAMENTO', label: 'Estacionamento', icon: 'car-outline' },
+  { id: 'PISO_TATIL', label: 'Piso tátil', icon: 'eye-outline' },
+  { id: 'ATENDIMENTO_ESPECIALIZADO', label: 'Atendimento especializado', icon: 'hand-left-outline' },
+  { id: 'RECURSOS_AUDIOVISUAIS', label: 'Recursos audiovisuais', icon: 'mic-outline' },
+  { id: 'SINALIZACAO_BRAILLE', label: 'Sinalização em Braile', icon: 'braille-outline' },
+  { id: 'ESPACO_AMPLO', label: 'Espaço amplo', icon: 'resize-outline' },
+  { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
+];
+
+// Adicione o componente FiltroAcessibilidade
+const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <View style={styles.filtroGrupo}>
+      <TouchableOpacity 
+        style={styles.filtroHeader} 
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
+        <Ionicons 
+          name={expanded ? 'chevron-up' : 'chevron-down'} 
+          size={18} 
+          color={theme.colors.textSecondary} 
+        />
+      </TouchableOpacity>
+      
+      {expanded && (
+        <View style={styles.filtroContent}>
+          {RECURSOS_ACESSIBILIDADE.map(recurso => (
+            <TouchableOpacity
+              key={recurso.id}
+              style={styles.filtroItem}
+              onPress={() => onToggleRecurso(recurso.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.checkbox,
+                { 
+                  borderColor: theme.colors.primary,
+                  backgroundColor: recursosSelecionados.includes(recurso.id) 
+                    ? theme.colors.primary 
+                    : 'transparent'
+                }
+              ]}>
+                {recursosSelecionados.includes(recurso.id) && (
+                  <Ionicons name="checkmark" size={12} color="#FFF" />
+                )}
+              </View>
+              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
+              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
 // Adicione o componente FiltroCategoria antes do componente principal
 const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) => {
   const [expanded, setExpanded] = useState(true);
