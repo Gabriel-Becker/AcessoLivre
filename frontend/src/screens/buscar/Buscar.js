@@ -245,6 +245,67 @@ export default function Buscar({ onNavigate }) {
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
+  // Adicione o componente FiltroNota
+const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
+  const renderStars = (nota) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Ionicons
+          key={i}
+          name={i <= nota ? 'star' : 'star-outline'}
+          size={20}
+          color={i <= nota ? theme.colors.warning : theme.colors.textTertiary}
+        />
+      );
+    }
+    return stars;
+  };
+
+  return (
+    <View style={styles.filtroGrupo}>
+      <View style={styles.filtroHeader}>
+        <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota Mínima</ThemedText>
+      </View>
+      
+      <View style={styles.filtroContent}>
+        <View style={styles.notaContainer}>
+          <View style={styles.notaStars}>
+            {renderStars(notaMinima)}
+          </View>
+          <ThemedText weight="bold" style={styles.notaValor}>
+            {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
+          </ThemedText>
+        </View>
+        
+        <View style={styles.notaSliderContainer}>
+          {[0, 1, 2, 3, 4, 4.5].map(nota => (
+            <TouchableOpacity
+              key={nota}
+              style={[
+                styles.notaBotao,
+                notaMinima === nota && styles.notaBotaoAtivo,
+                { borderColor: theme.colors.primary }
+              ]}
+              onPress={() => onNotaChange(nota)}
+            >
+              <ThemedText 
+                style={[
+                  styles.notaBotaoTexto,
+                  notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }
+                ]}
+              >
+                {nota === 0 ? 'Qualquer' : `${nota}+`}
+              </ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
