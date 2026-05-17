@@ -30,6 +30,72 @@ import { breakpoints, getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
 import toastHelper from '../../utils/toastHelper';
 
+// Adicione após os imports
+const CATEGORIAS_LABELS = {
+  COMERCIAL: 'Comercial',
+  PUBLICO: 'Público',
+  SAUDE: 'Saúde',
+  EDUCACAO: 'Educação',
+  LAZER: 'Lazer',
+  TRANSPORTE: 'Transporte',
+  ALIMENTACAO: 'Alimentação',
+  HOSPEDAGEM: 'Hospedagem',
+  SERVICOS: 'Serviços',
+};
+
+// Adicione o componente FiltroCategoria antes do componente principal
+const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) => {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <View style={styles.filtroGrupo}>
+      <TouchableOpacity 
+        style={styles.filtroHeader} 
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="grid-outline" size={20} color={theme.colors.primary} />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Categoria</ThemedText>
+        <Ionicons 
+          name={expanded ? 'chevron-up' : 'chevron-down'} 
+          size={18} 
+          color={theme.colors.textSecondary} 
+        />
+      </TouchableOpacity>
+      
+      {expanded && (
+        <View style={styles.filtroContent}>
+          {CATEGORIAS.map(categoria => (
+            <TouchableOpacity
+              key={categoria}
+              style={styles.filtroItem}
+              onPress={() => onToggleCategoria(categoria)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.checkbox,
+                { 
+                  borderColor: theme.colors.primary,
+                  backgroundColor: categoriasSelecionadas.includes(categoria) 
+                    ? theme.colors.primary 
+                    : 'transparent'
+                }
+              ]}>
+                {categoriasSelecionadas.includes(categoria) && (
+                  <Ionicons name="checkmark" size={12} color="#FFF" />
+                )}
+              </View>
+              <ThemedText style={styles.filtroItemLabel}>
+                {CATEGORIAS_LABELS[categoria] || categoria}
+              </ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
 export default function Buscar({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
