@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -8,7 +7,6 @@ import {
   RefreshControl,
   TouchableOpacity,
   useWindowDimensions,
-  FlatList,
   TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,9 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   CabecalhoPagina,
   Card,
-  Button,
-  Select,
-  Input
+  Button
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { Container } from '../../components/layout';
@@ -30,7 +26,6 @@ import { breakpoints, getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
 import toastHelper from '../../utils/toastHelper';
 
-// Adicione após os imports
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
   PUBLICO: 'Público',
@@ -43,7 +38,6 @@ const CATEGORIAS_LABELS = {
   SERVICOS: 'Serviços',
 };
 
-// Adicione após CATEGORIAS_LABELS
 const RECURSOS_ACESSIBILIDADE = [
   { id: 'RAMPA', label: 'Rampa', icon: 'logo-usd' },
   { id: 'ELEVADOR', label: 'Elevador', icon: 'arrow-up-outline' },
@@ -57,59 +51,6 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
-// Adicione o componente FiltroAcessibilidade
-const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) => {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <View style={styles.filtroGrupo}>
-      <TouchableOpacity 
-        style={styles.filtroHeader} 
-        onPress={() => setExpanded(!expanded)}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
-        <Ionicons 
-          name={expanded ? 'chevron-up' : 'chevron-down'} 
-          size={18} 
-          color={theme.colors.textSecondary} 
-        />
-      </TouchableOpacity>
-      
-      {expanded && (
-        <View style={styles.filtroContent}>
-          {RECURSOS_ACESSIBILIDADE.map(recurso => (
-            <TouchableOpacity
-              key={recurso.id}
-              style={styles.filtroItem}
-              onPress={() => onToggleRecurso(recurso.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                styles.checkbox,
-                { 
-                  borderColor: theme.colors.primary,
-                  backgroundColor: recursosSelecionados.includes(recurso.id) 
-                    ? theme.colors.primary 
-                    : 'transparent'
-                }
-              ]}>
-                {recursosSelecionados.includes(recurso.id) && (
-                  <Ionicons name="checkmark" size={12} color="#FFF" />
-                )}
-              </View>
-              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
-              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-};
-
-// Adicione o componente FiltroCategoria antes do componente principal
 const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -162,90 +103,57 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) =
   );
 };
 
-export default function Buscar({ onNavigate }) {
-  const { isHighContrast, theme: t } = useThemeContext();
-  const { width } = useWindowDimensions();
-  const theme = getTheme(isHighContrast);
+const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) => {
+  const [expanded, setExpanded] = useState(false);
 
-  const isDesktop = width >= breakpoints.desktop;
-  const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
-
-  // Estados
-  const [searchText, setSearchText] = useState('');
-  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
-  const [recursosSelecionados, setRecursosSelecionados] = useState([]);
-  const [notaMinima, setNotaMinima] = useState(0);
-  const [resultados, setResultados] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [totalResultados, setTotalResultados] = useState(0);
-
-  const realizarBusca = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Mock para desenvolvimento
-      const mockResultados = [
-        {
-          id: 1,
-          nome: 'Shopping Center Norte',
-          categoria: 'COMERCIAL',
-          avaliacaoMedia: 4.5,
-          totalAvaliacoes: 23,
-          endereco: { logradouro: 'Av. Paulista', numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', estado: 'SP' },
-          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'ESTACIONAMENTO'],
-        },
-        {
-          id: 2,
-          nome: 'Hospital das Clínicas',
-          categoria: 'SAUDE',
-          avaliacaoMedia: 4.8,
-          totalAvaliacoes: 45,
-          endereco: { logradouro: 'Rua Dr. Enéas', numero: '255', bairro: 'Cerqueira César', cidade: 'São Paulo', estado: 'SP' },
-          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'PISO_TATIL', 'ATENDIMENTO_ESPECIALIZADO'],
-        },
-        {
-          id: 3,
-          nome: 'Biblioteca Municipal',
-          categoria: 'PUBLICO',
-          avaliacaoMedia: 3.2,
-          totalAvaliacoes: 12,
-          endereco: { logradouro: 'Rua da Consolação', numero: '94', bairro: 'Consolação', cidade: 'São Paulo', estado: 'SP' },
-          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'BANHEIRO_ADAPTADO', 'PISO_TATIL', 'ESPACO_AMPLO'],
-        },
-      ];
+  return (
+    <View style={styles.filtroGrupo}>
+      <TouchableOpacity 
+        style={styles.filtroHeader} 
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
+        <Ionicons 
+          name={expanded ? 'chevron-up' : 'chevron-down'} 
+          size={18} 
+          color={theme.colors.textSecondary} 
+        />
+      </TouchableOpacity>
       
-      let filtrados = mockResultados;
-      
-      if (searchText) {
-        filtrados = filtrados.filter(l => 
-          l.nome.toLowerCase().includes(searchText.toLowerCase())
-        );
-      }
-      
-      setResultados(filtrados);
-      setTotalResultados(filtrados.length);
-      
-    } catch (error) {
-      console.error('❌ Erro na busca:', error);
-      toastHelper.showError('Erro ao buscar locais');
-    } finally {
-      setLoading(false);
-    }
-  }, [searchText]);
+      {expanded && (
+        <View style={styles.filtroContent}>
+          {RECURSOS_ACESSIBILIDADE.map(recurso => (
+            <TouchableOpacity
+              key={recurso.id}
+              style={styles.filtroItem}
+              onPress={() => onToggleRecurso(recurso.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.checkbox,
+                { 
+                  borderColor: theme.colors.primary,
+                  backgroundColor: recursosSelecionados.includes(recurso.id) 
+                    ? theme.colors.primary 
+                    : 'transparent'
+                }
+              ]}>
+                {recursosSelecionados.includes(recurso.id) && (
+                  <Ionicons name="checkmark" size={12} color="#FFF" />
+                )}
+              </View>
+              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
+              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      realizarBusca();
-    }, 500);
-    
-    return () => clearTimeout(timeout);
-  }, [searchText, realizarBusca]);
-
-  const handleLocalPress = (local) => {
-    onNavigate?.('LocalDetalhes', { id: local.id });
-  };
-
-  // Adicione o componente FiltroNota
 const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
   const renderStars = (nota) => {
     const stars = [];
@@ -306,6 +214,122 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
   );
 };
 
+export default function Buscar({ onNavigate }) {
+  const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const theme = getTheme(isHighContrast);
+
+  const isDesktop = width >= breakpoints.desktop;
+
+  const [searchText, setSearchText] = useState('');
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
+  const [recursosSelecionados, setRecursosSelecionados] = useState([]);
+  const [notaMinima, setNotaMinima] = useState(0);
+  const [resultados, setResultados] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [totalResultados, setTotalResultados] = useState(0);
+
+  const toggleCategoria = useCallback((categoria) => {
+    setCategoriasSelecionadas(prev =>
+      prev.includes(categoria)
+        ? prev.filter(c => c !== categoria)
+        : [...prev, categoria]
+    );
+  }, []);
+
+  const toggleRecurso = useCallback((recurso) => {
+    setRecursosSelecionados(prev =>
+      prev.includes(recurso)
+        ? prev.filter(r => r !== recurso)
+        : [...prev, recurso]
+    );
+  }, []);
+
+  const limparFiltros = useCallback(() => {
+    setSearchText('');
+    setCategoriasSelecionadas([]);
+    setRecursosSelecionados([]);
+    setNotaMinima(0);
+  }, []);
+
+  const realizarBusca = useCallback(async (refresh = false) => {
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const mockResultados = [
+        {
+          id: 1,
+          nome: 'Shopping Center Norte',
+          categoria: 'COMERCIAL',
+          avaliacaoMedia: 4.5,
+          totalAvaliacoes: 23,
+          endereco: { logradouro: 'Av. Paulista', numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', estado: 'SP' },
+          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'ESTACIONAMENTO'],
+        },
+        {
+          id: 2,
+          nome: 'Hospital das Clínicas',
+          categoria: 'SAUDE',
+          avaliacaoMedia: 4.8,
+          totalAvaliacoes: 45,
+          endereco: { logradouro: 'Rua Dr. Enéas', numero: '255', bairro: 'Cerqueira César', cidade: 'São Paulo', estado: 'SP' },
+          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'PISO_TATIL', 'ATENDIMENTO_ESPECIALIZADO'],
+        },
+        {
+          id: 3,
+          nome: 'Biblioteca Municipal',
+          categoria: 'PUBLICO',
+          avaliacaoMedia: 3.2,
+          totalAvaliacoes: 12,
+          endereco: { logradouro: 'Rua da Consolação', numero: '94', bairro: 'Consolação', cidade: 'São Paulo', estado: 'SP' },
+          tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'BANHEIRO_ADAPTADO', 'PISO_TATIL', 'ESPACO_AMPLO'],
+        },
+      ];
+      
+      let filtrados = mockResultados;
+      
+      if (searchText) {
+        filtrados = filtrados.filter(l => 
+          l.nome.toLowerCase().includes(searchText.toLowerCase())
+        );
+      }
+      
+      if (categoriasSelecionadas.length > 0) {
+        filtrados = filtrados.filter(l => 
+          categoriasSelecionadas.includes(l.categoria)
+        );
+      }
+      
+      if (notaMinima > 0) {
+        filtrados = filtrados.filter(l => l.avaliacaoMedia >= notaMinima);
+      }
+      
+      setResultados(filtrados);
+      setTotalResultados(filtrados.length);
+      
+    } catch (error) {
+      console.error('Erro na busca:', error);
+      toastHelper.showError('Erro ao buscar locais');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      realizarBusca();
+    }, 500);
+    
+    return () => clearTimeout(timeout);
+  }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima, realizarBusca]);
+
+  const handleLocalPress = useCallback((local) => {
+    onNavigate?.('LocalDetalhes', { id: local.id });
+  }, [onNavigate]);
+
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
@@ -319,14 +343,6 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
     </View>
   );
 
-  // Adicione a função limparFiltros
-  const limparFiltros = () => {
-    setSearchText('');
-    setCategoriasSelecionadas([]);
-    setRecursosSelecionados([]);
-    setNotaMinima(0);
-};
-
   if (loading && resultados.length === 0) {
     return (
       <View style={styles.loadingContainer}>
@@ -336,86 +352,6 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
       </View>
     );
   }
-
-  const realizarBusca = useCallback(async (refresh = false) => {
-  if (refresh) setRefreshing(true);
-  else setLoading(true);
-
-  try {
-    const params = {
-      search: searchText || undefined,
-      categorias: categoriasSelecionadas.length > 0 ? categoriasSelecionadas : undefined,
-      recursos: recursosSelecionados.length > 0 ? recursosSelecionados : undefined,
-      notaMinima: notaMinima > 0 ? notaMinima : undefined,
-    };
-
-    console.log('🔍 Buscando com params:', params);
-    
-    // TODO: Descomentar quando a API estiver pronta
-    // const response = await LocalService.buscarLocais(params);
-    // setResultados(response.data.content || []);
-    // setTotalResultados(response.data.totalElements || 0);
-    
-    // Mock para desenvolvimento (mantenha até a API estar pronta)
-    const mockResultados = [
-      {
-        id: 1,
-        nome: 'Shopping Center Norte',
-        categoria: 'COMERCIAL',
-        avaliacaoMedia: 4.5,
-        totalAvaliacoes: 23,
-        endereco: { logradouro: 'Av. Paulista', numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', estado: 'SP' },
-        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'ESTACIONAMENTO'],
-      },
-      {
-        id: 2,
-        nome: 'Hospital das Clínicas',
-        categoria: 'SAUDE',
-        avaliacaoMedia: 4.8,
-        totalAvaliacoes: 45,
-        endereco: { logradouro: 'Rua Dr. Enéas', numero: '255', bairro: 'Cerqueira César', cidade: 'São Paulo', estado: 'SP' },
-        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'PISO_TATIL', 'ATENDIMENTO_ESPECIALIZADO'],
-      },
-      {
-        id: 3,
-        nome: 'Biblioteca Municipal',
-        categoria: 'PUBLICO',
-        avaliacaoMedia: 3.2,
-        totalAvaliacoes: 12,
-        endereco: { logradouro: 'Rua da Consolação', numero: '94', bairro: 'Consolação', cidade: 'São Paulo', estado: 'SP' },
-        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'BANHEIRO_ADAPTADO', 'PISO_TATIL', 'ESPACO_AMPLO'],
-      },
-    ];
-    
-    let filtrados = mockResultados;
-    
-    if (searchText) {
-      filtrados = filtrados.filter(l => 
-        l.nome.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-    
-    if (categoriasSelecionadas.length > 0) {
-      filtrados = filtrados.filter(l => 
-        categoriasSelecionadas.includes(l.categoria)
-      );
-    }
-    
-    if (notaMinima > 0) {
-      filtrados = filtrados.filter(l => l.avaliacaoMedia >= notaMinima);
-    }
-    
-    setResultados(filtrados);
-    setTotalResultados(filtrados.length);
-    
-  } catch (error) {
-    console.error('❌ Erro na busca:', error);
-    toastHelper.showError('Erro ao buscar locais');
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-}, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
   return (
     <Container
@@ -435,14 +371,13 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => realizarBusca()}
+            onRefresh={() => realizarBusca(true)}
             colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
           />
         }
       >
         <View style={styles.conteudo}>
-          {/* Coluna de Filtros */}
           <View style={[
             styles.colunaFiltros,
             isDesktop && styles.colunaFiltrosDesktop
@@ -453,11 +388,16 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
                 <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>
                   Filtros
                 </ThemedText>
+                {(categoriasSelecionadas.length > 0 || recursosSelecionados.length > 0 || notaMinima > 0) && (
+                  <TouchableOpacity onPress={limparFiltros} style={styles.limparButton}>
+                    <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
+                    <ThemedText color="error" variant="caption">Limpar</ThemedText>
+                  </TouchableOpacity>
+                )}
               </View>
 
               <Spacer size="md" />
 
-              {/* Campo de busca por texto */}
               <View style={styles.searchContainer}>
                 <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
                 <TextInput
@@ -476,13 +416,43 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
 
               <Spacer size="md" />
 
-              <ThemedText color="textSecondary" align="center">
-                Mais filtros em breve...
-              </ThemedText>
+              <FiltroCategoria
+                categoriasSelecionadas={categoriasSelecionadas}
+                onToggleCategoria={toggleCategoria}
+                theme={theme}
+              />
+
+              <Spacer size="md" />
+
+              <FiltroAcessibilidade
+                recursosSelecionados={recursosSelecionados}
+                onToggleRecurso={toggleRecurso}
+                theme={theme}
+              />
+
+              <Spacer size="md" />
+
+              <FiltroNota
+                notaMinima={notaMinima}
+                onNotaChange={setNotaMinima}
+                theme={theme}
+              />
+
+              <Spacer size="md" />
+
+              {!isDesktop && (
+                <Button
+                  variant="primary"
+                  onPress={() => realizarBusca()}
+                  fullWidth
+                  altoContraste={isHighContrast}
+                >
+                  Aplicar Filtros
+                </Button>
+              )}
             </View>
           </View>
 
-          {/* Coluna de Resultados */}
           <View style={styles.colunaResultados}>
             <View style={styles.resultadosHeader}>
               <ThemedText variant="h3" weight="bold">
@@ -554,6 +524,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
   },
+  limparButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -568,26 +543,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     padding: 0,
-  },
-  resultadosHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  resultadosLista: {
-    gap: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    gap: 12,
   },
   filtroGrupo: {
     borderTopWidth: 1,
@@ -630,11 +585,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  limparButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   notaContainer: {
     alignItems: 'center',
     gap: 8,
@@ -665,5 +615,25 @@ const styles = StyleSheet.create({
   },
   notaBotaoTexto: {
     fontSize: 12,
+  },
+  resultadosHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  resultadosLista: {
+    gap: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 12,
   },
 });
