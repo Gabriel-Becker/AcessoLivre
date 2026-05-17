@@ -319,6 +319,14 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
     </View>
   );
 
+  // Adicione a função limparFiltros
+  const limparFiltros = () => {
+    setSearchText('');
+    setCategoriasSelecionadas([]);
+    setRecursosSelecionados([]);
+    setNotaMinima(0);
+};
+
   if (loading && resultados.length === 0) {
     return (
       <View style={styles.loadingContainer}>
