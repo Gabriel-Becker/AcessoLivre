@@ -337,6 +337,86 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
     );
   }
 
+  const realizarBusca = useCallback(async (refresh = false) => {
+  if (refresh) setRefreshing(true);
+  else setLoading(true);
+
+  try {
+    const params = {
+      search: searchText || undefined,
+      categorias: categoriasSelecionadas.length > 0 ? categoriasSelecionadas : undefined,
+      recursos: recursosSelecionados.length > 0 ? recursosSelecionados : undefined,
+      notaMinima: notaMinima > 0 ? notaMinima : undefined,
+    };
+
+    console.log('🔍 Buscando com params:', params);
+    
+    // TODO: Descomentar quando a API estiver pronta
+    // const response = await LocalService.buscarLocais(params);
+    // setResultados(response.data.content || []);
+    // setTotalResultados(response.data.totalElements || 0);
+    
+    // Mock para desenvolvimento (mantenha até a API estar pronta)
+    const mockResultados = [
+      {
+        id: 1,
+        nome: 'Shopping Center Norte',
+        categoria: 'COMERCIAL',
+        avaliacaoMedia: 4.5,
+        totalAvaliacoes: 23,
+        endereco: { logradouro: 'Av. Paulista', numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', estado: 'SP' },
+        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'ESTACIONAMENTO'],
+      },
+      {
+        id: 2,
+        nome: 'Hospital das Clínicas',
+        categoria: 'SAUDE',
+        avaliacaoMedia: 4.8,
+        totalAvaliacoes: 45,
+        endereco: { logradouro: 'Rua Dr. Enéas', numero: '255', bairro: 'Cerqueira César', cidade: 'São Paulo', estado: 'SP' },
+        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'PISO_TATIL', 'ATENDIMENTO_ESPECIALIZADO'],
+      },
+      {
+        id: 3,
+        nome: 'Biblioteca Municipal',
+        categoria: 'PUBLICO',
+        avaliacaoMedia: 3.2,
+        totalAvaliacoes: 12,
+        endereco: { logradouro: 'Rua da Consolação', numero: '94', bairro: 'Consolação', cidade: 'São Paulo', estado: 'SP' },
+        tiposAcessibilidade: ['RAMPA', 'ELEVADOR', 'BANHEIRO_ADAPTADO', 'PISO_TATIL', 'ESPACO_AMPLO'],
+      },
+    ];
+    
+    let filtrados = mockResultados;
+    
+    if (searchText) {
+      filtrados = filtrados.filter(l => 
+        l.nome.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+    
+    if (categoriasSelecionadas.length > 0) {
+      filtrados = filtrados.filter(l => 
+        categoriasSelecionadas.includes(l.categoria)
+      );
+    }
+    
+    if (notaMinima > 0) {
+      filtrados = filtrados.filter(l => l.avaliacaoMedia >= notaMinima);
+    }
+    
+    setResultados(filtrados);
+    setTotalResultados(filtrados.length);
+    
+  } catch (error) {
+    console.error('❌ Erro na busca:', error);
+    toastHelper.showError('Erro ao buscar locais');
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+}, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
+
   return (
     <Container
       scroll
