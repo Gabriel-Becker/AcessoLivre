@@ -1,40 +1,29 @@
 import api from '../api/axios';
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
+
 const HomeService = {
-  /**
-   * Busca estatísticas gerais do sistema
-   */
+
   async obterEstatisticas() {
     try {
-      const response = await api.get('/locais', {
+      const response = await api.get('/locais/todos', {
         params: { page: 0, size: 1 }
       });
-      
+
       const totalLocais = response.data?.totalElements || 0;
-      
-      // TODO: Quando tiver endpoint de avaliações, substituir
-      const totalAvaliacoes = 0;
-      const totalUsuarios = 0;
-      
-      return { totalLocais, totalAvaliacoes, totalUsuarios };
+      return { totalLocais, totalAvaliacoes: 0, totalUsuarios: 0 };
     } catch (erro) {
       console.error('Erro ao buscar estatísticas:', erro);
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },
-  /**
-   * Busca locais em destaque (os mais recentes)
-   * @param {number} limite - Quantidade de locais a buscar
-   */
+
   async obterLocaisEmDestaque(limite = 4) {
     try {
-      const response = await api.get('/locais', {
-        params: { 
-          page: 0, 
-          size: limite,
-          sort: 'dataCriacao,desc' 
-        }
+      const response = await api.get('/locais/todos', {
+        params: { page: 0, size: limite, sort: 'dataCriacao,desc' }
       });
-      
+
       const locais = response.data?.content || [];
       return locais.map(local => this.formatarLocal(local));
     } catch (erro) {
@@ -42,19 +31,15 @@ const HomeService = {
       return [];
     }
   },
-  /**
-   * Busca todos os locais (para a página de buscar)
-   * @param {number} page - Número da página
-   * @param {number} size - Itens por página
-   */
+
   async listarTodosLocais(page = 0, size = 10) {
     try {
-      const response = await api.get('/locais', {
+      const response = await api.get('/locais/todos', {
         params: { page, size, sort: 'dataCriacao,desc' }
       });
-      
+
       const locais = response.data?.content || [];
-      
+
       return {
         locais: locais.map(local => this.formatarLocal(local)),
         totalPages: response.data?.totalPages || 0,
@@ -66,34 +51,71 @@ const HomeService = {
       return { locais: [], totalPages: 0, totalElements: 0, currentPage: page };
     }
   },
-  /**
-   * Formata os dados do local para o padrão do frontend
-   * @param {Object} local - Local vindo do backend
-   */
+
+  construirUrlImagem(caminhoRelativo) {
+    if (!caminhoRelativo) return null;
+
+    if (caminhoRelativo.startsWith('http')) return caminhoRelativo;
+
+    return `${API_BASE_URL}${caminhoRelativo.startsWith('/') ? '' : '/'}${caminhoRelativo}`;
+  },
+
+  extrairTodasImagens(local) {
+    if (!Array.isArray(local.imagens)) return [];
+
+    // remove duplicadas
+    const caminhosUnicos = [
+      ...new Set(local.imagens.map(img => img.caminhoRelativo))
+    ];
+
+    return caminhosUnicos.map(caminho =>
+      this.construirUrlImagem(caminho)
+    );
+  },
+
+  extrairPrimeiraImagem(local) {
+    const imagens = this.extrairTodasImagens(local);
+    return imagens.length > 0 ? imagens[0] : null;
+  },
+
   formatarLocal(local) {
-    if (!local) return null;
-    
+    const imagensUrls = this.extrairTodasImagens(local);
+    const primeiraImagemUrl = this.extrairPrimeiraImagem(local);
+
     return {
       id: local.idLocal,
       nome: local.nome,
       descricao: local.descricao,
       categoria: local.categoria,
-      tipoAcessibilidade: local.tipoAcessibilidade,
       status: local.status,
       avaliacaoMedia: local.avaliacaoMedia || 0,
-      totalAvaliacoes: 0,
-      imagemUrl: local.imagem || null,
+      totalAvaliacoes: local.totalAvaliacoes || 0,
+
+      imagemUrl: primeiraImagemUrl,
+      imagens: imagensUrls,
+
+      tiposAcessibilidade: local.tiposAcessibilidade || [],
       dataCriacao: local.dataCriacao,
-      endereco: local.endereco ? {
-        logradouro: local.endereco.logradouro,
-        numero: local.endereco.numero,
-        complemento: local.endereco.complemento,
-        bairro: local.endereco.bairro,
-        cidade: local.endereco.cidade,
-        estado: local.endereco.estado,
-        cep: local.endereco.cep
-      } : null
+      dataAtualizacao: local.dataAtualizacao,
+      endereco: local.endereco || null,
+
+      localPrincipal: local.localPrincipal,
+      subLocais: local.subLocais || [],
+      nivelHierarquia: local.nivelHierarquia,
+      isRaiz: local.isRaiz,
+      isFolha: local.isFolha
     };
   },
+
+  async buscarLocalPorId(id) {
+    try {
+      const response = await api.get(`/locais/${id}`);
+      return this.formatarLocal(response.data);
+    } catch (erro) {
+      console.error(`Erro ao buscar local ${id}:`, erro);
+      return null;
+    }
+  }
 };
+
 export default HomeService;

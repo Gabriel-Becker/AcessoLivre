@@ -30,6 +30,28 @@ public class LocalService {
 
     private static final int MAX_PROFUNDIDADE_HIERARQUIA = 5;
 
+    // ===== NOVOS MÉTODOS COM JOIN FETCH PARA IMAGENS =====
+    
+    @Transactional(readOnly = true)
+    public Page<Local> listarTodosComImagens(Pageable pageable) {
+        log.info("Listando locais com imagens via JOIN FETCH");
+        return localRepository.findAllWithImages(pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Local> listarLocaisRaizComImagens(Pageable pageable) {
+        log.info("Listando locais raiz com imagens via JOIN FETCH");
+        return localRepository.findAllLocaisRaizWithImages(pageable);
+    }
+    
+    @Transactional(readOnly = true)
+    public Optional<Local> buscarPorIdComImagens(Long id) {
+        log.info("Buscando local por ID com imagens: {}", id);
+        return localRepository.findByIdWithImages(id);
+    }
+    
+    // ===== MÉTODOS EXISTENTES =====
+
     @Transactional(readOnly = true)
     public Page<Local> listarTodos(Pageable pageable) {
         log.info("Listando locais com paginação: página={}, tamanho={}", 
@@ -68,8 +90,6 @@ public class LocalService {
         return localRepository.findByCategoria(categoria);
     }
 
-    // ⭐ NOVOS MÉTODOS PARA ACESSIBILIDADE
-    
     @Transactional(readOnly = true)
     public List<Local> buscarPorTipoAcessibilidade(TipoAcessibilidade tipoAcessibilidade) {
         log.info("Buscando locais por tipo de acessibilidade: {}", tipoAcessibilidade);
@@ -168,17 +188,13 @@ public class LocalService {
     public Local salvar(LocalRequestDTO dto) {
         log.info("Salvando novo local: nome={}", dto.getNome());
 
-        // Validação dos tipos de acessibilidade
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
             throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
         }
 
         Usuario usuario = validarUsuario(dto.getIdUsuario());
-        
         Endereco endereco = resolverEndereco(dto);
-    
         Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
-        
         validarHierarquia(localPrincipal, null);
         
         Local local = LocalMapper.toEntity(dto, usuario, endereco);
@@ -191,8 +207,7 @@ public class LocalService {
             localRepository.save(localPrincipal);
         }
         
-        log.info("Local salvo com sucesso. ID: {}, Tipos de acessibilidade: {}", 
-            salvo.getIdLocal(), salvo.getTiposAcessibilidade());
+        log.info("Local salvo com sucesso. ID: {}", salvo.getIdLocal());
         return salvo;
     }
     
@@ -200,18 +215,14 @@ public class LocalService {
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
         log.info("Atualizando local: id={}", id);
 
-        // Validação dos tipos de acessibilidade
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
             throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
         }
 
         return localRepository.findById(id).map(local -> {
-    
             Usuario usuario = validarUsuario(dto.getIdUsuario());
             Endereco endereco = resolverEndereco(dto);
-            
             Local novoLocalPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), id);
-            
             validarHierarquia(novoLocalPrincipal, id);
             
             if (local.getLocalPrincipal() != null) {
@@ -221,7 +232,6 @@ public class LocalService {
             
             LocalMapper.updateEntity(local, dto, usuario, endereco);
             local.setLocalPrincipal(novoLocalPrincipal);
-            
             Local atualizado = localRepository.save(local);
             
             if (novoLocalPrincipal != null) {
@@ -229,8 +239,7 @@ public class LocalService {
                 localRepository.save(novoLocalPrincipal);
             }
             
-            log.info("Local atualizado com sucesso. ID: {}, Tipos de acessibilidade: {}", 
-                atualizado.getIdLocal(), atualizado.getTiposAcessibilidade());
+            log.info("Local atualizado com sucesso. ID: {}", atualizado.getIdLocal());
             return atualizado;
         });
     }

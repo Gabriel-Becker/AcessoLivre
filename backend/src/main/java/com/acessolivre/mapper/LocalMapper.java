@@ -39,30 +39,34 @@ public class LocalMapper {
             return null;
         }
 
+        // ===== PROCESSAR IMAGENS =====
         List<ImagemResponseDTO> imagensDTO = new ArrayList<>();
-        String imagemPrincipal = null;
-        String primeiraImagemCompatibilidade = null;
+        String imagemUrl = null;
         
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
+            // Ordena as imagens por ordem
             List<Imagem> imagensOrdenadas = entity.getImagens().stream()
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .collect(Collectors.toList());
             
-            // CORRIGIDO: Chamada de método estático diretamente
+            // Converte todas as imagens para DTO
             imagensDTO = imagensOrdenadas.stream()
-                    .map(ImagemMapper::toResponse)  // ← AGORA FUNCIONA (método estático)
+                    .map(ImagemMapper::toResponse)
                     .collect(Collectors.toList());
             
+    
             Imagem primeiraImagem = imagensOrdenadas.get(0);
-            imagemPrincipal = primeiraImagem.getCaminhoRelativo();
-            primeiraImagemCompatibilidade = imagemPrincipal;
+            ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
+            if (primeiraImagemDTO != null) {
+                imagemUrl = primeiraImagemDTO.getUrlCompleta();
+            }
         }
 
         LocalResponseDTO.LocalResponseDTOBuilder builder = LocalResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
                 .descricao(entity.getDescricao())
-                .imagem(primeiraImagemCompatibilidade)
+                .imagemUrl(imagemUrl)  // ← Agora é URL completa!
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .categoria(entity.getCategoria())
@@ -77,7 +81,6 @@ public class LocalMapper {
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha())
                 .imagens(imagensDTO)
-                .imagemPrincipal(imagemPrincipal)
                 .totalImagens(imagensDTO.size());
 
         if (entity.getLocalPrincipal() != null) {
@@ -101,21 +104,24 @@ public class LocalMapper {
             return null;
         }
         
-        String imagemResumo = null;
+        String imagemUrl = null;
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
             Imagem primeiraImagem = entity.getImagens().stream()
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .findFirst()
                     .orElse(null);
             if (primeiraImagem != null) {
-                imagemResumo = primeiraImagem.getCaminhoRelativo();
+                ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
+                if (primeiraImagemDTO != null) {
+                    imagemUrl = primeiraImagemDTO.getUrlCompleta();
+                }
             }
         }
         
         return LocalResumoResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
-                .imagem(imagemResumo)
+                .imagem(imagemUrl)  // ← URL completa
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .build();

@@ -78,12 +78,23 @@ public class StorageService {
         }
     }
     
-    /**
-     * Constrói URL completa para acesso
-     */
     public String construirUrlCompleta(String caminhoRelativo) {
         if (caminhoRelativo == null) return null;
-        return storageProperties.getBaseUrl() + caminhoRelativo;
+        
+        // Se já é URL completa, retorna
+        if (caminhoRelativo.startsWith("http")) return caminhoRelativo;
+        
+        String baseUrl = storageProperties.getBaseUrl();
+        if (baseUrl == null) {
+            baseUrl = "http://localhost:8080";
+        }
+        
+        // Remove barra duplicada
+        if (baseUrl.endsWith("/") && caminhoRelativo.startsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        
+        return baseUrl + caminhoRelativo;
     }
     
     private void validarArquivo(MultipartFile arquivo) {

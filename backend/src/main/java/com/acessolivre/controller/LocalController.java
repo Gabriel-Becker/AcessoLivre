@@ -32,32 +32,33 @@ public class LocalController {
 
     private final LocalService localService;
     
-    // Campos permitidos para ordenação (evita SQL Injection e problemas com relacionamentos)
     private static final Set<String> CAMPOS_ORDENACAO_PERMITIDOS = new HashSet<>(Arrays.asList(
         "nome", "idLocal", "dataCriacao", "dataAtualizacao", "avaliacaoMedia", "categoria", "status"
     ));
     
     private static final int TAMANHO_PADRAO_PAGINA = 20;
     private static final int TAMANHO_MAXIMO_PAGINA = 100;
-    private static final String CAMPO_ORDENACAO_PADRAO = "nome";
+    private static final String CAMPO_ORDENACAO_PADRAO = "dataCriacao";
+
+    // ==========================================
+    // ENDPOINTS PRINCIPAIS COM JOIN FETCH
+    // ==========================================
 
     @GetMapping
     public ResponseEntity<Page<LocalResponseDTO>> listarTodos(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size,
             @RequestParam(defaultValue = CAMPO_ORDENACAO_PADRAO) String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction) {
         
-        // Validação de parâmetros
         int pageSize = validatePageSize(size);
         String sortField = validateSortField(sort);
         Sort.Direction sortDirection = validateSortDirection(direction);
         
-        log.info("Listando locais raiz com paginação: página={}, tamanho={}, ordenação={}, direção={}", 
-                 page, pageSize, sortField, sortDirection);
+        log.info("GET /api/locais - Listando locais raiz com imagens");
         
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortField));
-        Page<Local> locais = localService.listarLocaisRaiz(pageable);
+        Page<Local> locais = localService.listarLocaisRaizComImagens(pageable);
         Page<LocalResponseDTO> responseDTOs = locais.map(LocalMapper::toResponse);
         
         log.info("Total de locais encontrados: {}", responseDTOs.getTotalElements());
@@ -69,20 +70,34 @@ public class LocalController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size,
             @RequestParam(defaultValue = CAMPO_ORDENACAO_PADRAO) String sort,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction) {
         
         int pageSize = validatePageSize(size);
         String sortField = validateSortField(sort);
         Sort.Direction sortDirection = validateSortDirection(direction);
         
-        log.info("Listando TODOS os locais com paginação: página={}, tamanho={}", page, pageSize);
+        log.info("GET /api/locais/todos - Listando todos os locais com imagens");
         
         Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortField));
-        Page<Local> locais = localService.listarTodos(pageable);
+        Page<Local> locais = localService.listarTodosComImagens(pageable);
         Page<LocalResponseDTO> responseDTOs = locais.map(LocalMapper::toResponse);
         
         return ResponseEntity.ok(responseDTOs);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LocalResponseDTO> buscarPorId(@PathVariable Long id) {
+        log.info("GET /api/locais/{} - Buscando local com imagens", id);
+        
+        return localService.buscarPorIdComImagens(id)
+                .map(LocalMapper::toResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ==========================================
+    // ENDPOINTS POR CATEGORIA
+    // ==========================================
 
     @GetMapping("/categoria/{categoria}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorCategoria(@PathVariable Categoria categoria) {
@@ -93,7 +108,11 @@ public class LocalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
-    
+
+    // ==========================================
+    // ENDPOINTS POR TIPO DE ACESSIBILIDADE
+    // ==========================================
+
     @GetMapping("/tipo-acessibilidade/{tipo}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorTipoAcessibilidade(@PathVariable TipoAcessibilidade tipo) {
         log.info("Buscando locais por tipo de acessibilidade: {}", tipo);
@@ -111,16 +130,18 @@ public class LocalController {
             @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size) {
         
         int pageSize = validatePageSize(size);
-        log.info("Buscando locais por tipo de acessibilidade com paginação: {}, página={}, tamanho={}", 
-                 tipo, page, pageSize);
+        log.info("Buscando locais por tipo de acessibilidade com paginação: {}", tipo);
         
         Pageable pageable = PageRequest.of(page, pageSize);
         Page<Local> locais = localService.buscarPorTipoAcessibilidadePaginado(tipo, pageable);
         Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
         
-        log.info("Encontrados {} locais com tipo de acessibilidade {}", dtos.getTotalElements(), tipo);
         return ResponseEntity.ok(dtos);
     }
+
+    // ==========================================
+    // ENDPOINTS PARA MÚLTIPLOS TIPOS
+    // ==========================================
 
     @PostMapping("/tipo-acessibilidade/buscar-por-qualquer-tipo")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorQualquerTipoAcessibilidade(
@@ -140,11 +161,9 @@ public class LocalController {
             @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size) {
         
         int pageSize = validatePageSize(size);
-        log.info("Buscando locais por qualquer um dos tipos com paginação: {}, página={}, tamanho={}", 
-                 tipos, page, pageSize);
+        log.info("Buscando locais por qualquer um dos tipos com paginação: {}", tipos);
         
         if (tipos == null || tipos.isEmpty()) {
-            log.warn("Lista de tipos vazia, retornando página vazia");
             return ResponseEntity.ok(Page.empty());
         }
         
@@ -152,7 +171,6 @@ public class LocalController {
         Page<Local> locais = localService.buscarPorQualquerTipoAcessibilidadePaginado(tipos, pageable);
         Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
         
-        log.info("Encontrados {} locais com qualquer um dos tipos {}", dtos.getTotalElements(), tipos);
         return ResponseEntity.ok(dtos);
     }
 
@@ -162,7 +180,6 @@ public class LocalController {
         log.info("Buscando locais que possuem todos os tipos: {}", tipos);
         
         if (tipos == null || tipos.isEmpty()) {
-            log.warn("Lista de tipos vazia, retornando lista vazia");
             return ResponseEntity.ok(List.of());
         }
         
@@ -180,11 +197,9 @@ public class LocalController {
             @RequestParam(defaultValue = "" + TAMANHO_PADRAO_PAGINA) int size) {
         
         int pageSize = validatePageSize(size);
-        log.info("Buscando locais que possuem todos os tipos com paginação: {}, página={}, tamanho={}", 
-                 tipos, page, pageSize);
+        log.info("Buscando locais que possuem todos os tipos com paginação: {}", tipos);
         
         if (tipos == null || tipos.isEmpty()) {
-            log.warn("Lista de tipos vazia, retornando página vazia");
             return ResponseEntity.ok(Page.empty());
         }
         
@@ -192,9 +207,12 @@ public class LocalController {
         Page<Local> locais = localService.buscarPorTodosTiposAcessibilidadePaginado(tipos, pageable);
         Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
         
-        log.info("Encontrados {} locais que possuem todos os tipos {}", dtos.getTotalElements(), tipos);
         return ResponseEntity.ok(dtos);
     }
+
+    // ==========================================
+    // ENDPOINTS COMBINADOS
+    // ==========================================
 
     @GetMapping("/categoria/{categoria}/tipo-acessibilidade/{tipo}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorCategoriaETipoAcessibilidade(
@@ -208,6 +226,10 @@ public class LocalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
+
+    // ==========================================
+    // ENDPOINTS PARA TIPOS DE ACESSIBILIDADE DO LOCAL
+    // ==========================================
 
     @GetMapping("/{id}/tipos-acessibilidade/count")
     public ResponseEntity<Integer> contarTiposAcessibilidade(@PathVariable Long id) {
@@ -231,14 +253,9 @@ public class LocalController {
         return ResponseEntity.ok(LocalMapper.toResponse(local));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LocalResponseDTO> buscarPorId(@PathVariable Long id) {
-        log.info("Buscando local por ID: {}", id);
-        return localService.buscarPorId(id)
-                .map(LocalMapper::toResponse)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    // ==========================================
+    // ENDPOINTS DE HIERARQUIA E SUB-LOCAIS
+    // ==========================================
 
     @GetMapping("/{id}/sub-locais")
     public ResponseEntity<Page<LocalResponseDTO>> listarSubLocais(
@@ -267,19 +284,21 @@ public class LocalController {
         return ResponseEntity.ok(dtos);
     }
 
+    // ==========================================
+    // ENDPOINTS CRUD PRINCIPAIS
+    // ==========================================
+
     @PostMapping
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
-        log.info("Salvando local: {}", requestDTO.getNome());
+        log.info("POST /api/locais - Salvando local: {}", requestDTO.getNome());
         
-        // Validação adicional
         if (requestDTO.getTiposAcessibilidade() == null || requestDTO.getTiposAcessibilidade().isEmpty()) {
             log.error("Tentativa de salvar local sem tipos de acessibilidade");
             return ResponseEntity.badRequest().build();
         }
         
         Local local = localService.salvar(requestDTO);
-        log.info("Local salvo com sucesso. ID: {}, Tipos de acessibilidade: {}", 
-                 local.getIdLocal(), local.getTiposAcessibilidade());
+        log.info("Local salvo com sucesso. ID: {}", local.getIdLocal());
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(LocalMapper.toResponse(local));
@@ -290,7 +309,7 @@ public class LocalController {
             @PathVariable Long id, 
             @Valid @RequestBody LocalRequestDTO requestDTO) {
         
-        log.info("Atualizando local ID: {}", id);
+        log.info("PUT /api/locais/{} - Atualizando local", id);
         
         if (requestDTO.getTiposAcessibilidade() == null || requestDTO.getTiposAcessibilidade().isEmpty()) {
             log.error("Tentativa de atualizar local sem tipos de acessibilidade");
@@ -305,11 +324,15 @@ public class LocalController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        log.info("Deletando local ID: {}", id);
+        log.info("DELETE /api/locais/{} - Deletando local", id);
         localService.deletar(id);
         log.info("Local ID: {} deletado com sucesso", id);
         return ResponseEntity.noContent().build();
     }
+
+    // ==========================================
+    // MÉTODOS DE VALIDAÇÃO PRIVADOS
+    // ==========================================
     
     private int validatePageSize(int size) {
         if (size <= 0) {
@@ -323,10 +346,8 @@ public class LocalController {
             return CAMPO_ORDENACAO_PADRAO;
         }
         
-        // Remove possíveis caracteres perigosos
         String campoLimpo = sort.trim().replaceAll("[^a-zA-Z]", "");
         
-        // Verifica se o campo é permitido
         if (CAMPOS_ORDENACAO_PERMITIDOS.contains(campoLimpo)) {
             return campoLimpo;
         }
@@ -337,14 +358,14 @@ public class LocalController {
     
     private Sort.Direction validateSortDirection(String direction) {
         if (direction == null) {
-            return Sort.Direction.ASC;
+            return Sort.Direction.DESC;
         }
         
         try {
             return Sort.Direction.fromString(direction.toUpperCase());
         } catch (IllegalArgumentException e) {
-            log.warn("Direção de ordenação inválida: {}, usando ASC", direction);
-            return Sort.Direction.ASC;
+            log.warn("Direção de ordenação inválida: {}, usando DESC", direction);
+            return Sort.Direction.DESC;
         }
     }
 }

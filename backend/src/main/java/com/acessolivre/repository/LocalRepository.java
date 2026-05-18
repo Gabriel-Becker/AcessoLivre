@@ -20,16 +20,55 @@ import java.util.Set;
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
+    // ===== MÉTODOS COM JOIN FETCH PARA CARREGAR IMAGENS =====
+    
+    @Query("""
+        SELECT DISTINCT l
+        FROM Local l
+        LEFT JOIN FETCH l.imagens
+        LEFT JOIN FETCH l.endereco
+        LEFT JOIN FETCH l.tiposAcessibilidade
+        LEFT JOIN FETCH l.usuario
+        WHERE l.localPrincipal IS NULL
+    """)
+    Page<Local> findAllLocaisRaizWithImages(Pageable pageable);
+    
+    @Query("""
+        SELECT DISTINCT l
+        FROM Local l
+        LEFT JOIN FETCH l.imagens
+        LEFT JOIN FETCH l.endereco
+        LEFT JOIN FETCH l.tiposAcessibilidade
+        LEFT JOIN FETCH l.usuario
+    """)
+    Page<Local> findAllWithImages(Pageable pageable);
+    
+    @Query("""
+        SELECT DISTINCT l
+        FROM Local l
+        LEFT JOIN FETCH l.imagens
+        LEFT JOIN FETCH l.endereco
+        LEFT JOIN FETCH l.tiposAcessibilidade
+        LEFT JOIN FETCH l.usuario
+        WHERE l.idLocal = :id
+    """)
+    Optional<Local> findByIdWithImages(@Param("id") Long id);
+    
+    // ===== MÉTODOS EXISTENTES =====
+    
     @Override
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario", "imagens"})
     Page<Local> findAll(Pageable pageable);
     
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     Page<Local> findByLocalPrincipalIsNull(Pageable pageable);
     
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     Page<Local> findByLocalPrincipalIdLocal(Long idLocalPrincipal, Pageable pageable);
     
+    @Override
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario", "imagens"})
+    Optional<Local> findById(Long id);
     
     List<Local> findByUsuarioIdUsuario(Long idUsuario);
     List<Local> findByCategoria(Categoria categoria);
@@ -39,21 +78,21 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     List<Local> findByLocalPrincipalIdLocal(Long idLocalPrincipal);
     Optional<Local> findByIdLocalAndLocalPrincipalIsNull(Long idLocal);
     
-    
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t = :tipo")
     Page<Local> findByTipoAcessibilidade(@Param("tipo") TipoAcessibilidade tipo, Pageable pageable);
     
+    @EntityGraph(attributePaths = {"imagens"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t = :tipo")
     List<Local> findByTipoAcessibilidade(@Param("tipo") TipoAcessibilidade tipo);
     
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     Page<Local> findByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos, Pageable pageable);
     
+    @EntityGraph(attributePaths = {"imagens"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     List<Local> findByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos);
-    
     
     @Query("SELECT COUNT(DISTINCT l) FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :tipos")
     long countByAnyTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos);
@@ -63,25 +102,23 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     long countByAllTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos, 
                                       @Param("quantidade") long quantidade);
     
-    
+    @EntityGraph(attributePaths = {"imagens"})
     @Query("SELECT l FROM Local l WHERE SIZE(l.tiposAcessibilidade) >= :quantidade AND NOT EXISTS (" +
            "SELECT t FROM Local l2 JOIN l2.tiposAcessibilidade t WHERE l2 = l AND t NOT IN :tipos)")
     List<Local> findByAllTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos, 
                                             @Param("quantidade") long quantidade);
     
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     @Query("SELECT l FROM Local l WHERE SIZE(l.tiposAcessibilidade) >= :quantidade AND NOT EXISTS (" +
            "SELECT t FROM Local l2 JOIN l2.tiposAcessibilidade t WHERE l2 = l AND t NOT IN :tipos)")
     Page<Local> findByAllTipoAcessibilidade(@Param("tipos") Set<TipoAcessibilidade> tipos, 
                                             @Param("quantidade") long quantidade, 
                                             Pageable pageable);
-   
     
-    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco"})
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE l.categoria = :categoria AND t = :tipo")
     List<Local> findByCategoriaAndTipoAcessibilidade(@Param("categoria") Categoria categoria, 
                                                      @Param("tipo") TipoAcessibilidade tipo);
-    
     
     @Query("SELECT SIZE(l.tiposAcessibilidade) FROM Local l WHERE l.idLocal = :idLocal")
     Integer countTiposAcessibilidadeByLocalId(@Param("idLocal") Long idLocal);
@@ -108,6 +145,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     """, nativeQuery = true)
     List<Local> buscarTodosAncestrais(@Param("idLocal") Long idLocal);
     
+    @EntityGraph(attributePaths = {"imagens"})
     @Query("SELECT l FROM Local l WHERE LOWER(l.nome) LIKE LOWER(CONCAT('%', :nome, '%'))")
     List<Local> buscarPorNomeLike(@Param("nome") String nome, Pageable pageable);
     
@@ -117,6 +155,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM Local l WHERE l.localPrincipal.idLocal = :idLocal")
     boolean hasSubLocais(@Param("idLocal") Long idLocal);
     
+    @EntityGraph(attributePaths = {"imagens"})
     List<Local> findByStatusOrderByAvaliacaoMediaDesc(StatusLocal status, Pageable pageable);
     
     @Modifying
