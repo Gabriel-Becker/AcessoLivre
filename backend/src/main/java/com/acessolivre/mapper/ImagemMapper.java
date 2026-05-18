@@ -1,32 +1,31 @@
 package com.acessolivre.mapper;
 
-import com.acessolivre.dto.request.ImagemRequestDTO;
 import com.acessolivre.dto.response.ImagemResponseDTO;
 import com.acessolivre.model.Imagem;
+import com.acessolivre.service.StorageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ImagemMapper {
     
-    public static Imagem toEntity(String url, Long idLocal, String nomeOriginal, String contentType, Long tamanho) {
-        return Imagem.builder()
-                .url(url)
-                .idLocal(idLocal)
-                .nomeOriginal(nomeOriginal)
-                .contentType(contentType)
-                .tamanhoBytes(tamanho)
-                .build();
-    }
+    private final StorageService storageService;
     
-    public static ImagemResponseDTO toResponse(Imagem entity) {
+    public ImagemResponseDTO toResponse(Imagem entity) {
         if (entity == null) {
             return null;
         }
         
         return ImagemResponseDTO.builder()
                 .idImagem(entity.getIdImagem())
-                .url(entity.getUrl())
+                .urlCompleta(storageService.construirUrlCompleta(entity.getCaminhoRelativo()))
+                .caminhoRelativo(entity.getCaminhoRelativo())
+                .nomeOriginal(entity.getNomeOriginal())
                 .idLocal(entity.getIdLocal())
+                .tamanhoBytes(entity.getTamanhoBytes())
+                .contentType(entity.getContentType())
+                .ordem(entity.getOrdem())
                 .build();
     }
 }
