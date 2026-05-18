@@ -14,7 +14,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
   const tiposAcessibilidade = local?.tiposAcessibilidade || [];
 
-  // ✅ AGORA É SIMPLES E CORRETO
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
     return local?.imagemUrl || null;
@@ -43,7 +42,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
   const formatEnderecoCompleto = (end) => {
     if (!end) return '';
-    return [end.logradouro, end.numero, end.bairro, end.cidade, end.estado]
+    return [end.logradouro, end.numero, end.cidade, end.estado]
       .filter(Boolean)
       .join(', ');
   };

@@ -83,8 +83,6 @@ export default function Home({ onNavigate }) {
 
   return (
     <View style={[styles.container, { backgroundColor: t.colors.background }]}>
-
-      {/* 🔒 CONTAINER FIXO */}
       <View style={styles.fixedContainer}>
         <StatsBanner
           estatisticas={estatisticas}
@@ -104,7 +102,6 @@ export default function Home({ onNavigate }) {
         </View>
       </View>
 
-      {/* 🔽 SOMENTE A LISTA ROLA */}
       <FlatList
         data={locaisDestaque}
         key={numColumns}
@@ -129,13 +126,13 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   fixedContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 10,
+    paddingTop: 10,
     paddingBottom: 8,
   },
 
   sectionHeader: {
-    marginTop: 12,
+    marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
