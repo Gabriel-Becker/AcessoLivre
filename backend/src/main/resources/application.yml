@@ -1,0 +1,13 @@
+app:
+  storage:
+    upload-dir: ${UPLOAD_DIR:uploads}
+    base-url: ${BASE_URL:http://localhost:8080}
+    static-prefix: /uploads
+    max-file-size: 5242880  # 5MB
+    allowed-formats: jpg,jpeg,png,webp
+
+spring:
+  web:
+    resources:
+      static-locations: file:${app.storage.upload-dir}/
+      add-mappings: true
