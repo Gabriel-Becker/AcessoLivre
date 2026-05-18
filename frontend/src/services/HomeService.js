@@ -118,4 +118,4 @@ const HomeService = {
   }
 };
 
-export default HomeService;
+export default HomeService
