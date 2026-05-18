@@ -1,8 +1,8 @@
-// service/StorageService.java
 package com.acessolivre.service;
 
+import com.acessolivre.config.StorageProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,137 +14,107 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class StorageService {
     
-    @Value("${app.uploads.path:/uploads}")
-    private String uploadPath;
-    
-    @Value("${app.uploads.url-pattern:/uploads/**}")
-    private String urlPattern;
-    
+    private final StorageProperties storageProperties;
     private final ImageOptimizerService imageOptimizerService;
     
-    public StorageService(ImageOptimizerService imageOptimizerService) {
-        this.imageOptimizerService = imageOptimizerService;
-    }
+    private static final String DIR_LOCAIS = "locais";
+    private static final String DIR_USUARIOS = "usuarios";
+    private static final String DIR_AVALIACOES = "avaliacoes";
     
     /**
-     * Salva uma imagem otimizada no disco
-     * @param arquivo MultipartFile da imagem
-     * @param idLocal ID do local para criar subpasta
-     * @return URL pública da imagem
+     * Salva a imagem otimizada no disco e retorna o caminho relativo
      */
-    public String salvarImagem(MultipartFile arquivo, Long idLocal) {
-        try {
-            // 1. Validar arquivo
-            validarArquivo(arquivo);
-            
-            // 2. Criar subpasta /uploads/locais/{idLocal}/
-            Path diretorioLocal = Paths.get(uploadPath, "locais", idLocal.toString());
-            Files.createDirectories(diretorioLocal);
-            
-            // 3. Gerar nome único para o arquivo
-            String extensao = obterExtensao(arquivo.getOriginalFilename());
-            String nomeArquivo = UUID.randomUUID().toString() + extensao;
-            
-            // 4. Caminho completo físico
-            Path caminhoFisico = diretorioLocal.resolve(nomeArquivo);
-            
-            // 5. Otimizar e salvar imagem (já em webp se configurado)
-            byte[] imagemOtimizada = imageOptimizerService.otimizarImagem(arquivo);
-            Files.write(caminhoFisico, imagemOtimizada);
-            
-            // 6. Construir URL pública
-            String urlPublica = construirUrlPublica(idLocal, nomeArquivo);
-            
-            log.info("Imagem salva com sucesso: {} -> {}", caminhoFisico, urlPublica);
-            return urlPublica;
-            
-        } catch (IOException e) {
-            log.error("Erro ao salvar imagem", e);
-            throw new RuntimeException("Erro ao salvar imagem: " + e.getMessage(), e);
+    public String salvarImagem(MultipartFile arquivo, Long idLocal, String dominio) throws IOException {
+        // 1. Validar arquivo
+        validarArquivo(arquivo);
+        
+        // 2. Gerar nome único com UUID
+        String extensao = getExtensao(arquivo.getOriginalFilename());
+        String uuid = UUID.randomUUID().toString();
+        String nomeArquivo = uuid + "." + extensao;
+        
+        // 3. Construir caminho: /uploads/locais/{idLocal}/{uuid}.jpg
+        String subDir = determinarSubDiretorio(dominio, idLocal);
+        Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
+        
+        // 4. Criar diretório se não existir
+        if (!Files.exists(diretorio)) {
+            Files.createDirectories(diretorio);
+            log.info("Diretório criado: {}", diretorio);
         }
+        
+        // 5. Otimizar a imagem (redimensionar + comprimir)
+        byte[] imagemOtimizada = imageOptimizerService.otimizarImagem(arquivo);
+        
+        // 6. Salvar arquivo no disco
+        Path caminhoCompleto = diretorio.resolve(nomeArquivo);
+        Files.write(caminhoCompleto, imagemOtimizada);
+        
+        // 7. Retornar caminho relativo (para salvar no banco)
+        String caminhoRelativo = storageProperties.getStaticPrefix() + "/" + subDir + "/" + nomeArquivo;
+        
+        log.info("Imagem salva: {} ({})", caminhoRelativo, arquivo.getSize() / 1024 + "KB");
+        return caminhoRelativo;
     }
     
     /**
-     * Deleta uma imagem do disco
-     * @param url URL da imagem (completa ou relativa)
-     * @return true se deletado com sucesso
+     * Deleta a imagem do disco
      */
-    public boolean deletarImagem(String url) {
+    public boolean deletarImagem(String caminhoRelativo) {
         try {
-            // Converter URL para caminho físico
-            Path caminhoFisico = converterUrlParaCaminho(url);
+            // Converte caminho relativo para absoluto
+            // /uploads/locais/1/image.jpg -> uploads/locais/1/image.jpg
+            String caminhoSemPrefix = caminhoRelativo.replace(storageProperties.getStaticPrefix() + "/", "");
+            Path caminhoAbsoluto = Paths.get(storageProperties.getUploadDir(), caminhoSemPrefix);
             
-            if (Files.exists(caminhoFisico)) {
-                Files.delete(caminhoFisico);
-                log.info("Imagem deletada do disco: {}", caminhoFisico);
-                return true;
-            } else {
-                log.warn("Arquivo não encontrado para deletar: {}", caminhoFisico);
-                return false;
-            }
+            return Files.deleteIfExists(caminhoAbsoluto);
         } catch (IOException e) {
-            log.error("Erro ao deletar imagem: {}", url, e);
+            log.error("Erro ao deletar imagem: {}", caminhoRelativo, e);
             return false;
         }
     }
     
     /**
-     * Constrói a URL pública baseada no caminho
+     * Constrói URL completa para acesso
      */
-    private String construirUrlPublica(Long idLocal, String nomeArquivo) {
-        // Exemplo: /uploads/locais/11/8f3a9c.webp
-        return String.format("/uploads/locais/%d/%s", idLocal, nomeArquivo);
+    public String construirUrlCompleta(String caminhoRelativo) {
+        if (caminhoRelativo == null) return null;
+        return storageProperties.getBaseUrl() + caminhoRelativo;
     }
     
-    /**
-     * Converte URL pública em caminho físico
-     */
-    private Path converterUrlParaCaminho(String url) {
-        // Remove o prefixo da URL se necessário
-        String caminhoRelativo = url;
-        if (url.startsWith("http")) {
-            // Se for URL completa, extrair o path
-            // Normalmente você guardaria apenas o path relativo no banco
-            caminhoRelativo = url.substring(url.indexOf("/uploads"));
-        }
-        
-        // Remove o primeiro "/" para concatenar
-        if (caminhoRelativo.startsWith("/")) {
-            caminhoRelativo = caminhoRelativo.substring(1);
-        }
-        
-        return Paths.get(uploadPath, caminhoRelativo);
-    }
-    
-    /**
-     * Validações básicas do arquivo
-     */
     private void validarArquivo(MultipartFile arquivo) {
         if (arquivo.isEmpty()) {
             throw new IllegalArgumentException("Arquivo vazio");
         }
         
-        String contentType = arquivo.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Arquivo não é uma imagem válida");
+        if (arquivo.getSize() > storageProperties.getMaxFileSize()) {
+            throw new IllegalArgumentException("Arquivo excede tamanho máximo de " + 
+                    storageProperties.getMaxFileSize() / (1024 * 1024) + "MB");
         }
         
-        // Verificar tamanho máximo (5MB)
-        if (arquivo.getSize() > 5 * 1024 * 1024) {
-            throw new IllegalArgumentException("Imagem excede tamanho máximo de 5MB");
+        String contentType = arquivo.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Formato não suportado. Envie apenas imagens.");
         }
     }
     
-    /**
-     * Obtém extensão do arquivo
-     */
-    private String obterExtensao(String nomeArquivo) {
-        if (nomeArquivo == null || !nomeArquivo.contains(".")) {
-            return ".webp"; // Default
+    private String getExtensao(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "jpg"; // default
         }
-        return nomeArquivo.substring(nomeArquivo.lastIndexOf("."));
+        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+    }
+    
+    private String determinarSubDiretorio(String dominio, Long idLocal) {
+        return switch (dominio) {
+            case "locais" -> DIR_LOCAIS + "/" + idLocal;
+            case "usuarios" -> DIR_USUARIOS;
+            case "avaliacoes" -> DIR_AVALIACOES;
+            default -> DIR_LOCAIS + "/" + idLocal;
+        };
     }
 }
