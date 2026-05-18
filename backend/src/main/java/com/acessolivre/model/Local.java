@@ -146,7 +146,7 @@ public class Local {
     public void addImagem(Imagem imagem) {
         if (imagem != null) {
             imagens.add(imagem);
-            imagem.setLocal(this);
+            imagem.setIdLocal(this.idLocal);
         }
     }
     
@@ -157,14 +157,10 @@ public class Local {
     public void removeImagem(Imagem imagem) {
         if (imagem != null) {
             imagens.remove(imagem);
-            imagem.setLocal(null);
+            imagem.setIdLocal(null);
         }
     }
     
-    /**
-     * Retorna a primeira imagem (thumbnail) - CORRIGIDO
-     * Agora usa getUrl() em vez de getImagemBase64()
-     */
     public String getImagemPrincipal() {
         if (imagens != null && !imagens.isEmpty()) {
             Imagem primeira = imagens.stream()
@@ -176,7 +172,7 @@ public class Local {
                     .findFirst()
                     .orElse(null);
             if (primeira != null) {
-                return primeira.getUrl();  // ← CORRIGIDO: getUrl() em vez de getImagemBase64()
+                return primeira.getCaminhoRelativo();  // ← CORRETO
             }
         }
         return imagem;

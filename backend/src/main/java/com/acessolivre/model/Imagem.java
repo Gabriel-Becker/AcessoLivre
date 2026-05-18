@@ -1,10 +1,14 @@
 package com.acessolivre.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,35 +28,37 @@ public class Imagem {
     private Long idImagem;
 
     @Column(name = "uuid", nullable = false, unique = true)
-    private String uuid;  // Nome único do arquivo
-    
+    private String uuid;
+
+    @NotBlank(message = "Caminho da imagem é obrigatório")
     @Column(name = "caminho_relativo", length = 500, nullable = false)
-    private String caminhoRelativo;  // /uploads/locais/8f3a9c1e.jpg
-    
+    private String caminhoRelativo;
+
     @Column(name = "nome_original", length = 255)
     private String nomeOriginal;
-    
+
     @Column(name = "idlocal", nullable = false)
     private Long idLocal;
-    
+
     @Column(name = "tamanho_bytes")
     private Long tamanhoBytes;
-    
-    @Column(name = "content_type")
+
+    @Column(name = "content_type", length = 100)
     private String contentType;
-    
-    @Column(name = "formato")
+
+    @Column(name = "formato", length = 10)
     private String formato;
-    
+
     @Column(name = "ordem")
     @Builder.Default
     private Integer ordem = 0;
-    
+
     @Column(name = "data_upload")
+    @CreationTimestamp
     private LocalDateTime dataUpload;
-    
-    @PrePersist
-    protected void onCreate() {
-        dataUpload = LocalDateTime.now();
-    }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idlocal", insertable = false, updatable = false)
+    @JsonIgnore
+    private Local local; 
 }
