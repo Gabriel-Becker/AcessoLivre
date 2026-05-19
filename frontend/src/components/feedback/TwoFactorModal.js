@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, View, StyleSheet, ScrollView, Image, TouchableOpacity, Pressable } from 'react-native';
+import {
+  Modal,
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  useWindowDimensions,
+} from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Input } from '../ui';
 import { Spacer, ThemedText } from '../commons';
@@ -10,6 +19,8 @@ import toastHelper from '../../utils/toastHelper';
 
 export default function TwoFactorModal({ visible, enabled = false, onClose, onSuccess }) {
   const { theme: t, isHighContrast } = useThemeContext();
+  const { width, height } = useWindowDimensions();
+  const isMobile = width < 600;
   const [carregandoSetup, setCarregandoSetup] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [setupDados, setSetupDados] = useState(null);
@@ -25,46 +36,57 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           backgroundColor: 'rgba(0,0,0,0.45)',
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: t.spacing.lg,
+          paddingHorizontal: isMobile ? t.spacing.md : t.spacing.lg,
+          paddingVertical: isMobile ? t.spacing.md : t.spacing.lg,
         },
         modalContainer: {
           width: '100%',
-          maxWidth: 560,
-          maxHeight: '92%',
+          maxWidth: isMobile ? 420 : 560,
+          maxHeight: Math.min(height - t.spacing.lg * 2, isMobile ? 760 : height * 0.92),
           borderRadius: t.borderRadius.xl,
-          paddingHorizontal: t.spacing.lg,
-          paddingVertical: t.spacing.lg,
+          paddingHorizontal: isMobile ? t.spacing.md : t.spacing.lg,
+          paddingVertical: isMobile ? t.spacing.md : t.spacing.lg,
           backgroundColor: t.colors.surface,
           ...(isHighContrast ? t.shadows.none : t.shadows.lg),
         },
         scrollContent: {
-          paddingBottom: t.spacing.lg,
+          flexGrow: 1,
+          paddingBottom: t.spacing.md,
+        },
+        headerSpacing: {
+          marginBottom: isMobile ? t.spacing.xs : t.spacing.sm,
         },
         qrContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          padding: t.spacing.md,
+          padding: isMobile ? t.spacing.sm : t.spacing.md,
           backgroundColor: '#FFFFFF',
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
         },
         qrImage: {
-          width: 210,
-          height: 210,
+          width: isMobile ? 176 : 210,
+          height: isMobile ? 176 : 210,
+          maxWidth: '100%',
         },
         secretBox: {
-          padding: t.spacing.md,
+          paddingVertical: t.spacing.md,
+          paddingHorizontal: t.spacing.sm,
           borderRadius: t.borderRadius.md,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
           backgroundColor: t.colors.backgroundSecondary,
         },
+        secretText: {
+          flexShrink: 1,
+          lineHeight: isMobile ? 20 : undefined,
+        },
         copiedLink: {
           alignSelf: 'center',
         },
       }),
-    [isHighContrast, t]
+    [height, isHighContrast, isMobile, t]
   );
 
   useEffect(() => {
@@ -176,14 +198,13 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={estilos.scrollContent}
-            scrollEnabled={false}
+            scrollEnabled
             bounces={false}
             alwaysBounceVertical={false}
           >
-            <ThemedText variant="h2" weight="bold" align="center">
+            <ThemedText variant="h2" weight="bold" align="center" style={estilos.headerSpacing}>
               {enabled ? 'Desativar 2FA' : 'Autenticação de Dois Fatores'}
             </ThemedText>
-            <Spacer size="sm" />
             <ThemedText color="textSecondary" align="center">
               {enabled
                 ? 'Digite o código de 6 dígitos do seu aplicativo autenticador para desativar.'
@@ -219,7 +240,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                     <Spacer size="md" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
                       <View style={estilos.secretBox}>
-                        <ThemedText align="center" weight="semibold">
+                        <ThemedText align="center" weight="semibold" style={estilos.secretText}>
                           {setupDados.secretKey}
                         </ThemedText>
                       </View>
