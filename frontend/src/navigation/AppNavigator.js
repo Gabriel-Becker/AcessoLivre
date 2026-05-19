@@ -64,6 +64,12 @@ function MainApp({ navigation, route }) {
   };
 
   useEffect(() => {
+    if (!isAuthenticated && ['Perfil', 'Adicionar', 'Admin'].includes(currentScreen)) {
+      setCurrentScreen('Inicio');
+    }
+  }, [isAuthenticated, currentScreen]);
+
+  useEffect(() => {
     if (!isAdmin && currentScreen === 'Admin') {
       setCurrentScreen('Inicio');
     }
@@ -80,7 +86,7 @@ function MainApp({ navigation, route }) {
       case 'Sobre':
         return <Sobre />;
       case 'Perfil':
-        return <Perfil />;
+        return isAuthenticated ? <Perfil /> : <Home />;
       case 'Admin':
         return isAdmin ? <Admin /> : <Home />;
       default:

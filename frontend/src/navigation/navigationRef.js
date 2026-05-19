@@ -26,4 +26,22 @@ export function resetToAuth() {
   );
 }
 
+export function resetToHome() {
+  if (!navigationRef.isReady()) return;
+
+  const state = navigationRef.getRootState();
+  const routeNames = state?.routeNames || [];
+
+  if (!routeNames.includes('Main')) {
+    return;
+  }
+
+  navigationRef.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: 'Main', params: { screen: 'Inicio' } }],
+    })
+  );
+}
+
 export default navigationRef;
