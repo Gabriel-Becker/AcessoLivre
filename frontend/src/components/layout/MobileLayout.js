@@ -78,20 +78,12 @@ export default function MobileLayout({
               accessibilityRole="button"
               accessibilityLabel={`Ir para ${tab.label}`}
             >
-              <View
-                style={
-                  ativo
-                    ? [
-                        styles.tabInner,
-                        { backgroundColor: t.colors.surface, borderRightWidth: 3, borderRightColor: t.colors.primary, paddingHorizontal: 12 },
-                      ]
-                    : [styles.tabInner, { backgroundColor: t.colors.surface }]
-                }
-              >
+              <View style={[styles.tabInner, ativo && [styles.tabInnerAtivo, { backgroundColor: t.colors.backgroundSecondary }]]}>
                 <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={20} color={ativo ? t.colors.primary : t.colors.textSecondary} />
                 <ThemedText style={[styles.tabLabel, { color: ativo ? t.colors.primary : t.colors.textSecondary }]} weight={ativo ? 'semibold' : 'regular'}>
                   {tab.label}
                 </ThemedText>
+                {ativo ? <View style={[styles.tabIndicator, { backgroundColor: t.colors.primary }]} /> : null}
               </View>
             </TouchableOpacity>
           );
@@ -156,7 +148,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 4,
     minHeight: 48,
   },
   tabInner: {
@@ -167,7 +159,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: theme.borderRadius.full,
   },
+  tabInnerAtivo: {
+    paddingHorizontal: 12,
+  },
   tabLabel: {
     fontSize: 12,
+  },
+  tabIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 999,
   },
 });
