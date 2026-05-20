@@ -4,7 +4,7 @@ import theme from '../../../config/theme';
 import { Spacer, Divider } from '../../commons';
 import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
-import { resetToAuth } from '../../../navigation/navigationRef';
+import { resetToHome } from '../../../navigation/navigationRef';
 import SidebarItem from './SidebarItem';
 
 export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
@@ -14,7 +14,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
 
   const handleLogout = async () => {
     await logout();
-    resetToAuth();
+    resetToHome();
   };
 
   return (

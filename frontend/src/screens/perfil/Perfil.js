@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
@@ -8,15 +8,19 @@ import { TrocarSenhaModal, TwoFactorModal } from '../../components/feedback';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
 import AuthService from '../../services/AuthService';
+import { resetToHome } from '../../navigation/navigationRef';
 import toastHelper from '../../utils/toastHelper';
 
 export default function Perfil() {
-  const { usuario } = useAuth();
+  const { usuario, logout } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
   const [twoFactorAtivo, setTwoFactorAtivo] = useState(false);
   const [carregandoTwoFactor, setCarregandoTwoFactor] = useState(true);
+  const [carregandoLogout, setCarregandoLogout] = useState(false);
 
   const carregarStatusTwoFactor = async () => {
     try {
@@ -33,6 +37,16 @@ export default function Perfil() {
   useEffect(() => {
     carregarStatusTwoFactor();
   }, []);
+
+  const executarLogout = async () => {
+    try {
+      setCarregandoLogout(true);
+      await logout();
+      resetToHome();
+    } finally {
+      setCarregandoLogout(false);
+    }
+  };
 
   const InfoItem = ({ icon, label, value }) => (
     <View style={styles.infoItem}>
@@ -113,6 +127,24 @@ export default function Perfil() {
           >
             Trocar Senha
           </Button>
+
+          {isMobile ? (
+            <>
+              <Spacer size="md" />
+              <Button
+                variant="danger"
+                size="large"
+                fullWidth
+                onPress={executarLogout}
+                iconLeft="log-out-outline"
+                loading={carregandoLogout}
+                disabled={carregandoLogout}
+                altoContraste={isHighContrast}
+              >
+                Sair da conta
+              </Button>
+            </>
+          ) : null}
         </Card>
 
         <Spacer size="lg" />

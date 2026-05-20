@@ -9,7 +9,7 @@ import SidebarUserPanel from './SidebarUserPanel';
 import SidebarItem from './SidebarItem';
 import { useAuth } from '../../../context/AuthContext';
 
-export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false }) {
+export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240 }) {
   const t = altoContraste ? getTheme(true) : theme;
   const { isAuthenticated } = useAuth();
 
@@ -26,7 +26,10 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
   ];
 
   return (
-    <SafeArea background="surface" style={[styles.sidebar, { borderRightColor: t.colors.borderLight }]}>
+    <SafeArea
+      background="surface"
+      style={[styles.sidebar, { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura }]}
+    >
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Ionicons name="accessibility-outline" size={32} color={t.colors.primary} />
@@ -60,8 +63,6 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
 
 const styles = StyleSheet.create({
   sidebar: {
-    width: 240,
-    maxWidth: 240,
     borderRightWidth: 1,
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.lg,

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, useWindowDimensions } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { Container, DesktopLayout } from '../components/layout';
+import { Container, DesktopLayout, MobileLayout } from '../components/layout';
 import { ThemedText, Spacer } from '../components/commons';
 import { Login, Register, ForgotPassword, ResetPassword } from '../screens/auth';
 import Home from '../screens/home/Home';
@@ -12,7 +12,7 @@ import LocalDetalhes from '../screens/locais/LocalDetalhes';
 import Sobre from '../screens/sobre/Sobre';
 import Perfil from '../screens/perfil/Perfil';
 import Admin from '../screens/admin/Admin';
-import theme from '../config/theme';
+import theme, { breakpoints } from '../config/theme';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,8 +28,10 @@ function LoadingScreen() {
 
 function MainApp({ navigation, route }) {
   const { usuario, isAuthenticated } = useAuth();
+  const { width } = useWindowDimensions();
   const screenInicial = route?.params?.screen || 'Inicio';
   const [currentScreen, setCurrentScreen] = useState(screenInicial);
+  const isDesktop = width >= breakpoints.desktop;
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
@@ -68,6 +70,12 @@ function MainApp({ navigation, route }) {
   };
 
   useEffect(() => {
+    if (!isAuthenticated && ['Perfil', 'Adicionar', 'Admin'].includes(currentScreen)) {
+      setCurrentScreen('Inicio');
+    }
+  }, [isAuthenticated, currentScreen]);
+
+  useEffect(() => {
     if (!isAdmin && currentScreen === 'Admin') {
       setCurrentScreen('Inicio');
     }
@@ -86,7 +94,7 @@ function MainApp({ navigation, route }) {
       case 'Sobre':
         return <Sobre onNavigate={handleNavigate} />;
       case 'Perfil':
-        return <Perfil onNavigate={handleNavigate} />;
+        return isAuthenticated ? <Perfil /> : <Home />;
       case 'Admin':
         return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
       default:
@@ -94,10 +102,18 @@ function MainApp({ navigation, route }) {
     }
   };
 
+  if (isDesktop) {
+    return (
+      <DesktopLayout current={currentScreen} onNavigate={handleNavigate}>
+        {renderScreen()}
+      </DesktopLayout>
+    );
+  }
+
   return (
-    <DesktopLayout current={currentScreen} onNavigate={handleNavigate}>
+    <MobileLayout current={currentScreen} onNavigate={handleNavigate}>
       {renderScreen()}
-    </DesktopLayout>
+    </MobileLayout>
   );
 }
 

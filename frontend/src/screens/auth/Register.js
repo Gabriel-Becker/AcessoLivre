@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import { formatarErroCadastro, formatarErroLogin } from '../../utils/authToastFormatter';
+import { breakpoints } from '../../config/theme';
 
 const REQUISITOS_SENHA = [
   {
@@ -72,6 +73,8 @@ const schema = z
 export default function Register({ navigation }) {
   const { register: registerUser, login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= breakpoints.desktop;
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -242,9 +245,8 @@ export default function Register({ navigation }) {
     navigation.navigate('Main', { screen: screenName });
   };
 
-  return (
-    <DesktopLayout current="Register" onNavigate={handleNavigate} altoContraste={isHighContrast}>
-      <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
+  const conteudoCadastro = (
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -423,6 +425,15 @@ export default function Register({ navigation }) {
       </ScrollView>
 
       </Container>
+  );
+
+  if (!isDesktop) {
+    return conteudoCadastro;
+  }
+
+  return (
+    <DesktopLayout current="Register" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      {conteudoCadastro}
     </DesktopLayout>
   );
 }
