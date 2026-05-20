@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
@@ -25,52 +24,55 @@ public class StorageService {
     private static final String DIR_USUARIOS = "usuarios";
     private static final String DIR_AVALIACOES = "avaliacoes";
     
-    /**
-     * Salva a imagem otimizada no disco e retorna o caminho relativo
-     */
     public String salvarImagem(MultipartFile arquivo, Long idLocal, String dominio) throws IOException {
+        log.info("💾 Salvando imagem para local: {}", idLocal);
+        
         // 1. Validar arquivo
         validarArquivo(arquivo);
         
-        // 2. Gerar nome único com UUID
-        String extensao = getExtensao(arquivo.getOriginalFilename());
+        // 2. Gerar nome único com UUID (tratando nome original null)
+        String originalFilename = arquivo.getOriginalFilename();
+        String extensao = getExtensao(originalFilename);
         String uuid = UUID.randomUUID().toString();
         String nomeArquivo = uuid + "." + extensao;
         
-        // 3. Construir caminho: /uploads/locais/{idLocal}/{uuid}.jpg
+        log.info("Arquivo original: {}, extensão: {}, nome gerado: {}", originalFilename, extensao, nomeArquivo);
+        
+        // 3. Construir caminho
         String subDir = determinarSubDiretorio(dominio, idLocal);
         Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
         
         // 4. Criar diretório se não existir
         if (!Files.exists(diretorio)) {
             Files.createDirectories(diretorio);
-            log.info("Diretório criado: {}", diretorio);
+            log.info("📁 Diretório criado: {}", diretorio.toAbsolutePath());
         }
         
-        // 5. Otimizar a imagem (redimensionar + comprimir)
-        byte[] imagemOtimizada = imageOptimizerService.otimizarImagem(arquivo);
+        // 5. Otimizar a imagem (ou usar original em caso de erro)
+        byte[] imagemBytes;
+        try {
+            imagemBytes = imageOptimizerService.otimizarImagem(arquivo);
+            log.info("✅ Imagem otimizada: {} bytes", imagemBytes.length);
+        } catch (Exception e) {
+            log.warn("⚠️ Erro na otimização, usando arquivo original: {}", e.getMessage());
+            imagemBytes = arquivo.getBytes();
+        }
         
         // 6. Salvar arquivo no disco
         Path caminhoCompleto = diretorio.resolve(nomeArquivo);
-        Files.write(caminhoCompleto, imagemOtimizada);
+        Files.write(caminhoCompleto, imagemBytes);
         
-        // 7. Retornar caminho relativo (para salvar no banco)
+        // 7. Retornar caminho relativo
         String caminhoRelativo = storageProperties.getStaticPrefix() + "/" + subDir + "/" + nomeArquivo;
         
-        log.info("Imagem salva: {} ({})", caminhoRelativo, arquivo.getSize() / 1024 + "KB");
+        log.info("✅ Imagem salva: {} ({} KB)", caminhoRelativo, imagemBytes.length / 1024);
         return caminhoRelativo;
     }
     
-    /**
-     * Deleta a imagem do disco
-     */
     public boolean deletarImagem(String caminhoRelativo) {
         try {
-            // Converte caminho relativo para absoluto
-            // /uploads/locais/1/image.jpg -> uploads/locais/1/image.jpg
             String caminhoSemPrefix = caminhoRelativo.replace(storageProperties.getStaticPrefix() + "/", "");
             Path caminhoAbsoluto = Paths.get(storageProperties.getUploadDir(), caminhoSemPrefix);
-            
             return Files.deleteIfExists(caminhoAbsoluto);
         } catch (IOException e) {
             log.error("Erro ao deletar imagem: {}", caminhoRelativo, e);
@@ -80,8 +82,6 @@ public class StorageService {
     
     public String construirUrlCompleta(String caminhoRelativo) {
         if (caminhoRelativo == null) return null;
-        
-        // Se já é URL completa, retorna
         if (caminhoRelativo.startsWith("http")) return caminhoRelativo;
         
         String baseUrl = storageProperties.getBaseUrl();
@@ -89,7 +89,6 @@ public class StorageService {
             baseUrl = "http://localhost:8080";
         }
         
-        // Remove barra duplicada
         if (baseUrl.endsWith("/") && caminhoRelativo.startsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
@@ -98,9 +97,12 @@ public class StorageService {
     }
     
     private void validarArquivo(MultipartFile arquivo) {
-        if (arquivo.isEmpty()) {
+        if (arquivo == null || arquivo.isEmpty()) {
             throw new IllegalArgumentException("Arquivo vazio");
         }
+        
+        log.info("Validando arquivo: size={}, contentType={}, originalFilename={}", 
+            arquivo.getSize(), arquivo.getContentType(), arquivo.getOriginalFilename());
         
         if (arquivo.getSize() > storageProperties.getMaxFileSize()) {
             throw new IllegalArgumentException("Arquivo excede tamanho máximo de " + 
@@ -109,13 +111,14 @@ public class StorageService {
         
         String contentType = arquivo.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
+            log.warn("ContentType inválido: {}", contentType);
             throw new IllegalArgumentException("Formato não suportado. Envie apenas imagens.");
         }
     }
     
     private String getExtensao(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "jpg"; // default
+        if (filename == null || filename.isEmpty() || !filename.contains(".")) {
+            return "jpg";
         }
         return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
