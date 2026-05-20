@@ -263,19 +263,11 @@ export default function Admin() {
       <>
         <BarraFiltroAdmin
           titulo="Planilha de usuários"
-          subtitulo="Pesquisa e filtros aplicados aos usuários carregados na página atual."
           pesquisa={buscaUsuarios}
           onChangePesquisa={setBuscaUsuarios}
           pesquisaPlaceholder="Pesquisar por nome ou e-mail"
           filtros={filtros}
-          onLimparFiltros={limparFiltrosUsuarios}
         />
-
-        <Spacer size="sm" />
-
-        <ThemedText color="textSecondary" size="sm">
-          Exibindo {usuariosFiltrados.length} de {usuarios.length} registros nesta página.
-        </ThemedText>
 
         <Spacer size="sm" />
 
@@ -315,19 +307,11 @@ export default function Admin() {
       <>
         <BarraFiltroAdmin
           titulo="Planilha de locais"
-          subtitulo="Busca por nome ou cidade e filtro por categoria nos registros carregados na página atual."
           pesquisa={buscaLocais}
           onChangePesquisa={setBuscaLocais}
           pesquisaPlaceholder="Pesquisar por nome ou cidade"
           filtros={filtros}
-          onLimparFiltros={limparFiltrosLocais}
         />
-
-        <Spacer size="sm" />
-
-        <ThemedText color="textSecondary" size="sm">
-          Exibindo {locaisFiltrados.length} de {locais.length} registros nesta página.
-        </ThemedText>
 
         <Spacer size="sm" />
 
@@ -376,10 +360,6 @@ export default function Admin() {
         <View style={styles.cabecalhoPagina}>
           <ThemedText variant="h1" weight="bold" align="center">
             Painel Administrativo
-          </ThemedText>
-          <Spacer size="sm" />
-          <ThemedText color="textSecondary" align="center">
-            Área restrita para gestão geral do sistema. Bem-vindo, {usuario?.nome || 'Administrador'}.
           </ThemedText>
         </View>
 
