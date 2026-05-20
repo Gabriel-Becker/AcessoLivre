@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+//import org.springframework.context.annotation.Lazy;
 
 import java.util.*;
 
@@ -27,10 +28,9 @@ public class LocalService {
     private final EnderecoRepository enderecoRepository;
     private final EnderecoService enderecoService;
     private final AvaliacaoRepository avaliacaoRepository;
+    private final ImagemService imagemService;  
 
     private static final int MAX_PROFUNDIDADE_HIERARQUIA = 5;
-
-    // ===== NOVOS MÉTODOS COM JOIN FETCH PARA IMAGENS =====
     
     @Transactional(readOnly = true)
     public Page<Local> listarTodosComImagens(Pageable pageable) {

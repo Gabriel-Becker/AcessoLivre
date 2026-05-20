@@ -40,10 +40,6 @@ public class LocalController {
     private static final int TAMANHO_MAXIMO_PAGINA = 100;
     private static final String CAMPO_ORDENACAO_PADRAO = "dataCriacao";
 
-    // ==========================================
-    // ENDPOINTS PRINCIPAIS COM JOIN FETCH
-    // ==========================================
-
     @GetMapping
     public ResponseEntity<Page<LocalResponseDTO>> listarTodos(
             @RequestParam(defaultValue = "0") int page,
@@ -95,10 +91,6 @@ public class LocalController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ==========================================
-    // ENDPOINTS POR CATEGORIA
-    // ==========================================
-
     @GetMapping("/categoria/{categoria}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorCategoria(@PathVariable Categoria categoria) {
         log.info("Buscando locais por categoria: {}", categoria);
@@ -108,10 +100,6 @@ public class LocalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
-
-    // ==========================================
-    // ENDPOINTS POR TIPO DE ACESSIBILIDADE
-    // ==========================================
 
     @GetMapping("/tipo-acessibilidade/{tipo}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorTipoAcessibilidade(@PathVariable TipoAcessibilidade tipo) {
@@ -138,10 +126,6 @@ public class LocalController {
         
         return ResponseEntity.ok(dtos);
     }
-
-    // ==========================================
-    // ENDPOINTS PARA MÚLTIPLOS TIPOS
-    // ==========================================
 
     @PostMapping("/tipo-acessibilidade/buscar-por-qualquer-tipo")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorQualquerTipoAcessibilidade(
@@ -210,10 +194,6 @@ public class LocalController {
         return ResponseEntity.ok(dtos);
     }
 
-    // ==========================================
-    // ENDPOINTS COMBINADOS
-    // ==========================================
-
     @GetMapping("/categoria/{categoria}/tipo-acessibilidade/{tipo}")
     public ResponseEntity<List<LocalResponseDTO>> buscarPorCategoriaETipoAcessibilidade(
             @PathVariable Categoria categoria,
@@ -226,10 +206,6 @@ public class LocalController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
-
-    // ==========================================
-    // ENDPOINTS PARA TIPOS DE ACESSIBILIDADE DO LOCAL
-    // ==========================================
 
     @GetMapping("/{id}/tipos-acessibilidade/count")
     public ResponseEntity<Integer> contarTiposAcessibilidade(@PathVariable Long id) {
@@ -252,10 +228,6 @@ public class LocalController {
         Local local = localService.atualizarTiposAcessibilidade(id, tipos);
         return ResponseEntity.ok(LocalMapper.toResponse(local));
     }
-
-    // ==========================================
-    // ENDPOINTS DE HIERARQUIA E SUB-LOCAIS
-    // ==========================================
 
     @GetMapping("/{id}/sub-locais")
     public ResponseEntity<Page<LocalResponseDTO>> listarSubLocais(
@@ -284,9 +256,6 @@ public class LocalController {
         return ResponseEntity.ok(dtos);
     }
 
-    // ==========================================
-    // ENDPOINTS CRUD PRINCIPAIS
-    // ==========================================
 
     @PostMapping
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
@@ -329,10 +298,6 @@ public class LocalController {
         log.info("Local ID: {} deletado com sucesso", id);
         return ResponseEntity.noContent().build();
     }
-
-    // ==========================================
-    // MÉTODOS DE VALIDAÇÃO PRIVADOS
-    // ==========================================
     
     private int validatePageSize(int size) {
         if (size <= 0) {

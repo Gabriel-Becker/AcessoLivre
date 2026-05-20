@@ -1,7 +1,61 @@
+spring:
+  # Configuração do banco de dados
+  datasource:
+    url: jdbc:postgresql://db:5432/acessolivre
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA / Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  # Permitir dependências circulares (SOLUÇÃO RÁPIDA)
+  main:
+    allow-circular-references: true
+  
+  # Upload de arquivos
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  
+  # Recursos estáticos
+  web:
+    resources:
+      static-locations: file:uploads/
+      add-mappings: true
+
+# Configurações da aplicação
 app:
   storage:
     upload-dir: uploads
     base-url: http://localhost:8080
     static-prefix: /uploads
     max-file-size: 5242880
-    allowed-formats: jpg,jpeg,png,webp
+    allowed-formats:
+      - jpg
+      - jpeg
+      - png
+      - webp
+
+# Logging
+logging:
+  level:
+    com.acessolivre: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Server
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always

@@ -2,7 +2,9 @@ package com.acessolivre.service;
 
 import com.acessolivre.dto.request.ImagemUploadDTO;
 import com.acessolivre.model.Imagem;
+import com.acessolivre.model.Local;
 import com.acessolivre.repository.ImagemRepository;
+import com.acessolivre.repository.LocalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,8 @@ public class ImagemService {
 
     private final ImagemRepository imagemRepository;
     private final StorageService storageService;
-    private final LocalService localService;
-    
+    private final LocalRepository localRepository; 
+
     private static final String DOMINIO_LOCAIS = "locais";
 
     @Transactional(readOnly = true)
@@ -43,22 +45,19 @@ public class ImagemService {
     public Imagem salvar(ImagemUploadDTO uploadDTO) {
         log.info("Salvando imagem para local ID: {}", uploadDTO.getIdLocal());
         
-        // 1. Validar se o local existe
-        localService.buscarPorId(uploadDTO.getIdLocal())
+        // Usar o repository diretamente para evitar ciclo
+        Local local = localRepository.findById(uploadDTO.getIdLocal())
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + uploadDTO.getIdLocal()));
         
         try {
-            // 2. Salvar arquivo físico e obter caminho relativo
             String caminhoRelativo = storageService.salvarImagem(
                     uploadDTO.getArquivo(),
-                    uploadDTO.getIdLocal(),
+                    local.getIdLocal(),
                     DOMINIO_LOCAIS
             );
             
-            // 3. Gerar UUID único para a imagem
             String uuid = UUID.randomUUID().toString();
             
-            // 4. Salvar metadados no banco
             Imagem imagem = Imagem.builder()
                     .uuid(uuid)
                     .caminhoRelativo(caminhoRelativo)
@@ -93,10 +92,7 @@ public class ImagemService {
         
         Imagem imagem = imagemOpt.get();
         
-        // 1. Deletar arquivo físico
         boolean deletadoDisco = storageService.deletarImagem(imagem.getCaminhoRelativo());
-        
-        // 2. Deletar registro do banco
         imagemRepository.deleteById(id);
         
         if (!deletadoDisco) {
@@ -105,6 +101,20 @@ public class ImagemService {
         
         log.info("Imagem deletada: {}", id);
         return true;
+    }
+    
+    @Transactional
+    public void deletarImagensPorLocal(Long idLocal) {
+        log.info("Deletando todas imagens do local ID: {}", idLocal);
+        
+        List<Imagem> imagens = imagemRepository.findByIdLocalOrderByIdImagemDesc(idLocal);
+        
+        for (Imagem imagem : imagens) {
+            storageService.deletarImagem(imagem.getCaminhoRelativo());
+        }
+        
+        imagemRepository.deleteAll(imagens);
+        log.info("{} imagens deletadas do local ID: {}", imagens.size(), idLocal);
     }
     
     private String getExtensao(String filename) {
