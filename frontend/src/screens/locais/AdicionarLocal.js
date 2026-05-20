@@ -66,7 +66,6 @@ const RECURSOS_ACESSIBILIDADE = [
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  // Para Web: drag and drop
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -96,7 +95,6 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     }
   };
 
-  // Para Web: selecionar arquivos
   const handleSelectFilesWeb = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -122,7 +120,6 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     input.click();
   };
 
-  // Para Mobile: selecionar da galeria
   const handleSelectFilesMobile = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -148,7 +145,6 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     }
   };
 
-  // Para Mobile: tirar foto
   const handleTakePhotoMobile = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -302,7 +298,6 @@ const localStyles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   removeButton: {
     position: 'absolute',
@@ -380,7 +375,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
-  // Carregar estatísticas
   useEffect(() => {
     const carregarEstatisticas = async () => {
       const stats = await LocalService.obterEstatisticas();
@@ -555,9 +549,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     try {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
-      // ==========================================
-      // PASSO 1: Cadastrar o Local
-      // ==========================================
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
@@ -582,9 +573,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       
       console.log('✅ Local criado com ID:', localId);
 
-      // ==========================================
-      // PASSO 2: Enviar imagens
-      // ==========================================
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
         
@@ -597,35 +585,44 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             
             const imagem = imagens[i];
             console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
+            console.log(`   URI: ${imagem.uri}`);
+            console.log(`   Nome: ${imagem.name}`);
+            console.log(`   Tipo: ${imagem.type}`);
             
             const formData = new FormData();
             formData.append('idLocal', String(localId));
             
-            // CORREÇÃO PRINCIPAL: Enviar o arquivo corretamente
             let arquivoParaEnviar;
             
             if (Platform.OS === 'web') {
-              // Web: usar o File original
               if (imagem.file) {
                 arquivoParaEnviar = imagem.file;
               } else if (imagem.uri && imagem.uri.startsWith('blob:')) {
-                // Converter blob URL para File
                 const response = await fetch(imagem.uri);
                 const blob = await response.blob();
-                arquivoParaEnviar = new File([blob], imagem.name, { type: imagem.type });
+                const fileName = imagem.name || `image_${Date.now()}.jpg`;
+                const fileType = imagem.type || 'image/jpeg';
+                arquivoParaEnviar = new File([blob], fileName, { type: fileType });
               } else {
-                arquivoParaEnviar = imagem;
+                arquivoParaEnviar = {
+                  uri: imagem.uri,
+                  name: imagem.name || `image_${Date.now()}.jpg`,
+                  type: imagem.type || 'image/jpeg',
+                };
               }
             } else {
-              // Mobile: formato React Native
               arquivoParaEnviar = {
                 uri: imagem.uri,
-                name: imagem.name,
-                type: imagem.type,
+                name: imagem.name || `image_${Date.now()}.jpg`,
+                type: imagem.type || 'image/jpeg',
               };
             }
             
             formData.append('arquivo', arquivoParaEnviar);
+            
+            for (let pair of formData.entries()) {
+              console.log(`   FormData: ${pair[0]}:`, pair[1]?.name || pair[1]);
+            }
             
             await api.post('/imagens', formData, {
               headers: {
@@ -634,10 +631,11 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             });
             
             imagensEnviadas++;
-            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
+            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada com sucesso!`);
             
           } catch (erroImagem) {
-            console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem.response?.data || erroImagem.message);
+            console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);
+            console.error('Detalhes:', erroImagem.response?.data);
             imagensComErro++;
           }
         }
@@ -651,7 +649,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
       toastHelper.showSuccess('Local adicionado com sucesso!');
 
-      // Limpar formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -668,7 +665,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       setImagens([]);
       setProgressoImagens({ atual: 0, total: 0 });
       
-      // Navegar de volta
       if (onNavigate) {
         onNavigate('Inicio');
       } else if (navigation) {
@@ -849,7 +845,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
               />
             </CardSecao>
 
-            {/* RECURSOS DE ACESSIBILIDADE */}
             <CardSecao
               titulo="Recursos de Acessibilidade"
               descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
@@ -895,7 +890,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 theme={t}
               />
               
-              {/* Indicador de progresso do upload */}
               {enviando && progressoImagens.total > 0 && (
                 <View style={{ marginTop: 16 }}>
                   <ThemedText variant="caption" align="center">
