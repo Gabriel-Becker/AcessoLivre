@@ -45,8 +45,8 @@ export default function MobileLayout({
         <View style={styles.headerAction} />
 
         <View style={styles.brandContainer}>
-          <View style={[styles.logoCircle, { borderColor: t.colors.primary }]}> 
-            <Ionicons name="accessibility-outline" size={18} color={t.colors.primary} />
+          <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
+            <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
           </View>
           <ThemedText variant="h3" weight="bold">
             AcessoLivre
@@ -69,7 +69,6 @@ export default function MobileLayout({
         {tabs.map((tab) => {
           const activeKey = tab.baseKey || tab.key;
           const ativo = current === activeKey;
-          const cor = ativo ? t.colors.primary : t.colors.textSecondary;
 
           return (
             <TouchableOpacity
@@ -79,14 +78,21 @@ export default function MobileLayout({
               accessibilityRole="button"
               accessibilityLabel={`Ir para ${tab.label}`}
             >
-              <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={22} color={cor} />
-              <ThemedText
-                style={[styles.tabLabel, { color: cor }]}
-                weight={ativo ? 'semibold' : 'regular'}
-                numberOfLines={1}
+              <View
+                style={
+                  ativo
+                    ? [
+                        styles.tabInner,
+                        { backgroundColor: t.colors.surface, borderRightWidth: 3, borderRightColor: t.colors.primary, paddingHorizontal: 12 },
+                      ]
+                    : [styles.tabInner, { backgroundColor: t.colors.surface }]
+                }
               >
-                {tab.label}
-              </ThemedText>
+                <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={20} color={ativo ? t.colors.primary : t.colors.textSecondary} />
+                <ThemedText style={[styles.tabLabel, { color: ativo ? t.colors.primary : t.colors.textSecondary }]} weight={ativo ? 'semibold' : 'regular'}>
+                  {tab.label}
+                </ThemedText>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -152,6 +158,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     minHeight: 48,
+  },
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: theme.borderRadius.full,
   },
   tabLabel: {
     fontSize: 12,

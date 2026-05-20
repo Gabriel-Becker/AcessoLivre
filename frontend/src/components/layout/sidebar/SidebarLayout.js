@@ -31,11 +31,11 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
       style={[styles.sidebar, { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura }]}
     >
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Ionicons name="accessibility-outline" size={32} color={t.colors.primary} />
+        <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
+          <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
         </View>
-        <ThemedText variant="h3" weight="bold">AcessoLivre</ThemedText>
-        <ThemedText color="textSecondary">Acessibilidade para todos</ThemedText>
+        <ThemedText variant="h3" weight="bold" style={{ marginTop: 2 }}>AcessoLivre</ThemedText>
+        <ThemedText color="textSecondary" size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</ThemedText>
       </View>
 
       <Spacer size="lg" />
@@ -69,9 +69,17 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'flex-start',
-    gap: 4,
+    gap: 6,
   },
   logoContainer: {
+    marginBottom: theme.spacing.xs,
+  },
+  logoCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: theme.spacing.xs,
   },
   menu: {

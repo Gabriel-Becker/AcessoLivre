@@ -23,11 +23,35 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
       <Spacer size="sm" />
       {!isAuthenticated ? (
         <>
-          <Button variant="primary" size="large" fullWidth onPress={() => onNavigate && onNavigate('Login')} align="left" iconLeft="log-in-outline">
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            onPress={() => onNavigate && onNavigate('Login')}
+            align="center"
+            iconLeft="log-in-outline"
+            style={{
+              borderRadius: theme.borderRadius.lg,
+              shadowColor: t.shadows.md.shadowColor,
+              shadowOffset: t.shadows.md.shadowOffset,
+              shadowOpacity: t.shadows.md.shadowOpacity,
+              shadowRadius: t.shadows.md.shadowRadius,
+              elevation: t.shadows.md.elevation,
+            }}
+          >
             Fazer Login
           </Button>
           <Spacer size="sm" />
-          <Button variant="outline" size="large" fullWidth onPress={() => onNavigate && onNavigate('Register')} align="left" iconLeft="person-add-outline">
+          <Button
+            variant="ghost"
+            size="large"
+            fullWidth
+            onPress={() => onNavigate && onNavigate('Register')}
+            align="center"
+            iconLeft="person-add-outline"
+            textStyle={{ color: t.colors.textSecondary }}
+            style={{ backgroundColor: 'transparent' }}
+          >
             Criar Conta
           </Button>
         </>
