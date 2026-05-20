@@ -24,6 +24,7 @@ import { Container } from '../../components/layout';
 
 import LocalAccessibility from '../../components/local/LocalAccessibility';
 import AvaliacaoModal from '../../components/local/AvaliacaoModal';
+import LocalGallery from '../../components/local/LocalGallery';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -32,103 +33,6 @@ import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// ============================================
-// COMPONENTE DE GALERIA DE IMAGENS
-// ============================================
-const LocalGallery = ({ imagens, altoContraste = false }) => {
-  const { theme: t } = useThemeContext();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-  if (!imagens || imagens.length === 0) {
-    return (
-      <View style={styles.galleryEmptyContainer}>
-        <Ionicons name="camera-outline" size={48} color={t.colors.textTertiary} />
-        <ThemedText color="textSecondary" align="center">
-          Nenhuma foto disponível
-        </ThemedText>
-      </View>
-    );
-  }
-
-  const openImageModal = (index) => {
-    setSelectedImageIndex(index);
-    setModalVisible(true);
-  };
-
-  const renderImageItem = ({ item, index }) => (
-    <TouchableOpacity
-      style={styles.galleryImageItem}
-      onPress={() => openImageModal(index)}
-      activeOpacity={0.9}
-    >
-      <Image
-        source={{ uri: item.url || item }}
-        style={styles.galleryThumbnail}
-        resizeMode="cover"
-      />
-    </TouchableOpacity>
-  );
-
-  return (
-    <View style={styles.galleryContainer}>
-      <FlatList
-        data={imagens}
-        keyExtractor={(item, index) => `img_${index}`}
-        renderItem={renderImageItem}
-        numColumns={3}
-        scrollEnabled={false}
-        contentContainerStyle={styles.galleryGrid}
-      />
-
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.95)' }]}>
-          <TouchableOpacity
-            style={styles.modalCloseButton}
-            onPress={() => setModalVisible(false)}
-          >
-            <Ionicons name="close" size={28} color="#FFF" />
-          </TouchableOpacity>
-
-          <FlatList
-            data={imagens}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            initialScrollIndex={selectedImageIndex}
-            getItemLayout={(data, index) => ({
-              length: SCREEN_WIDTH,
-              offset: SCREEN_WIDTH * index,
-              index,
-            })}
-            renderItem={({ item }) => (
-              <View style={styles.modalImageContainer}>
-                <Image
-                  source={{ uri: item.url || item }}
-                  style={styles.modalImage}
-                  resizeMode="contain"
-                />
-              </View>
-            )}
-            keyExtractor={(item, index) => `full_${index}`}
-          />
-
-          <View style={styles.modalCounter}>
-            <ThemedText style={{ color: '#FFF' }}>
-              {selectedImageIndex + 1} / {imagens.length}
-            </ThemedText>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-};
 
 // ============================================
 // COMPONENTE DE AVALIAÇÃO INDIVIDUAL
@@ -206,7 +110,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
-  const isMobile = width < breakpoints.tablet;
 
   const [botaoAtivo, setBotaoAtivo] = useState(null);
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
@@ -237,7 +140,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
         throw new Error('Local não encontrado');
       }
       
-      // Garantir que imagens é um array
       const imagensList = dados.imagensCompletas || [];
       const avaliacoesOrdenadas = [...(dados.avaliacoes || [])].sort((a, b) => {
         const dataA = new Date(a.dataCriacao || a.data || 0);
@@ -550,7 +452,15 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
 }
 
 function renderFotos(local, t, isHighContrast) {
-  const imagensUrls = local.imagens?.map(img => img.url) || [];
+  // Extrair URLs das imagens corretamente
+  let imagensUrls = [];
+  
+  if (local.imagens && Array.isArray(local.imagens)) {
+    imagensUrls = local.imagens.map(img => img.url).filter(url => url);
+  } else if (local.imagensUrls && Array.isArray(local.imagensUrls)) {
+    imagensUrls = local.imagensUrls;
+  }
+  
   const temImagens = imagensUrls.length > 0;
   
   return (
@@ -741,7 +651,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   tituloFotos: {
     fontSize: 18,
@@ -794,65 +704,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
     gap: 16,
-  },
-  // Galeria de Fotos
-  galleryContainer: {
-    marginVertical: 8,
-  },
-  galleryGrid: {
-    gap: 8,
-  },
-  galleryImageItem: {
-    flex: 1,
-    margin: 4,
-    aspectRatio: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#F0F0F0',
-  },
-  galleryThumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  galleryEmptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-    gap: 16,
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  modalImageContainer: {
-    width: SCREEN_WIDTH,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalImage: {
-    width: SCREEN_WIDTH - 40,
-    height: '80%',
-  },
-  modalCounter: {
-    position: 'absolute',
-    bottom: 40,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
 });
