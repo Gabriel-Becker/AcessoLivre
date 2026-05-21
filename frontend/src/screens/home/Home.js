@@ -19,7 +19,7 @@ import theme, { breakpoints } from '../../config/theme';
 const BREAKPOINT_DESKTOP_GRANDE = 1360;
 
 export default function Home({ onNavigate }) {
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast, theme: t } = useThemeContext(); // ✅ Corrigido!
   const { width } = useWindowDimensions();
 
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function Home({ onNavigate }) {
 
   if (loading) {
     return (
-      <View style={[styles.loading, { backgroundColor: t.colors.background }]}>
+      <View style={[styles.loading, { backgroundColor: '#f5f5f5' }]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
         <ThemedText>Carregando...</ThemedText>
@@ -79,7 +79,7 @@ export default function Home({ onNavigate }) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: '#f5f5f5' }]}>
       <View style={styles.fixedContainer}>
         <StatsBanner
           estatisticas={estatisticas}
@@ -110,6 +110,7 @@ export default function Home({ onNavigate }) {
             refreshing={refreshing}
             onRefresh={() => carregarDados(true)}
             colors={[t.colors.primary]}
+            tintColor={t.colors.primary}
           />
         }
         contentContainerStyle={styles.listContent}
@@ -120,7 +121,9 @@ export default function Home({ onNavigate }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1,
+  },
 
   fixedContainer: {
     paddingHorizontal: theme.spacing.md,
