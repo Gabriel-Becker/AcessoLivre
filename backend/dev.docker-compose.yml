@@ -11,6 +11,7 @@ services:
     volumes:
       - .:/app
       - ~/.m2:/root/.m2
+      - ./uploads:/app/uploads
     environment:
       # Override para garantir que o app use o hostname correto do DB no Docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}

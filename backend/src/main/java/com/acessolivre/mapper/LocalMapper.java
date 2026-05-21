@@ -1,4 +1,3 @@
-// mapper/LocalMapper.java
 package com.acessolivre.mapper;
 
 import com.acessolivre.dto.request.LocalRequestDTO;
@@ -28,7 +27,6 @@ public class LocalMapper {
                 .tiposAcessibilidade(new HashSet<>())
                 .build();
         
-        // Adicionar tipos de acessibilidade
         if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
             local.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());
         }
@@ -43,8 +41,7 @@ public class LocalMapper {
 
         // ===== PROCESSAR IMAGENS =====
         List<ImagemResponseDTO> imagensDTO = new ArrayList<>();
-        String imagemPrincipal = null;
-        String primeiraImagemCompatibilidade = null;
+        String imagemUrl = null;
         
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
             // Ordena as imagens por ordem
@@ -52,22 +49,24 @@ public class LocalMapper {
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .collect(Collectors.toList());
             
-            // Converte todas as imagens
+            // Converte todas as imagens para DTO
             imagensDTO = imagensOrdenadas.stream()
                     .map(ImagemMapper::toResponse)
                     .collect(Collectors.toList());
             
-            // Pega a primeira imagem para thumbnail (USANDO getUrl())
+    
             Imagem primeiraImagem = imagensOrdenadas.get(0);
-            imagemPrincipal = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
-            primeiraImagemCompatibilidade = imagemPrincipal;
+            ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
+            if (primeiraImagemDTO != null) {
+                imagemUrl = primeiraImagemDTO.getUrlCompleta();
+            }
         }
 
         LocalResponseDTO.LocalResponseDTOBuilder builder = LocalResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
                 .descricao(entity.getDescricao())
-                .imagem(primeiraImagemCompatibilidade)  // Agora é URL
+                .imagemUrl(imagemUrl)  // ← Agora é URL completa!
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .categoria(entity.getCategoria())
@@ -81,9 +80,7 @@ public class LocalMapper {
                 .nivelHierarquia(entity.getNivelHierarquia())
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha())
-                // NOVOS CAMPOS DE IMAGEM
                 .imagens(imagensDTO)
-                .imagemPrincipal(imagemPrincipal)
                 .totalImagens(imagensDTO.size());
 
         if (entity.getLocalPrincipal() != null) {
@@ -107,22 +104,24 @@ public class LocalMapper {
             return null;
         }
         
-        // Para o resumo, também pega a primeira imagem (USANDO getUrl())
-        String imagemResumo = null;
+        String imagemUrl = null;
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
             Imagem primeiraImagem = entity.getImagens().stream()
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .findFirst()
                     .orElse(null);
             if (primeiraImagem != null) {
-                imagemResumo = primeiraImagem.getUrl();  // ← CORRIGIDO: getUrl()
+                ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
+                if (primeiraImagemDTO != null) {
+                    imagemUrl = primeiraImagemDTO.getUrlCompleta();
+                }
             }
         }
         
         return LocalResumoResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
-                .imagem(imagemResumo)
+                .imagem(imagemUrl)  // ← URL completa
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .build();
@@ -147,7 +146,6 @@ public class LocalMapper {
             entity.setStatus(dto.getStatus());
         }
         
-        // Atualizar tipos de acessibilidade
         entity.getTiposAcessibilidade().clear();
         if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
             entity.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());

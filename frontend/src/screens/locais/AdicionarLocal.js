@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
+
 import { Container } from '../../components/layout';
 import {
-  AreaPlaceholder,
   Button,
   CabecalhoPagina,
   CardInfoIcone,
@@ -33,8 +34,6 @@ import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
-import * as ImagePicker from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
 
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
@@ -61,7 +60,9 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
-// Componente de upload de imagens
+// ============================================
+// COMPONENTE DE UPLOAD DE IMAGENS
+// ============================================
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -83,20 +84,49 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
     if (imageFiles.length > 0) {
-      const newImages = await Promise.all(
-        imageFiles.map(async (file) => ({
-          uri: URL.createObjectURL(file),
-          file,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        }))
-      );
+      const newImages = imageFiles.map((file) => ({
+        uri: URL.createObjectURL(file),
+        file: file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      }));
       onAddImages(newImages);
     }
   };
 
-  const handleSelectFiles = async () => {
+  const handleSelectFilesWeb = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/jpeg,image/png,image/webp';
+    
+    input.onchange = (e) => {
+      const files = Array.from(e.target.files);
+      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+      
+      if (imageFiles.length > 0) {
+        const newImages = imageFiles.map((file) => ({
+          uri: URL.createObjectURL(file),
+          file: file,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        }));
+        onAddImages(newImages);
+      }
+    };
+    
+    input.click();
+  };
+
+  const handleSelectFilesMobile = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toastHelper.showError('Permissão de galeria negada');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
@@ -115,7 +145,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     }
   };
 
-  const handleTakePhoto = async () => {
+  const handleTakePhotoMobile = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       toastHelper.showError('Permissão de câmera negada');
@@ -140,6 +170,22 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     }
   };
 
+  const handleSelectFiles = () => {
+    if (Platform.OS === 'web') {
+      handleSelectFilesWeb();
+    } else {
+      handleSelectFilesMobile();
+    }
+  };
+
+  const handleTakePhoto = () => {
+    if (Platform.OS !== 'web') {
+      handleTakePhotoMobile();
+    } else {
+      toastHelper.showInfo('Câmera disponível apenas no aplicativo mobile');
+    }
+  };
+
   const renderPreview = () => {
     if (images.length === 0) return null;
 
@@ -160,9 +206,9 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     );
   };
 
-  return (
-    <View>
-      {Platform.OS === 'web' ? (
+  if (Platform.OS === 'web') {
+    return (
+      <View>
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -188,15 +234,27 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
             PNG, JPG até 10MB cada (máx. 5 imagens)
           </ThemedText>
         </div>
-      ) : (
-        <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
-          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
-          <ThemedText align="center">Clique para selecionar imagens</ThemedText>
-          <ThemedText color="textTertiary" variant="caption" align="center">
-            PNG, JPG até 10MB cada (máx. 5 imagens)
-          </ThemedText>
-        </TouchableOpacity>
-      )}
+
+        {renderPreview()}
+
+        <View style={localStyles.actionButtons}>
+          <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+            Galeria
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
+        <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+        <ThemedText align="center">Clique para selecionar imagens</ThemedText>
+        <ThemedText color="textTertiary" variant="caption" align="center">
+          PNG, JPG até 10MB cada (máx. 5 imagens)
+        </ThemedText>
+      </TouchableOpacity>
 
       {renderPreview()}
 
@@ -240,7 +298,6 @@ const localStyles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   removeButton: {
     position: 'absolute',
@@ -261,9 +318,12 @@ const localStyles = StyleSheet.create({
   },
 });
 
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function AdicionarLocal({ onNavigate, navigation }) {
   const { isHighContrast, theme: t } = useThemeContext();
-  const { usuario, isAuthenticated } = useAuth();
+  const { usuario } = useAuth();
   const { width } = useWindowDimensions();
   
   const isDesktop = width >= breakpoints.desktop;
@@ -315,7 +375,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
-  // Carregar estatísticas
   useEffect(() => {
     const carregarEstatisticas = async () => {
       const stats = await LocalService.obterEstatisticas();
@@ -474,6 +533,9 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     return true;
   };
 
+  // ============================================
+  // MÉTODO PRINCIPAL - SALVAR LOCAL COM UPLOAD
+  // ============================================
   const handleSalvarLocal = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -487,9 +549,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     try {
       const cepLimpo = formulario.cep.replace(/\D/g, '');
       
-      // ==========================================
-      // PASSO 1: Cadastrar o Local
-      // ==========================================
       const payloadLocal = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
@@ -514,9 +573,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       
       console.log('✅ Local criado com ID:', localId);
 
-      // ==========================================
-      // PASSO 2: Enviar imagens via Multipart FormData
-      // ==========================================
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
         
@@ -529,14 +585,44 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             
             const imagem = imagens[i];
             console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
+            console.log(`   URI: ${imagem.uri}`);
+            console.log(`   Nome: ${imagem.name}`);
+            console.log(`   Tipo: ${imagem.type}`);
             
             const formData = new FormData();
-            formData.append('idLocal', localId.toString());
-            formData.append('arquivo', {
-              uri: imagem.uri,
-              name: imagem.name || `image_${Date.now()}.jpg`,
-              type: imagem.type || 'image/jpeg',
-            });
+            formData.append('idLocal', String(localId));
+            
+            let arquivoParaEnviar;
+            
+            if (Platform.OS === 'web') {
+              if (imagem.file) {
+                arquivoParaEnviar = imagem.file;
+              } else if (imagem.uri && imagem.uri.startsWith('blob:')) {
+                const response = await fetch(imagem.uri);
+                const blob = await response.blob();
+                const fileName = imagem.name || `image_${Date.now()}.jpg`;
+                const fileType = imagem.type || 'image/jpeg';
+                arquivoParaEnviar = new File([blob], fileName, { type: fileType });
+              } else {
+                arquivoParaEnviar = {
+                  uri: imagem.uri,
+                  name: imagem.name || `image_${Date.now()}.jpg`,
+                  type: imagem.type || 'image/jpeg',
+                };
+              }
+            } else {
+              arquivoParaEnviar = {
+                uri: imagem.uri,
+                name: imagem.name || `image_${Date.now()}.jpg`,
+                type: imagem.type || 'image/jpeg',
+              };
+            }
+            
+            formData.append('arquivo', arquivoParaEnviar);
+            
+            for (let pair of formData.entries()) {
+              console.log(`   FormData: ${pair[0]}:`, pair[1]?.name || pair[1]);
+            }
             
             await api.post('/imagens', formData, {
               headers: {
@@ -545,10 +631,11 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
             });
             
             imagensEnviadas++;
-            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
+            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada com sucesso!`);
             
           } catch (erroImagem) {
-            console.error(`❌ Erro ao enviar imagem ${i + 1}:`, erroImagem);
+            console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);
+            console.error('Detalhes:', erroImagem.response?.data);
             imagensComErro++;
           }
         }
@@ -562,7 +649,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
 
       toastHelper.showSuccess('Local adicionado com sucesso!');
 
-      // Limpar formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -579,7 +665,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       setImagens([]);
       setProgressoImagens({ atual: 0, total: 0 });
       
-      // Navegar de volta
       if (onNavigate) {
         onNavigate('Inicio');
       } else if (navigation) {
@@ -587,11 +672,12 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
       }
       
     } catch (erro) {
-      const mensagem = erro.response?.data || 
+      console.error('❌ Erro ao cadastrar local:', erro);
+      const mensagem = erro.response?.data?.message || 
+                      erro.response?.data?.error ||
                       erro.message ||
                       'Erro ao cadastrar local. Tente novamente.';
       toastHelper.showError(typeof mensagem === 'string' ? mensagem : JSON.stringify(mensagem));
-      console.error('Erro detalhado:', erro);
     } finally {
       setEnviando(false);
       setProgressoImagens({ atual: 0, total: 0 });
@@ -759,7 +845,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
               />
             </CardSecao>
 
-            {/* RECURSOS DE ACESSIBILIDADE */}
             <CardSecao
               titulo="Recursos de Acessibilidade"
               descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
@@ -805,7 +890,6 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 theme={t}
               />
               
-              {/* Indicador de progresso do upload */}
               {enviando && progressoImagens.total > 0 && (
                 <View style={{ marginTop: 16 }}>
                   <ThemedText variant="caption" align="center">

@@ -5,7 +5,12 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  useWindowDimensions
+  useWindowDimensions,
+  Image,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,16 +22,17 @@ import {
 import { ThemedText, Spacer } from '../../components/commons';
 import { Container } from '../../components/layout';
 
-import LocalGallery from '../../components/local/LocalGallery';
 import LocalAccessibility from '../../components/local/LocalAccessibility';
-import LocalActions from '../../components/local/LocalActions';
 import AvaliacaoModal from '../../components/local/AvaliacaoModal';
+import LocalGallery from '../../components/local/LocalGallery';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import LocalService from '../../services/LocalService';
+import HomeService from '../../services/HomeService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COMPONENTE DE AVALIAÇÃO INDIVIDUAL
@@ -102,21 +108,16 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const { width } = useWindowDimensions();
   const { id } = route?.params || {};
 
-  // Breakpoints responsivos
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
-  const isMobile = width < breakpoints.tablet;
 
-  // Estado para controle visual dos botões
   const [botaoAtivo, setBotaoAtivo] = useState(null);
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
-
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // Reset botão ativo após 300ms (feedback tátil)
   const resetBotaoAtivo = useCallback(() => {
     setTimeout(() => setBotaoAtivo(null), 300);
   }, []);
@@ -133,8 +134,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
     setError(null);
 
     try {
-      const dados = await LocalService.obterLocal(id);
+      const dados = await HomeService.buscarLocalPorId(id);
       
+      if (!dados) {
+        throw new Error('Local não encontrado');
+      }
+      
+      const imagensList = dados.imagensCompletas || [];
       const avaliacoesOrdenadas = [...(dados.avaliacoes || [])].sort((a, b) => {
         const dataA = new Date(a.dataCriacao || a.data || 0);
         const dataB = new Date(b.dataCriacao || b.data || 0);
@@ -143,7 +149,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
       setLocal({
         ...dados,
-        imagens: dados.imagens || [],
+        imagens: imagensList,
         avaliacoes: avaliacoesOrdenadas,
         tiposAcessibilidade: dados.tiposAcessibilidade || [],
         avaliacaoMedia: dados.avaliacaoMedia || 0,
@@ -165,7 +171,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleRefresh = () => carregar(true);
 
-  // Handlers com feedback visual
   const handleAvaliar = () => {
     setBotaoAtivo('avaliar');
     resetBotaoAtivo();
@@ -181,14 +186,12 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const handleCompartilhar = () => {
     setBotaoAtivo('compartilhar');
     resetBotaoAtivo();
-    
     toastHelper.showInfo('Compartilhar em breve');
   };
 
   const handleReportar = () => {
     setBotaoAtivo('reportar');
     resetBotaoAtivo();
-    
     onNavigate?.('ReportarProblema', { localId: id, localNome: local?.nome });
   };
 
@@ -198,7 +201,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleEnviarAvaliacao = async (avaliacao) => {
     try {
-      // TODO: Chamar API para salvar avaliação
       console.log('Avaliação enviada:', avaliacao);
       toastHelper.showSuccess('Avaliação enviada com sucesso!');
       setModalAvaliacaoVisible(false);
@@ -297,58 +299,46 @@ export default function LocalDetalhes({ onNavigate, route }) {
           />
         }
       >
-        {/* ============================================ */}
-        {/* LAYOUT RESPONSIVO */}
-        {/* ============================================ */}
-        
         {isDesktop ? (
-          // ========== DESKTOP: Cards lado a lado ==========
           <>
             <View style={styles.linhaSuperior}>
-              {/* CARD PRINCIPAL - ESQUERDA */}
               <View style={styles.cardPrincipalWrapper}>
                 <Card altoContraste={isHighContrast} style={styles.cardPrincipal}>
-                  {renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto)}
-                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo)}
+                  {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto)}
+                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
                 </Card>
               </View>
 
-              {/* CARD AVALIAÇÕES - DIREITA */}
               <View style={styles.cardAvaliacoesWrapper}>
                 <Card altoContraste={isHighContrast} style={styles.cardAvaliacoes}>
-                  {renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated)}
+                  {renderAvaliacoes(local, t, handleVerTodasAvaliacoes)}
                 </Card>
               </View>
             </View>
 
             <Spacer size="lg" />
 
-            {/* CARD DE FOTOS */}
             <Card altoContraste={isHighContrast} style={styles.cardFotos}>
               {renderFotos(local, t, isHighContrast)}
             </Card>
           </>
         ) : (
-          // ========== TABLET / MOBILE: Cards empilhados ==========
           <>
-            {/* CARD PRINCIPAL */}
             <Card altoContraste={isHighContrast} style={styles.cardPrincipalMobile}>
-              {renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto)}
-              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo)}
+              {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto)}
+              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
             </Card>
 
             <Spacer size="lg" />
 
-            {/* CARD DE FOTOS */}
             <Card altoContraste={isHighContrast} style={styles.cardFotos}>
               {renderFotos(local, t, isHighContrast)}
             </Card>
 
             <Spacer size="lg" />
 
-            {/* CARD AVALIAÇÕES */}
             <Card altoContraste={isHighContrast} style={styles.cardAvaliacoesMobile}>
-              {renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated)}
+              {renderAvaliacoes(local, t, handleVerTodasAvaliacoes)}
             </Card>
           </>
         )}
@@ -356,7 +346,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <Spacer size="xl" />
       </ScrollView>
 
-      {/* Modal de Avaliação */}
       <AvaliacaoModal
         visible={modalAvaliacaoVisible}
         onClose={() => setModalAvaliacaoVisible(false)}
@@ -371,7 +360,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 // FUNÇÕES DE RENDERIZAÇÃO
 // ============================================
 
-function renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatEnderecoCompleto) {
+function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto) {
   return (
     <>
       <View style={styles.headerLocal}>
@@ -408,7 +397,7 @@ function renderCardPrincipal(local, t, isHighContrast, renderMediaStars, formatE
   );
 }
 
-function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, isAuthenticated, botaoAtivo) {
+function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo) {
   const getButtonVariant = (botaoNome) => {
     return botaoAtivo === botaoNome ? 'primary' : 'outline';
   };
@@ -417,7 +406,6 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
     <>
       <Spacer size="lg" />
 
-      {/* Recursos de Acessibilidade */}
       <LocalAccessibility
         tiposAcessibilidade={local.tiposAcessibilidade}
         altoContraste={isHighContrast}
@@ -425,7 +413,6 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
 
       <Spacer size="lg" />
 
-      {/* Botões de Ação com feedback visual */}
       <View style={styles.botoesContainer}>
         <Button
           variant={getButtonVariant('avaliar')}
@@ -434,8 +421,6 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
           onPress={handleAvaliar}
           altoContraste={isHighContrast}
           style={styles.botaoAcao}
-          accessibilityLabel="Avaliar este local"
-          accessibilityHint="Clique para avaliar o local com nota e comentário"
         >
           Avaliar
         </Button>
@@ -447,8 +432,6 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
           onPress={handleCompartilhar}
           altoContraste={isHighContrast}
           style={styles.botaoAcao}
-          accessibilityLabel="Compartilhar este local"
-          accessibilityHint="Compartilhe este local com amigos e familiares"
         >
           Compartilhar
         </Button>
@@ -460,8 +443,6 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
           onPress={handleReportar}
           altoContraste={isHighContrast}
           style={styles.botaoAcao}
-          accessibilityLabel="Reportar problema"
-          accessibilityHint="Reporte informações incorretas ou problemas no local"
         >
           Reportar
         </Button>
@@ -471,6 +452,17 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
 }
 
 function renderFotos(local, t, isHighContrast) {
+  // Extrair URLs das imagens corretamente
+  let imagensUrls = [];
+  
+  if (local.imagens && Array.isArray(local.imagens)) {
+    imagensUrls = local.imagens.map(img => img.url).filter(url => url);
+  } else if (local.imagensUrls && Array.isArray(local.imagensUrls)) {
+    imagensUrls = local.imagensUrls;
+  }
+  
+  const temImagens = imagensUrls.length > 0;
+  
   return (
     <>
       <View style={styles.headerFotos}>
@@ -478,18 +470,23 @@ function renderFotos(local, t, isHighContrast) {
         <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>
           Fotos do Local
         </ThemedText>
+        {temImagens && (
+          <ThemedText variant="caption" color="textSecondary">
+            ({imagensUrls.length} {imagensUrls.length === 1 ? 'foto' : 'fotos'})
+          </ThemedText>
+        )}
       </View>
       <Spacer size="sm" />
+      
       <LocalGallery
-        imagens={local.imagens}
-        imagemPrincipal={local.imagemPrincipal}
+        imagens={imagensUrls}
         altoContraste={isHighContrast}
       />
     </>
   );
 }
 
-function renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isAuthenticated) {
+function renderAvaliacoes(local, t, handleVerTodasAvaliacoes) {
   return (
     <>
       <View style={styles.headerAvaliacoes}>
@@ -530,6 +527,14 @@ function renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isA
           <ThemedText color="textSecondary" align="center">
             Nenhuma avaliação ainda.
           </ThemedText>
+          <Button
+            variant="outline"
+            size="small"
+            onPress={handleVerTodasAvaliacoes}
+            iconLeft="star-outline"
+          >
+            Seja o primeiro a avaliar
+          </Button>
         </View>
       )}
     </>
@@ -537,7 +542,7 @@ function renderAvaliacoes(local, t, handleVerTodasAvaliacoes, handleAvaliar, isA
 }
 
 // ============================================
-// ESTILOS RESPONSIVOS
+// ESTILOS
 // ============================================
 const styles = StyleSheet.create({
   centerContainer: {
@@ -646,7 +651,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   tituloFotos: {
     fontSize: 18,

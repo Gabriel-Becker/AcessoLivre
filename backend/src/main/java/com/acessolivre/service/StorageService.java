@@ -1,8 +1,12 @@
-// service/StorageService.java
 package com.acessolivre.service;
 
+import com.acessolivre.config.StorageProperties;
+import com.acessolivre.model.Local;
+import com.acessolivre.model.Usuario;
+import com.acessolivre.repository.LocalRepository;
+import com.acessolivre.repository.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,141 +14,203 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.text.Normalizer;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class StorageService {
     
-    @Value("${app.uploads.path:/uploads}")
-    private String uploadPath;
-    
-    @Value("${app.uploads.url-pattern:/uploads/**}")
-    private String urlPattern;
-    
+    private final StorageProperties storageProperties;
     private final ImageOptimizerService imageOptimizerService;
+    private final UsuarioRepository usuarioRepository;
+    private final LocalRepository localRepository;
     
-    public StorageService(ImageOptimizerService imageOptimizerService) {
-        this.imageOptimizerService = imageOptimizerService;
+    private static final String DIR_USUARIOS = "usuarios";
+    private static final String DIR_LOCAIS = "locais";
+    
+    /**
+     * Salva a imagem na estrutura: uploads/usuarios/{idUsuario}_{nome}/locais/{idLocal}_{nomeLocal}/
+     */
+    public String salvarImagem(MultipartFile arquivo, Long idLocal, Long idUsuario) throws IOException {
+        log.info("💾 Salvando imagem para local ID: {}, usuário ID: {}", idLocal, idUsuario);
+        
+        // 1. Buscar usuário e local
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + idUsuario));
+        
+        Local local = localRepository.findById(idLocal)
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado: " + idLocal));
+        
+        // 2. Validar arquivo
+        validarArquivo(arquivo);
+        
+        // 3. Gerar nome único
+        String extensao = getExtensao(arquivo.getOriginalFilename());
+        String uuid = UUID.randomUUID().toString();
+        String nomeArquivo = uuid + "." + extensao;
+        
+        // 4. Construir caminho: usuarios/{idUsuario}_{nomeUsuario}/locais/{idLocal}_{nomeLocal}/
+        String nomeUsuarioSanitizado = sanitizarNome(usuario.getNome());
+        String nomeLocalSanitizado = sanitizarNome(local.getNome());
+        
+        String subDir = DIR_USUARIOS + "/" + idUsuario + "_" + nomeUsuarioSanitizado 
+                + "/" + DIR_LOCAIS + "/" + idLocal + "_" + nomeLocalSanitizado;
+        
+        Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
+        
+        // 5. Criar diretório se não existir
+        if (!Files.exists(diretorio)) {
+            Files.createDirectories(diretorio);
+            log.info("📁 Diretório criado: {}", diretorio.toAbsolutePath());
+        }
+        
+        // 6. Otimizar imagem
+        byte[] imagemBytes;
+        try {
+            imagemBytes = imageOptimizerService.otimizarImagem(arquivo);
+            log.info("✅ Imagem otimizada: {} bytes", imagemBytes.length);
+        } catch (Exception e) {
+            log.warn("⚠️ Erro na otimização, usando original: {}", e.getMessage());
+            imagemBytes = arquivo.getBytes();
+        }
+        
+        // 7. Salvar arquivo
+        Path caminhoCompleto = diretorio.resolve(nomeArquivo);
+        Files.write(caminhoCompleto, imagemBytes);
+        
+        // 8. Retornar caminho relativo
+        String caminhoRelativo = storageProperties.getStaticPrefix() + "/" + subDir + "/" + nomeArquivo;
+        
+        log.info("✅ Imagem salva: {} ({} KB)", caminhoRelativo, imagemBytes.length / 1024);
+        return caminhoRelativo;
     }
     
     /**
-     * Salva uma imagem otimizada no disco
-     * @param arquivo MultipartFile da imagem
-     * @param idLocal ID do local para criar subpasta
-     * @return URL pública da imagem
+     * Salva imagem usando apenas ID do local (busca o usuário automaticamente)
      */
-    public String salvarImagem(MultipartFile arquivo, Long idLocal) {
+    public String salvarImagem(MultipartFile arquivo, Long idLocal, String dominio) throws IOException {
+        // Buscar o local para obter o idUsuario
+        Local local = localRepository.findById(idLocal)
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado: " + idLocal));
+        
+        return salvarImagem(arquivo, idLocal, local.getUsuario().getIdUsuario());
+    }
+    
+    /**
+     * Deleta a imagem do disco
+     */
+    public boolean deletarImagem(String caminhoRelativo) {
         try {
-            // 1. Validar arquivo
-            validarArquivo(arquivo);
-            
-            // 2. Criar subpasta /uploads/locais/{idLocal}/
-            Path diretorioLocal = Paths.get(uploadPath, "locais", idLocal.toString());
-            Files.createDirectories(diretorioLocal);
-            
-            // 3. Gerar nome único para o arquivo
-            String extensao = obterExtensao(arquivo.getOriginalFilename());
-            String nomeArquivo = UUID.randomUUID().toString() + extensao;
-            
-            // 4. Caminho completo físico
-            Path caminhoFisico = diretorioLocal.resolve(nomeArquivo);
-            
-            // 5. Otimizar e salvar imagem (já em webp se configurado)
-            byte[] imagemOtimizada = imageOptimizerService.otimizarImagem(arquivo);
-            Files.write(caminhoFisico, imagemOtimizada);
-            
-            // 6. Construir URL pública
-            String urlPublica = construirUrlPublica(idLocal, nomeArquivo);
-            
-            log.info("Imagem salva com sucesso: {} -> {}", caminhoFisico, urlPublica);
-            return urlPublica;
-            
+            String caminhoSemPrefix = caminhoRelativo.replace(storageProperties.getStaticPrefix() + "/", "");
+            Path caminhoAbsoluto = Paths.get(storageProperties.getUploadDir(), caminhoSemPrefix);
+            return Files.deleteIfExists(caminhoAbsoluto);
         } catch (IOException e) {
-            log.error("Erro ao salvar imagem", e);
-            throw new RuntimeException("Erro ao salvar imagem: " + e.getMessage(), e);
+            log.error("Erro ao deletar imagem: {}", caminhoRelativo, e);
+            return false;
         }
     }
-    
-    /**
-     * Deleta uma imagem do disco
-     * @param url URL da imagem (completa ou relativa)
-     * @return true se deletado com sucesso
-     */
-    public boolean deletarImagem(String url) {
+
+    public boolean deletarImagensDoLocal(Local local, Usuario usuario) {
         try {
-            // Converter URL para caminho físico
-            Path caminhoFisico = converterUrlParaCaminho(url);
+            String nomeUsuarioSanitizado = sanitizarNome(usuario.getNome());
+            String nomeLocalSanitizado = sanitizarNome(local.getNome());
             
-            if (Files.exists(caminhoFisico)) {
-                Files.delete(caminhoFisico);
-                log.info("Imagem deletada do disco: {}", caminhoFisico);
+            String subDir = DIR_USUARIOS + "/" + usuario.getIdUsuario() + "_" + nomeUsuarioSanitizado 
+                    + "/" + DIR_LOCAIS + "/" + local.getIdLocal() + "_" + nomeLocalSanitizado;
+            
+            Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
+            
+            if (Files.exists(diretorio)) {
+                // Deleta recursivamente toda a pasta do local
+                Files.walk(diretorio)
+                    .sorted((a, b) -> -a.compareTo(b))
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            log.error("Erro ao deletar arquivo: {}", path, e);
+                        }
+                    });
+                log.info(" Pasta do local deletada: {}", diretorio);
                 return true;
-            } else {
-                log.warn("Arquivo não encontrado para deletar: {}", caminhoFisico);
-                return false;
             }
+            return false;
         } catch (IOException e) {
-            log.error("Erro ao deletar imagem: {}", url, e);
+            log.error("Erro ao deletar imagens do local: {}", local.getIdLocal(), e);
             return false;
         }
     }
     
     /**
-     * Constrói a URL pública baseada no caminho
+     * Constrói URL completa para acesso
      */
-    private String construirUrlPublica(Long idLocal, String nomeArquivo) {
-        // Exemplo: /uploads/locais/11/8f3a9c.webp
-        return String.format("/uploads/locais/%d/%s", idLocal, nomeArquivo);
+    public String construirUrlCompleta(String caminhoRelativo) {
+        if (caminhoRelativo == null) return null;
+        if (caminhoRelativo.startsWith("http")) return caminhoRelativo;
+        
+        String baseUrl = storageProperties.getBaseUrl();
+        if (baseUrl == null) {
+            baseUrl = "http://localhost:8080";
+        }
+        
+        if (baseUrl.endsWith("/") && caminhoRelativo.startsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        
+        return baseUrl + caminhoRelativo;
     }
     
     /**
-     * Converte URL pública em caminho físico
+     * Sanitiza nome para usar em pasta (remove acentos, espaços, caracteres especiais)
      */
-    private Path converterUrlParaCaminho(String url) {
-        // Remove o prefixo da URL se necessário
-        String caminhoRelativo = url;
-        if (url.startsWith("http")) {
-            // Se for URL completa, extrair o path
-            // Normalmente você guardaria apenas o path relativo no banco
-            caminhoRelativo = url.substring(url.indexOf("/uploads"));
+    private String sanitizarNome(String nome) {
+        if (nome == null) return "sem_nome";
+        
+        // Remove acentos
+        String normalized = Normalizer.normalize(nome, Normalizer.Form.NFD);
+        normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        
+        // Substitui espaços e caracteres especiais por underscore
+        String sanitizado = normalized
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_|_$", "");
+        
+        // Limita tamanho
+        if (sanitizado.length() > 50) {
+            sanitizado = sanitizado.substring(0, 50);
         }
         
-        // Remove o primeiro "/" para concatenar
-        if (caminhoRelativo.startsWith("/")) {
-            caminhoRelativo = caminhoRelativo.substring(1);
-        }
-        
-        return Paths.get(uploadPath, caminhoRelativo);
+        return sanitizado.isEmpty() ? "sem_nome" : sanitizado;
     }
     
-    /**
-     * Validações básicas do arquivo
-     */
     private void validarArquivo(MultipartFile arquivo) {
-        if (arquivo.isEmpty()) {
+        if (arquivo == null || arquivo.isEmpty()) {
             throw new IllegalArgumentException("Arquivo vazio");
+        }
+        
+        log.info("Validando arquivo: size={}, contentType={}, originalFilename={}", 
+            arquivo.getSize(), arquivo.getContentType(), arquivo.getOriginalFilename());
+        
+        if (arquivo.getSize() > storageProperties.getMaxFileSize()) {
+            throw new IllegalArgumentException("Arquivo excede tamanho máximo de " + 
+                    storageProperties.getMaxFileSize() / (1024 * 1024) + "MB");
         }
         
         String contentType = arquivo.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("Arquivo não é uma imagem válida");
-        }
-        
-        // Verificar tamanho máximo (5MB)
-        if (arquivo.getSize() > 5 * 1024 * 1024) {
-            throw new IllegalArgumentException("Imagem excede tamanho máximo de 5MB");
+            log.warn("ContentType inválido: {}", contentType);
+            throw new IllegalArgumentException("Formato não suportado. Envie apenas imagens.");
         }
     }
     
-    /**
-     * Obtém extensão do arquivo
-     */
-    private String obterExtensao(String nomeArquivo) {
-        if (nomeArquivo == null || !nomeArquivo.contains(".")) {
-            return ".webp"; // Default
+    private String getExtensao(String filename) {
+        if (filename == null || filename.isEmpty() || !filename.contains(".")) {
+            return "jpg";
         }
-        return nomeArquivo.substring(nomeArquivo.lastIndexOf("."));
+        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
 }

@@ -1,18 +1,19 @@
-// service/ImagemService.java
 package com.acessolivre.service;
 
-import com.acessolivre.dto.request.ImagemRequestDTO;
-import com.acessolivre.mapper.ImagemMapper;
+import com.acessolivre.dto.request.ImagemUploadDTO;
 import com.acessolivre.model.Imagem;
+import com.acessolivre.model.Local;
 import com.acessolivre.repository.ImagemRepository;
+import com.acessolivre.repository.LocalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,50 +22,62 @@ public class ImagemService {
 
     private final ImagemRepository imagemRepository;
     private final StorageService storageService;
-    private final LocalService localService; // para validar se local existe
+    private final LocalRepository localRepository; 
+
+    private static final String DOMINIO_LOCAIS = "locais";
 
     @Transactional(readOnly = true)
     public List<Imagem> listarTodos() {
-        log.info("Listando todas as imagens");
         return imagemRepository.findAll();
     }
 
     @Transactional(readOnly = true)
     public Optional<Imagem> buscarPorId(Long id) {
-        log.info("Buscando imagem por ID: {}", id);
         return imagemRepository.findById(id);
     }
 
     @Transactional(readOnly = true)
     public List<Imagem> buscarPorLocal(Long idLocal) {
-        log.info("Buscando imagens por local ID: {}", idLocal);
         return imagemRepository.findByIdLocalOrderByIdImagemDesc(idLocal);
     }
 
     @Transactional
-    public Imagem salvar(ImagemRequestDTO requestDTO) {
-        log.info("Salvando imagem para local ID: {}", requestDTO.getIdLocal());
+    public Imagem salvar(ImagemUploadDTO uploadDTO) {
+        log.info("Salvando imagem para local ID: {}", uploadDTO.getIdLocal());
         
-        // 1. Validar se o local existe
-        localService.buscarPorId(requestDTO.getIdLocal())
-                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
+        // Usar o repository diretamente para evitar ciclo
+        Local local = localRepository.findById(uploadDTO.getIdLocal())
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + uploadDTO.getIdLocal()));
         
-        // 2. Salvar arquivo no disco
-        MultipartFile arquivo = requestDTO.getArquivo();
-        String url = storageService.salvarImagem(arquivo, requestDTO.getIdLocal());
-        
-        // 3. Salvar referência no banco
-        Imagem imagem = ImagemMapper.toEntity(
-            url,
-            requestDTO.getIdLocal(),
-            arquivo.getOriginalFilename(),
-            arquivo.getContentType(),
-            arquivo.getSize()
-        );
-        
-        Imagem salva = imagemRepository.save(imagem);
-        log.info("Imagem salva com sucesso. ID: {}", salva.getIdImagem());
-        return salva;
+        try {
+            String caminhoRelativo = storageService.salvarImagem(
+                    uploadDTO.getArquivo(),
+                    local.getIdLocal(),
+                    DOMINIO_LOCAIS
+            );
+            
+            String uuid = UUID.randomUUID().toString();
+            
+            Imagem imagem = Imagem.builder()
+                    .uuid(uuid)
+                    .caminhoRelativo(caminhoRelativo)
+                    .nomeOriginal(uploadDTO.getArquivo().getOriginalFilename())
+                    .idLocal(uploadDTO.getIdLocal())
+                    .tamanhoBytes(uploadDTO.getArquivo().getSize())
+                    .contentType(uploadDTO.getArquivo().getContentType())
+                    .formato(getExtensao(uploadDTO.getArquivo().getOriginalFilename()))
+                    .ordem(uploadDTO.getOrdem())
+                    .dataUpload(LocalDateTime.now())
+                    .build();
+            
+            Imagem salva = imagemRepository.save(imagem);
+            log.info("Imagem salva com sucesso. ID: {}, Caminho: {}", salva.getIdImagem(), caminhoRelativo);
+            return salva;
+            
+        } catch (Exception e) {
+            log.error("Erro ao salvar imagem", e);
+            throw new RuntimeException("Erro ao processar imagem: " + e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -79,17 +92,35 @@ public class ImagemService {
         
         Imagem imagem = imagemOpt.get();
         
-        // 1. Deletar arquivo físico
-        boolean deletadoDisco = storageService.deletarImagem(imagem.getUrl());
-        
-        // 2. Deletar registro do banco
+        boolean deletadoDisco = storageService.deletarImagem(imagem.getCaminhoRelativo());
         imagemRepository.deleteById(id);
         
         if (!deletadoDisco) {
-            log.warn("Imagem deletada do banco, mas arquivo não encontrado no disco: {}", imagem.getUrl());
+            log.warn("Imagem deletada do banco, mas arquivo não encontrado no disco: {}", imagem.getCaminhoRelativo());
         }
         
         log.info("Imagem deletada: {}", id);
         return true;
+    }
+    
+    @Transactional
+    public void deletarImagensPorLocal(Long idLocal) {
+        log.info("Deletando todas imagens do local ID: {}", idLocal);
+        
+        List<Imagem> imagens = imagemRepository.findByIdLocalOrderByIdImagemDesc(idLocal);
+        
+        for (Imagem imagem : imagens) {
+            storageService.deletarImagem(imagem.getCaminhoRelativo());
+        }
+        
+        imagemRepository.deleteAll(imagens);
+        log.info("{} imagens deletadas do local ID: {}", imagens.size(), idLocal);
+    }
+    
+    private String getExtensao(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "jpg";
+        }
+        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
 }

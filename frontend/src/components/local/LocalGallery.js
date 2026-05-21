@@ -1,177 +1,313 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  FlatList, 
-  Image, 
-  TouchableOpacity, 
-  Modal 
+// components/local/LocalGallery.js
+import React, { useState, useRef, useMemo, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Dimensions,
+  useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import { getTheme } from '../../config/theme';
+import { breakpoints } from '../../config/theme';
 
-export default function LocalGallery({ imagens = [], imagemPrincipal, altoContraste }) {
-  const { isHighContrast } = useThemeContext();
-  const t = getTheme(altoContraste ?? isHighContrast);
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+export default function LocalGallery({ imagens, altoContraste = false }) {
+  const { theme: t } = useThemeContext();
   const [modalVisible, setModalVisible] = useState(false);
-  const [imagemSelecionada, setImagemSelecionada] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const { width } = useWindowDimensions();
+  const flatListRef = useRef(null);
 
-  // Processa imagens para exibição
-  const imagensParaExibir = useMemo(() => {
-    const lista = [];
-    
-    // Adiciona imagem principal primeiro
-    if (imagemPrincipal) {
-      lista.push({ uri: imagemPrincipal, isPrincipal: true });
-    }
-    
-    // Adiciona imagens da galeria
-    if (imagens && Array.isArray(imagens)) {
-      imagens.forEach(img => {
-        if (img?.imagemBase64) {
-          lista.push({ uri: img.imagemBase64 });
-        } else if (img?.url) {
-          lista.push({ uri: img.url });
-        } else if (typeof img === 'string') {
-          lista.push({ uri: img });
-        }
-      });
-    }
-    
-    return lista;
-  }, [imagemPrincipal, imagens]);
+  // Calcular tamanho das imagens baseado na largura da tela
+  const imageSize = useMemo(() => {
+    if (width >= breakpoints.desktop) return 180;
+    if (width >= breakpoints.tablet) return 150;
+    return 110;
+  }, [width]);
 
-  const abrirGaleria = (imagem) => {
-    setImagemSelecionada(imagem);
-    setModalVisible(true);
-  };
-
-  const renderImageItem = ({ item, index }) => (
-    <TouchableOpacity 
-      style={styles.imageWrapper} 
-      onPress={() => abrirGaleria(item)}
-      activeOpacity={0.9}
-    >
-      <Image 
-        source={{ uri: item.uri }} 
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
-      {index === 0 && imagensParaExibir.length > 1 && (
-        <View style={[styles.badge, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
-          <ThemedText variant="caption" color="textOnPrimary">
-            +{imagensParaExibir.length - 1}
-          </ThemedText>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-
-  if (imagensParaExibir.length === 0) {
+  // Se não houver imagens, mostra placeholder
+  if (!imagens || imagens.length === 0) {
     return (
-      <View style={[styles.placeholderContainer, { backgroundColor: t.colors.backgroundTertiary }]}>
-        <Ionicons name="image-outline" size={48} color={t.colors.textTertiary} />
-        <ThemedText color="textTertiary" style={styles.placeholderText}>
-          Nenhuma imagem disponível
+      <View style={styles.emptyContainer}>
+        <Ionicons name="camera-outline" size={48} color={t.colors.textTertiary} />
+        <ThemedText color="textSecondary" align="center">
+          Nenhuma foto disponível
         </ThemedText>
       </View>
     );
   }
 
-  return (
-    <>
-      <View style={styles.container}>
-        <FlatList
-          data={imagensParaExibir}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={renderImageItem}
-          keyExtractor={(_, index) => `gallery_${index}`}
-          contentContainerStyle={styles.flatListContent}
-        />
+  // Abrir modal com a imagem selecionada
+  const openImageModal = useCallback((index) => {
+    setSelectedImageIndex(index);
+    setModalVisible(true);
+  }, []);
+
+  // Fechar modal
+  const closeModal = useCallback(() => {
+    setModalVisible(false);
+  }, []);
+
+  // Navegar para imagem anterior
+  const goToPrevious = useCallback(() => {
+    if (selectedImageIndex > 0) {
+      const newIndex = selectedImageIndex - 1;
+      setSelectedImageIndex(newIndex);
+      flatListRef.current?.scrollToIndex({
+        index: newIndex,
+        animated: true,
+        viewPosition: 0.5
+      });
+    }
+  }, [selectedImageIndex]);
+
+  // Navegar para próxima imagem
+  const goToNext = useCallback(() => {
+    if (selectedImageIndex < imagens.length - 1) {
+      const newIndex = selectedImageIndex + 1;
+      setSelectedImageIndex(newIndex);
+      flatListRef.current?.scrollToIndex({
+        index: newIndex,
+        animated: true,
+        viewPosition: 0.5
+      });
+    }
+  }, [selectedImageIndex, imagens.length]);
+
+  // Scroll finalizado no FlatList do modal
+  const onScrollEnd = useCallback((event) => {
+    const contentOffset = event.nativeEvent.contentOffset;
+    const viewSize = event.nativeEvent.layoutMeasurement;
+    const newIndex = Math.floor(contentOffset.x / viewSize.width);
+    if (newIndex !== selectedImageIndex) {
+      setSelectedImageIndex(newIndex);
+    }
+  }, [selectedImageIndex]);
+
+  // Renderizar cada thumbnail
+  const renderThumbnail = useCallback(({ item, index }) => (
+    <TouchableOpacity
+      style={[
+        styles.thumbnailItem,
+        { width: imageSize, height: imageSize }
+      ]}
+      onPress={() => openImageModal(index)}
+      activeOpacity={0.85}
+    >
+      <Image
+        source={{ uri: item.url || item }}
+        style={styles.thumbnailImage}
+        resizeMode="cover"
+      />
+      <View style={styles.thumbnailOverlay}>
+        <Ionicons name="expand-outline" size={20} color="#FFF" />
       </View>
+    </TouchableOpacity>
+  ), [imageSize, openImageModal]);
+
+  // Renderizar imagem em tela cheia no modal
+  const renderFullImage = useCallback(({ item }) => (
+    <View style={styles.fullImageWrapper}>
+      <Image
+        source={{ uri: item.url || item }}
+        style={styles.fullImage}
+        resizeMode="contain"
+      />
+    </View>
+  ), []);
+
+  // Key extractor para thumbnails
+  const thumbnailKeyExtractor = useCallback((item, index) => `thumbnail_${index}`, []);
+
+  // Key extractor para modal
+  const modalKeyExtractor = useCallback((item, index) => `modal_${index}`, []);
+
+  return (
+    <View style={styles.container}>
+      {/* Grid de miniaturas */}
+      <FlatList
+        data={imagens}
+        keyExtractor={thumbnailKeyExtractor}
+        renderItem={renderThumbnail}
+        numColumns={3}
+        scrollEnabled={false}
+        contentContainerStyle={styles.gridContainer}
+        columnWrapperStyle={styles.gridRow}
+      />
 
       {/* Modal para visualização em tela cheia */}
       <Modal
         visible={modalVisible}
-        transparent={false}
+        transparent={true}
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeModal}
       >
-        <View style={[styles.modalContainer, { backgroundColor: '#000' }]}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => setModalVisible(false)}
-          >
+        <View style={styles.modalContainer}>
+          {/* Botão de fechar */}
+          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
             <Ionicons name="close" size={28} color="#FFF" />
           </TouchableOpacity>
-          
-          {imagemSelecionada && (
-            <Image 
-              source={{ uri: imagemSelecionada.uri }} 
-              style={styles.fullImage}
-              resizeMode="contain"
-            />
+
+          {/* Botão de navegação anterior */}
+          {imagens.length > 1 && selectedImageIndex > 0 && (
+            <TouchableOpacity style={styles.navButtonLeft} onPress={goToPrevious}>
+              <Ionicons name="chevron-back" size={40} color="#FFF" />
+            </TouchableOpacity>
           )}
+
+          {/* Botão de navegação próxima */}
+          {imagens.length > 1 && selectedImageIndex < imagens.length - 1 && (
+            <TouchableOpacity style={styles.navButtonRight} onPress={goToNext}>
+              <Ionicons name="chevron-forward" size={40} color="#FFF" />
+            </TouchableOpacity>
+          )}
+
+          {/* FlatList horizontal com as imagens em tela cheia */}
+          <FlatList
+            ref={flatListRef}
+            data={imagens}
+            keyExtractor={modalKeyExtractor}
+            renderItem={renderFullImage}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            initialScrollIndex={selectedImageIndex}
+            onMomentumScrollEnd={onScrollEnd}
+            getItemLayout={(data, index) => ({
+              length: SCREEN_WIDTH,
+              offset: SCREEN_WIDTH * index,
+              index,
+            })}
+          />
+
+          {/* Indicador de posição */}
+          <View style={styles.counterContainer}>
+            <ThemedText style={styles.counterText}>
+              {selectedImageIndex + 1} / {imagens.length}
+            </ThemedText>
+          </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 16,
+    marginTop: 4,
+    marginBottom: 8,
   },
-  flatListContent: {
-    paddingHorizontal: 16,
+  gridContainer: {
+    paddingVertical: 4,
+  },
+  gridRow: {
+    justifyContent: 'flex-start',
     gap: 12,
+    marginBottom: 12,
   },
-  imageWrapper: {
+  thumbnailItem: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
     position: 'relative',
-    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  thumbnail: {
-    width: 120,
-    height: 120,
-    borderRadius: 12,
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
-  badge: {
+  thumbnailOverlay: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 4,
+    margin: 6,
   },
-  placeholderContainer: {
-    height: 200,
-    justifyContent: 'center',
+  emptyContainer: {
     alignItems: 'center',
-    marginVertical: 16,
-    marginHorizontal: 16,
+    justifyContent: 'center',
+    paddingVertical: 48,
+    gap: 16,
+    backgroundColor: '#F9F9F9',
     borderRadius: 12,
   },
-  placeholderText: {
-    marginTop: 8,
-    fontSize: 12,
-  },
+  // Modal styles
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
   },
   closeButton: {
     position: 'absolute',
     top: 40,
     right: 20,
     zIndex: 10,
-    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 30,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navButtonLeft: {
+    position: 'absolute',
+    left: 16,
+    top: '50%',
+    transform: [{ translateY: -25 }],
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navButtonRight: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -25 }],
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullImageWrapper: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fullImage: {
-    width: '100%',
-    height: '100%',
+    width: SCREEN_WIDTH - 40,
+    height: SCREEN_HEIGHT - 100,
+  },
+  counterContainer: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  counterText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
