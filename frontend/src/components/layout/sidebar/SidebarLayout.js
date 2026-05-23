@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, Switch } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
 import SafeArea from '../SafeArea';
 import { Spacer, ThemedText } from '../../commons';
+import Toggle from '../../ui/Toggle';
 import { Button } from '../../ui';
 import SidebarUserPanel from './SidebarUserPanel';
 import SidebarItem from './SidebarItem';
@@ -105,13 +106,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
                 </View>
 
                 <View style={styles.switchContainer}>
-                  <Switch
-                    value={isHighContrast}
-                    onValueChange={toggleTheme}
-                    accessibilityLabel="Alternar alto contraste"
-                    trackColor={{ false: t.colors.borderLight, true: t.colors.primaryLight }}
-                    thumbColor={isHighContrast ? t.colors.primary : t.colors.textOnPrimary}
-                  />
+                  <Toggle value={isHighContrast} onValueChange={toggleTheme} altoContraste={altoContraste} />
                 </View>
               </View>
             </View>
