@@ -4,10 +4,12 @@ import theme from '../../../config/theme';
 import { Spacer, Divider } from '../../commons';
 import { Button } from '../../ui';
 import { useAuth } from '../../../context/AuthContext';
+import { useThemeContext } from '../../../context/ThemeContext';
 import { resetToHome } from '../../../navigation/navigationRef';
 import SidebarItem from './SidebarItem';
 
 export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
+  const { theme: t } = useThemeContext();
   const { isAuthenticated, usuario, logout } = useAuth();
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
@@ -30,6 +32,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             onPress={() => onNavigate && onNavigate('Login')}
             align="center"
             iconLeft="log-in-outline"
+            altoContraste={altoContraste}
             style={{
               borderRadius: theme.borderRadius.lg,
               shadowColor: t.shadows.md.shadowColor,
@@ -49,6 +52,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             onPress={() => onNavigate && onNavigate('Register')}
             align="center"
             iconLeft="person-add-outline"
+            altoContraste={altoContraste}
             textStyle={{ color: t.colors.textSecondary }}
             style={{ backgroundColor: 'transparent' }}
           >
