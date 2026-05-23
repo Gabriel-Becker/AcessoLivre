@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function ThemedText({
   children,
@@ -12,7 +13,8 @@ export default function ThemedText({
   style,
   ...props
 }) {
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast, theme: ctxTheme } = useThemeContext();
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
 
   const variantStyles = {
     display: {

@@ -13,9 +13,10 @@ import { useAuth } from '../../../context/AuthContext';
 
 export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240 }) {
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const t = altoContraste ? getTheme(true) : theme;
-  const { isAuthenticated } = useAuth();
   const { isHighContrast, toggleTheme } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = contrasteAtivo ? getTheme(true) : theme;
+  const { isAuthenticated } = useAuth();
 
   const items = [
     { key: 'Inicio', label: 'Início', icon: 'home-outline' },
@@ -34,7 +35,10 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
     <>
       <SafeArea
         background="surface"
-        style={[styles.sidebar, { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura }]}
+        style={[
+          styles.sidebar,
+          { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura, backgroundColor: t.colors.background },
+        ]}
       >
         <View style={styles.header}>
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
@@ -61,13 +65,13 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
                     ? () => setShowConfigModal(true)
                     : () => onNavigate && onNavigate(item.key)
               }
-              altoContraste={altoContraste}
+              altoContraste={contrasteAtivo}
             />
           ))}
         </View>
 
         <View style={styles.footer}>
-          <SidebarUserPanel current={current} onNavigate={onNavigate} altoContraste={altoContraste} />
+          <SidebarUserPanel current={current} onNavigate={onNavigate} altoContraste={contrasteAtivo} />
         </View>
       </SafeArea>
 

@@ -90,6 +90,7 @@ export default function Select({
         <ThemedText
           color={selecionado ? 'textPrimary' : 'textTertiary'}
           style={estilos.texto}
+          altoContraste={contraste}
         >
           {selecionado?.label || placeholder}
         </ThemedText>
@@ -128,7 +129,7 @@ export default function Select({
                       style={[estilos.item, ativo && estilos.itemAtivo]}
                       onPress={() => handleSelect(item)}
                     >
-                      <ThemedText color={ativo ? 'primary' : 'textPrimary'}>
+                      <ThemedText color={ativo ? 'primary' : 'textPrimary'} altoContraste={contraste}>
                         {item.label}
                       </ThemedText>
                     </TouchableOpacity>

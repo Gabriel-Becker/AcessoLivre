@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Input({
   label,
@@ -27,7 +28,8 @@ export default function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast, theme: ctxTheme } = useThemeContext();
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
   const hasError = !!error;
   const isPassword = secureTextEntry;
   

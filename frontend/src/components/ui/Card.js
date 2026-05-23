@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Card({
   variant = 'default',
@@ -12,7 +13,8 @@ export default function Card({
   altoContraste = false,
   ...props
 }) {
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast, theme: ctxTheme } = useThemeContext();
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
 
   // Estilos baseados na variante
   const getVariantStyles = () => {

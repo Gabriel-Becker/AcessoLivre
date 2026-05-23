@@ -60,7 +60,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           alignItems: 'center',
           justifyContent: 'center',
           padding: isMobile ? t.spacing.sm : t.spacing.md,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: t.colors.surface,
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,

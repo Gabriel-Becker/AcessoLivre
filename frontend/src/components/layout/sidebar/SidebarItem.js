@@ -1,9 +1,12 @@
 import React from 'react';
 import theme, { getTheme } from '../../../config/theme';
+import { useThemeContext } from '../../../context/ThemeContext';
 import { Button } from '../../ui';
 
-export default function SidebarItem({ icon, label, active, onPress, disabled = false, altoContraste = false }) {
-  const t = altoContraste ? getTheme(true) : theme;
+export default function SidebarItem({ icon, label, active, onPress, disabled = false, altoContraste }) {
+  const { isHighContrast } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = contrasteAtivo ? getTheme(true) : theme;
   const isDisabled = disabled;
 
   const inactiveStyle = {

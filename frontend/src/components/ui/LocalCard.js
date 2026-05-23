@@ -2,10 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
-import theme from '../../config/theme';
+import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
-export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
+export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste }) {
   const [imageError, setImageError] = useState(false);
+  const { isHighContrast } = useThemeContext();
+  const contraste = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = contraste ? getTheme(true) : theme;
 
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria;
@@ -49,7 +53,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
   return (
     <TouchableOpacity
-      style={[styles.container, altoContraste && styles.containerHighContrast]}
+      style={[styles.container, contraste && { borderWidth: 2, borderColor: t.colors.border }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -63,8 +67,8 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           />
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
-            <ThemedText color="textTertiary">Sem imagem</ThemedText>
+            <Ionicons name="image-outline" size={40} color={t.colors.textTertiary} />
+            <ThemedText color="textTertiary" altoContraste={contraste}>Sem imagem</ThemedText>
           </View>
         )}
 

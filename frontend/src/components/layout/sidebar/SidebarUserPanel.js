@@ -8,8 +8,9 @@ import { useThemeContext } from '../../../context/ThemeContext';
 import { resetToHome } from '../../../navigation/navigationRef';
 import SidebarItem from './SidebarItem';
 
-export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste = false }) {
-  const { theme: t } = useThemeContext();
+export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoContraste }) {
+  const { isHighContrast, theme: t } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const { isAuthenticated, usuario, logout } = useAuth();
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
@@ -32,9 +33,9 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             onPress={() => onNavigate && onNavigate('Login')}
             align="center"
             iconLeft="log-in-outline"
-            altoContraste={altoContraste}
+            altoContraste={contrasteAtivo}
             style={{
-              borderRadius: theme.borderRadius.lg,
+              borderRadius: t.borderRadius.lg,
               shadowColor: t.shadows.md.shadowColor,
               shadowOffset: t.shadows.md.shadowOffset,
               shadowOpacity: t.shadows.md.shadowOpacity,
@@ -52,7 +53,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             onPress={() => onNavigate && onNavigate('Register')}
             align="center"
             iconLeft="person-add-outline"
-            altoContraste={altoContraste}
+            altoContraste={contrasteAtivo}
             textStyle={{ color: t.colors.textSecondary }}
             style={{ backgroundColor: 'transparent' }}
           >
@@ -68,7 +69,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
                 label="Admin"
                 active={current === 'Admin'}
                 onPress={() => onNavigate && onNavigate('Admin')}
-                altoContraste={altoContraste}
+                altoContraste={contrasteAtivo}
               />
               <Spacer size="xs" />
             </>
@@ -78,10 +79,10 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             label="Meu Perfil"
             active={current === 'Perfil'}
             onPress={() => onNavigate && onNavigate('Perfil')}
-            altoContraste={altoContraste}
+            altoContraste={contrasteAtivo}
           />
           <Spacer size="xs" />
-          <Button variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline">
+          <Button variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline" altoContraste={contrasteAtivo}>
             Sair
           </Button>
         </>

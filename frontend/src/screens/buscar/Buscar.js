@@ -51,18 +51,18 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
-const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) => {
+const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, estilos }) => {
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <View style={styles.filtroGrupo}>
+    <View style={estilos.filtroGrupo}>
       <TouchableOpacity 
-        style={styles.filtroHeader} 
+        style={estilos.filtroHeader} 
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
       >
         <Ionicons name="grid-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Categoria</ThemedText>
+        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Categoria</ThemedText>
         <Ionicons 
           name={expanded ? 'chevron-up' : 'chevron-down'} 
           size={18} 
@@ -71,16 +71,16 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) =
       </TouchableOpacity>
       
       {expanded && (
-        <View style={styles.filtroContent}>
+        <View style={estilos.filtroContent}>
           {CATEGORIAS.map(categoria => (
             <TouchableOpacity
               key={categoria}
-              style={styles.filtroItem}
+              style={estilos.filtroItem}
               onPress={() => onToggleCategoria(categoria)}
               activeOpacity={0.7}
             >
               <View style={[
-                styles.checkbox,
+                estilos.checkbox,
                 { 
                   borderColor: theme.colors.primary,
                   backgroundColor: categoriasSelecionadas.includes(categoria) 
@@ -92,7 +92,7 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) =
                   <Ionicons name="checkmark" size={12} color="#FFF" />
                 )}
               </View>
-              <ThemedText style={styles.filtroItemLabel}>
+              <ThemedText style={estilos.filtroItemLabel}>
                 {CATEGORIAS_LABELS[categoria] || categoria}
               </ThemedText>
             </TouchableOpacity>
@@ -103,18 +103,18 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme }) =
   );
 };
 
-const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) => {
+const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, estilos }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={styles.filtroGrupo}>
+    <View style={estilos.filtroGrupo}>
       <TouchableOpacity 
-        style={styles.filtroHeader} 
+        style={estilos.filtroHeader} 
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
       >
         <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
+        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Acessibilidade</ThemedText>
         <Ionicons 
           name={expanded ? 'chevron-up' : 'chevron-down'} 
           size={18} 
@@ -123,16 +123,16 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) 
       </TouchableOpacity>
       
       {expanded && (
-        <View style={styles.filtroContent}>
+        <View style={estilos.filtroContent}>
           {RECURSOS_ACESSIBILIDADE.map(recurso => (
             <TouchableOpacity
               key={recurso.id}
-              style={styles.filtroItem}
+              style={estilos.filtroItem}
               onPress={() => onToggleRecurso(recurso.id)}
               activeOpacity={0.7}
             >
               <View style={[
-                styles.checkbox,
+                estilos.checkbox,
                 { 
                   borderColor: theme.colors.primary,
                   backgroundColor: recursosSelecionados.includes(recurso.id) 
@@ -144,8 +144,8 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) 
                   <Ionicons name="checkmark" size={12} color="#FFF" />
                 )}
               </View>
-              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
-              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
+              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={estilos.filtroIcon} />
+              <ThemedText style={estilos.filtroItemLabel}>{recurso.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -154,7 +154,7 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme }) 
   );
 };
 
-const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
+const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
   const renderStars = (nota) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -171,36 +171,36 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
   };
 
   return (
-    <View style={styles.filtroGrupo}>
-      <View style={styles.filtroHeader}>
+    <View style={estilos.filtroGrupo}>
+      <View style={estilos.filtroHeader}>
         <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota Mínima</ThemedText>
+        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Nota Mínima</ThemedText>
       </View>
       
-      <View style={styles.filtroContent}>
-        <View style={styles.notaContainer}>
-          <View style={styles.notaStars}>
+      <View style={estilos.filtroContent}>
+        <View style={estilos.notaContainer}>
+          <View style={estilos.notaStars}>
             {renderStars(notaMinima)}
           </View>
-          <ThemedText weight="bold" style={styles.notaValor}>
+          <ThemedText weight="bold" style={estilos.notaValor}>
             {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
           </ThemedText>
         </View>
         
-        <View style={styles.notaSliderContainer}>
+        <View style={estilos.notaSliderContainer}>
           {[0, 1, 2, 3, 4, 4.5].map(nota => (
             <TouchableOpacity
               key={nota}
               style={[
-                styles.notaBotao,
-                notaMinima === nota && styles.notaBotaoAtivo,
+                estilos.notaBotao,
+                notaMinima === nota && estilos.notaBotaoAtivo,
                 { borderColor: theme.colors.primary }
               ]}
               onPress={() => onNotaChange(nota)}
             >
               <ThemedText 
                 style={[
-                  styles.notaBotaoTexto,
+                  estilos.notaBotaoTexto,
                   notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }
                 ]}
               >
@@ -217,7 +217,8 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme }) => {
 export default function Buscar({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
-  const theme = getTheme(isHighContrast);
+  const theme = t;
+  const estilos = criarEstilos(theme);
 
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
@@ -323,7 +324,7 @@ export default function Buscar({ onNavigate }) {
   }, [onNavigate]);
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
+    <View style={estilos.emptyContainer}>
       <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
       <ThemedText variant="h3" weight="bold" align="center">
         {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Nenhum local cadastrado ainda'}
@@ -338,7 +339,7 @@ export default function Buscar({ onNavigate }) {
   );
 
   const renderItem = useCallback(({ item }) => (
-    <View style={styles.cardWrapper}>
+    <View style={estilos.cardWrapper}>
       <LocalCard
         local={item}
         onPress={() => handleLocalPress(item)}
@@ -349,7 +350,7 @@ export default function Buscar({ onNavigate }) {
 
   if (loading && resultados.length === 0) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={estilos.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Spacer size="md" />
         <ThemedText color="textSecondary">Buscando locais...</ThemedText>
@@ -373,29 +374,29 @@ export default function Buscar({ onNavigate }) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={estilos.scrollContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => realizarBusca(true)}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
+              refreshing={refreshing}
+              onRefresh={() => realizarBusca(true)}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
         }
       >
-        <View style={styles.conteudo}>
+        <View style={estilos.conteudo}>
           <View style={[
-            styles.colunaFiltros,
-            isDesktop && styles.colunaFiltrosDesktop
+            estilos.colunaFiltros,
+            isDesktop && estilos.colunaFiltrosDesktop
           ]}>
-            <View style={[styles.filtrosCard, { backgroundColor: theme.colors.surface }]}>
-              <View style={styles.filtrosHeader}>
+            <View style={[estilos.filtrosCard, { backgroundColor: theme.colors.surface }]}>
+              <View style={estilos.filtrosHeader}>
                 <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>
+                <ThemedText variant="h3" weight="bold" style={estilos.filtrosTitulo}>
                   Filtros
                 </ThemedText>
                 {temFiltrosAtivos && (
-                  <TouchableOpacity onPress={limparFiltros} style={styles.limparButton}>
+                  <TouchableOpacity onPress={limparFiltros} style={estilos.limparButton}>
                     <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
                     <ThemedText color="error" variant="caption">Limpar</ThemedText>
                   </TouchableOpacity>
@@ -404,10 +405,10 @@ export default function Buscar({ onNavigate }) {
 
               <Spacer size="md" />
 
-              <View style={styles.searchContainer}>
+              <View style={estilos.searchContainer}>
                 <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
                 <TextInput
-                  style={[styles.searchInput, { color: theme.colors.textPrimary }]}
+                  style={[estilos.searchInput, { color: theme.colors.textPrimary }]}
                   placeholder="Buscar por nome..."
                   placeholderTextColor={theme.colors.textTertiary}
                   value={searchText}
@@ -426,6 +427,7 @@ export default function Buscar({ onNavigate }) {
                 categoriasSelecionadas={categoriasSelecionadas}
                 onToggleCategoria={toggleCategoria}
                 theme={theme}
+                estilos={estilos}
               />
 
               <Spacer size="md" />
@@ -434,6 +436,7 @@ export default function Buscar({ onNavigate }) {
                 recursosSelecionados={recursosSelecionados}
                 onToggleRecurso={toggleRecurso}
                 theme={theme}
+                estilos={estilos}
               />
 
               <Spacer size="md" />
@@ -442,6 +445,7 @@ export default function Buscar({ onNavigate }) {
                 notaMinima={notaMinima}
                 onNotaChange={setNotaMinima}
                 theme={theme}
+                estilos={estilos}
               />
 
               <Spacer size="md" />
@@ -459,8 +463,8 @@ export default function Buscar({ onNavigate }) {
             </View>
           </View>
 
-          <View style={styles.colunaResultados}>
-            <View style={styles.resultadosHeader}>
+          <View style={estilos.colunaResultados}>
+            <View style={estilos.resultadosHeader}>
               <ThemedText variant="h3" weight="bold">
                 {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
               </ThemedText>
@@ -479,19 +483,19 @@ export default function Buscar({ onNavigate }) {
                 renderItem={renderItem}
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.resultadosGrid}
+                contentContainerStyle={estilos.resultadosGrid}
               />
             )}
           </View>
         </View>
 
-        <Spacer size="xl" />
+            <Spacer size="xl" />
       </ScrollView>
     </Container>
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (t) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 32,
@@ -516,10 +520,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowColor: t.shadows.sm.shadowColor,
+    shadowOffset: t.shadows.sm.shadowOffset,
+    shadowOpacity: t.shadows.sm.shadowOpacity,
+    shadowRadius: t.shadows.sm.shadowRadius,
+    borderWidth: 1,
+    borderColor: t.colors.border,
   },
   filtrosHeader: {
     flexDirection: 'row',
@@ -539,7 +545,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: t.colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -552,7 +558,7 @@ const styles = StyleSheet.create({
   },
   filtroGrupo: {
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: t.colors.border,
     paddingTop: 12,
   },
   filtroHeader: {
@@ -615,9 +621,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     backgroundColor: 'transparent',
+    borderColor: t.colors.border,
   },
   notaBotaoAtivo: {
-    backgroundColor: '#E8F0FF',
+    backgroundColor: t.colors.surfaceSecondary,
   },
   notaBotaoTexto: {
     fontSize: 12,

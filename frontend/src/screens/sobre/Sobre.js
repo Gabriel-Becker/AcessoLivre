@@ -2,9 +2,19 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
-import theme from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Sobre() {
+  const { theme: t } = useThemeContext();
+  const styles = StyleSheet.create({
+    scroll: {
+      flexGrow: 1,
+    },
+    card: {
+      padding: t.spacing.xl,
+    },
+  });
+
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <ThemedText variant="h1" weight="bold">
@@ -34,12 +44,3 @@ export default function Sobre() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-  },
-  card: {
-    padding: theme.spacing.xl,
-  },
-});
