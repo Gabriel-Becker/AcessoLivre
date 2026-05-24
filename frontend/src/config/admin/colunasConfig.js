@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { ThemedText } from '../../components/commons';
 import { EtiquetaStatus } from '../../components/admin';
 import { Button } from '../../components/ui';
+import { obterCategoriaLabel, obterStatusLabel, obterTipoEtiquetaStatus } from './locaisConfig';
 
 export const renderNomeUsuario = (item, altoContraste = false) => (
   <View>
@@ -114,7 +115,7 @@ export const renderNomeLocal = (item, altoContraste = false) => (
 );
 
 export const renderCategoriaLocal = (item) => (
-  <EtiquetaStatus texto={item?.categoria?.nome || 'Não informada'} tipo="neutro" />
+  <EtiquetaStatus texto={obterCategoriaLabel(item?.categoria?.nome || item?.categoria)} tipo="neutro" />
 );
 
 export const renderCidadeLocal = (item, altoContraste = false) => (
@@ -123,7 +124,39 @@ export const renderCidadeLocal = (item, altoContraste = false) => (
   </ThemedText>
 );
 
-export const colunasLocais = () => [
+export const renderStatusLocal = (item) => (
+  <EtiquetaStatus
+    texto={obterStatusLabel(item?.status)}
+    tipo={obterTipoEtiquetaStatus(item?.status)}
+  />
+);
+
+export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExcluir, altoContraste = false) => (
+  <View style={styles.acoesLinha}>
+    <Button
+      variant="outline"
+      size="small"
+      iconLeft="create-outline"
+      loading={carregandoAcao}
+      disabled={carregandoAcao}
+      onPress={() => onEditar(item)}
+    >
+      Editar
+    </Button>
+    <Button
+      variant="danger"
+      size="small"
+      iconLeft="trash-outline"
+      loading={carregandoAcao}
+      disabled={carregandoAcao}
+      onPress={() => onExcluir(item)}
+    >
+      Excluir
+    </Button>
+  </View>
+);
+
+export const colunasLocais = (styles, carregandoAcao, onEditar, onExcluir, altoContraste = false) => [
   {
     chave: 'nome',
     titulo: 'Local',
@@ -144,5 +177,20 @@ export const colunasLocais = () => [
     flex: 1.1,
     minWidth: 180,
     render: (item) => renderCidadeLocal(item),
+  },
+  {
+    chave: 'status',
+    titulo: 'Status',
+    flex: 0.95,
+    minWidth: 140,
+    render: (item) => renderStatusLocal(item),
+  },
+  {
+    chave: 'acoes',
+    titulo: 'Ações',
+    flex: 1.2,
+    minWidth: 200,
+    alinhamento: 'right',
+    render: (item) => renderAcoesLocal(item, styles, carregandoAcao, onEditar, onExcluir, altoContraste),
   },
 ];

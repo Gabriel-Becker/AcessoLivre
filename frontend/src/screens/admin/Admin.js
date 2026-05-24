@@ -4,10 +4,12 @@ import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
+import EditarLocalModal from '../../components/admin/EditarLocalModal';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { useAuth } from '../../context/AuthContext';
 import { useThemeContext } from '../../context/ThemeContext';
 import AdminService from '../../services/AdminService';
+import LocalService from '../../services/LocalService';
 import theme from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 import { colunasUsuarios, colunasLocais } from '../../config/admin/colunasConfig';
@@ -49,6 +51,10 @@ export default function Admin() {
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [modalDeleteVisivel, setModalDeleteVisivel] = useState(false);
   const [usuarioParaDeletar, setUsuarioParaDeletar] = useState(null);
+  const [modalEditarLocalVisivel, setModalEditarLocalVisivel] = useState(false);
+  const [localSelecionado, setLocalSelecionado] = useState(null);
+  const [modalDeleteLocalVisivel, setModalDeleteLocalVisivel] = useState(false);
+  const [localParaDeletar, setLocalParaDeletar] = useState(null);
 
   const abas = useMemo(
     () => [
@@ -86,6 +92,16 @@ export default function Admin() {
   const limparFiltrosLocais = () => {
     setBuscaLocais('');
     setFiltroCategoriaLocais('todos');
+  };
+
+  const confirmarEdicaoLocal = (localItem) => {
+    setLocalSelecionado(localItem);
+    setModalEditarLocalVisivel(true);
+  };
+
+  const confirmarApagarLocal = (localItem) => {
+    setLocalParaDeletar(localItem);
+    setModalDeleteLocalVisivel(true);
   };
 
   const carregarUsuarios = async () => {
@@ -184,7 +200,7 @@ export default function Admin() {
     return locais.filter((item) => {
       const nome = normalizarTexto(item?.nome);
       const cidade = normalizarTexto(item?.endereco?.cidade);
-      const categoria = item?.categoria?.nome || '';
+      const categoria = normalizarTexto(item?.categoria?.nome || item?.categoria || '');
 
       const atendeBusca = !termo || nome.includes(termo) || cidade.includes(termo);
       const atendeCategoria = filtroCategoriaLocais === 'todos' || categoria === filtroCategoriaLocais;
@@ -222,6 +238,28 @@ export default function Admin() {
   const confirmarApagarUsuario = (usuarioItem) => {
     setUsuarioParaDeletar(usuarioItem);
     setModalDeleteVisivel(true);
+  };
+
+  const apagarLocal = async (localItem) => {
+    setCarregandoAcao(true);
+    setErro('');
+
+    try {
+      await LocalService.removerLocal(localItem.idLocal);
+      toastHelper.showSuccess('Local removido com sucesso.', 'Exclusão concluída');
+
+      if (locais.length === 1 && paginaLocais > 0) {
+        setPaginaLocais((p) => Math.max(0, p - 1));
+      } else {
+        await carregarLocais();
+      }
+    } catch (e) {
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o local.';
+      setErro(mensagemErro);
+      toastHelper.showError(mensagemErro, 'Falha ao excluir local');
+    } finally {
+      setCarregandoAcao(false);
+    }
   };
 
   const tentarNovamente = () => {
@@ -313,7 +351,7 @@ export default function Admin() {
   };
 
   const renderLocais = () => {
-    const colunas = colunasLocais();
+    const colunas = colunasLocais(styles, carregandoAcao, confirmarEdicaoLocal, confirmarApagarLocal, isHighContrast);
     const filtros = filtrosLocais(filtroCategoriaLocais, setFiltroCategoriaLocais, locais);
 
     return (
@@ -432,6 +470,16 @@ export default function Admin() {
         }}
       />
 
+      <EditarLocalModal
+        visible={modalEditarLocalVisivel}
+        onClose={() => setModalEditarLocalVisivel(false)}
+        local={localSelecionado}
+        onSucesso={() => {
+          setLocalSelecionado(null);
+          carregarLocais();
+        }}
+      />
+
       <Modal
         visible={modalDeleteVisivel}
         transparent
@@ -491,6 +539,75 @@ export default function Admin() {
                 fullWidth
                 onPress={() => {
                   setModalDeleteVisivel(false);
+                }}
+                disabled={carregandoAcao}
+              >
+                Cancelar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={modalDeleteLocalVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setModalDeleteLocalVisivel(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContainer,
+              {
+                backgroundColor: t.colors.surface,
+                width: width < 768 ? '88%' : width < 1024 ? '52%' : '35%',
+              },
+            ]}
+          >
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+              Apagar local
+            </ThemedText>
+
+            <Spacer size="lg" />
+
+            <View style={styles.modalMessage}>
+              <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
+                Tem certeza que deseja apagar{' '}
+                <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
+                  {localParaDeletar?.nome || ''}
+                </ThemedText>
+                ? Esta ação não pode ser desfeita.
+              </ThemedText>
+            </View>
+
+            <Spacer size="xl" />
+
+            <View style={styles.modalBotoes}>
+              <Button
+                variant="danger"
+                size="medium"
+                fullWidth
+                onPress={async () => {
+                  await apagarLocal(localParaDeletar);
+                  setModalDeleteLocalVisivel(false);
+                }}
+                loading={carregandoAcao}
+                disabled={carregandoAcao}
+              >
+                Deletar
+              </Button>
+
+              <Spacer size="xs" />
+
+              <Button
+                variant="outline"
+                size="medium"
+                fullWidth
+                onPress={() => {
+                  setModalDeleteLocalVisivel(false);
                 }}
                 disabled={carregandoAcao}
               >

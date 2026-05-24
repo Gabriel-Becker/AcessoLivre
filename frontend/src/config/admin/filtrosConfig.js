@@ -16,7 +16,11 @@ export const filtrosUsuarios = (filtroRole, setFiltroRole) => [
 
 export const gerarOpcoesCategoriaLocais = (locais) => {
   const categorias = Array.from(
-    new Set(locais.map((item) => item?.categoria?.nome).filter(Boolean))
+    new Set(
+      locais
+        .map((item) => item?.categoria?.nome || item?.categoria)
+        .filter(Boolean)
+    )
   );
 
   return [

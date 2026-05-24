@@ -45,7 +45,7 @@ export default function TabelaPlanilhaAdmin({
                       flex: coluna.flex ?? 1,
                       minWidth: coluna.minWidth ?? 120,
                       maxWidth: coluna.maxWidth,
-                      alignItems: coluna.alinhamento === 'center' ? 'center' : 'flex-start',
+                      alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
                     },
                   ]}
                 >
@@ -55,7 +55,7 @@ export default function TabelaPlanilhaAdmin({
                         size="xs"
                         weight="bold"
                         color={corTexto}
-                        align={coluna.alinhamento === 'center' ? 'center' : 'left'}
+                        align={coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'right' : 'left')}
                         style={styles.tituloColuna}
                         altoContraste={contrasteAtivo}
                       >
@@ -109,20 +109,20 @@ export default function TabelaPlanilhaAdmin({
                     ]}
                   >
                     {colunas.map((coluna) => (
-                      <View
-                        key={`${coluna.chave}-${chave}`}
-                        style={[
-                          styles.celula,
-                          {
-                            flex: coluna.flex ?? 1,
-                            minWidth: coluna.minWidth ?? 120,
-                            maxWidth: coluna.maxWidth,
-                            alignItems: coluna.alinhamento === 'center' ? 'center' : 'flex-start',
-                          },
-                        ]}
-                      >
-                        {coluna.render(item, indice)}
-                      </View>
+                        <View
+                          key={`${coluna.chave}-${chave}`}
+                          style={[
+                            styles.celula,
+                            {
+                              flex: coluna.flex ?? 1,
+                              minWidth: coluna.minWidth ?? 120,
+                              maxWidth: coluna.maxWidth,
+                              alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
+                            },
+                          ]}
+                        >
+                          {coluna.render(item, indice)}
+                        </View>
                     ))}
                   </View>
                 );
