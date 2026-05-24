@@ -9,12 +9,18 @@ export default function ThemedText({
   color = 'textPrimary',
   align = 'left',
   weight = 'regular',
-  altoContraste = false,
+  altoContraste,
   style,
   ...props
 }) {
   const { isHighContrast, theme: ctxTheme } = useThemeContext();
-  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = getTheme(contrasteAtivo) || ctxTheme || theme;
+
+  let colorKey = color;
+  if (contrasteAtivo && (color === 'textSecondary' || color === 'textTertiary')) {
+    colorKey = 'textPrimary';
+  }
 
   const variantStyles = {
     display: {
@@ -53,7 +59,7 @@ export default function ThemedText({
         styles.base,
         variantStyles[variant],
         {
-          color: t.colors[color] || t.colors.textPrimary,
+          color: t.colors[colorKey] || t.colors.textPrimary,
           textAlign: align,
           fontWeight: t.typography.fontWeight[weight] || t.typography.fontWeight.regular,
         },

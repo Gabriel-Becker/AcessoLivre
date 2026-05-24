@@ -192,7 +192,16 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     return (
       <View style={localStyles.previewContainer}>
         {images.map((image, index) => (
-          <View key={index} style={localStyles.previewItem}>
+          <View
+            key={index}
+            style={[
+              localStyles.previewItem,
+              {
+                borderColor: isHighContrast ? theme.colors.border : theme.colors.borderLight,
+                backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : theme.colors.surface,
+              },
+            ]}
+          >
             <Image source={{ uri: image.uri }} style={localStyles.previewImage} />
             <TouchableOpacity
               style={localStyles.removeButton}
@@ -226,7 +235,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
           }}
           onClick={handleSelectFiles}
         >
-          <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+          <Ionicons name="cloud-upload-outline" size={48} color={isHighContrast ? theme.colors.textPrimary : theme.colors.textSecondary} />
           <ThemedText align="center">
             {isDragging ? 'Solte as imagens aqui' : 'Arraste e solte imagens ou clique para selecionar'}
           </ThemedText>
@@ -238,7 +247,13 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
         {renderPreview()}
 
         <View style={localStyles.actionButtons}>
-          <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+          <Button
+            variant="outline"
+            size="small"
+            onPress={handleSelectFiles}
+            iconLeft="images-outline"
+            altoContraste={isHighContrast}
+          >
             Galeria
           </Button>
         </View>
@@ -249,7 +264,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
   return (
     <View>
       <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
-        <Ionicons name="cloud-upload-outline" size={48} color={theme.colors.textSecondary} />
+        <Ionicons name="cloud-upload-outline" size={48} color={isHighContrast ? theme.colors.textPrimary : theme.colors.textSecondary} />
         <ThemedText align="center">Clique para selecionar imagens</ThemedText>
         <ThemedText color="textTertiary" variant="caption" align="center">
           PNG, JPG até 10MB cada (máx. 5 imagens)
@@ -259,10 +274,22 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
       {renderPreview()}
 
       <View style={localStyles.actionButtons}>
-        <Button variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline">
+        <Button
+          variant="outline"
+          size="small"
+          onPress={handleSelectFiles}
+          iconLeft="images-outline"
+          altoContraste={isHighContrast}
+        >
           Galeria
         </Button>
-        <Button variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline">
+        <Button
+          variant="outline"
+          size="small"
+          onPress={handleTakePhoto}
+          iconLeft="camera-outline"
+          altoContraste={isHighContrast}
+        >
           Câmera
         </Button>
       </View>
@@ -294,6 +321,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 2,
   },
   previewImage: {
     width: '100%',
