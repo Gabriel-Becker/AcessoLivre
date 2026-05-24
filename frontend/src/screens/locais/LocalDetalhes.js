@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import AvaliacaoService from '../../services/AvaliacaoService';
 import {
   View,
   StyleSheet,
