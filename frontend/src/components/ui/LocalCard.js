@@ -7,9 +7,10 @@ import { useThemeContext } from '../../context/ThemeContext';
 
 export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste }) {
   const [imageError, setImageError] = useState(false);
-  const { isHighContrast } = useThemeContext();
+  const { isHighContrast, theme: ctxTheme } = useThemeContext();
   const contraste = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = contraste ? getTheme(true) : theme;
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
+  const baseTheme = ctxTheme || t || theme;
 
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria;
@@ -34,11 +35,11 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={14} color={t.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={14} color={t.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={14} color={t.colors.textSecondary} />);
       }
     }
     return stars;
@@ -53,7 +54,19 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
   return (
     <TouchableOpacity
-      style={[styles.container, contraste && { borderWidth: 2, borderColor: t.colors.border }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: t.colors.surface,
+          borderColor: contraste ? t.colors.border : t.colors.borderLight,
+          borderWidth: contraste ? 2 : 1,
+          shadowColor: contraste ? 'transparent' : theme.colors.shadow,
+          shadowOffset: contraste ? { width: 0, height: 0 } : { width: 0, height: 2 },
+          shadowOpacity: contraste ? 0 : 0.12,
+          shadowRadius: contraste ? 0 : 4,
+          elevation: contraste ? 0 : 3,
+        },
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -66,34 +79,34 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
             onError={handleImageError}
           />
         ) : (
-          <View style={styles.imagePlaceholder}>
-            <Ionicons name="image-outline" size={40} color={t.colors.textTertiary} />
+          <View style={[styles.imagePlaceholder, { backgroundColor: baseTheme.colors.surfaceSecondary }]}>
+            <Ionicons name="image-outline" size={40} color={baseTheme.colors.textTertiary} />
             <ThemedText color="textTertiary" altoContraste={contraste}>Sem imagem</ThemedText>
           </View>
         )}
 
         {showNewBadge && (
-          <View style={styles.newBadge}>
-            <ThemedText color="textOnSecondary" weight="bold">
+          <View style={[styles.newBadge, { backgroundColor: baseTheme.colors.secondary, borderColor: contraste ? baseTheme.colors.border : 'transparent' }]}>
+            <ThemedText color="textOnSecondary" weight="bold" altoContraste={contraste}>
               NOVO
             </ThemedText>
           </View>
         )}
       </View>
 
-      <View style={styles.content}>
-        <ThemedText variant="h3" weight="bold" numberOfLines={1}>
+      <View style={[styles.content, { backgroundColor: t.colors.surface }]}>
+        <ThemedText variant="h3" weight="bold" numberOfLines={1} altoContraste={contraste} color={contraste ? 'textPrimary' : 'textPrimary'}>
           {nome}
         </ThemedText>
 
         <View style={styles.ratingRow}>
           {renderStars(avaliacaoMedia)}
-          <ThemedText weight="bold">{avaliacaoMedia.toFixed(1)}</ThemedText>
-          <ThemedText color="textSecondary">({totalAvaliacoes})</ThemedText>
+          <ThemedText weight="bold" altoContraste={contraste} color={'textPrimary'}>{avaliacaoMedia.toFixed(1)}</ThemedText>
+          <ThemedText color="textSecondary" altoContraste={contraste}>({totalAvaliacoes})</ThemedText>
         </View>
 
         {endereco && (
-          <ThemedText color="textSecondary" numberOfLines={2}>
+          <ThemedText color="textSecondary" numberOfLines={2} altoContraste={contraste}>
             {formatEnderecoCompleto(endereco)}
           </ThemedText>
         )}
@@ -104,7 +117,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
+    borderStyle: 'solid',
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 16,
@@ -130,7 +143,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: theme.colors.secondary,
+    borderWidth: 1,
     padding: 6,
     borderRadius: 20,
   },

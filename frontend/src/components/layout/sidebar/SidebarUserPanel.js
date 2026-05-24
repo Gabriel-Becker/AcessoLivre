@@ -48,15 +48,20 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
           </Button>
           <Spacer size="sm" />
           <Button
-            variant="ghost"
+            variant={contrasteAtivo ? 'outline' : 'ghost'}
             size="large"
             fullWidth
             onPress={() => onNavigate && onNavigate('Register')}
             align="center"
             iconLeft="person-add-outline"
             altoContraste={contrasteAtivo}
-            textStyle={{ color: corTextoSecundario }}
-            style={{ backgroundColor: 'transparent' }}
+            textStyle={{ color: contrasteAtivo ? t.colors.primary : corTextoSecundario }}
+            iconColor={contrasteAtivo ? t.colors.primary : corTextoSecundario}
+            style={contrasteAtivo ? {
+              backgroundColor: 'transparent',
+              borderColor: t.colors.primary,
+              borderWidth: 2,
+            } : { backgroundColor: 'transparent' }}
           >
             Criar Conta
           </Button>

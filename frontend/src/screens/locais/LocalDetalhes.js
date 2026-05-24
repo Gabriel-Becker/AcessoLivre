@@ -304,7 +304,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
             <View style={styles.linhaSuperior}>
               <View style={styles.cardPrincipalWrapper}>
                 <Card altoContraste={isHighContrast} style={styles.cardPrincipal}>
-                  {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto)}
+                  {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
                   {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
                 </Card>
               </View>
@@ -325,7 +325,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         ) : (
           <>
             <Card altoContraste={isHighContrast} style={styles.cardPrincipalMobile}>
-              {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto)}
+              {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
               {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
             </Card>
 
@@ -360,7 +360,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 // FUNÇÕES DE RENDERIZAÇÃO
 // ============================================
 
-function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto) {
+function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast) {
   return (
     <>
       <View style={styles.headerLocal}>
@@ -369,8 +369,8 @@ function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto)
             {local.nome}
           </ThemedText>
           
-          <View style={styles.categoriaBadge}>
-            <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
+          <View style={[styles.categoriaBadge, { backgroundColor: t.colors.surfaceSecondary, borderWidth: isHighContrast ? 1 : 0, borderColor: t.colors.border }]}>
+            <ThemedText variant="caption" weight="semibold" altoContraste={isHighContrast} color="textPrimary">
               {local.categoria}
             </ThemedText>
           </View>
@@ -602,7 +602,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   categoriaBadge: {
-    backgroundColor: '#E8F0FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,

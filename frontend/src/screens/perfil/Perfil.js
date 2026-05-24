@@ -51,7 +51,7 @@ export default function Perfil() {
   };
 
   const InfoItem = ({ icon, label, value }) => (
-    <View style={styles.infoItem}>
+    <View style={[styles.infoItem, isHighContrast && { borderBottomColor: t.colors.primary }]}>
       <View style={styles.infoIcon}>
         <Ionicons name={icon} size={24} color={t.colors.primary} />
       </View>
@@ -88,7 +88,7 @@ export default function Perfil() {
 
           <Spacer size="xl" />
 
-          <View style={styles.segurancaBox}>
+          <View style={[styles.segurancaBox, isHighContrast && { borderColor: t.colors.primary, backgroundColor: t.colors.surface }] }>
             <View style={styles.segurancaHeader}>
               <View style={styles.segurancaIcone}>
                 <Ionicons name="shield-checkmark-outline" size={22} color={t.colors.primary} />
@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
   },
   infoIcon: {
     width: 40,
@@ -198,6 +199,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
+    borderColor: 'transparent',
   },
   segurancaHeader: {
     flexDirection: 'row',
