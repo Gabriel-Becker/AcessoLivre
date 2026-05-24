@@ -1,13 +1,14 @@
 import React from 'react';
-import theme, { getTheme } from '../../../config/theme';
+import { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
 import { Button } from '../../ui';
 
 export default function SidebarItem({ icon, label, active, onPress, disabled = false, altoContraste }) {
   const { isHighContrast } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = contrasteAtivo ? getTheme(true) : theme;
+  const t = contrasteAtivo ? getTheme(true) : getTheme(isHighContrast);
   const isDisabled = disabled;
+  const corTextoSecundario = contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary;
 
   const inactiveStyle = {
     paddingVertical: 12,
@@ -42,8 +43,8 @@ export default function SidebarItem({ icon, label, active, onPress, disabled = f
       fullWidth
       align="left"
       iconLeft={icon}
-      iconColor={isDisabled ? t.colors.textTertiary : active ? t.colors.primary : t.colors.textSecondary}
-      textStyle={{ color: isDisabled ? t.colors.textTertiary : active ? t.colors.primary : t.colors.textPrimary }}
+      iconColor={isDisabled ? corTextoSecundario : active ? t.colors.primary : corTextoSecundario}
+      textStyle={{ color: isDisabled ? corTextoSecundario : active ? t.colors.primary : contrasteAtivo ? t.colors.textOnPrimary : t.colors.textPrimary }}
       style={active ? activeStyle : inactiveStyle}
       onPress={onPress}
       disabled={isDisabled}

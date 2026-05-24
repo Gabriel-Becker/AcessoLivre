@@ -58,6 +58,7 @@ const schema = z
 
 export default function TrocarSenhaModal({ visible, onClose, altoContraste = false }) {
   const { theme: t } = useThemeContext();
+  const corPrincipal = altoContraste ? 'textOnPrimary' : 'textPrimary';
   const [submitting, setSubmitting] = useState(false);
   const [tentouTrocarSenha, setTentouTrocarSenha] = useState(false);
   const [erroSenhaAtual, setErroSenhaAtual] = useState('');
@@ -153,7 +154,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
           style={[styles.modalContainer, { backgroundColor: t.colors.surface }]}
           onPress={(event) => event.stopPropagation?.()}
         >
-          <ThemedText variant="h2" weight="bold" align="center">
+          <ThemedText variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal}>
             Trocar Senha
           </ThemedText>
           <Spacer size="md" />

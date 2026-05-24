@@ -188,8 +188,14 @@ export default function Register({ navigation }) {
   const onSubmit = async (values) => {
     try {
       setSubmitting(true);
+      const nomeFormatado = String(values.nome || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .replace(/(^|\s)([a-zà-ÿ])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
+
       const resultado = await registerUser({
-        nome: values.nome.trim(),
+        nome: nomeFormatado,
         email: values.email.trim().toLowerCase(),
         senha: values.password,
       });
@@ -418,8 +424,9 @@ export default function Register({ navigation }) {
               text="Já possui conta?"
               actionLabel="Entrar"
               onPress={() => navigation?.navigate?.('Login')}
+              altoContraste={isHighContrast}
             />
-            <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} />
+            <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} altoContraste={isHighContrast} />
           </Card>
         </View>
       </ScrollView>

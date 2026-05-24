@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import theme, { getTheme } from '../../../config/theme';
+import { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
 import SafeArea from '../SafeArea';
 import { Spacer, ThemedText } from '../../commons';
@@ -13,10 +13,12 @@ import { useAuth } from '../../../context/AuthContext';
 
 export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240 }) {
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const { isHighContrast, toggleTheme } = useThemeContext();
+  const { isHighContrast, toggleTheme, theme: ctxTheme } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = contrasteAtivo ? getTheme(true) : theme;
+  const t = contrasteAtivo ? getTheme(true) : (ctxTheme || getTheme(isHighContrast));
+  const styles = criarEstilos(t);
   const { isAuthenticated } = useAuth();
+  const corTextoSecundario = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   const items = [
     { key: 'Inicio', label: 'Início', icon: 'home-outline' },
@@ -44,8 +46,16 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
             <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
           </View>
-          <ThemedText variant="h3" weight="bold" style={{ marginTop: 2 }}>AcessoLivre</ThemedText>
-          <ThemedText color="textSecondary" size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</ThemedText>
+          <ThemedText
+            variant="h3"
+            weight="bold"
+            altoContraste={contrasteAtivo}
+            color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'}
+            style={{ marginTop: 2 }}
+          >
+            AcessoLivre
+          </ThemedText>
+          <ThemedText color={corTextoSecundario} size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</ThemedText>
         </View>
 
         <Spacer size="lg" />
@@ -92,7 +102,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
               Configurações
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary" align="center" altoContraste={altoContraste}>
+            <ThemedText color={corTextoSecundario} align="center" altoContraste={altoContraste}>
               Ajuste a acessibilidade do aplicativo sem sair desta tela.
             </ThemedText>
 
@@ -104,7 +114,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
                     Alto contraste
                   </ThemedText>
                   <Spacer size="xs" />
-                  <ThemedText color="textSecondary" size="sm" altoContraste={altoContraste}>
+                  <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
                     Ativa contraste máximo para facilitar a leitura.
                   </ThemedText>
                 </View>
@@ -132,18 +142,18 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (t) => StyleSheet.create({
   sidebar: {
     borderRightWidth: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.lg,
+    paddingHorizontal: t.spacing.md,
+    paddingTop: t.spacing.lg,
   },
   header: {
     alignItems: 'flex-start',
     gap: 6,
   },
   logoContainer: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: t.spacing.xs,
   },
   logoCircle: {
     width: 40,
@@ -151,27 +161,27 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: t.spacing.xs,
   },
   menu: {
     gap: 6,
   },
   footer: {
     marginTop: 'auto',
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: t.spacing.lg,
   },
   modalOverlay: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: theme.spacing.lg,
+    padding: t.spacing.lg,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 480,
-    borderRadius: theme.borderRadius.xl,
+    maxWidth: 640,
+    borderRadius: t.borderRadius.xl,
     borderWidth: 1,
-    padding: theme.spacing.xl,
+    padding: t.spacing.xl,
     transform: [{ translateY: 28 }],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -188,15 +198,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   settingCard: {
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: t.borderRadius.lg,
     borderWidth: 1,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    paddingVertical: t.spacing.sm,
+    paddingHorizontal: t.spacing.md,
   },
   settingHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.spacing.md,
+    gap: t.spacing.md,
   },
   settingTextBlock: {
     minWidth: 0,

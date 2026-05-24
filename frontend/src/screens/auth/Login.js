@@ -249,7 +249,7 @@ export default function Login({ navigation }) {
           <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
             <Spacer size="sm" />
-            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
               Entre com seu e-mail para continuar
             </ThemedText>
 
@@ -334,7 +334,7 @@ export default function Login({ navigation }) {
                     {value && <Ionicons name="checkmark" size={16} color={t.colors.textOnPrimary} />}
                   </View>
                   <ThemedText
-                    color="textSecondary"
+                      color={isHighContrast ? 'textOnPrimary' : 'textSecondary'}
                     weight="medium"
                     altoContraste={isHighContrast}
                     style={styles.rememberLabel}
@@ -369,6 +369,7 @@ export default function Login({ navigation }) {
               text="Não possui conta?"
               actionLabel="Cadastre-se"
               onPress={() => navigation?.navigate?.('Register')}
+              altoContraste={isHighContrast}
             />
           </Card>
         </View>
@@ -390,7 +391,7 @@ export default function Login({ navigation }) {
               Verificação em duas etapas
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
               Digite o código de 6 dígitos do seu aplicativo autenticador.
             </ThemedText>
 
@@ -456,7 +457,7 @@ export default function Login({ navigation }) {
               Conta desativada
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
               Sua conta foi desativada, Contate um administrador para mais informações
             </ThemedText>
 

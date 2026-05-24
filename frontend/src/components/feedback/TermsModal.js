@@ -6,9 +6,12 @@ import { TERMOS_DE_USO, POLITICA_PRIVACIDADE } from '../../config/legalTexts';
 import { Ionicons } from '@expo/vector-icons';
 
 // type: 'terms' | 'privacy'
-export default function TermsModal({ visible, onClose, type = 'terms' }) {
+export default function TermsModal({ visible, onClose, type = 'terms', altoContraste = false }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   const styles = useMemo(
     () => {
@@ -29,7 +32,7 @@ export default function TermsModal({ visible, onClose, type = 'terms' }) {
         content: { padding: 16 },
       });
     },
-    [isHighContrast, t, width]
+    [contrasteAtivo, t, width]
   );
 
   const texto = type === 'privacy' ? POLITICA_PRIVACIDADE : TERMOS_DE_USO;
@@ -40,16 +43,18 @@ export default function TermsModal({ visible, onClose, type = 'terms' }) {
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
-            <ThemedText weight="bold" style={styles.title}>
+            <ThemedText weight="bold" altoContraste={contrasteAtivo} color={corPrincipal} style={styles.title}>
               {titulo}
             </ThemedText>
             <Pressable onPress={onClose} accessibilityRole="button" style={styles.closeButton}>
-              <Ionicons name="close" size={20} color={t.colors.textSecondary} />
+              <Ionicons name="close" size={20} color={contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 32 }}>
-            <ThemedText>{texto}</ThemedText>
+            <ThemedText altoContraste={contrasteAtivo} color={corPrincipal}>
+              {texto}
+            </ThemedText>
           </ScrollView>
         </Pressable>
       </Pressable>

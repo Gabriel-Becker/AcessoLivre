@@ -13,20 +13,24 @@ export default function BarraFiltroAdmin({
   pesquisaPlaceholder = 'Pesquisar',
   filtros = [],
   onLimparFiltros,
+  altoContraste = false,
 }) {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(isHighContrast);
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = getTheme(contrasteAtivo);
+  const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   return (
     <View style={styles.container}>
       <View>
-        <ThemedText variant="h3" weight="bold">
+        <ThemedText variant="h3" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
           {titulo}
         </ThemedText>
         {subtitulo ? (
           <>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary" size="sm">
+            <ThemedText color={corSecundaria} size="sm" altoContraste={contrasteAtivo}>
               {subtitulo}
             </ThemedText>
           </>
@@ -43,6 +47,7 @@ export default function BarraFiltroAdmin({
           leftIcon="search-outline"
           containerStyle={styles.campoPesquisa}
           style={styles.campoInput}
+          altoContraste={contrasteAtivo}
         />
 
         <View style={styles.filtrosContainer}>
@@ -56,6 +61,7 @@ export default function BarraFiltroAdmin({
               onSelect={filtro.onSelect}
               containerStyle={styles.campoFiltro}
               style={styles.campoFiltroInterno}
+              altoContraste={contrasteAtivo}
             />
           ))}
         </View>
@@ -65,10 +71,11 @@ export default function BarraFiltroAdmin({
         <>
           <Spacer size="sm" />
           <ThemedText
-            color="textSecondary"
+            color={corSecundaria}
             size="sm"
             style={[styles.limparFiltros, { color: t.colors.primary }]}
             onPress={onLimparFiltros}
+            altoContraste={contrasteAtivo}
           >
             Limpar filtros
           </ThemedText>

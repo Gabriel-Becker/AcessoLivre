@@ -15,9 +15,11 @@ import { filtrosUsuarios, filtrosLocais } from '../../config/admin/filtrosConfig
 
 export default function Admin() {
   const { usuario } = useAuth();
-  const { theme: t } = useThemeContext();
+  const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
   const ehMobile = width < 768;
+  const corPrincipal = isHighContrast ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = isHighContrast ? 'textOnPrimary' : 'textSecondary';
   const [abaAtiva, setAbaAtiva] = useState('usuarios');
 
   const [usuarios, setUsuarios] = useState([]);
@@ -238,10 +240,17 @@ export default function Admin() {
 
   const renderPaginacao = ({ paginaAtual, totalPaginas, onAnterior, onProxima }) => (
     <View style={[styles.paginacao, ehMobile && styles.paginacaoEmpilhada]}>
-      <Button variant="outline" size="small" onPress={onAnterior} disabled={carregando || paginaAtual <= 0}>
+      <Button
+        variant="outline"
+        size="small"
+        onPress={onAnterior}
+        disabled={carregando || paginaAtual <= 0}
+        altoContraste={isHighContrast}
+        textStyle={{ color: isHighContrast ? t.colors.textOnPrimary : undefined }}
+      >
         Anterior
       </Button>
-      <ThemedText color="textSecondary">
+      <ThemedText color={corSecundaria} altoContraste={isHighContrast}>
         Página {paginaAtual + 1} de {totalPaginas}
       </ThemedText>
       <Button
@@ -249,6 +258,8 @@ export default function Admin() {
         size="small"
         onPress={onProxima}
         disabled={carregando || paginaAtual + 1 >= totalPaginas}
+        altoContraste={isHighContrast}
+        textStyle={{ color: isHighContrast ? t.colors.textOnPrimary : undefined }}
       >
         Próxima
       </Button>
@@ -256,7 +267,7 @@ export default function Admin() {
   );
 
   const renderUsuarios = () => {
-    const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario);
+    const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario, isHighContrast);
     const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios);
 
     return (
@@ -267,6 +278,7 @@ export default function Admin() {
           onChangePesquisa={setBuscaUsuarios}
           pesquisaPlaceholder="Pesquisar por nome ou e-mail"
           filtros={filtros}
+          altoContraste={isHighContrast}
         />
 
         <Spacer size="sm" />
@@ -276,7 +288,7 @@ export default function Admin() {
           dados={usuariosFiltrados}
           chaveExtractor={(item) => String(item.idUsuario)}
           renderVazio={
-            <ThemedText size="sm" color="textSecondary">
+            <ThemedText size="sm" color={corSecundaria} altoContraste={isHighContrast}>
               Nenhum usuário encontrado com os filtros atuais.
             </ThemedText>
           }
@@ -285,6 +297,7 @@ export default function Admin() {
           sortField={sortField}
           sortDirection={sortDirection}
           onChangeSort={handleSortChange}
+          altoContraste={isHighContrast}
         />
 
         <Spacer size="sm" />
@@ -311,6 +324,7 @@ export default function Admin() {
           onChangePesquisa={setBuscaLocais}
           pesquisaPlaceholder="Pesquisar por nome ou cidade"
           filtros={filtros}
+          altoContraste={isHighContrast}
         />
 
         <Spacer size="sm" />
@@ -320,12 +334,13 @@ export default function Admin() {
           dados={locaisFiltrados}
           chaveExtractor={(item) => String(item.idLocal)}
           renderVazio={
-            <ThemedText size="sm" color="textSecondary">
+            <ThemedText size="sm" color={corSecundaria} altoContraste={isHighContrast}>
               Nenhum local encontrado com os filtros atuais.
             </ThemedText>
           }
           carregando={carregando}
           larguraMinima={760}
+          altoContraste={isHighContrast}
         />
 
         <Spacer size="sm" />
@@ -342,23 +357,23 @@ export default function Admin() {
 
   const renderRelatorios = () => (
     <Card style={styles.cardUsuario}>
-      <ThemedText variant="h3" weight="bold">Resumo Geral</ThemedText>
+      <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
       <Spacer size="md" />
-      <ThemedText size="sm">Total de usuários: {Number(estatisticas?.totalUsuarios) || 0}</ThemedText>
+      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de usuários: {Number(estatisticas?.totalUsuarios) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText size="sm">Total de locais: {Number(estatisticas?.totalLocais) || 0}</ThemedText>
+      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de locais: {Number(estatisticas?.totalLocais) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText size="sm">Total de avaliações: {Number(estatisticas?.totalAvaliacoes) || 0}</ThemedText>
+      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de avaliações: {Number(estatisticas?.totalAvaliacoes) || 0}</ThemedText>
       <Spacer size="xs" />
-      <ThemedText size="sm">Avaliações pendentes: {Number(estatisticas?.avaliacoesPendentes) || 0}</ThemedText>
+      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Avaliações pendentes: {Number(estatisticas?.avaliacoesPendentes) || 0}</ThemedText>
     </Card>
   );
 
   return (
-    <Container background="backgroundSecondary" scroll contentStyle={styles.scrollContent}>
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} scroll contentStyle={styles.scrollContent} altoContraste={isHighContrast}>
       <View style={[styles.pageShell, { paddingHorizontal: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
         <View style={styles.cabecalhoPagina}>
-          <ThemedText variant="h1" weight="bold" align="center">
+          <ThemedText variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
             Painel Administrativo
           </ThemedText>
         </View>
@@ -383,13 +398,13 @@ export default function Admin() {
 
         {carregando ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <ThemedText size="sm">Carregando dados...</ThemedText>
+            <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</ThemedText>
           </Card>
         ) : null}
 
         {erro ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <ThemedText color="error" size="sm">{erro}</ThemedText>
+            <ThemedText color="error" size="sm" altoContraste={isHighContrast}>{erro}</ThemedText>
             <Spacer size="sm" />
             <Button
               variant="outline"
@@ -435,16 +450,16 @@ export default function Admin() {
               },
             ]}
           >
-            <ThemedText variant="h2" weight="bold" align="center" color="text">
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
               Apagar usuário
             </ThemedText>
 
             <Spacer size="lg" />
 
             <View style={styles.modalMessage}>
-              <ThemedText color="textSecondary" align="center" size="sm">
+              <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
                 Tem certeza que deseja apagar{' '}
-                <ThemedText weight="bold" color="textSecondary">
+                <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {usuarioParaDeletar?.nome || ''}
                 </ThemedText>
                 ? Esta ação não pode ser desfeita.

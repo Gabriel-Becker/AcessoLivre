@@ -14,6 +14,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
   const { isAuthenticated, usuario, logout } = useAuth();
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
+  const corTextoSecundario = contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary;
 
   const handleLogout = async () => {
     await logout();
@@ -54,7 +55,7 @@ export default function SidebarUserPanel({ current = 'Inicio', onNavigate, altoC
             align="center"
             iconLeft="person-add-outline"
             altoContraste={contrasteAtivo}
-            textStyle={{ color: t.colors.textSecondary }}
+            textStyle={{ color: corTextoSecundario }}
             style={{ backgroundColor: 'transparent' }}
           >
             Criar Conta

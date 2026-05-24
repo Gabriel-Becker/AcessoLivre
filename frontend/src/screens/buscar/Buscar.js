@@ -51,8 +51,10 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
-const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, estilos }) => {
+const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, estilos, altoContraste = false }) => {
   const [expanded, setExpanded] = useState(true);
+  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textSecondary;
+  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
 
   return (
     <View style={estilos.filtroGrupo}>
@@ -62,11 +64,11 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, est
         activeOpacity={0.7}
       >
         <Ionicons name="grid-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Categoria</ThemedText>
+        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Categoria</ThemedText>
         <Ionicons 
           name={expanded ? 'chevron-up' : 'chevron-down'} 
           size={18} 
-          color={theme.colors.textSecondary} 
+          color={corTextoSecundario} 
         />
       </TouchableOpacity>
       
@@ -92,7 +94,7 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, est
                   <Ionicons name="checkmark" size={12} color="#FFF" />
                 )}
               </View>
-              <ThemedText style={estilos.filtroItemLabel}>
+              <ThemedText altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.filtroItemLabel}>
                 {CATEGORIAS_LABELS[categoria] || categoria}
               </ThemedText>
             </TouchableOpacity>
@@ -103,8 +105,10 @@ const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, est
   );
 };
 
-const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, estilos }) => {
+const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, estilos, altoContraste = false }) => {
   const [expanded, setExpanded] = useState(false);
+  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textSecondary;
+  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
 
   return (
     <View style={estilos.filtroGrupo}>
@@ -114,11 +118,11 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, es
         activeOpacity={0.7}
       >
         <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Acessibilidade</ThemedText>
+        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Acessibilidade</ThemedText>
         <Ionicons 
           name={expanded ? 'chevron-up' : 'chevron-down'} 
           size={18} 
-          color={theme.colors.textSecondary} 
+          color={corTextoSecundario} 
         />
       </TouchableOpacity>
       
@@ -145,7 +149,7 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, es
                 )}
               </View>
               <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={estilos.filtroIcon} />
-              <ThemedText style={estilos.filtroItemLabel}>{recurso.label}</ThemedText>
+              <ThemedText altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.filtroItemLabel}>{recurso.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -154,7 +158,10 @@ const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, es
   );
 };
 
-const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
+const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos, altoContraste = false }) => {
+  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textTertiary;
+  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
+
   const renderStars = (nota) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -163,7 +170,7 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
           key={i}
           name={i <= nota ? 'star' : 'star-outline'}
           size={20}
-          color={i <= nota ? theme.colors.warning : theme.colors.textTertiary}
+          color={i <= nota ? theme.colors.warning : corTextoSecundario}
         />
       );
     }
@@ -174,7 +181,7 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
     <View style={estilos.filtroGrupo}>
       <View style={estilos.filtroHeader}>
         <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
-        <ThemedText weight="semibold" style={estilos.filtroTitulo}>Nota Mínima</ThemedText>
+        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Nota Mínima</ThemedText>
       </View>
       
       <View style={estilos.filtroContent}>
@@ -182,7 +189,7 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
           <View style={estilos.notaStars}>
             {renderStars(notaMinima)}
           </View>
-          <ThemedText weight="bold" style={estilos.notaValor}>
+          <ThemedText weight="bold" altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.notaValor}>
             {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
           </ThemedText>
         </View>
@@ -199,6 +206,8 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
               onPress={() => onNotaChange(nota)}
             >
               <ThemedText 
+                altoContraste={altoContraste}
+                color={notaMinima === nota ? theme.colors.primary : corTextoPrincipal}
                 style={[
                   estilos.notaBotaoTexto,
                   notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }
@@ -217,8 +226,9 @@ const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos }) => {
 export default function Buscar({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
-  const theme = t;
-  const estilos = criarEstilos(theme);
+    const estilos = criarEstilos(t);
+  const corTextoSecundario = isHighContrast ? t.colors.textOnPrimary : t.colors.textSecondary;
+  const corTextoTerciario = isHighContrast ? t.colors.textOnPrimary : t.colors.textTertiary;
 
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
@@ -325,12 +335,12 @@ export default function Buscar({ onNavigate }) {
 
   const renderEmptyState = () => (
     <View style={estilos.emptyContainer}>
-      <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
-      <ThemedText variant="h3" weight="bold" align="center">
+      <Ionicons name="search-outline" size={64} color={corTextoTerciario} />
+      <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'}>
         {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Nenhum local cadastrado ainda'}
       </ThemedText>
       <Spacer size="sm" />
-      <ThemedText color="textSecondary" align="center">
+      <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center">
         {temFiltrosAtivos 
           ? 'Tente ajustar os filtros ou buscar por outro termo'
           : 'Seja o primeiro da comunidade a cadastrar um local acessível!'}
@@ -351,9 +361,9 @@ export default function Buscar({ onNavigate }) {
   if (loading && resultados.length === 0) {
     return (
       <View style={estilos.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
-        <ThemedText color="textSecondary">Buscando locais...</ThemedText>
+        <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'}>Buscando locais...</ThemedText>
       </View>
     );
   }
@@ -379,8 +389,8 @@ export default function Buscar({ onNavigate }) {
           <RefreshControl
               refreshing={refreshing}
               onRefresh={() => realizarBusca(true)}
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.primary}
+              colors={[t.colors.primary]}
+              tintColor={t.colors.primary}
             />
         }
       >
@@ -389,16 +399,16 @@ export default function Buscar({ onNavigate }) {
             estilos.colunaFiltros,
             isDesktop && estilos.colunaFiltrosDesktop
           ]}>
-            <View style={[estilos.filtrosCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={[estilos.filtrosCard, { backgroundColor: t.colors.surface }]}>
               <View style={estilos.filtrosHeader}>
-                <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={estilos.filtrosTitulo}>
+                <Ionicons name="options-outline" size={22} color={t.colors.primary} />
+                <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'} style={estilos.filtrosTitulo}>
                   Filtros
                 </ThemedText>
                 {temFiltrosAtivos && (
                   <TouchableOpacity onPress={limparFiltros} style={estilos.limparButton}>
-                    <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
-                    <ThemedText color="error" variant="caption">Limpar</ThemedText>
+                    <Ionicons name="close-circle-outline" size={18} color={t.colors.error} />
+                    <ThemedText color="error" variant="caption" altoContraste={isHighContrast}>Limpar</ThemedText>
                   </TouchableOpacity>
                 )}
               </View>
@@ -406,17 +416,17 @@ export default function Buscar({ onNavigate }) {
               <Spacer size="md" />
 
               <View style={estilos.searchContainer}>
-                <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
+                <Ionicons name="search-outline" size={20} color={corTextoSecundario} />
                 <TextInput
-                  style={[estilos.searchInput, { color: theme.colors.textPrimary }]}
+                  style={[estilos.searchInput, { color: t.colors.textPrimary }]}
                   placeholder="Buscar por nome..."
-                  placeholderTextColor={theme.colors.textTertiary}
+                  placeholderTextColor={isHighContrast ? t.colors.textOnPrimary : t.colors.textTertiary}
                   value={searchText}
                   onChangeText={setSearchText}
                 />
                 {searchText !== '' && (
                   <TouchableOpacity onPress={() => setSearchText('')}>
-                    <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+                    <Ionicons name="close-circle" size={18} color={corTextoSecundario} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -426,8 +436,9 @@ export default function Buscar({ onNavigate }) {
               <FiltroCategoria
                 categoriasSelecionadas={categoriasSelecionadas}
                 onToggleCategoria={toggleCategoria}
-                theme={theme}
+                theme={t}
                 estilos={estilos}
+                altoContraste={isHighContrast}
               />
 
               <Spacer size="md" />
@@ -435,8 +446,9 @@ export default function Buscar({ onNavigate }) {
               <FiltroAcessibilidade
                 recursosSelecionados={recursosSelecionados}
                 onToggleRecurso={toggleRecurso}
-                theme={theme}
+                theme={t}
                 estilos={estilos}
+                altoContraste={isHighContrast}
               />
 
               <Spacer size="md" />
@@ -444,8 +456,9 @@ export default function Buscar({ onNavigate }) {
               <FiltroNota
                 notaMinima={notaMinima}
                 onNotaChange={setNotaMinima}
-                theme={theme}
+                theme={t}
                 estilos={estilos}
+                altoContraste={isHighContrast}
               />
 
               <Spacer size="md" />
@@ -465,7 +478,7 @@ export default function Buscar({ onNavigate }) {
 
           <View style={estilos.colunaResultados}>
             <View style={estilos.resultadosHeader}>
-              <ThemedText variant="h3" weight="bold">
+              <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'}>
                 {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
               </ThemedText>
             </View>

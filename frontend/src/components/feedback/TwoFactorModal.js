@@ -17,9 +17,12 @@ import { useThemeContext } from '../../context/ThemeContext';
 import AuthService from '../../services/AuthService';
 import toastHelper from '../../utils/toastHelper';
 
-export default function TwoFactorModal({ visible, enabled = false, onClose, onSuccess }) {
+export default function TwoFactorModal({ visible, enabled = false, onClose, onSuccess, altoContraste = false }) {
   const { theme: t, isHighContrast } = useThemeContext();
   const { width, height } = useWindowDimensions();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
   const isMobile = width < 600;
   const [carregandoSetup, setCarregandoSetup] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
@@ -47,7 +50,9 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           paddingHorizontal: isMobile ? t.spacing.md : t.spacing.lg,
           paddingVertical: isMobile ? t.spacing.md : t.spacing.lg,
           backgroundColor: t.colors.surface,
-          ...(isHighContrast ? t.shadows.none : t.shadows.lg),
+          borderWidth: contrasteAtivo ? 2 : 0,
+          borderColor: contrasteAtivo ? t.colors.border : 'transparent',
+          ...(contrasteAtivo ? t.shadows.none : t.shadows.lg),
         },
         scrollContent: {
           flexGrow: 1,
@@ -60,7 +65,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           alignItems: 'center',
           justifyContent: 'center',
           padding: isMobile ? t.spacing.sm : t.spacing.md,
-          backgroundColor: t.colors.surface,
+          backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : t.colors.surface,
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
@@ -76,7 +81,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           borderRadius: t.borderRadius.md,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
-          backgroundColor: t.colors.backgroundSecondary,
+          backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : t.colors.surface,
         },
         secretText: {
           flexShrink: 1,
@@ -86,7 +91,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
           alignSelf: 'center',
         },
       }),
-    [height, isHighContrast, isMobile, t]
+    [height, contrasteAtivo, isMobile, t]
   );
 
   useEffect(() => {
@@ -202,10 +207,10 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
             bounces={false}
             alwaysBounceVertical={false}
           >
-            <ThemedText variant="h2" weight="bold" align="center" style={estilos.headerSpacing}>
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={contrasteAtivo} color={corPrincipal} style={estilos.headerSpacing}>
               {enabled ? 'Desativar 2FA' : 'Autenticação de Dois Fatores'}
             </ThemedText>
-            <ThemedText color="textSecondary" align="center">
+            <ThemedText color={corSecundaria} align="center" altoContraste={contrasteAtivo}>
               {enabled
                 ? 'Digite o código de 6 dígitos do seu aplicativo autenticador para desativar.'
                 : 'Escaneie o QR Code e confirme com o código de 6 dígitos.'}
@@ -214,7 +219,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
             {erroModal ? (
               <>
                 <Spacer size="sm" />
-                <ThemedText color="error" size="sm" align="center">
+                <ThemedText color="error" size="sm" align="center" altoContraste={contrasteAtivo}>
                   {erroModal}
                 </ThemedText>
               </>
@@ -240,14 +245,14 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                     <Spacer size="md" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
                       <View style={estilos.secretBox}>
-                        <ThemedText align="center" weight="semibold" style={estilos.secretText}>
+                        <ThemedText align="center" weight="semibold" altoContraste={contrasteAtivo} color={corPrincipal} style={estilos.secretText}>
                           {setupDados.secretKey}
                         </ThemedText>
                       </View>
                     </TouchableOpacity>
                     <Spacer size="xs" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
-                      <ThemedText color="primary" align="center" style={estilos.copiedLink}>
+                        <ThemedText color="primary" align="center" altoContraste={contrasteAtivo} style={estilos.copiedLink}>
                         Toque para copiar a chave
                       </ThemedText>
                     </TouchableOpacity>
@@ -272,7 +277,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                       onPress={confirmarAtivacao}
                       loading={carregandoAcao}
                       disabled={carregandoAcao}
-                      altoContraste={isHighContrast}
+                      altoContraste={contrasteAtivo}
                     >
                       Ativar 2FA
                     </Button>
@@ -290,7 +295,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
                   keyboardType="number-pad"
                   maxLength={6}
                   leftIcon="shield-checkmark-outline"
-                  altoContraste={isHighContrast}
+                  altoContraste={contrasteAtivo}
                 />
 
                 <Spacer size="lg" />
@@ -315,7 +320,7 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
               fullWidth
               onPress={onClose}
               disabled={carregandoAcao}
-              altoContraste={isHighContrast}
+              altoContraste={contrasteAtivo}
             >
               Cancelar
             </Button>

@@ -217,7 +217,13 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ nome, email, senha }) => {
     try {
-      const result = await AuthService.register({ nome, email, senha });
+      const nomeFormatado = String(nome || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .replace(/(^|\s)([a-zà-ÿ])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
+
+      const result = await AuthService.register({ nome: nomeFormatado, email, senha });
       return result?.success
         ? { sucesso: true, mensagem: result.message }
         : { sucesso: false, erro: result?.message || 'Erro ao realizar cadastro' };

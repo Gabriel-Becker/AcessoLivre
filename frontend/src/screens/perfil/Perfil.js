@@ -16,6 +16,8 @@ export default function Perfil() {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+  const corPrincipal = isHighContrast ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = isHighContrast ? 'textOnPrimary' : 'textSecondary';
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
   const [twoFactorAtivo, setTwoFactorAtivo] = useState(false);
@@ -54,8 +56,8 @@ export default function Perfil() {
         <Ionicons name={icon} size={24} color={t.colors.primary} />
       </View>
       <View style={styles.infoContent}>
-        <ThemedText color="textSecondary" size="sm">{label}</ThemedText>
-        <ThemedText weight="semibold">{value || 'Não informado'}</ThemedText>
+        <ThemedText color={corSecundaria} size="sm" altoContraste={isHighContrast}>{label}</ThemedText>
+        <ThemedText weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>{value || 'Não informado'}</ThemedText>
       </View>
     </View>
   );
@@ -63,18 +65,18 @@ export default function Perfil() {
   return (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ThemedText variant="h1" weight="bold">Meu Perfil</ThemedText>
+        <ThemedText variant="h1" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meu Perfil</ThemedText>
         <Spacer size="md" />
 
-        <Card altoContraste={isHighContrast} style={{ padding: t.spacing.xl }}>
+        <Card altoContraste={isHighContrast} variant={isHighContrast ? 'outlined' : 'default'} style={{ padding: t.spacing.xl }}>
           <View style={styles.header}>
             <View style={[styles.avatar, { backgroundColor: t.colors.primary }]}>
-              <ThemedText variant="h1" color="textOnPrimary" weight="bold">
+              <ThemedText variant="h1" color="textOnPrimary" weight="bold" altoContraste={isHighContrast}>
                 {usuario?.nome?.charAt(0)?.toUpperCase() || 'U'}
               </ThemedText>
             </View>
             <Spacer size="md" />
-            <ThemedText variant="h2" weight="bold" align="center">
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
               {usuario?.nome}
             </ThemedText>
           </View>
@@ -92,8 +94,8 @@ export default function Perfil() {
                 <Ionicons name="shield-checkmark-outline" size={22} color={t.colors.primary} />
               </View>
               <View style={styles.segurancaTexto}>
-                <ThemedText weight="semibold">Autenticação em dois fatores</ThemedText>
-                <ThemedText color="textSecondary" size="sm">
+                <ThemedText weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>Autenticação em dois fatores</ThemedText>
+                <ThemedText color={corSecundaria} size="sm" altoContraste={isHighContrast}>
                   {twoFactorAtivo ? 'Ativada para sua conta' : 'Desativada no momento'}
                 </ThemedText>
               </View>
@@ -161,6 +163,7 @@ export default function Perfil() {
         enabled={twoFactorAtivo}
         onClose={() => setShowTwoFactorModal(false)}
         onSuccess={carregarStatusTwoFactor}
+        altoContraste={isHighContrast}
       />
     </Container>
   );
@@ -182,7 +185,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   infoIcon: {
     width: 40,
@@ -196,8 +198,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
-    backgroundColor: '#fafafa',
   },
   segurancaHeader: {
     flexDirection: 'row',

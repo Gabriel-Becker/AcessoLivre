@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Card } from '../ui';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
@@ -15,13 +15,20 @@ export default function TabelaPlanilhaAdmin({
   sortField,
   sortDirection,
   onChangeSort,
+  altoContraste = false,
 }) {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(isHighContrast);
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = getTheme(contrasteAtivo);
+  const corTexto = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   return (
-    <Card variant="outlined" style={styles.card} altoContraste={isHighContrast}>
-      <ScrollView horizontal showsHorizontalScrollIndicator>
+    <Card variant="outlined" style={styles.card} altoContraste={contrasteAtivo}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator
+        style={[styles.scrollArea, contrasteAtivo && styles.scrollAreaContrast]}
+      >
         <View style={[styles.tabela, { minWidth: larguraMinima }]}>
           <View style={[styles.linha, styles.cabecalho, { borderBottomColor: t.colors.border }]}>
             {colunas.map((coluna) => {
@@ -47,9 +54,10 @@ export default function TabelaPlanilhaAdmin({
                       <ThemedText
                         size="xs"
                         weight="bold"
-                        color="textSecondary"
+                        color={corTexto}
                         align={coluna.alinhamento === 'center' ? 'center' : 'left'}
                         style={styles.tituloColuna}
+                        altoContraste={contrasteAtivo}
                       >
                         {coluna.titulo} {indicator}
                       </ThemedText>
@@ -58,9 +66,10 @@ export default function TabelaPlanilhaAdmin({
                     <ThemedText
                       size="xs"
                       weight="bold"
-                      color="textSecondary"
+                      color={corTexto}
                       align={coluna.alinhamento === 'center' ? 'center' : 'left'}
                       style={styles.tituloColuna}
+                      altoContraste={contrasteAtivo}
                     >
                       {coluna.titulo}
                     </ThemedText>
@@ -73,14 +82,14 @@ export default function TabelaPlanilhaAdmin({
           <View>
             {carregando ? (
               <View style={styles.estadoVazio}>
-                <ThemedText size="sm" color="textSecondary">
+                <ThemedText size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                   Carregando dados...
                 </ThemedText>
               </View>
             ) : dados.length === 0 ? (
               <View style={styles.estadoVazio}>
                 {renderVazio || (
-                  <ThemedText size="sm" color="textSecondary">
+                  <ThemedText size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                     Nenhum registro encontrado.
                   </ThemedText>
                 )}
@@ -132,6 +141,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 14,
   },
+  scrollArea: {
+    width: '100%',
+  },
+  scrollAreaContrast: Platform.OS === 'web'
+    ? {
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#00F7EF #0A0A0A',
+      }
+    : {},
   tabela: {
     width: '100%',
   },

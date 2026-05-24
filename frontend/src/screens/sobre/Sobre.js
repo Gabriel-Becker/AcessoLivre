@@ -5,7 +5,9 @@ import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Sobre() {
-  const { theme: t } = useThemeContext();
+  const { isHighContrast, theme: t } = useThemeContext();
+  const corPrincipal = isHighContrast ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = isHighContrast ? 'textOnPrimary' : 'textSecondary';
   const styles = StyleSheet.create({
     scroll: {
       flexGrow: 1,
@@ -17,27 +19,27 @@ export default function Sobre() {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-      <ThemedText variant="h1" weight="bold">
+      <ThemedText variant="h1" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
         Sobre Nós
       </ThemedText>
       <Spacer size="sm" />
-      <ThemedText color="textSecondary">
+      <ThemedText altoContraste={isHighContrast} color={corSecundaria}>
         Nossa missão
       </ThemedText>
 
       <Spacer size="xl" />
 
-      <Card variant="default" style={styles.card}>
-        <ThemedText variant="h3" weight="bold">
+      <Card variant="default" style={styles.card} altoContraste={isHighContrast}>
+        <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
           AcessoLivre
         </ThemedText>
         <Spacer size="md" />
-        <ThemedText>
+        <ThemedText altoContraste={isHighContrast} color={corPrincipal}>
           O AcessoLivre é uma plataforma dedicada a mapear, avaliar e registrar locais
           acessíveis em cidades, promovendo inclusão e acessibilidade urbana.
         </ThemedText>
         <Spacer size="md" />
-        <ThemedText>
+        <ThemedText altoContraste={isHighContrast} color={corPrincipal}>
           Juntos construindo um mundo mais inclusivo para todos.
         </ThemedText>
       </Card>

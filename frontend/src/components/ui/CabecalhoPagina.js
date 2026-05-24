@@ -15,7 +15,10 @@ export default function CabecalhoPagina({
   style,
 }) {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(altoContraste ?? isHighContrast);
+  const contrasteAtivo = altoContraste ?? isHighContrast;
+  const t = getTheme(contrasteAtivo);
+  const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   const estilos = useMemo(() => criarEstilos(t), [t]);
 
@@ -28,7 +31,7 @@ export default function CabecalhoPagina({
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
-          <ThemedText style={estilos.textoVoltar} weight="medium">
+          <ThemedText style={estilos.textoVoltar} weight="medium" altoContraste={contrasteAtivo} color={corPrincipal}>
             {textoVoltar}
           </ThemedText>
         </Pressable>
@@ -37,13 +40,13 @@ export default function CabecalhoPagina({
       )}
 
       <View style={estilos.textos}>
-        <ThemedText variant="h1" weight="bold">
+        <ThemedText variant="h1" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
           {titulo}
         </ThemedText>
         {subtitulo ? (
           <>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary">{subtitulo}</ThemedText>
+            <ThemedText altoContraste={contrasteAtivo} color={corSecundaria}>{subtitulo}</ThemedText>
           </>
         ) : null}
       </View>
