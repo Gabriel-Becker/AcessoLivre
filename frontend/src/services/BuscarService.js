@@ -1,82 +1,109 @@
-// services/BuscarService.js
 import api from '../api/axios';
 
 class BuscarService {
+  static cache = null;
+
   /**
-   * Busca inteligente com múltiplos filtros
+   * Carrega TODOS os locais uma única vez (com cache)
+   * @returns {Promise<Array>}
+   */
+  static async carregarTodosLocais() {
+    try {
+      // Verificar se já temos cache
+      if (this.cache && this.cache.length > 0) {
+        console.log('📦 Usando cache de locais:', this.cache.length);
+        return this.cache;
+      }
+      
+      console.log('🌐 Buscando todos os locais do backend...');
+      const response = await api.get('/locais/todos', {
+        params: { page: 0, size: 100, sort: 'nome', direction: 'asc' }
+      });
+      
+      const locais = response.data?.content || response.data || [];
+      this.cache = this.sanitizarLocais(locais);
+      
+      console.log('✅ Carregados', this.cache.length, 'locais');
+      return this.cache;
+      
+    } catch (error) {
+      console.error('❌ Erro ao carregar locais:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Busca inteligente com múltiplos filtros (100% frontend)
    * @param {Object} filtros - Filtros de busca
    * @returns {Promise<Object>}
    */
   static async buscarLocais(filtros) {
     try {
-      console.log('🔍 Buscando locais com filtros:', filtros);
+      console.log('🔍 Filtrando locais localmente:', filtros);
       
-      // Preparar payload - remover campos vazios
-      const payload = {};
+      // Carregar todos os locais (com cache)
+      let locais = await this.carregarTodosLocais();
       
+      if (!locais || locais.length === 0) {
+        return { success: true, data: [], total: 0 };
+      }
+      
+      // Aplicar filtros
+      let resultados = [...locais];
+      
+      // 1. Filtro por texto (nome ou endereço)
       if (filtros.searchText && filtros.searchText.trim()) {
-        payload.searchText = filtros.searchText.trim();
+        const searchLower = filtros.searchText.toLowerCase().trim();
+        resultados = resultados.filter(local => 
+          local.nome?.toLowerCase().includes(searchLower) ||
+          local.endereco?.logradouro?.toLowerCase().includes(searchLower) ||
+          local.endereco?.cidade?.toLowerCase().includes(searchLower) ||
+          local.endereco?.bairro?.toLowerCase().includes(searchLower) ||
+          local.categoria?.toLowerCase().includes(searchLower)
+        );
+        console.log(`📝 Filtro por texto "${searchLower}": ${resultados.length} resultados`);
       }
       
+      // 2. Filtro por categorias
       if (filtros.categorias && filtros.categorias.length > 0) {
-        payload.categorias = filtros.categorias;
+        resultados = resultados.filter(local => 
+          filtros.categorias.includes(local.categoria)
+        );
+        console.log(`📂 Filtro por categorias: ${resultados.length} resultados`);
       }
       
+      // 3. Filtro por recursos de acessibilidade
       if (filtros.recursos && filtros.recursos.length > 0) {
-        payload.recursos = filtros.recursos;
+        resultados = resultados.filter(local => {
+          if (!local.tiposAcessibilidade || local.tiposAcessibilidade.length === 0) return false;
+          // Verifica se o local possui PELO MENOS UM dos recursos selecionados
+          return filtros.recursos.some(recurso => 
+            local.tiposAcessibilidade.includes(recurso)
+          );
+        });
+        console.log(`♿ Filtro por recursos: ${resultados.length} resultados`);
       }
       
+      // 4. Filtro por nota mínima
       if (filtros.notaMinima && filtros.notaMinima > 0) {
-        payload.notaMinima = filtros.notaMinima;
+        resultados = resultados.filter(local => 
+          (local.avaliacaoMedia || 0) >= filtros.notaMinima
+        );
+        console.log(`⭐ Filtro por nota >= ${filtros.notaMinima}: ${resultados.length} resultados`);
       }
       
-      // Se não há filtros, buscar todos com paginação
-      const isEmpty = Object.keys(payload).length === 0;
+      // Ordenar resultados (melhores notas primeiro)
+      resultados.sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0));
       
-      let response;
-      if (isEmpty) {
-        response = await api.get('/locais/todos', {
-          params: { page: 0, size: 50, sort: 'avaliacaoMedia', direction: 'desc' }
-        });
-      } else {
-        response = await api.post('/locais/buscar', payload, {
-          params: { page: 0, size: 50, sort: 'avaliacaoMedia', direction: 'desc' }
-        });
-      }
-      
-      // Processar resposta
-      if (response.data) {
-        const locais = response.data.content || response.data;
-        const total = response.data.totalElements || locais.length;
-        
-        console.log(`✅ Encontrados ${total} locais`);
-        
-        return {
-          success: true,
-          data: Array.isArray(locais) ? locais : [],
-          total: total,
-          hasMore: response.data.hasNext || false
-        };
-      }
-      
-      return { success: true, data: [], total: 0 };
+      return {
+        success: true,
+        data: resultados,
+        total: resultados.length
+      };
       
     } catch (error) {
       console.error('❌ Erro na busca:', error);
-      
-      let errorMessage = 'Erro ao buscar locais';
-      if (error.response?.status === 400) {
-        errorMessage = 'Filtros inválidos. Tente novamente.';
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Erro no servidor. Tente mais tarde.';
-      }
-      
-      return {
-        success: false,
-        data: [],
-        total: 0,
-        message: errorMessage
-      };
+      return { success: false, data: [], total: 0, message: error.message };
     }
   }
 
@@ -87,13 +114,12 @@ class BuscarService {
    */
   static async obterLocaisEmDestaque(limit = 8) {
     try {
-      const response = await api.get('/locais/todos', {
-        params: { page: 0, size: limit, sort: 'avaliacaoMedia', direction: 'desc' }
-      });
-      
-      const locais = response.data?.content || response.data || [];
-      return this.sanitizarLocais(locais);
-      
+      const locais = await this.carregarTodosLocais();
+      // Ordenar por avaliação e pegar os primeiros
+      const destaques = [...locais]
+        .sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0))
+        .slice(0, limit);
+      return destaques;
     } catch (error) {
       console.error('Erro ao buscar destaques:', error);
       return [];
@@ -106,11 +132,22 @@ class BuscarService {
    */
   static async obterEstatisticas() {
     try {
-      const response = await api.get('/estatisticas');
-      return response.data || { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
+      const locais = await this.carregarTodosLocais();
+      const totalLocais = locais.length;
+      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
+      const mediaGeral = totalLocais > 0 
+        ? locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0) / totalLocais 
+        : 0;
+      
+      return {
+        totalLocais,
+        totalAvaliacoes,
+        mediaGeral: mediaGeral.toFixed(1),
+        totalUsuarios: 0
+      };
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
-      return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
+      return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0, totalUsuarios: 0 };
     }
   }
 
@@ -147,6 +184,22 @@ class BuscarService {
    */
   static getLocalId(local) {
     return local?.id || local?.idLocal || null;
+  }
+
+  static async obterEstatisticas() {
+    try {
+      const locais = await this.carregarTodosLocais();
+      
+      const totalLocais = locais.length;
+      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
+      const somaNotas = locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0);
+      const mediaGeral = totalLocais > 0 ? (somaNotas / totalLocais).toFixed(1) : 0;
+      
+      return { totalLocais, totalAvaliacoes, mediaGeral };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0 };
+    }
   }
 }
 

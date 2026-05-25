@@ -18,7 +18,6 @@ import {
 import { ThemedText, Spacer } from '../../components/commons';
 import { Container } from '../../components/layout';
 import LocalCard from '../../components/ui/LocalCard';
-
 import { useThemeContext } from '../../context/ThemeContext';
 import BuscarService from '../../services/BuscarService';
 import { breakpoints, getTheme } from '../../config/theme';
@@ -183,7 +182,7 @@ export default function Buscar({ onNavigate }) {
   const carregarDadosIniciais = async () => {
     setCarregandoInicial(true);
     try {
-      await BuscarService.carregarTodosLocais();
+      await BuscarService.carregarTodosLocais(); 
       await realizarBusca();
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
