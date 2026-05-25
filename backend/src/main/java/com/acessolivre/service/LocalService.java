@@ -33,6 +33,15 @@ import com.acessolivre.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+<<<<<<< HEAD
+=======
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.acessolivre.dto.request.BuscaFiltrosRequestDTO;
+import java.util.*;
+>>>>>>> 5af05f5 (feat: implementado filtro ebusca)
 
 @Service
 @RequiredArgsConstructor
@@ -65,8 +74,6 @@ public class LocalService {
         log.info("Buscando local por ID com imagens: {}", id);
         return localRepository.findByIdWithImages(id, StatusLocal.INATIVO);
     }
-    
-    // ===== MÉTODOS EXISTENTES =====
 
     @Transactional(readOnly = true)
     public Page<Local> listarTodos(Pageable pageable) {
@@ -530,5 +537,46 @@ public class LocalService {
         if (!localRepository.existsById(idLocal)) {
             throw new IllegalArgumentException("Local não encontrado com ID: " + idLocal);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Local> buscarComFiltros(BuscaFiltrosRequestDTO filtros, Pageable pageable) {
+        log.info("Buscando locais com filtros: {}", filtros);
+        
+        // Tratamento profissional: converter coleções vazias para null
+        String searchTerm = filtros.getSearchText();
+        if (searchTerm != null && searchTerm.isBlank()) {
+            searchTerm = null;
+        }
+        
+        Set<Categoria> categorias = filtros.getCategorias();
+        if (categorias != null && categorias.isEmpty()) {
+            categorias = null;  // Evita IN () que causaria erro
+        }
+        
+        Set<TipoAcessibilidade> recursos = filtros.getRecursos();
+        if (recursos != null && recursos.isEmpty()) {
+            recursos = null;  // Evita IN () que causaria erro
+        }
+        
+        Double notaMinima = filtros.getNotaMinima();
+        if (notaMinima != null && notaMinima <= 0) {
+            notaMinima = null;
+        }
+        
+        // Se não há filtros, retorna todos
+        if (searchTerm == null && categorias == null && recursos == null && notaMinima == null) {
+            log.info("Nenhum filtro aplicado, retornando todos os locais");
+            return localRepository.findAll(pageable);
+        }
+        
+        // CORRIGIDO: usar o método correto que existe no Repository
+        return localRepository.buscarComFiltrosAvancados(
+            searchTerm, 
+            categorias, 
+            recursos, 
+            notaMinima, 
+            pageable
+        );
     }
 }

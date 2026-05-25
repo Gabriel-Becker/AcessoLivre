@@ -29,36 +29,19 @@ import AvaliacaoService from '../../services/AvaliacaoService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
-const formatarDataRelativa = (dataString) => {
-  if (!dataString) return 'Data não informada';
+const formatarDataRelativa = (dataOriginal) => {
+  if (!dataOriginal) return 'Data não informada';
   
   try {
     let data;
     
-    // Converter para Date de forma robusta
-    if (typeof dataString === 'string') {
-      data = new Date(dataString);
-      
-      // Se falhar, tentar extrair números
-      if (isNaN(data.getTime())) {
-        const numeros = dataString.match(/\d+/g);
-        if (numeros && numeros.length >= 3) {
-          const [ano, mes, dia, hora = 0, minuto = 0] = numeros;
-          data = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia), parseInt(hora), parseInt(minuto));
-        }
-      }
-    } 
-    else if (typeof dataString === 'number') {
-      data = new Date(dataString);
-    }
-    else if (dataString instanceof Date) {
-      data = dataString;
-    }
-    else if (Array.isArray(dataString) && dataString.length >= 3) {
-      const [ano, mes, dia, hora = 0, minuto = 0] = dataString;
-      data = new Date(ano, mes - 1, dia, hora, minuto);
-    }
-    else {
+    if (typeof dataOriginal === 'string') {
+      data = new Date(dataOriginal);
+    } else if (typeof dataOriginal === 'number') {
+      data = new Date(dataOriginal);
+    } else if (dataOriginal instanceof Date) {
+      data = dataOriginal;
+    } else {
       return 'Data inválida';
     }
     
@@ -71,7 +54,7 @@ const formatarDataRelativa = (dataString) => {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-
+    
     if (diffMins < 1) return 'Agora mesmo';
     if (diffMins === 1) return 'Há 1 minuto';
     if (diffMins < 60) return `Há ${diffMins} minutos`;
@@ -79,9 +62,9 @@ const formatarDataRelativa = (dataString) => {
     if (diffHours < 24) return `Há ${diffHours} horas`;
     if (diffDays === 1) return 'Ontem';
     if (diffDays < 7) return `Há ${diffDays} dias`;
-    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} ${Math.floor(diffDays / 7) === 1 ? 'semana' : 'semanas'}`;
-    if (diffDays < 365) return `Há ${Math.floor(diffDays / 30)} ${Math.floor(diffDays / 30) === 1 ? 'mês' : 'meses'}`;
-    return `Há ${Math.floor(diffDays / 365)} ${Math.floor(diffDays / 365) === 1 ? 'ano' : 'anos'}`;
+    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
+    if (diffDays < 365) return `Há ${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
+    return `Há ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
     
   } catch (error) {
     console.error('Erro ao formatar data:', error);
@@ -107,7 +90,6 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
     return stars;
   };
 
-  // Extrair dados da avaliação
   const nomeUsuario = avaliacao.usuario?.nome || 
                       avaliacao.usuarioNome || 
                       avaliacao.nomeUsuario || 
@@ -115,7 +97,6 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
   
   const primeiraLetra = nomeUsuario.charAt(0).toUpperCase();
   
-  // Calcular média geral
   const notaVisual = avaliacao.notaAcessibilidadeVisual || 0;
   const notaMotora = avaliacao.notaAcessibilidadeMotora || 0;
   const notaAuditiva = avaliacao.notaAcessibilidadeAuditiva || 0;
@@ -125,10 +106,8 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
                      (notaVisual + notaMotora + notaAuditiva) / 3 || 0;
   
   const comentarioReal = avaliacao.comentario || '';
-  
-  // Extrair data
-  let dataRaw = avaliacao.dataAvaliacao || avaliacao.data || avaliacao.dataCriacao;
-  const dataFormatada = formatarDataRelativa(dataRaw);
+  const dataOriginal = avaliacao.dataAvaliacao || avaliacao.data;
+  const dataFormatada = formatarDataRelativa(dataOriginal);
 
   return (
     <View style={styles.avaliacaoItem}>
@@ -165,7 +144,7 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
 
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t } = useThemeContext();
-  const { isAuthenticated, getUsuarioId } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
   const { id } = route?.params || {};
 
@@ -176,6 +155,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [descricaoExpandida, setDescricaoExpandida] = useState(false);
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
@@ -202,16 +182,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         const result = await AvaliacaoService.buscarAvaliacoesPorLocal(id);
         
         if (result.success && result.data && Array.isArray(result.data)) {
-          avaliacoes = result.data.map(item => ({
-            id: item.idAvaliacao || item.id,
-            notaAcessibilidadeVisual: item.notaAcessibilidadeVisual || 0,
-            notaAcessibilidadeMotora: item.notaAcessibilidadeMotora || 0,
-            notaAcessibilidadeAuditiva: item.notaAcessibilidadeAuditiva || 0,
-            notaGeral: item.notaGeral || item.nota || 0,
-            comentario: item.comentario || '',
-            usuarioNome: item.usuario?.nome || item.usuarioNome || 'Usuário',
-            dataAvaliacao: item.dataAvaliacao || item.data,
-          }));
+          avaliacoes = result.data;
         } else if (dados.avaliacoes) {
           avaliacoes = dados.avaliacoes;
         }
@@ -221,8 +192,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
       }
       
       const avaliacoesOrdenadas = [...avaliacoes].sort((a, b) => {
-        const dataA = new Date(a.dataAvaliacao || 0);
-        const dataB = new Date(b.dataAvaliacao || 0);
+        const dataA = a.dataAvaliacao ? new Date(a.dataAvaliacao) : 0;
+        const dataB = b.dataAvaliacao ? new Date(b.dataAvaliacao) : 0;
         return dataB - dataA;
       });
 
@@ -233,6 +204,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         tiposAcessibilidade: dados.tiposAcessibilidade || [],
         avaliacaoMedia: dados.avaliacaoMedia || 0,
         totalAvaliacoes: dados.totalAvaliacoes || avaliacoesOrdenadas.length,
+        descricao: dados.descricao || '',
       });
     } catch (err) {
       console.error('Erro ao carregar local:', err);
@@ -314,6 +286,41 @@ export default function LocalDetalhes({ onNavigate, route }) {
     if (end.cidade) partes.push(end.cidade);
     if (end.estado) partes.push(end.estado);
     return partes.join(', ');
+  };
+
+  // Renderizar descrição do local
+  const renderDescricaoLocal = () => {
+    const descricao = local?.descricao || '';
+    if (!descricao) return null;
+    
+    const shouldTruncate = descricao.length > 120;
+    const descricaoExibida = descricaoExpandida ? descricao : descricao.substring(0, 120);
+    
+    return (
+      <View style={styles.descricaoContainer}>
+        <View style={styles.descricaoHeader}>
+          <Ionicons name="document-text-outline" size={20} color={t.colors.primary} />
+          <ThemedText weight="bold" style={styles.descricaoTitulo}>
+            Sobre o local
+          </ThemedText>
+        </View>
+        <Spacer size="sm" />
+        <ThemedText color="textSecondary" style={styles.descricaoTexto}>
+          {descricaoExibida}
+          {shouldTruncate && !descricaoExpandida && '...'}
+        </ThemedText>
+        {shouldTruncate && (
+          <TouchableOpacity 
+            onPress={() => setDescricaoExpandida(!descricaoExpandida)} 
+            style={styles.verMaisButtonDescricao}
+          >
+            <ThemedText color="primary" weight="semibold" variant="caption">
+              {descricaoExpandida ? 'Ver menos ▲' : 'Ver mais ▼'}
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   };
 
   if (loading) {
@@ -398,7 +405,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
                   <Spacer size="lg" />
                   <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
-                  <Spacer size="lg" />
+                  
+                  {/* CARD DE DESCRIÇÃO - COM ESPAÇAMENTO REDUZIDO */}
+                  {renderDescricaoLocal()}
+                  
+                  <Spacer size="md" />
 
                   <View style={styles.botoesContainer}>
                     <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>
@@ -481,9 +492,14 @@ export default function LocalDetalhes({ onNavigate, route }) {
                   <ThemedText variant="caption" color="textSecondary">{local.totalAvaliacoes || 0} avaliações</ThemedText>
                 </View>
               </View>
+
               <Spacer size="lg" />
               <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
-              <Spacer size="lg" />
+              
+              {renderDescricaoLocal()}
+              
+              <Spacer size="md" />
+              
               <View style={styles.botoesContainer}>
                 <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>Avaliar</Button>
                 <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={styles.botaoAcao}>Compartilhar</Button>
@@ -653,6 +669,31 @@ const styles = StyleSheet.create({
   tituloAvaliacoes: {
     fontSize: 18,
     flex: 1,
+  },
+  // Estilos para o card de descrição
+  descricaoContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  descricaoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  descricaoTitulo: {
+    fontSize: 15,
+  },
+  descricaoTexto: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'justify',
+  },
+  verMaisButtonDescricao: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
   avaliacaoItem: {
     paddingVertical: 12,

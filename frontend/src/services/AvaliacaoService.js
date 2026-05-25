@@ -13,46 +13,42 @@ class AvaliacaoService {
       
       const response = await api.get(`/avaliacoes/local/${idLocal}`);
       
-      console.log('📥 Resposta do backend:', response.data);
+      console.log('📥 Resposta do backend (RAW):', JSON.stringify(response.data, null, 2));
       
       if (response.data && Array.isArray(response.data)) {
         // Mapear os dados do backend para o formato esperado pelo frontend
         const avaliacoesFormatadas = response.data.map(avaliacao => {
-          // Extrair dados do usuário do objeto usuario (que agora vem do backend)
+          // Extrair dados do usuário
           const usuario = avaliacao.usuario || {};
+          
+          // Log específico para a data
+          console.log(`📅 Data bruta da avaliação ${avaliacao.idAvaliacao}:`, {
+            dataAvaliacao: avaliacao.dataAvaliacao,
+            tipo: typeof avaliacao.dataAvaliacao,
+            valor: avaliacao.dataAvaliacao
+          });
           
           return {
             id: avaliacao.idAvaliacao,
             idAvaliacao: avaliacao.idAvaliacao,
-            // Notas individuais
             notaAcessibilidadeVisual: avaliacao.notaAcessibilidadeVisual || 0,
             notaAcessibilidadeMotora: avaliacao.notaAcessibilidadeMotora || 0,
             notaAcessibilidadeAuditiva: avaliacao.notaAcessibilidadeAuditiva || 0,
-            // Média geral
             notaGeral: avaliacao.notaGeral || 0,
             nota: avaliacao.notaGeral || 0,
-            // Comentário
             comentario: avaliacao.comentario || '',
-            // Dados do usuário
             usuarioNome: usuario.nome || avaliacao.nomeUsuario || 'Usuário',
             usuarioId: usuario.idUsuario || avaliacao.idUsuario,
             usuarioEmail: usuario.email || '',
-            // Data
+            // PRESERVAR A DATA ORIGINAL SEM CONVERSÃO
             dataAvaliacao: avaliacao.dataAvaliacao,
             data: avaliacao.dataAvaliacao,
-            // Status
             moderado: avaliacao.moderado !== false
           };
         });
         
-        // Ordenar por data (mais recentes primeiro)
-        avaliacoesFormatadas.sort((a, b) => {
-          const dataA = new Date(a.dataAvaliacao || 0);
-          const dataB = new Date(b.dataAvaliacao || 0);
-          return dataB - dataA;
-        });
-        
         console.log('✅ Avaliações formatadas:', avaliacoesFormatadas);
+        console.log('📅 Datas após formatação:', avaliacoesFormatadas.map(a => ({ id: a.id, data: a.dataAvaliacao, tipo: typeof a.dataAvaliacao })));
         
         return {
           success: true,
