@@ -114,8 +114,8 @@ export const renderNomeLocal = (item, altoContraste = false) => (
   </View>
 );
 
-export const renderCategoriaLocal = (item) => (
-  <EtiquetaStatus texto={obterCategoriaLabel(item?.categoria?.nome || item?.categoria)} tipo="neutro" />
+export const renderCategoriaLocal = (item, altoContraste = false) => (
+  <EtiquetaStatus texto={obterCategoriaLabel(item?.categoria?.nome || item?.categoria)} tipo="neutro" altoContraste={altoContraste} />
 );
 
 export const renderCidadeLocal = (item, altoContraste = false) => (
@@ -124,10 +124,11 @@ export const renderCidadeLocal = (item, altoContraste = false) => (
   </ThemedText>
 );
 
-export const renderStatusLocal = (item) => (
+export const renderStatusLocal = (item, altoContraste = false) => (
   <EtiquetaStatus
     texto={obterStatusLabel(item?.status)}
     tipo={obterTipoEtiquetaStatus(item?.status)}
+    altoContraste={altoContraste}
   />
 );
 
@@ -140,6 +141,7 @@ export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExclu
       loading={carregandoAcao}
       disabled={carregandoAcao}
       onPress={() => onEditar(item)}
+      altoContraste={altoContraste}
     >
       Editar
     </Button>
@@ -150,6 +152,7 @@ export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExclu
       loading={carregandoAcao}
       disabled={carregandoAcao}
       onPress={() => onExcluir(item)}
+      altoContraste={altoContraste}
     >
       Excluir
     </Button>
@@ -160,37 +163,30 @@ export const colunasLocais = (styles, carregandoAcao, onEditar, onExcluir, altoC
   {
     chave: 'nome',
     titulo: 'Local',
-    flex: 1.7,
-    minWidth: 220,
-    render: (item) => renderNomeLocal(item),
+    flex: 1.4,
+    minWidth: 180,
+    render: (item, _, altoContraste) => renderNomeLocal(item, altoContraste),
   },
   {
     chave: 'categoria',
     titulo: 'Categoria',
-    flex: 1,
-    minWidth: 160,
-    render: (item) => renderCategoriaLocal(item),
+    flex: 0.9,
+    minWidth: 120,
+    render: (item, _, altoContraste) => renderCategoriaLocal(item, altoContraste),
   },
   {
     chave: 'cidade',
     titulo: 'Cidade / UF',
-    flex: 1.1,
-    minWidth: 180,
-    render: (item) => renderCidadeLocal(item),
-  },
-  {
-    chave: 'status',
-    titulo: 'Status',
-    flex: 0.95,
+    flex: 0.9,
     minWidth: 140,
-    render: (item) => renderStatusLocal(item),
+    render: (item, _, altoContraste) => renderCidadeLocal(item, altoContraste),
   },
   {
     chave: 'acoes',
     titulo: 'Ações',
     flex: 1.2,
-    minWidth: 200,
-    alinhamento: 'right',
-    render: (item) => renderAcoesLocal(item, styles, carregandoAcao, onEditar, onExcluir, altoContraste),
+    minWidth: 190,
+    alinhamento: 'center',
+    render: (item, _, altoContraste) => renderAcoesLocal(item, styles, carregandoAcao, onEditar, onExcluir, altoContraste),
   },
 ];

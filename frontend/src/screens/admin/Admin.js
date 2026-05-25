@@ -377,7 +377,7 @@ export default function Admin() {
             </ThemedText>
           }
           carregando={carregando}
-          larguraMinima={760}
+          larguraMinima={980}
           altoContraste={isHighContrast}
         />
 
@@ -662,9 +662,9 @@ const styles = StyleSheet.create({
   },
   acoesLinha: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   modalOverlay: {
     flex: 1,

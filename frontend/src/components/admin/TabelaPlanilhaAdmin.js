@@ -35,6 +35,8 @@ export default function TabelaPlanilhaAdmin({
               const isSortable = Boolean(coluna.sortKey);
               const isActive = isSortable && sortField && (coluna.sortKey === sortField || coluna.chave === sortField);
               const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? '▲' : '▼') : '';
+              const isCenter = coluna.alinhamento === 'center';
+              const paddingHorizontal = isCenter ? 0 : 6;
 
               return (
                 <View
@@ -45,7 +47,9 @@ export default function TabelaPlanilhaAdmin({
                       flex: coluna.flex ?? 1,
                       minWidth: coluna.minWidth ?? 120,
                       maxWidth: coluna.maxWidth,
-                      alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
+                      alignItems: isCenter ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
+                      paddingLeft: paddingHorizontal,
+                      paddingRight: paddingHorizontal,
                     },
                   ]}
                 >
@@ -55,7 +59,7 @@ export default function TabelaPlanilhaAdmin({
                         size="xs"
                         weight="bold"
                         color={corTexto}
-                        align={coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'right' : 'left')}
+                        align={isCenter ? 'center' : (coluna.alinhamento === 'right' ? 'right' : 'left')}
                         style={styles.tituloColuna}
                         altoContraste={contrasteAtivo}
                       >
@@ -67,7 +71,7 @@ export default function TabelaPlanilhaAdmin({
                       size="xs"
                       weight="bold"
                       color={corTexto}
-                      align={coluna.alinhamento === 'center' ? 'center' : 'left'}
+                      align={isCenter ? 'center' : 'left'}
                       style={styles.tituloColuna}
                       altoContraste={contrasteAtivo}
                     >
@@ -109,20 +113,22 @@ export default function TabelaPlanilhaAdmin({
                     ]}
                   >
                     {colunas.map((coluna) => (
-                        <View
-                          key={`${coluna.chave}-${chave}`}
-                          style={[
-                            styles.celula,
-                            {
-                              flex: coluna.flex ?? 1,
-                              minWidth: coluna.minWidth ?? 120,
-                              maxWidth: coluna.maxWidth,
-                              alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
-                            },
-                          ]}
-                        >
-                          {coluna.render(item, indice)}
-                        </View>
+                      <View
+                        key={`${coluna.chave}-${chave}`}
+                        style={[
+                          styles.celula,
+                          {
+                            flex: coluna.flex ?? 1,
+                            minWidth: coluna.minWidth ?? 120,
+                            maxWidth: coluna.maxWidth,
+                            alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
+                            paddingRight: coluna.alinhamento === 'right' ? 0 : styles.celula.paddingRight,
+                            paddingLeft: coluna.alinhamento === 'center' ? 0 : (coluna.chave === 'nome' ? 12 : 6),
+                          },
+                        ]}
+                      >
+                        {coluna.render(item, indice, contrasteAtivo)}
+                      </View>
                     ))}
                   </View>
                 );
@@ -156,20 +162,20 @@ const styles = StyleSheet.create({
   linha: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    paddingHorizontal: 14,
+    paddingHorizontal: 0,
   },
   cabecalho: {
     backgroundColor: 'rgba(0, 0, 0, 0.03)',
     borderBottomWidth: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   linhaDados: {
     borderBottomWidth: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   celula: {
     justifyContent: 'center',
-    paddingRight: 10,
+    paddingRight: 6,
   },
   tituloColuna: {
     textTransform: 'uppercase',

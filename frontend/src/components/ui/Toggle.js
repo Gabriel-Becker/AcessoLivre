@@ -19,7 +19,7 @@ export default function Toggle({ value = false, onValueChange = () => {}, altoCo
             styles.thumb,
             {
               backgroundColor: value ? t.colors.textOnPrimary : t.colors.surface,
-              transform: [{ translateX: value ? 18 : 0 }],
+              transform: [{ translateX: value ? 36 : 0 }],
             },
           ]}
         />
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 999,
     borderWidth: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     paddingHorizontal: 2,
   },
