@@ -11,6 +11,7 @@ import com.acessolivre.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,19 +36,19 @@ public class LocalService {
     @Transactional(readOnly = true)
     public Page<Local> listarTodosComImagens(Pageable pageable) {
         log.info("Listando locais com imagens via JOIN FETCH");
-        return localRepository.findAllWithImages(StatusLocal.ATIVO, pageable);
+        return localRepository.findAllWithImages(StatusLocal.INATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarLocaisRaizComImagens(Pageable pageable) {
         log.info("Listando locais raiz com imagens via JOIN FETCH");
-        return localRepository.findAllLocaisRaizWithImages(StatusLocal.ATIVO, pageable);
+        return localRepository.findAllLocaisRaizWithImages(StatusLocal.INATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Optional<Local> buscarPorIdComImagens(Long id) {
         log.info("Buscando local por ID com imagens: {}", id);
-        return localRepository.findByIdWithImages(id, StatusLocal.ATIVO);
+        return localRepository.findByIdWithImages(id, StatusLocal.INATIVO);
     }
     
     // ===== MÉTODOS EXISTENTES =====
@@ -56,20 +57,20 @@ public class LocalService {
     public Page<Local> listarTodos(Pageable pageable) {
         log.info("Listando locais com paginação: página={}, tamanho={}", 
             pageable.getPageNumber(), pageable.getPageSize());
-        return localRepository.findByStatus(StatusLocal.ATIVO, pageable);
+        return filtrarLocaisNaoInativos(localRepository.findAll(pageable), pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarLocaisRaiz(Pageable pageable) {
         log.info("Listando locais raiz (sem pai)");
-        return localRepository.findByLocalPrincipalIsNullAndStatus(StatusLocal.ATIVO, pageable);
+        return filtrarLocaisNaoInativos(localRepository.findByLocalPrincipalIsNull(pageable), pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarSubLocais(Long idLocalPrincipal, Pageable pageable) {
         log.info("Listando sub-locais do local ID: {}", idLocalPrincipal);
         validarExistenciaLocal(idLocalPrincipal);
-        return localRepository.findByLocalPrincipalIdLocalAndStatus(idLocalPrincipal, StatusLocal.ATIVO, pageable);
+        return filtrarLocaisNaoInativos(localRepository.findByLocalPrincipalIdLocal(idLocalPrincipal, pageable), pageable);
     }
 
     @Transactional(readOnly = true)
@@ -186,6 +187,13 @@ public class LocalService {
     public List<Local> buscarLocaisPorNome(String nome, Pageable pageable) {
         log.info("Buscando locais por nome: {}", nome);
         return localRepository.buscarPorNomeLike(nome, pageable);
+    }
+
+    private Page<Local> filtrarLocaisNaoInativos(Page<Local> pagina, Pageable pageable) {
+        List<Local> filtrados = pagina.getContent().stream()
+                .filter(local -> local.getStatus() != StatusLocal.INATIVO)
+                .toList();
+        return new PageImpl<>(filtrados, pageable, filtrados.size());
     }
 
     @Transactional
