@@ -29,9 +29,9 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
         LEFT JOIN FETCH l.endereco
         LEFT JOIN FETCH l.tiposAcessibilidade
         LEFT JOIN FETCH l.usuario
-        WHERE l.localPrincipal IS NULL
+        WHERE l.localPrincipal IS NULL AND l.status = :status
     """)
-    Page<Local> findAllLocaisRaizWithImages(Pageable pageable);
+    Page<Local> findAllLocaisRaizWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
     @Query("""
         SELECT DISTINCT l
@@ -40,8 +40,9 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
         LEFT JOIN FETCH l.endereco
         LEFT JOIN FETCH l.tiposAcessibilidade
         LEFT JOIN FETCH l.usuario
+        WHERE l.status = :status
     """)
-    Page<Local> findAllWithImages(Pageable pageable);
+    Page<Local> findAllWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
     @Query("""
         SELECT DISTINCT l
@@ -50,9 +51,9 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
         LEFT JOIN FETCH l.endereco
         LEFT JOIN FETCH l.tiposAcessibilidade
         LEFT JOIN FETCH l.usuario
-        WHERE l.idLocal = :id
+        WHERE l.idLocal = :id AND l.status = :status
     """)
-    Optional<Local> findByIdWithImages(@Param("id") Long id);
+    Optional<Local> findByIdWithImages(@Param("id") Long id, @Param("status") StatusLocal status);
     
     // ===== MÉTODOS EXISTENTES =====
     
@@ -62,9 +63,15 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     Page<Local> findByLocalPrincipalIsNull(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
+    Page<Local> findByLocalPrincipalIsNullAndStatus(StatusLocal status, Pageable pageable);
     
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
     Page<Local> findByLocalPrincipalIdLocal(Long idLocalPrincipal, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "imagens"})
+    Page<Local> findByLocalPrincipalIdLocalAndStatus(Long idLocalPrincipal, StatusLocal status, Pageable pageable);
     
     @Override
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario", "imagens"})

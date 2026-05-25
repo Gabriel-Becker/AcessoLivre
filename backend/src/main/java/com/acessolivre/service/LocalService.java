@@ -35,19 +35,19 @@ public class LocalService {
     @Transactional(readOnly = true)
     public Page<Local> listarTodosComImagens(Pageable pageable) {
         log.info("Listando locais com imagens via JOIN FETCH");
-        return localRepository.findAllWithImages(pageable);
+        return localRepository.findAllWithImages(StatusLocal.ATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarLocaisRaizComImagens(Pageable pageable) {
         log.info("Listando locais raiz com imagens via JOIN FETCH");
-        return localRepository.findAllLocaisRaizWithImages(pageable);
+        return localRepository.findAllLocaisRaizWithImages(StatusLocal.ATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Optional<Local> buscarPorIdComImagens(Long id) {
         log.info("Buscando local por ID com imagens: {}", id);
-        return localRepository.findByIdWithImages(id);
+        return localRepository.findByIdWithImages(id, StatusLocal.ATIVO);
     }
     
     // ===== MÉTODOS EXISTENTES =====
@@ -56,26 +56,30 @@ public class LocalService {
     public Page<Local> listarTodos(Pageable pageable) {
         log.info("Listando locais com paginação: página={}, tamanho={}", 
             pageable.getPageNumber(), pageable.getPageSize());
-        return localRepository.findAll(pageable);
+        return localRepository.findByStatus(StatusLocal.ATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarLocaisRaiz(Pageable pageable) {
         log.info("Listando locais raiz (sem pai)");
-        return localRepository.findByLocalPrincipalIsNull(pageable);
+        return localRepository.findByLocalPrincipalIsNullAndStatus(StatusLocal.ATIVO, pageable);
     }
     
     @Transactional(readOnly = true)
     public Page<Local> listarSubLocais(Long idLocalPrincipal, Pageable pageable) {
         log.info("Listando sub-locais do local ID: {}", idLocalPrincipal);
         validarExistenciaLocal(idLocalPrincipal);
-        return localRepository.findByLocalPrincipalIdLocal(idLocalPrincipal, pageable);
+        return localRepository.findByLocalPrincipalIdLocalAndStatus(idLocalPrincipal, StatusLocal.ATIVO, pageable);
     }
 
     @Transactional(readOnly = true)
     public Optional<Local> buscarPorId(Long id) {
         log.info("Buscando local por ID: {}", id);
-        return localRepository.findById(id);
+        Optional<Local> opt = localRepository.findById(id);
+        if (opt.isPresent() && opt.get().getStatus() == StatusLocal.INATIVO) {
+            return Optional.empty();
+        }
+        return opt;
     }
 
     @Transactional(readOnly = true)
@@ -283,8 +287,10 @@ public class LocalService {
             localRepository.save(local.getLocalPrincipal());
         }
         
-        localRepository.deleteById(id);
-        log.info("Local deletado com sucesso. ID: {}", id);
+        // Exclusão lógica: marcar status como INATIVO
+        local.setStatus(StatusLocal.INATIVO);
+        localRepository.save(local);
+        log.info("Local marcado como INATIVO (exclusão lógica). ID: {}", id);
         return true;
     }
     
