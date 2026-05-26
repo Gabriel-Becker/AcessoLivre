@@ -510,13 +510,13 @@ export default function Buscar({ onNavigate }) {
 
 const criarEstilos = (t) => StyleSheet.create({
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingHorizontal: t.spacing.md,
+    paddingBottom: t.spacing.lg,
   },
   conteudo: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    gap: t.spacing.lg,
   },
   colunaFiltros: {
     flex: 1,
@@ -530,8 +530,8 @@ const criarEstilos = (t) => StyleSheet.create({
     minWidth: 280,
   },
   filtrosCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: t.borderRadius.lg,
+    padding: t.spacing.lg,
     elevation: 2,
     shadowColor: t.shadows.sm.shadowColor,
     shadowOffset: t.shadows.sm.shadowOffset,
@@ -543,7 +543,7 @@ const criarEstilos = (t) => StyleSheet.create({
   filtrosHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: t.spacing.sm,
   },
   filtrosTitulo: {
     flex: 1,
@@ -552,17 +552,17 @@ const criarEstilos = (t) => StyleSheet.create({
   limparButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: t.spacing.xs,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: t.colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    borderRadius: t.borderRadius.md,
+    paddingHorizontal: t.spacing.sm,
+    paddingVertical: t.spacing.sm,
+    gap: t.spacing.sm,
   },
   searchInput: {
     flex: 1,
@@ -572,13 +572,13 @@ const criarEstilos = (t) => StyleSheet.create({
   filtroGrupo: {
     borderTopWidth: 1,
     borderTopColor: t.colors.border,
-    paddingTop: 12,
+    paddingTop: t.spacing.sm,
   },
   filtroHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
+    gap: t.spacing.sm,
+    paddingVertical: t.spacing.sm,
   },
   filtroTitulo: {
     flex: 1,
@@ -586,17 +586,17 @@ const criarEstilos = (t) => StyleSheet.create({
   },
   filtroContent: {
     paddingLeft: 30,
-    paddingTop: 8,
-    gap: 8,
+    paddingTop: t.spacing.sm,
+    gap: t.spacing.sm,
   },
   filtroItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 6,
+    gap: t.spacing.sm,
+    paddingVertical: t.spacing.xs,
   },
   filtroIcon: {
-    marginLeft: 4,
+    marginLeft: t.spacing.xs,
   },
   filtroItemLabel: {
     fontSize: 14,
@@ -605,19 +605,19 @@ const criarEstilos = (t) => StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 6,
+    borderRadius: t.borderRadius.sm,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notaContainer: {
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: t.spacing.sm,
+    marginBottom: t.spacing.sm,
   },
   notaStars: {
     flexDirection: 'row',
-    gap: 6,
+    gap: t.spacing.xs,
   },
   notaValor: {
     fontSize: 14,
@@ -625,13 +625,13 @@ const criarEstilos = (t) => StyleSheet.create({
   notaSliderContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: t.spacing.sm,
     justifyContent: 'center',
   },
   notaBotao: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: t.spacing.sm,
+    paddingVertical: t.spacing.xs,
+    borderRadius: t.borderRadius.full,
     borderWidth: 1,
     backgroundColor: 'transparent',
     borderColor: t.colors.border,
@@ -646,26 +646,26 @@ const criarEstilos = (t) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: t.spacing.sm,
   },
   resultadosGrid: {
-    paddingBottom: 16,
+    paddingBottom: t.spacing.md,
   },
   cardWrapper: {
     flex: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
+    paddingHorizontal: t.spacing.xs,
+    paddingVertical: t.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 48,
+    paddingVertical: t.spacing.xxxl,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
-    gap: 12,
+    paddingVertical: t.spacing.xxxl,
+    gap: t.spacing.sm,
   },
 });

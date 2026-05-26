@@ -10,6 +10,22 @@ const BuscarService = {
       .toLowerCase();
   },
 
+  obterCategoriaLocal(local) {
+    const categoria = local?.categoria;
+
+    if (!categoria) return '';
+
+    if (typeof categoria === 'string') {
+      return categoria;
+    }
+
+    if (typeof categoria === 'object') {
+      return categoria?.nome || categoria?.descricao || categoria?.value || '';
+    }
+
+    return String(categoria);
+  },
+
   /**
    * Busca locais com filtros avançados
    * Se não houver filtros, retorna locais em destaque
@@ -37,7 +53,7 @@ const BuscarService = {
       
       console.log('🔍 BuscarService: Buscando todos os locais para aplicar filtros');
       
-      const response = await api.get('/locais', {
+      const response = await api.get('/locais/todos', {
         params: { page: 0, size: 100, sort: 'nome,asc' }
       });
       
@@ -54,7 +70,9 @@ const BuscarService = {
       
       if (categorias && categorias.length > 0) {
         locais = locais.filter(local => 
-          categorias.some(categoria => this.normalizarTexto(categoria) === this.normalizarTexto(local.categoria))
+          categorias.some(categoria =>
+            this.normalizarTexto(categoria) === this.normalizarTexto(this.obterCategoriaLocal(local))
+          )
         );
       }
       
@@ -106,7 +124,7 @@ const BuscarService = {
         return { success: true, data: [], total: 0 };
       }
       
-      const response = await api.get('/locais', {
+      const response = await api.get('/locais/todos', {
         params: { page: 0, size: 20, sort: 'nome,asc' }
       });
       
@@ -138,7 +156,7 @@ const BuscarService = {
     if (!locais || !Array.isArray(locais)) return [];
     
     return locais.filter(local => {
-      const temId = local?.id || local?.localId;
+      const temId = local?.id || local?.localId || local?.idLocal;
       if (!temId) {
         console.warn('⚠️ BuscarService: Local sem ID ignorado', local?.nome);
       }
