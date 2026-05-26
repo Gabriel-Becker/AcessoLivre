@@ -14,12 +14,9 @@ import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import HomeService from '../../services/HomeService';
 import toastHelper from '../../utils/toastHelper';
+import theme, { breakpoints } from '../../config/theme';
 
-const BREAKPOINTS = {
-  MOBILE: 600,
-  TABLET: 1000,
-  DESKTOP: 1400
-};
+const BREAKPOINT_DESKTOP_GRANDE = 1360;
 
 export default function Home({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
@@ -31,9 +28,9 @@ export default function Home({ onNavigate }) {
   const [locaisDestaque, setLocaisDestaque] = useState([]);
 
   const numColumns = useMemo(() => {
-    if (width >= BREAKPOINTS.DESKTOP) return 4;
-    if (width >= BREAKPOINTS.TABLET) return 3;
-    if (width >= BREAKPOINTS.MOBILE) return 2;
+    if (width >= BREAKPOINT_DESKTOP_GRANDE) return 4;
+    if (width >= breakpoints.desktop) return 3;
+    if (width >= breakpoints.tablet) return 2;
     return 1;
   }, [width]);
 
@@ -126,26 +123,26 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   fixedContainer: {
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
   },
 
   sectionHeader: {
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
 
   listContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
   },
 
   cardWrapper: {
     flex: 1,
-    padding: 6,
+    padding: theme.spacing.sm,
     minWidth: 260,
     maxWidth: 400,
   },
