@@ -1,27 +1,38 @@
 package com.acessolivre.service;
 
-import com.acessolivre.dto.request.LocalRequestDTO;
-import com.acessolivre.enums.StatusLocal;
-import com.acessolivre.enums.Categoria;
-import com.acessolivre.enums.TipoAcessibilidade;
-import com.acessolivre.mapper.EnderecoMapper;
-import com.acessolivre.mapper.LocalMapper;
-import com.acessolivre.model.*;
-import com.acessolivre.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import com.acessolivre.enums.Role;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-//import org.springframework.context.annotation.Lazy;
 
-import java.util.*;
+import com.acessolivre.dto.request.LocalRequestDTO;
+import com.acessolivre.enums.Categoria;
+import com.acessolivre.enums.Role;
+import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
+import com.acessolivre.mapper.EnderecoMapper;
+import com.acessolivre.mapper.LocalMapper;
+import com.acessolivre.model.Endereco;
+import com.acessolivre.model.Local;
+import com.acessolivre.model.Usuario;
+import com.acessolivre.repository.AvaliacaoRepository;
+import com.acessolivre.repository.EnderecoRepository;
+import com.acessolivre.repository.LocalRepository;
+import com.acessolivre.repository.UsuarioRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor

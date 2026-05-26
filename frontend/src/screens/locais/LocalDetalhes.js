@@ -456,9 +456,15 @@ function renderFotos(local, t, isHighContrast) {
   let imagensUrls = [];
   
   if (local.imagens && Array.isArray(local.imagens)) {
-    imagensUrls = local.imagens.map(img => img.url).filter(url => url);
+    imagensUrls = local.imagens
+      .map((img) => (typeof img === 'string' ? img : img?.url))
+      .filter((url) => url);
   } else if (local.imagensUrls && Array.isArray(local.imagensUrls)) {
     imagensUrls = local.imagensUrls;
+  } else if (local.imagensCompletas && Array.isArray(local.imagensCompletas)) {
+    imagensUrls = local.imagensCompletas
+      .map((img) => img?.url)
+      .filter((url) => url);
   }
   
   const temImagens = imagensUrls.length > 0;
