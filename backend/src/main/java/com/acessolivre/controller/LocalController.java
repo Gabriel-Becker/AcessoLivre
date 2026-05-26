@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -258,6 +259,7 @@ public class LocalController {
 
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
         log.info("POST /api/locais - Salvando local: {}", requestDTO.getNome());
         
@@ -274,6 +276,7 @@ public class LocalController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LocalResponseDTO> atualizar(
             @PathVariable Long id, 
             @Valid @RequestBody LocalRequestDTO requestDTO) {
@@ -292,6 +295,7 @@ public class LocalController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         log.info("DELETE /api/locais/{} - Deletando local", id);
         localService.deletar(id);

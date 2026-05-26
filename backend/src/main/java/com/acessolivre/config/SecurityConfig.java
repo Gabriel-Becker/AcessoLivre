@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableMethodSecurity(prePostEnabled = false) // Desabilita segurança em métodos
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
@@ -58,9 +58,19 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()  // 🔓 LIBERA TODAS AS REQUISIÇÕES SEM AUTENTICAÇÃO
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {})); // Desativa validação JWT
+                .requestMatchers(
+                    "/api/auth/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/api/locais",
+                    "/api/locais/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            );
+
+        http.addFilterBefore(tokenRevogadoFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(tokenResponseFilter(), TokenRevogadoFilter.class);
 
         return http.build();
     }
