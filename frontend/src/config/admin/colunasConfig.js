@@ -132,6 +132,27 @@ export const renderStatusLocal = (item, altoContraste = false) => (
   />
 );
 
+const formatarDataHora = (valor) => {
+  if (!valor) return 'Sem data';
+
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return 'Sem data';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(data);
+};
+
+export const renderDataCadastroLocal = (item, altoContraste = false) => (
+  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+    {formatarDataHora(item?.dataCriacao)}
+  </ThemedText>
+);
+
 export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExcluir, altoContraste = false) => (
   <View style={styles.acoesLinha}>
     <Button
@@ -180,6 +201,14 @@ export const colunasLocais = (styles, carregandoAcao, onEditar, onExcluir, altoC
     flex: 0.9,
     minWidth: 140,
     render: (item, _, altoContraste) => renderCidadeLocal(item, altoContraste),
+  },
+  {
+    chave: 'cadastro',
+    sortKey: 'dataCriacao',
+    titulo: 'Cadastro',
+    flex: 1.1,
+    minWidth: 170,
+    render: (item, _, altoContraste) => renderDataCadastroLocal(item, altoContraste),
   },
   {
     chave: 'acoes',

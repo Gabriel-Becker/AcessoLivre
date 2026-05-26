@@ -31,12 +31,13 @@ export default function TabelaPlanilhaAdmin({
       >
         <View style={[styles.tabela, { minWidth: larguraMinima }]}>
           <View style={[styles.linha, styles.cabecalho, { borderBottomColor: t.colors.border }]}>
-            {colunas.map((coluna) => {
+            {colunas.map((coluna, colIndex) => {
               const isSortable = Boolean(coluna.sortKey);
               const isActive = isSortable && sortField && (coluna.sortKey === sortField || coluna.chave === sortField);
               const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? '▲' : '▼') : '';
               const isCenter = coluna.alinhamento === 'center';
               const paddingHorizontal = isCenter ? 0 : 6;
+              const isLast = colIndex === colunas.length - 1;
 
               return (
                 <View
@@ -49,7 +50,7 @@ export default function TabelaPlanilhaAdmin({
                       maxWidth: coluna.maxWidth,
                       alignItems: isCenter ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
                       paddingLeft: paddingHorizontal,
-                      paddingRight: paddingHorizontal,
+                      paddingRight: isLast ? 0 : paddingHorizontal,
                     },
                   ]}
                 >
@@ -112,7 +113,7 @@ export default function TabelaPlanilhaAdmin({
                       { borderBottomColor: t.colors.borderLight, backgroundColor: fundoLinha },
                     ]}
                   >
-                    {colunas.map((coluna) => (
+                    {colunas.map((coluna, colIndex) => (
                       <View
                         key={`${coluna.chave}-${chave}`}
                         style={[
@@ -122,7 +123,7 @@ export default function TabelaPlanilhaAdmin({
                             minWidth: coluna.minWidth ?? 120,
                             maxWidth: coluna.maxWidth,
                             alignItems: coluna.alinhamento === 'center' ? 'center' : (coluna.alinhamento === 'right' ? 'flex-end' : 'flex-start'),
-                            paddingRight: coluna.alinhamento === 'right' ? 0 : styles.celula.paddingRight,
+                            paddingRight: coluna.alinhamento === 'right' ? 0 : (colIndex === colunas.length - 1 ? 0 : styles.celula.paddingRight),
                             paddingLeft: coluna.alinhamento === 'center' ? 0 : (coluna.chave === 'nome' ? 12 : 6),
                           },
                         ]}
