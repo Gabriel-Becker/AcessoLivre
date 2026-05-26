@@ -60,6 +60,17 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
+const LIMITES_CAMPOS_LOCAL = {
+  nome: 150,
+  descricao: 350,
+  logradouro: 200,
+  numero: 10,
+  complemento: 100,
+  bairro: 100,
+  cidade: 100,
+  estado: 2,
+};
+
 // ============================================
 // COMPONENTE DE UPLOAD DE IMAGENS
 // ============================================
@@ -403,6 +414,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     [isHighContrast, t]
   );
 
+  const contadorDescricao = `${formulario.descricao.length}/${LIMITES_CAMPOS_LOCAL.descricao}`;
+
   useEffect(() => {
     const carregarEstatisticas = async () => {
       const stats = await LocalService.obterEstatisticas();
@@ -435,8 +448,13 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     setImagens(prev => prev.filter((_, i) => i !== index));
   };
 
-  const atualizarCampo = (campo) => (valor) => {
-    setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
+  const atualizarCampo = (campo, limite) => (valor) => {
+    const texto = typeof valor === 'string' ? valor : '';
+
+    setFormulario((anterior) => ({
+      ...anterior,
+      [campo]: limite ? texto.slice(0, limite) : texto,
+    }));
   };
 
   const buscarCep = async (cepLimpo) => {
@@ -766,7 +784,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Nome do Local *"
                     placeholder="Ex: Shopping Center Norte"
                     value={formulario.nome}
-                    onChangeText={atualizarCampo('nome')}
+                    onChangeText={atualizarCampo('nome', LIMITES_CAMPOS_LOCAL.nome)}
+                    maxLength={LIMITES_CAMPOS_LOCAL.nome}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -801,9 +820,9 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Estado *"
                     placeholder="UF"
                     value={formulario.estado}
-                    onChangeText={atualizarCampo('estado')}
+                    onChangeText={(valor) => atualizarCampo('estado', LIMITES_CAMPOS_LOCAL.estado)(valor.toUpperCase())}
                     autoCapitalize="characters"
-                    maxLength={2}
+                    maxLength={LIMITES_CAMPOS_LOCAL.estado}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -813,7 +832,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 label="Logradouro *"
                 placeholder="Ex: Av. Beira-Mar Norte"
                 value={formulario.logradouro}
-                onChangeText={atualizarCampo('logradouro')}
+                onChangeText={atualizarCampo('logradouro', LIMITES_CAMPOS_LOCAL.logradouro)}
+                maxLength={LIMITES_CAMPOS_LOCAL.logradouro}
                 altoContraste={isHighContrast}
               />
 
@@ -823,8 +843,9 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Número *"
                     placeholder="Ex: 1230"
                     value={formulario.numero}
-                    onChangeText={atualizarCampo('numero')}
+                    onChangeText={atualizarCampo('numero', LIMITES_CAMPOS_LOCAL.numero)}
                     keyboardType="numeric"
+                    maxLength={LIMITES_CAMPOS_LOCAL.numero}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -834,7 +855,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Complemento"
                     placeholder="Ex: Apto 402"
                     value={formulario.complemento}
-                    onChangeText={atualizarCampo('complemento')}
+                    onChangeText={atualizarCampo('complemento', LIMITES_CAMPOS_LOCAL.complemento)}
+                    maxLength={LIMITES_CAMPOS_LOCAL.complemento}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -846,7 +868,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Bairro *"
                     placeholder="Ex: Centro"
                     value={formulario.bairro}
-                    onChangeText={atualizarCampo('bairro')}
+                    onChangeText={atualizarCampo('bairro', LIMITES_CAMPOS_LOCAL.bairro)}
+                    maxLength={LIMITES_CAMPOS_LOCAL.bairro}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -856,19 +879,29 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                     label="Cidade *"
                     placeholder="Ex: Florianópolis"
                     value={formulario.cidade}
-                    onChangeText={atualizarCampo('cidade')}
+                    onChangeText={atualizarCampo('cidade', LIMITES_CAMPOS_LOCAL.cidade)}
+                    maxLength={LIMITES_CAMPOS_LOCAL.cidade}
                     altoContraste={isHighContrast}
                   />
                 </View>
               </View>
 
+              <View style={estilos.campoDescricaoHeader}>
+                <ThemedText color="textPrimary" weight="medium">
+                  Descrição *
+                </ThemedText>
+                <ThemedText color="textTertiary" variant="caption">
+                  {contadorDescricao}
+                </ThemedText>
+              </View>
+
               <Input
-                label="Descrição *"
                 placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
                 value={formulario.descricao}
-                onChangeText={atualizarCampo('descricao')}
+                onChangeText={atualizarCampo('descricao', LIMITES_CAMPOS_LOCAL.descricao)}
                 multiline
                 numberOfLines={4}
+                maxLength={LIMITES_CAMPOS_LOCAL.descricao}
                 altoContraste={isHighContrast}
               />
             </CardSecao>
@@ -1059,6 +1092,12 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
       flex: 1,
       flexBasis: 0,
       minWidth: isTablet ? 260 : '100%',
+    },
+    campoDescricaoHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: t.spacing.xs,
     },
     recursosGrid: {
       flexDirection: 'row',
