@@ -71,6 +71,9 @@ const LIMITES_CAMPOS_LOCAL = {
   estado: 2,
 };
 
+const LARGURA_MINIMA_COLUNA_LATERAL = 1280;
+const LARGURA_MINIMA_DUAS_COLUNAS_COM_LATERAL = 1360;
+
 // ============================================
 // COMPONENTE DE UPLOAD DE IMAGENS
 // ============================================
@@ -367,6 +370,8 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet;
+  const exibirColunaLateral = isDesktop && width >= LARGURA_MINIMA_COLUNA_LATERAL;
+  const usarDuasColunasCampos = isTablet && (!exibirColunaLateral || width >= LARGURA_MINIMA_DUAS_COLUNAS_COM_LATERAL);
 
   const [formulario, setFormulario] = useState({
     nome: '',
@@ -399,10 +404,10 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     }));
   }, []);
 
-  const estilos = useMemo(() => criarEstilos(t, isHighContrast, isDesktop, isTablet), [
-    isDesktop,
+  const estilos = useMemo(() => criarEstilos(t, isHighContrast, exibirColunaLateral, usarDuasColunasCampos), [
+    exibirColunaLateral,
     isHighContrast,
-    isTablet,
+    usarDuasColunasCampos,
     t,
   ]);
   
@@ -980,7 +985,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 onPress={handleSalvarLocal}
                 iconLeft="add"
                 loading={enviando}
-                fullWidth={!isDesktop}
+                fullWidth={!exibirColunaLateral}
                 style={estilos.botaoPrincipal}
                 altoContraste={isHighContrast}
               >
@@ -1062,17 +1067,17 @@ function formatarNumero(valor) {
   return String(numero);
 }
 
-function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
+function criarEstilos(t, isHighContrast, exibirColunaLateral, usarDuasColunasCampos) {
   return StyleSheet.create({
     scroll: {
       paddingBottom: t.spacing.xxxl,
     },
     header: {
-      flexDirection: isDesktop ? 'row' : 'column',
-      alignItems: isDesktop ? 'center' : 'flex-start',
+      flexDirection: exibirColunaLateral ? 'row' : 'column',
+      alignItems: exibirColunaLateral ? 'center' : 'flex-start',
     },
     conteudo: {
-      flexDirection: isDesktop ? 'row' : 'column',
+      flexDirection: exibirColunaLateral ? 'row' : 'column',
       alignItems: 'flex-start',
       gap: t.spacing.xl,
     },
@@ -1081,17 +1086,21 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
       minWidth: 0,
     },
     colunaLateral: {
-      width: isDesktop ? 320 : '100%',
+      width: exibirColunaLateral ? 320 : '100%',
+      maxWidth: '100%',
       gap: t.spacing.lg,
     },
     linhaCampos: {
-      flexDirection: isTablet ? 'row' : 'column',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: t.spacing.md,
     },
     colunaCampo: {
-      flex: 1,
-      flexBasis: 0,
-      minWidth: isTablet ? 260 : '100%',
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: usarDuasColunasCampos ? '48%' : '100%',
+      minWidth: usarDuasColunasCampos ? 220 : '100%',
+      maxWidth: '100%',
     },
     campoDescricaoHeader: {
       flexDirection: 'row',
@@ -1105,15 +1114,15 @@ function criarEstilos(t, isHighContrast, isDesktop, isTablet) {
       gap: t.spacing.md,
     },
     recursoItem: {
-      width: isTablet ? '48%' : '100%',
+      width: usarDuasColunasCampos ? '48%' : '100%',
     },
     botaoContainer: {
-      alignItems: isDesktop ? 'flex-start' : 'stretch',
+      alignItems: exibirColunaLateral ? 'flex-start' : 'stretch',
       marginTop: t.spacing.md,
     },
     botaoPrincipal: {
-      minWidth: isDesktop ? 240 : '100%',
-      alignSelf: isDesktop ? 'flex-start' : 'stretch',
+      minWidth: exibirColunaLateral ? 240 : '100%',
+      alignSelf: exibirColunaLateral ? 'flex-start' : 'stretch',
     },
   });
 }
