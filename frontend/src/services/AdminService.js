@@ -9,7 +9,7 @@ const AdminService = {
   },
 
   async listarLocais({ page = 0, size = 8, sort = 'nome' } = {}) {
-    const response = await api.get('/locais', {
+    const response = await api.get('/locais/todos', {
       params: { page, size, sort },
     });
     return response.data;

@@ -1,28 +1,30 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
-import theme, { getTheme } from '../../config/theme';
+import defaultTheme, { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
 export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste }) {
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, theme: ctxTheme } = useThemeContext();
   const contraste = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
-  const baseTheme = ctxTheme || t || theme;
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || defaultTheme;
+  const baseTheme = ctxTheme || t || defaultTheme;
 
   const nome = local?.nome || 'Local sem nome';
-  const categoria = local?.categoria;
   const endereco = local?.endereco;
   const avaliacaoMedia = local?.avaliacaoMedia || 0;
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
-  const tiposAcessibilidade = local?.tiposAcessibilidade || [];
-
-  const imagemParaExibir = useMemo(() => {
-    if (imageError) return null;
-    return local?.imagemUrl || null;
-  }, [local?.imagemUrl, imageError]);
+  const imagemParaExibir = imageError
+    ? null
+    : local?.imagemUrl ||
+      local?.imagemPrincipal ||
+      local?.primeiraImagem?.url ||
+      (Array.isArray(local?.imagens) && typeof local.imagens[0] === 'string' ? local.imagens[0] : null) ||
+      local?.imagem ||
+      local?.imagensCompletas?.[0]?.url ||
+      null;
 
   const handleImageError = () => {
     setImageError(true);
@@ -60,7 +62,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           backgroundColor: t.colors.surface,
           borderColor: contraste ? t.colors.border : t.colors.borderLight,
           borderWidth: contraste ? 2 : 1,
-          shadowColor: contraste ? 'transparent' : theme.colors.shadow,
+          shadowColor: contraste ? 'transparent' : defaultTheme.colors.shadow,
           shadowOffset: contraste ? { width: 0, height: 0 } : { width: 0, height: 2 },
           shadowOpacity: contraste ? 0 : 0.12,
           shadowRadius: contraste ? 0 : 4,

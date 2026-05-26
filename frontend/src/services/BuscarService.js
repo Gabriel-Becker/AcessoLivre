@@ -2,6 +2,14 @@ import api from '../api/axios';
 import HomeService from './HomeService';
 
 const BuscarService = {
+  normalizarTexto(valor) {
+    return String(valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  },
+
   /**
    * Busca locais com filtros avançados
    * Se não houver filtros, retorna locais em destaque
@@ -34,17 +42,19 @@ const BuscarService = {
       });
       
       let locais = response.data?.content || response.data || [];
+      locais = this.sanitizarLocais(locais);
       
       if (searchText) {
-        const searchLower = searchText.toLowerCase();
+        const searchLower = this.normalizarTexto(searchText);
         locais = locais.filter(local => 
-          local.nome?.toLowerCase().includes(searchLower)
+          this.normalizarTexto(local.nome).includes(searchLower) ||
+          this.normalizarTexto(local.endereco?.cidade).includes(searchLower)
         );
       }
       
       if (categorias && categorias.length > 0) {
         locais = locais.filter(local => 
-          categorias.includes(local.categoria)
+          categorias.some(categoria => this.normalizarTexto(categoria) === this.normalizarTexto(local.categoria))
         );
       }
       
@@ -53,9 +63,8 @@ const BuscarService = {
           if (!local.tiposAcessibilidade || local.tiposAcessibilidade.length === 0) {
             return false;
           }
-          return recursos.some(recurso => 
-            local.tiposAcessibilidade.includes(recurso)
-          );
+          const tiposNormalizados = local.tiposAcessibilidade.map(tipo => this.normalizarTexto(tipo));
+          return recursos.some(recurso => tiposNormalizados.includes(this.normalizarTexto(recurso)));
         });
       }
       
@@ -102,10 +111,12 @@ const BuscarService = {
       });
       
       let locais = response.data?.content || response.data || [];
-      const searchLower = nome.toLowerCase();
+      locais = this.sanitizarLocais(locais);
+      const searchLower = this.normalizarTexto(nome);
       
       locais = locais.filter(local => 
-        local.nome?.toLowerCase().includes(searchLower)
+        this.normalizarTexto(local.nome).includes(searchLower) ||
+        this.normalizarTexto(local.endereco?.cidade).includes(searchLower)
       );
       
       return {
