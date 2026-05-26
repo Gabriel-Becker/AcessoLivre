@@ -14,6 +14,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.acessolivre.enums.Role;
 import org.springframework.transaction.annotation.Transactional;
 //import org.springframework.context.annotation.Lazy;
 
@@ -204,6 +208,14 @@ public class LocalService {
             throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
         }
 
+        Long authId = obterIdUsuarioAutenticado();
+        if (authId == null) {
+            throw new AccessDeniedException("Operação requer autenticação");
+        }
+        if (!authId.equals(dto.getIdUsuario()) && !isUsuarioAdminAutenticado()) {
+            throw new AccessDeniedException("Não autorizado a criar local para outro usuário");
+        }
+
         Usuario usuario = validarUsuario(dto.getIdUsuario());
         Endereco endereco = resolverEndereco(dto);
         Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
@@ -230,8 +242,14 @@ public class LocalService {
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
             throw new IllegalArgumentException("Pelo menos um tipo de acessibilidade deve ser informado");
         }
-
         return localRepository.findById(id).map(local -> {
+            Long authId = obterIdUsuarioAutenticado();
+            if (authId == null) {
+                throw new AccessDeniedException("Operação requer autenticação");
+            }
+            if (!isUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
+                throw new AccessDeniedException("Não autorizado a atualizar este local");
+            }
             Usuario usuario = validarUsuario(dto.getIdUsuario());
             Endereco endereco = resolverEndereco(dto);
             Local novoLocalPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), id);
@@ -281,6 +299,14 @@ public class LocalService {
         
         Local local = localRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + id));
+
+        Long authId = obterIdUsuarioAutenticado();
+        if (authId == null) {
+            throw new AccessDeniedException("Operação requer autenticação");
+        }
+        if (!isUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
+            throw new AccessDeniedException("Não autorizado a deletar este local");
+        }
         
         if (localRepository.hasSubLocais(id)) {
             long countSubLocais = localRepository.countSubLocais(id);
@@ -454,6 +480,30 @@ public class LocalService {
             atual = atual.getLocalPrincipal();
         }
         return false;
+    }
+    
+    private Long obterIdUsuarioAutenticado() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) return null;
+            String username = auth.getName();
+            return usuarioRepository.findByEmail(username).map(Usuario::getIdUsuario).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean isUsuarioAdminAutenticado() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated()) return false;
+            String username = auth.getName();
+            return usuarioRepository.findByEmail(username)
+                    .map(usuario -> usuario.getRole() == Role.ROLE_ADMIN)
+                    .orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     private void validarExistenciaLocal(Long idLocal) {

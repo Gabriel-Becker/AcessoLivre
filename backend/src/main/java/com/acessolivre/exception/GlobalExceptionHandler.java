@@ -213,7 +213,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("erro", ex.getMessage());
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (msg.contains("não encontrado") || msg.contains("não foi encontrado") || msg.contains("não existe")) {
+            status = HttpStatus.NOT_FOUND;
+        }
+        return new ResponseEntity<>(errors, status);
     }
 
     @ExceptionHandler(IllegalStateException.class)

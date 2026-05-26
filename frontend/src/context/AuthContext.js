@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import Toast from 'react-native-toast-message';
 import AuthService from '../services/AuthService';
 import { setLogoutHandler } from '../utils/SessionManager';
+import { resetToAuth } from '../navigation/navigationRef';
 import useTokenMonitor from '../hooks/useTokenMonitor';
 
 const AuthContext = createContext({});
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }) => {
         text1: 'Sessão expirada',
         text2: 'Faça login novamente',
       });
+      resetToAuth();
     } catch (error) {
       console.error('[AuthContext] Erro ao fazer logout após token inválido:', error);
     }
@@ -248,6 +250,7 @@ export const AuthProvider = ({ children }) => {
         text1: 'Logout realizado',
         text2: 'Até breve!',
       });
+      resetToAuth();
     } catch (erro) {
       console.error('[AuthContext] Erro ao fazer logout:', erro);
       setToken(null);
