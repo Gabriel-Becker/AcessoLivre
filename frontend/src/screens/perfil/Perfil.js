@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
@@ -91,6 +91,10 @@ export default function Perfil() {
 
   const handleEditarLocal = (idLocal) => {
     navigate('Main', { screen: 'Adicionar', localId: idLocal });
+  };
+
+  const handleAbrirDetalhesLocal = (idLocal) => {
+    navigate('Main', { screen: 'LocalDetalhes', id: idLocal });
   };
 
   const executarLogout = async () => {
@@ -218,26 +222,39 @@ export default function Perfil() {
             </>
           ) : (
             meusLocais.map((local) => (
-              <View key={local.idLocal} style={{ marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View
+                key={local.idLocal}
+                style={{
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: isHighContrast ? t.colors.primary : t.colors.borderLight,
+                  borderRadius: 12,
+                  padding: 12,
+                }}
+              >
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => handleAbrirDetalhesLocal(local.idLocal)}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <View style={{ flex: 1 }}>
                     <ThemedText weight="semibold" altoContraste={isHighContrast}>{local.nome}</ThemedText>
                     <ThemedText color="textSecondary" size="sm">{local.categoria}</ThemedText>
                   </View>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
-                      <Button variant="outline" size="small" onPress={() => handleEditarLocal(local.idLocal)} altoContraste={isHighContrast}>
-                        Editar
-                      </Button>
-                    )}
-                    {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
-                      <Button variant="danger" size="small" onPress={() => confirmarExcluirLocal(local.idLocal, local.nome)} altoContraste={isHighContrast}>
-                        Excluir
-                      </Button>
-                    )}
+                  <Ionicons name="chevron-forward" size={18} color={t.colors.textSecondary} />
+                </TouchableOpacity>
+
+                {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <Button variant="outline" size="small" onPress={() => handleEditarLocal(local.idLocal)} altoContraste={isHighContrast}>
+                      Editar
+                    </Button>
+                    <Button variant="danger" size="small" onPress={() => confirmarExcluirLocal(local.idLocal, local.nome)} altoContraste={isHighContrast}>
+                      Excluir
+                    </Button>
                   </View>
+                )}
                 </View>
-              </View>
             ))
           )}
         </Card>
