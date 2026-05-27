@@ -516,6 +516,15 @@ public class LocalService {
             return false;
         }
     }
+
+    // Métodos públicos auxiliares para uso em controladores
+    public Long obterIdUsuarioAutenticadoPublic() {
+        return obterIdUsuarioAutenticado();
+    }
+
+    public boolean isUsuarioAdminAutenticadoPublic() {
+        return isUsuarioAdminAutenticado();
+    }
     
     private void validarExistenciaLocal(Long idLocal) {
         if (!localRepository.existsById(idLocal)) {

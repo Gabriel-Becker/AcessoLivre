@@ -27,6 +27,7 @@ import com.acessolivre.dto.request.LocalRequestDTO;
 import com.acessolivre.dto.response.LocalResponseDTO;
 import com.acessolivre.enums.Categoria;
 import com.acessolivre.enums.TipoAcessibilidade;
+import com.acessolivre.enums.StatusLocal;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
@@ -135,6 +136,31 @@ public class LocalController {
         Page<Local> locais = localService.buscarPorTipoAcessibilidadePaginado(tipo, pageable);
         Page<LocalResponseDTO> dtos = locais.map(LocalMapper::toResponse);
         
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/usuario/{idUsuario}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<LocalResponseDTO>> buscarPorUsuario(@PathVariable Long idUsuario) {
+        log.info("GET /api/locais/usuario/{} - Buscando locais do usuário", idUsuario);
+
+        Long authId = localService.obterIdUsuarioAutenticadoPublic();
+        boolean isAdmin = localService.isUsuarioAdminAutenticadoPublic();
+
+        if (authId == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (!isAdmin && !authId.equals(idUsuario)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        List<Local> locais = localService.buscarPorUsuario(idUsuario);
+        List<LocalResponseDTO> dtos = locais.stream()
+                .filter(l -> l.getStatus() != StatusLocal.INATIVO)
+                .map(LocalMapper::toResponse)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(dtos);
     }
 
