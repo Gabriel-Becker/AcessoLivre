@@ -28,6 +28,7 @@ import LocalGallery from '../../components/local/LocalGallery';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import LocalService from '../../services/LocalService';
 import HomeService from '../../services/HomeService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
@@ -104,7 +105,7 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
 // ============================================
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t } = useThemeContext();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, usuario } = useAuth();
   const { width } = useWindowDimensions();
   const { id } = route?.params || {};
 
@@ -164,6 +165,33 @@ export default function LocalDetalhes({ onNavigate, route }) {
       setRefreshing(false);
     }
   }, [id]);
+
+  const roleUsuario = String(usuario?.role || '').toUpperCase();
+  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
+
+  const handleEditarLocal = () => {
+    onNavigate?.('Main', { screen: 'Adicionar', localId: id });
+  };
+
+  const handleExcluirLocal = () => {
+    Alert.alert(
+      'Confirmar exclusão',
+      'Deseja realmente excluir este local? A exclusão é lógica e pode ser reversível por um admin.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: async () => {
+          try {
+            await LocalService.removerLocal(id);
+            toastHelper.showSuccess('Local excluído com sucesso');
+            onNavigate?.('Inicio');
+          } catch (err) {
+            console.error('Erro ao excluir local:', err);
+            toastHelper.showError('Erro ao excluir local');
+          }
+        } }
+      ]
+    );
+  };
 
   useEffect(() => {
     carregar();
@@ -305,7 +333,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
               <View style={styles.cardPrincipalWrapper}>
                 <Card altoContraste={isHighContrast} style={styles.cardPrincipal}>
                   {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
-                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
+                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, handleEditarLocal, handleExcluirLocal)}
                 </Card>
               </View>
 
@@ -326,7 +354,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <>
             <Card altoContraste={isHighContrast} style={styles.cardPrincipalMobile}>
               {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
-              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo)}
+              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, handleEditarLocal, handleExcluirLocal)}
             </Card>
 
             <Spacer size="lg" />
@@ -397,7 +425,7 @@ function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto,
   );
 }
 
-function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo) {
+function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, onEditar, onExcluir) {
   const getButtonVariant = (botaoNome) => {
     return botaoAtivo === botaoNome ? 'primary' : 'outline';
   };
@@ -446,6 +474,30 @@ function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCom
         >
           Reportar
         </Button>
+        {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
+          <>
+            <Button
+              variant="outline"
+              size="medium"
+              iconLeft="create-outline"
+              onPress={onEditar}
+              altoContraste={isHighContrast}
+              style={styles.botaoAcao}
+            >
+              Editar
+            </Button>
+            <Button
+              variant="danger"
+              size="medium"
+              iconLeft="trash-outline"
+              onPress={onExcluir}
+              altoContraste={isHighContrast}
+              style={styles.botaoAcao}
+            >
+              Excluir
+            </Button>
+          </>
+        )}
       </View>
     </>
   );

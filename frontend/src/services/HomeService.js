@@ -207,6 +207,7 @@ const HomeService = {
       
       // Tipos de acessibilidade
       tiposAcessibilidade: local.tiposAcessibilidade || [],
+      idUsuario: local.idUsuario,
       
       // Datas
       dataCriacao: local.dataCriacao,

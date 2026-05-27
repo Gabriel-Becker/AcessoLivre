@@ -176,6 +176,12 @@ const LocalService = {
     return response.data;
   },
 
+  async obterMeusLocais(idUsuario) {
+    if (!idUsuario) return [];
+    const response = await api.get(`/locais/usuario/${idUsuario}`);
+    return response.data || [];
+  },
+
   /**
    * Busca locais em destaque
    */

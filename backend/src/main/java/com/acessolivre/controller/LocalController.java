@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.acessolivre.dto.request.LocalRequestDTO;
 import com.acessolivre.dto.response.LocalResponseDTO;
 import com.acessolivre.enums.Categoria;
-import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
@@ -297,6 +297,7 @@ public class LocalController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
+        requestDTO.setNome(capitalizarPrimeiraLetra(requestDTO.getNome()));
         log.info("POST /api/locais - Salvando local: {}", requestDTO.getNome());
         
         if (requestDTO.getTiposAcessibilidade() == null || requestDTO.getTiposAcessibilidade().isEmpty()) {
@@ -324,6 +325,8 @@ public class LocalController {
             return ResponseEntity.badRequest().build();
         }
         
+        requestDTO.setNome(capitalizarPrimeiraLetra(requestDTO.getNome()));
+
         return localService.atualizar(id, requestDTO)
                 .map(LocalMapper::toResponse)
                 .map(ResponseEntity::ok)
@@ -372,5 +375,12 @@ public class LocalController {
             log.warn("Direção de ordenação inválida: {}, usando DESC", direction);
             return Sort.Direction.DESC;
         }
+    }
+
+    private String capitalizarPrimeiraLetra(String nome) {
+        if (nome == null) return null;
+        String texto = nome.trim();
+        if (texto.isEmpty()) return texto;
+        return texto.substring(0, 1).toUpperCase() + texto.substring(1);
     }
 }

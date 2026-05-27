@@ -363,7 +363,7 @@ const localStyles = StyleSheet.create({
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
-export default function AdicionarLocal({ onNavigate, navigation }) {
+export default function AdicionarLocal({ onNavigate, navigation, routeParams }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario } = useAuth();
   const { width } = useWindowDimensions();
@@ -391,6 +391,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
   const [enviando, setEnviando] = useState(false);
   const [imagens, setImagens] = useState([]);
   const [progressoImagens, setProgressoImagens] = useState({ atual: 0, total: 0 });
+  const [editingLocalId, setEditingLocalId] = useState(null);
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
     totalAvaliacoes: 0,
@@ -428,6 +429,50 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
     };
     carregarEstatisticas();
   }, []);
+
+  useEffect(() => {
+    const localId = routeParams?.localId;
+    if (!localId) return;
+
+    const carregarLocalParaEdicao = async () => {
+      try {
+        setEnviando(true);
+        const data = await LocalService.obterLocal(localId);
+        if (data) {
+          setFormulario((prev) => ({
+            ...prev,
+            nome: data.nome || '',
+            categoria: data.categoria || null,
+            descricao: data.descricao || '',
+            cep: data.endereco?.cep || '',
+            logradouro: data.endereco?.logradouro || '',
+            numero: data.endereco?.numero || '',
+            complemento: data.endereco?.complemento || '',
+            bairro: data.endereco?.bairro || '',
+            cidade: data.endereco?.cidade || '',
+            estado: data.endereco?.estado || '',
+          }));
+
+          const recursosObj = {};
+          const tipos = Array.isArray(data.tiposAcessibilidade) ? data.tiposAcessibilidade : (data.tiposAcessibilidade ? Object.values(data.tiposAcessibilidade) : []);
+          RECURSOS_ACESSIBILIDADE.forEach((recurso) => {
+            recursosObj[recurso.id] = tipos.includes(recurso.enumValue);
+          });
+          setRecursosSelecionados(recursosObj);
+
+          setImagens([]);
+          setEditingLocalId(localId);
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar local para edição:', erro);
+        toastHelper.showError('Não foi possível carregar o local para edição.');
+      } finally {
+        setEnviando(false);
+      }
+    };
+
+    carregarLocalParaEdicao();
+  }, [routeParams]);
 
   const adicionarImagens = (novasImagens) => {
     const MAX_IMAGES = 5;
@@ -618,11 +663,14 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
         },
       };
 
-      console.log('📤 Cadastrando local...');
-      const localResponse = await LocalService.cadastrarLocal(payloadLocal);
-      const localId = localResponse.idLocal || localResponse.id;
-      
-      console.log('✅ Local criado com ID:', localId);
+      let localId = null;
+      if (editingLocalId) {
+        await LocalService.atualizarLocal(editingLocalId, payloadLocal);
+        localId = editingLocalId;
+      } else {
+        const localResponse = await LocalService.cadastrarLocal(payloadLocal);
+        localId = localResponse.idLocal || localResponse.id;
+      }
 
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
@@ -989,7 +1037,7 @@ export default function AdicionarLocal({ onNavigate, navigation }) {
                 style={estilos.botaoPrincipal}
                 altoContraste={isHighContrast}
               >
-                {enviando ? 'Salvando...' : 'Adicionar Local'}
+                {enviando ? 'Salvando...' : (editingLocalId ? 'Salvar Alterações' : 'Adicionar Local')}
               </Button>
             </View>
           </View>

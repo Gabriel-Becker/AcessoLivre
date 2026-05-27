@@ -88,7 +88,7 @@ function MainApp({ navigation, route }) {
       case 'Buscar':
         return <Buscar onNavigate={handleNavigate} />;
       case 'Adicionar':
-        return <AdicionarLocal onNavigate={handleNavigate} />;
+        return <AdicionarLocal onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'LocalDetalhes':
         return <LocalDetalhes onNavigate={handleNavigate} route={route} />;
       case 'Sobre':

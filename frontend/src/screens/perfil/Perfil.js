@@ -10,6 +10,9 @@ import { useThemeContext } from '../../context/ThemeContext';
 import AuthService from '../../services/AuthService';
 import { resetToHome } from '../../navigation/navigationRef';
 import toastHelper from '../../utils/toastHelper';
+import LocalService from '../../services/LocalService';
+import { navigate } from '../../navigation/navigationRef';
+import { Alert } from 'react-native';
 
 export default function Perfil() {
   const { usuario, logout } = useAuth();
@@ -23,6 +26,11 @@ export default function Perfil() {
   const [twoFactorAtivo, setTwoFactorAtivo] = useState(false);
   const [carregandoTwoFactor, setCarregandoTwoFactor] = useState(true);
   const [carregandoLogout, setCarregandoLogout] = useState(false);
+  const [meusLocais, setMeusLocais] = useState([]);
+  const [carregandoMeusLocais, setCarregandoMeusLocais] = useState(false);
+
+  const roleUsuario = String(usuario?.role || '').toUpperCase();
+  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   const carregarStatusTwoFactor = async () => {
     try {
@@ -39,6 +47,51 @@ export default function Perfil() {
   useEffect(() => {
     carregarStatusTwoFactor();
   }, []);
+
+  useEffect(() => {
+    carregarMeusLocais();
+  }, [usuario]);
+
+  const carregarMeusLocais = async () => {
+    if (!usuario?.idUsuario) return;
+    try {
+      setCarregandoMeusLocais(true);
+      const locais = await LocalService.obterMeusLocais(usuario.idUsuario);
+      setMeusLocais(Array.isArray(locais) ? locais : []);
+    } catch (erro) {
+      console.error('Erro ao carregar meus locais:', erro);
+      toastHelper.showError('Não foi possível carregar seus locais.');
+    } finally {
+      setCarregandoMeusLocais(false);
+    }
+  };
+
+  const confirmarExcluirLocal = (idLocal, nomeLocal) => {
+    Alert.alert(
+      'Excluir local',
+      `Tem certeza que deseja excluir o local "${nomeLocal}"? Esta ação é definitiva (exclusão lógica).`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: () => handleExcluirLocal(idLocal) }
+      ]
+    );
+  };
+
+  const handleExcluirLocal = async (idLocal) => {
+    try {
+      await LocalService.removerLocal(idLocal);
+      toastHelper.showSuccess('Local excluído com sucesso.');
+      carregarMeusLocais();
+    } catch (erro) {
+      console.error('Erro ao excluir local:', erro);
+      const msg = erro?.response?.data?.message || erro?.message || 'Erro ao excluir local.';
+      toastHelper.showError(msg);
+    }
+  };
+
+  const handleEditarLocal = (idLocal) => {
+    navigate('Main', { screen: 'Adicionar', localId: idLocal });
+  };
 
   const executarLogout = async () => {
     try {
@@ -150,6 +203,44 @@ export default function Perfil() {
         </Card>
 
         <Spacer size="lg" />
+        <Card altoContraste={isHighContrast} variant={isHighContrast ? 'outlined' : 'default'} style={{ padding: t.spacing.xl }}>
+          <ThemedText variant="h2" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meus Locais</ThemedText>
+          <Spacer size="sm" />
+          {carregandoMeusLocais ? (
+            <ThemedText color={corSecundaria}>Carregando seus locais...</ThemedText>
+          ) : meusLocais.length === 0 ? (
+            <>
+              <ThemedText color={corSecundaria}>Você ainda não cadastrou nenhum local.</ThemedText>
+              <Spacer size="sm" />
+              <Button variant="primary" onPress={() => navigate('Main', { screen: 'Adicionar' })} altoContraste={isHighContrast}>
+                Adicionar Local
+              </Button>
+            </>
+          ) : (
+            meusLocais.map((local) => (
+              <View key={local.idLocal} style={{ marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <ThemedText weight="semibold" altoContraste={isHighContrast}>{local.nome}</ThemedText>
+                    <ThemedText color="textSecondary" size="sm">{local.categoria}</ThemedText>
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
+                      <Button variant="outline" size="small" onPress={() => handleEditarLocal(local.idLocal)} altoContraste={isHighContrast}>
+                        Editar
+                      </Button>
+                    )}
+                    {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
+                      <Button variant="danger" size="small" onPress={() => confirmarExcluirLocal(local.idLocal, local.nome)} altoContraste={isHighContrast}>
+                        Excluir
+                      </Button>
+                    )}
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+        </Card>
       </ScrollView>
 
       <TrocarSenhaModal
