@@ -48,8 +48,43 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (status === 401) {
+    // Retry-once mitigation: try silent reauth before forcing logout.
+    if (status === 401 && !isLoginEndpoint) {
       try {
+        const originalRequest = error.config || {};
+
+        // avoid infinite retry loops
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const currentToken = await AuthService.getToken();
+            const tokenData = AuthService.parseJwt(currentToken);
+            const userId = tokenData?.userId || tokenData?.user_id || tokenData?.sub || null;
+
+            if (userId) {
+              // attempt to reauthenticate once
+              const newToken = await AuthService.reautenticar(userId);
+              if (newToken) {
+                await AuthService.setToken(newToken);
+                // update header and retry original request
+                if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+                  originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
+                } else {
+                  originalRequest.headers = {
+                    ...(originalRequest.headers || {}),
+                    Authorization: `Bearer ${newToken}`,
+                  };
+                }
+                return api(originalRequest);
+              }
+            }
+          } catch (reauthErr) {
+            // fallthrough to logout below
+          }
+        }
+
+        // if reauth not possible or failed, proceed to logout
         await AuthService.removeToken();
         await AuthService.setUserData(null);
         await triggerLogout();

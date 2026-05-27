@@ -26,11 +26,6 @@ const BuscarService = {
     return String(categoria);
   },
 
-  /**
-   * Busca locais com filtros avançados
-   * Se não houver filtros, retorna locais em destaque
-   * Se houver filtros, busca todos e filtra no frontend
-   */
   async buscarLocais(filtros = {}) {
     try {
       const { searchText, categorias, recursos, notaMinima } = filtros;
@@ -41,7 +36,6 @@ const BuscarService = {
                         (notaMinima && notaMinima > 0);
       
       if (!temFiltros) {
-        console.log('🏠 BuscarService: Sem filtros, usando locais em destaque');
         const locaisDestaque = await HomeService.obterLocaisEmDestaque(50);
         return {
           success: true,
