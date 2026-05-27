@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
@@ -8,6 +8,7 @@ import { Container, DesktopLayout } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import { useAuth } from '../../context/AuthContext';
+import AuthService from '../../services/AuthService';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
 import authMessages from '../../utils/authMessages';
@@ -70,6 +71,27 @@ export default function Login({ navigation }) {
       twoFactorCode: '',
     },
   });
+
+  useEffect(() => {
+    let ativo = true;
+
+    const carregarPreferenciaRememberMe = async () => {
+      try {
+        const preferenciaSalva = await AuthService.getRememberMePreference();
+        if (ativo) {
+          setValue('rememberMe', preferenciaSalva);
+        }
+      } catch (error) {
+        console.error('[Login] Erro ao carregar remember me:', error);
+      }
+    };
+
+    carregarPreferenciaRememberMe();
+
+    return () => {
+      ativo = false;
+    };
+  }, [setValue]);
 
   const styles = useMemo(
     () =>

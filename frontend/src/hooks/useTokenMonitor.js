@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import AuthService from '../services/AuthService';
 
-const INTERVALO_MONITORAMENTO_MS = 60000;
+const INTERVALO_MONITORAMENTO_MS = 5000;
 const JANELA_RENOVACAO_MS = 5 * 60 * 1000;
 const COOLDOWN_RENOVACAO_MS = 60 * 1000;
 const MAX_FAILS_BEFORE_INVALIDATE = 3;
@@ -25,12 +25,16 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
     const checkTokenChanges = async () => {
       try {
         const currentToken = await AuthService.getToken();
+        const tokenPersistido = await AuthService.getPersistedToken();
+        const devePersistir = AuthService.shouldPersistToken();
 
-        // token removed (user logged out elsewhere)
-        if (!currentToken && lastTokenRef.current) {
-          consecutiveFailsRef.current = MAX_FAILS_BEFORE_INVALIDATE;
-          onTokenInvalid();
-          return;
+        // If this session should be persistent, any removal or edit outside the app invalidates it.
+        if (devePersistir && lastTokenRef.current) {
+          if (!tokenPersistido || currentToken !== lastTokenRef.current || tokenPersistido !== lastTokenRef.current) {
+            consecutiveFailsRef.current = MAX_FAILS_BEFORE_INVALIDATE;
+            onTokenInvalid();
+            return;
+          }
         }
 
         if (currentToken) {
@@ -85,13 +89,39 @@ const useTokenMonitor = (isAuthenticated, onTokenInvalid, onTokenExpiring) => {
       }
     };
 
+    const handleWindowFocus = () => {
+      checkTokenChanges();
+    };
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        checkTokenChanges();
+      }
+    };
+
     checkTokenChanges();
     intervalRef.current = setInterval(checkTokenChanges, INTERVALO_MONITORAMENTO_MS);
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleWindowFocus);
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleWindowFocus);
+      }
+
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
   }, [isAuthenticated, onTokenInvalid, onTokenExpiring]);

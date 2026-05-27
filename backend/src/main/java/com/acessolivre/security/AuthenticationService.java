@@ -149,7 +149,7 @@ public class AuthenticationService {
         }
     }
 
-    public String reautenticar(Long userId) {
+    public String reautenticar(Long userId, Boolean rememberMe) {
         Usuario usuario = usuarioRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -163,7 +163,7 @@ public class AuthenticationService {
             List.of(() -> usuario.getRole().name())
         );
         
-        String token = jwtService.gerarToken(authentication, false);
+        String token = jwtService.gerarToken(authentication, rememberMe != null && rememberMe);
         usuario.setTokenAtual(token);
         usuarioRepository.save(usuario);
         return token;

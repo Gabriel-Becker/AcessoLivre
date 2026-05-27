@@ -3,8 +3,10 @@ import api from '../api/axios';
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
+const REMEMBER_ME_KEY = 'rememberMe';
 let tokenEmMemoria = null;
 let tokenInicializado = false;
+let devePersistirToken = false;
 
 const normalizarToken = (token) => {
   if (!token || typeof token !== 'string') return null;
@@ -56,7 +58,6 @@ const valorEhVerdadeiro = (valor) => {
   }
   return false;
 };
-
 const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) => {
   const payload = responseData && typeof responseData === 'object' ? responseData : {};
 
@@ -104,16 +105,24 @@ const mensagemIndicaCredenciaisInvalidasOuBloqueio = (mensagem) => {
   );
 };
 
-const montarRespostaTwoFactor = (responseData, email, mensagemPadrao) => ({
-  success: false,
-  requiresTwoFactor: true,
-  twoFactorRequired: true,
-  emailDestino: responseData?.emailDestino || email,
-  message:
-    responseData?.mensagem ||
-    responseData?.message ||
-    mensagemPadrao,
-});
+const montarRespostaTwoFactor = async (responseData, email, mensagemPadrao) => {
+  let rememberMe = false;
+  try {
+    const stored = await AsyncStorage.getItem(REMEMBER_ME_KEY);
+    rememberMe = stored === 'true';
+  } catch (e) {
+    // ignore and default to false
+  }
+
+  return {
+    success: false,
+    requiresTwoFactor: true,
+    twoFactorRequired: true,
+    emailDestino: responseData?.emailDestino || email,
+    rememberMe,
+    message: responseData?.mensagem || responseData?.message || mensagemPadrao,
+  };
+};
 
 const aguardar = (milissegundos) => new Promise((resolve) => setTimeout(resolve, milissegundos));
 
@@ -139,38 +148,26 @@ const erroEhTransitorioDeConexao = (erro) => {
 const AuthService = {
   async getToken() {
     try {
-      if (tokenEmMemoria) {
-        return tokenEmMemoria;
-      }
-
-      if (tokenInicializado) {
-        return null;
-      }
-
       const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
-      if (tokenFromStorage) {
-        const tokenNormalizado = normalizarToken(tokenFromStorage);
-        if (tokenNormalizado) {
-          tokenEmMemoria = tokenNormalizado;
-          tokenInicializado = true;
-          aplicarTokenNoHeader(tokenNormalizado);
-        }
-        return tokenNormalizado;
-      }
-
       const tokenFromCookie = obterCookie(TOKEN_KEY);
-      if (tokenFromCookie) {
-        const tokenNormalizado = normalizarToken(tokenFromCookie);
-        if (tokenNormalizado) {
-          tokenEmMemoria = tokenNormalizado;
-          tokenInicializado = true;
-          aplicarTokenNoHeader(tokenNormalizado);
-        }
-        return tokenNormalizado;
+      const tokenPersistido = normalizarToken(tokenFromStorage || tokenFromCookie);
+      const tokenAtual = normalizarToken(tokenEmMemoria);
+
+      if (tokenPersistido) {
+        tokenEmMemoria = tokenPersistido;
+        tokenInicializado = true;
+        aplicarTokenNoHeader(tokenPersistido);
+        return tokenPersistido;
       }
 
+      if (tokenAtual) {
+        return tokenAtual;
+      }
+
+      tokenEmMemoria = null;
       tokenInicializado = true;
-      
+      aplicarTokenNoHeader(null);
+
       return null;
     } catch (e) {
       console.error('[AuthService] Erro ao recuperar token:', e);
@@ -178,20 +175,31 @@ const AuthService = {
     }
   },
 
-  async setToken(token) {
+  async setToken(token, { persistir = devePersistirToken } = {}) {
     const tokenNormalizado = normalizarToken(token);
     if (!tokenNormalizado) return;
 
     tokenEmMemoria = tokenNormalizado;
     tokenInicializado = true;
+    devePersistirToken = Boolean(persistir);
     
     try {
-      await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
+      await this.setRememberMePreference(devePersistirToken);
 
-      if (typeof document !== 'undefined') {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 30);
-        document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      if (devePersistirToken) {
+        await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
+
+        if (typeof document !== 'undefined') {
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+        }
+      } else {
+        await AsyncStorage.removeItem(TOKEN_KEY);
+
+        if (typeof document !== 'undefined') {
+          document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
+        }
       }
 
       aplicarTokenNoHeader(tokenNormalizado);
@@ -205,11 +213,12 @@ const AuthService = {
     try {
       tokenEmMemoria = null;
       tokenInicializado = true;
+      devePersistirToken = false;
 
       await AsyncStorage.removeItem(TOKEN_KEY);
 
       if (typeof document !== 'undefined') {
-        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
       }
 
       aplicarTokenNoHeader(null);
@@ -221,6 +230,65 @@ const AuthService = {
 
   getTokenEmMemoria() {
     return tokenEmMemoria;
+  },
+
+  shouldPersistToken() {
+    return devePersistirToken;
+  },
+
+  async getRememberMePreference() {
+    try {
+      const valorArmazenado = await AsyncStorage.getItem(REMEMBER_ME_KEY);
+      if (valorArmazenado !== null) {
+        return valorArmazenado === 'true';
+      }
+
+      const valorCookie = obterCookie(REMEMBER_ME_KEY);
+      if (valorCookie !== null) {
+        return valorCookie === 'true';
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[AuthService] Erro ao recuperar preferência remember me:', error);
+      return false;
+    }
+  },
+
+  async setRememberMePreference(rememberMe) {
+    const valorNormalizado = rememberMe ? 'true' : 'false';
+
+    try {
+      await AsyncStorage.setItem(REMEMBER_ME_KEY, valorNormalizado);
+
+      if (typeof document !== 'undefined') {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 365);
+        document.cookie = `${REMEMBER_ME_KEY}=${valorNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      }
+    } catch (error) {
+      console.error('[AuthService] Erro ao salvar preferência remember me:', error);
+      throw error;
+    }
+  },
+
+  async getPersistedToken() {
+    try {
+      const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
+      if (tokenFromStorage) {
+        return normalizarToken(tokenFromStorage);
+      }
+
+      const tokenFromCookie = obterCookie(TOKEN_KEY);
+      if (tokenFromCookie) {
+        return normalizarToken(tokenFromCookie);
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[AuthService] Erro ao recuperar token persistido:', error);
+      return null;
+    }
   },
 
   async setUserData(usuario) {
@@ -318,6 +386,7 @@ const AuthService = {
   async login({ email, senha, rememberMe = false, twoFactorCode }) {
     let twoFactorCodeInformado = false;
     try {
+      await this.setRememberMePreference(rememberMe);
       await this.removeToken();
       await this.setUserData(null);
       
@@ -341,7 +410,7 @@ const AuthService = {
         throw new Error('Token inválido retornado pelo servidor');
       }
       
-      await this.setToken(token);
+      await this.setToken(token, { persistir: rememberMe });
       const storedToken = await this.getToken();
       if (!storedToken) {
         throw new Error('Falha ao armazenar token de autenticação');
@@ -498,7 +567,7 @@ const AuthService = {
       const newToken = response.data;
       
       if (newToken && typeof newToken === 'string') {
-        await this.setToken(newToken);
+        await this.setToken(newToken, { persistir: devePersistirToken });
         return newToken;
       }
       

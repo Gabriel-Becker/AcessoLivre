@@ -351,7 +351,7 @@ public class AuthController {
     }
 
     @PostMapping("/reauth/{userId}")
-    public ResponseEntity<?> reautenticar(@PathVariable Long userId, HttpServletRequest request) {
+    public ResponseEntity<?> reautenticar(@PathVariable Long userId, @RequestParam(required = false) Boolean rememberMe, HttpServletRequest request) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -369,7 +369,7 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token revogado");
             }
 
-            String newToken = authenticationService.reautenticar(userId);
+            String newToken = authenticationService.reautenticar(userId, rememberMe != null && rememberMe);
 
             log.info("Token renovado para userId={}", userId);
             return ResponseEntity.ok(newToken);
