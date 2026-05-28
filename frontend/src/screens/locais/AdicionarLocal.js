@@ -683,10 +683,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             setProgressoImagens({ atual: i + 1, total: imagens.length });
             
             const imagem = imagens[i];
-            console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
-            console.log(`   URI: ${imagem.uri}`);
-            console.log(`   Nome: ${imagem.name}`);
-            console.log(`   Tipo: ${imagem.type}`);
             
             const formData = new FormData();
             formData.append('idLocal', String(localId));
@@ -719,10 +715,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             
             formData.append('arquivo', arquivoParaEnviar);
             
-            for (let pair of formData.entries()) {
-              console.log(`   FormData: ${pair[0]}:`, pair[1]?.name || pair[1]);
-            }
-            
             await api.post('/imagens', formData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
@@ -730,7 +722,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             });
             
             imagensEnviadas++;
-            console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada com sucesso!`);
             
           } catch (erroImagem) {
             console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);

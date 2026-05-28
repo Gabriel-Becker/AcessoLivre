@@ -121,11 +121,9 @@ const LocalService = {
       }
 
       try {
-        console.log(`📸 Enviando imagem ${i + 1}/${imagens.length}...`);
         const resultado = await this.enviarImagem(idLocal, imagens[i]);
         resultados.push(resultado);
         imagensEnviadas++;
-        console.log(`✅ Imagem ${i + 1}/${imagens.length} enviada`);
       } catch (erro) {
         console.error(`❌ Erro na imagem ${i + 1}:`, erro);
         imagensComErro++;

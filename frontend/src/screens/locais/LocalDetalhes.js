@@ -187,7 +187,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
           avaliacoes = dados.avaliacoes;
         }
       } catch (err) {
-        console.warn('Erro ao buscar avaliações:', err);
         if (dados.avaliacoes) avaliacoes = dados.avaliacoes;
       }
       

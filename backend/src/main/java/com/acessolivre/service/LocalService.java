@@ -33,15 +33,7 @@ import com.acessolivre.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-<<<<<<< HEAD
-=======
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.acessolivre.dto.request.BuscaFiltrosRequestDTO;
-import java.util.*;
->>>>>>> 5af05f5 (feat: implementado filtro ebusca)
 
 @Service
 @RequiredArgsConstructor

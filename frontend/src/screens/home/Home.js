@@ -58,12 +58,6 @@ export default function Home({ onNavigate }) {
       const locais = await BuscarService.obterLocaisEmDestaque(8);
       setLocaisDestaque(locais.filter(l => l?.id));
       
-      console.log('📊 Home carregada:', {
-        locais: stats.totalLocais,
-        avaliacoes: stats.totalAvaliacoes,
-        destaques: locais.length
-      });
-      
     } catch (e) {
       console.error('Erro ao carregar Home:', e);
       toastHelper.showError('Erro ao carregar dados da home');

@@ -34,7 +34,6 @@ const HomeService = {
         });
         totalLocais = locaisResponse.data?.totalElements || 0;
       } catch (e) {
-        console.warn('Erro ao buscar total de locais:', e.message);
       }
 
       // Buscar total de usuários (endpoint pode não existir ainda)
@@ -45,7 +44,6 @@ const HomeService = {
         });
         totalUsuarios = usuariosResponse.data?.totalElements || 0;
       } catch (e) {
-        console.warn('Endpoint /usuarios não disponível, usando fallback');
         // Fallback: tentar buscar do token ou estimativa
         totalUsuarios = 1; // pelo menos o usuário atual
       }
@@ -58,7 +56,6 @@ const HomeService = {
         });
         totalAvaliacoes = avaliacoesResponse.data?.totalElements || 0;
       } catch (e) {
-        console.warn('Endpoint /avaliacoes não disponível');
       }
 
       return { totalLocais, totalAvaliacoes, totalUsuarios };

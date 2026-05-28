@@ -1,33 +1,22 @@
 package com.acessolivre.controller;
 
-<<<<<<< HEAD
-=======
+import com.acessolivre.dto.request.BuscaFiltrosRequestDTO;
 import com.acessolivre.dto.request.LocalRequestDTO;
 import com.acessolivre.dto.response.LocalResponseDTO;
-import com.acessolivre.dto.request.BuscaFiltrosRequestDTO;
 import com.acessolivre.enums.Categoria;
+import com.acessolivre.enums.StatusLocal;
 import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
->>>>>>> 5af05f5 (feat: implementado filtro ebusca)
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,19 +33,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.acessolivre.dto.request.LocalRequestDTO;
-import com.acessolivre.dto.response.LocalResponseDTO;
-import com.acessolivre.enums.Categoria;
-import com.acessolivre.enums.StatusLocal;
-import com.acessolivre.enums.TipoAcessibilidade;
-import com.acessolivre.mapper.LocalMapper;
-import com.acessolivre.model.Local;
-import com.acessolivre.service.LocalService;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/locais")
@@ -399,13 +375,13 @@ public class LocalController {
         }
     }
 
-<<<<<<< HEAD
     private String capitalizarPrimeiraLetra(String nome) {
         if (nome == null) return null;
         String texto = nome.trim();
         if (texto.isEmpty()) return texto;
         return texto.substring(0, 1).toUpperCase() + texto.substring(1);
-=======
+    }
+
     @PostMapping("/buscar")
     public ResponseEntity<Page<LocalResponseDTO>> buscarComFiltros(
             @RequestBody BuscaFiltrosRequestDTO filtros,
@@ -414,11 +390,10 @@ public class LocalController {
             @RequestParam(defaultValue = "avaliacaoMedia") String sort,
             @RequestParam(defaultValue = "desc") String direction) {
         
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction), sort));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(validateSortDirection(direction), sort));
         Page<Local> locais = localService.buscarComFiltros(filtros, pageable);
         Page<LocalResponseDTO> response = locais.map(LocalMapper::toResponse);
         
         return ResponseEntity.ok(response);
->>>>>>> 5af05f5 (feat: implementado filtro ebusca)
     }
 }

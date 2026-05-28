@@ -51,10 +51,11 @@ function MainApp({ navigation, route }) {
       return;
     }
 
-    // Armazena os params para a próxima renderização
-    if (params && Object.keys(params).length > 0) {
-      navigation?.setParams({ ...route?.params, screen, ...params });
-    }
+    navigation?.setParams({
+      ...route?.params,
+      screen,
+      ...params,
+    });
     
     setCurrentScreen(screen);
   };

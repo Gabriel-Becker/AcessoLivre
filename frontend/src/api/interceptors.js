@@ -3,9 +3,32 @@ import AuthService from '../services/AuthService';
 import { triggerLogout } from '../utils/SessionManager';
 import { resetToAuth } from '../navigation/navigationRef';
 
+const normalizarCaminho = (url = '') => String(url).split('?')[0];
+
+const ehRotaPublicaDeLeitura = (config = {}) => {
+  const metodo = String(config.method || 'get').toLowerCase();
+  const caminho = normalizarCaminho(config.url || '');
+
+  if (metodo !== 'get') {
+    return false;
+  }
+
+  return (
+    caminho === '/locais' ||
+    caminho.startsWith('/locais/') ||
+    caminho === '/avaliacoes' ||
+    caminho.startsWith('/avaliacoes/local/') ||
+    caminho.startsWith('/uploads/')
+  );
+};
+
 api.interceptors.request.use(
   async (config) => {
     try {
+      if (ehRotaPublicaDeLeitura(config)) {
+        return config;
+      }
+
       const tokenEmMemoria = AuthService.getTokenEmMemoria();
       const token = tokenEmMemoria || await AuthService.getToken();
       if (token) {
@@ -42,16 +65,26 @@ api.interceptors.response.use(
   async (error) => {
     const status = error.response?.status;
     const requestUrl = error.config?.url || '';
+    const requestConfig = error.config || {};
     const isLoginEndpoint = String(requestUrl).includes('/auth/login');
+    const isPublicReadEndpoint = ehRotaPublicaDeLeitura(requestConfig);
 
     if (status === 401 && isLoginEndpoint) {
+      return Promise.reject(error);
+    }
+
+    if (status === 401 && isPublicReadEndpoint) {
+      try {
+        await AuthService.removeToken();
+      } catch {
+      }
       return Promise.reject(error);
     }
 
     // Retry-once mitigation: try silent reauth before forcing logout.
     if (status === 401 && !isLoginEndpoint) {
       try {
-        const originalRequest = error.config || {};
+        const originalRequest = requestConfig;
 
         // avoid infinite retry loops
         if (!originalRequest._retry) {

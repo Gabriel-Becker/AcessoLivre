@@ -9,25 +9,14 @@ class AvaliacaoService {
    */
   static async buscarAvaliacoesPorLocal(idLocal) {
     try {
-      console.log('📡 Buscando avaliações para o local:', idLocal);
-      
       const response = await api.get(`/avaliacoes/local/${idLocal}`);
-      
-      console.log('📥 Resposta do backend (RAW):', JSON.stringify(response.data, null, 2));
-      
+
       if (response.data && Array.isArray(response.data)) {
         // Mapear os dados do backend para o formato esperado pelo frontend
         const avaliacoesFormatadas = response.data.map(avaliacao => {
           // Extrair dados do usuário
           const usuario = avaliacao.usuario || {};
-          
-          // Log específico para a data
-          console.log(`📅 Data bruta da avaliação ${avaliacao.idAvaliacao}:`, {
-            dataAvaliacao: avaliacao.dataAvaliacao,
-            tipo: typeof avaliacao.dataAvaliacao,
-            valor: avaliacao.dataAvaliacao
-          });
-          
+
           return {
             id: avaliacao.idAvaliacao,
             idAvaliacao: avaliacao.idAvaliacao,
@@ -46,10 +35,7 @@ class AvaliacaoService {
             moderado: avaliacao.moderado !== false
           };
         });
-        
-        console.log('✅ Avaliações formatadas:', avaliacoesFormatadas);
-        console.log('📅 Datas após formatação:', avaliacoesFormatadas.map(a => ({ id: a.id, data: a.dataAvaliacao, tipo: typeof a.dataAvaliacao })));
-        
+
         return {
           success: true,
           data: avaliacoesFormatadas,
@@ -120,8 +106,6 @@ class AvaliacaoService {
         idUsuario: Number(dados.idUsuario),
         idLocal: Number(dados.idLocal)
       };
-
-      console.log('📤 Enviando avaliação:', payload);
 
       const response = await api.post('/avaliacoes', payload);
       

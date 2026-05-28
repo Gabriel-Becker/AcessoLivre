@@ -204,8 +204,6 @@ export default function Buscar({ onNavigate }) {
         notaMinima: notaMinima > 0 ? notaMinima : null
       };
       
-      console.log('🔍 Buscando localmente com filtros:', filtros);
-      
       const response = await BuscarService.buscarLocais(filtros);
       
       if (response.success) {

@@ -104,8 +104,6 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
         notaAcessibilidadeAuditiva: notaAuditiva,
         comentario: comentario.trim() || null
       };
-
-      console.log('📝 Enviando avaliação:', avaliacaoData);
       
       await onSubmit(avaliacaoData);
       resetForm();

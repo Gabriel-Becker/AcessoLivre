@@ -11,19 +11,16 @@ class BuscarService {
     try {
       // Verificar se já temos cache
       if (this.cache && this.cache.length > 0) {
-        console.log('📦 Usando cache de locais:', this.cache.length);
         return this.cache;
       }
-      
-      console.log('🌐 Buscando todos os locais do backend...');
+
       const response = await api.get('/locais/todos', {
         params: { page: 0, size: 100, sort: 'nome', direction: 'asc' }
       });
       
       const locais = response.data?.content || response.data || [];
       this.cache = this.sanitizarLocais(locais);
-      
-      console.log('✅ Carregados', this.cache.length, 'locais');
+
       return this.cache;
       
     } catch (error) {
@@ -39,8 +36,6 @@ class BuscarService {
    */
   static async buscarLocais(filtros) {
     try {
-      console.log('🔍 Filtrando locais localmente:', filtros);
-      
       // Carregar todos os locais (com cache)
       let locais = await this.carregarTodosLocais();
       
@@ -61,7 +56,6 @@ class BuscarService {
           local.endereco?.bairro?.toLowerCase().includes(searchLower) ||
           local.categoria?.toLowerCase().includes(searchLower)
         );
-        console.log(`📝 Filtro por texto "${searchLower}": ${resultados.length} resultados`);
       }
       
       // 2. Filtro por categorias
@@ -69,7 +63,6 @@ class BuscarService {
         resultados = resultados.filter(local => 
           filtros.categorias.includes(local.categoria)
         );
-        console.log(`📂 Filtro por categorias: ${resultados.length} resultados`);
       }
       
       // 3. Filtro por recursos de acessibilidade
@@ -81,7 +74,6 @@ class BuscarService {
             local.tiposAcessibilidade.includes(recurso)
           );
         });
-        console.log(`♿ Filtro por recursos: ${resultados.length} resultados`);
       }
       
       // 4. Filtro por nota mínima
@@ -89,7 +81,6 @@ class BuscarService {
         resultados = resultados.filter(local => 
           (local.avaliacaoMedia || 0) >= filtros.notaMinima
         );
-        console.log(`⭐ Filtro por nota >= ${filtros.notaMinima}: ${resultados.length} resultados`);
       }
       
       // Ordenar resultados (melhores notas primeiro)
@@ -123,31 +114,6 @@ class BuscarService {
     } catch (error) {
       console.error('Erro ao buscar destaques:', error);
       return [];
-    }
-  }
-
-  /**
-   * Obtém estatísticas para a home
-   * @returns {Promise<Object>}
-   */
-  static async obterEstatisticas() {
-    try {
-      const locais = await this.carregarTodosLocais();
-      const totalLocais = locais.length;
-      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
-      const mediaGeral = totalLocais > 0 
-        ? locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0) / totalLocais 
-        : 0;
-      
-      return {
-        totalLocais,
-        totalAvaliacoes,
-        mediaGeral: mediaGeral.toFixed(1),
-        totalUsuarios: 0
-      };
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
-      return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0, totalUsuarios: 0 };
     }
   }
 
