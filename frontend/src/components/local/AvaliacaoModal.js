@@ -6,88 +6,55 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   ScrollView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText, Spacer } from '../commons';
 import { Button, Input } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { getTheme } from '../../config/theme';
 
-const CRITERIOS_ACESSIBILIDADE = [
-  { id: 'rampa', label: 'Possui rampa de acesso?', icon: 'logo-usd' },
-  { id: 'elevador', label: 'Tem elevador funcionando?', icon: 'arrow-up-outline' },
-  { id: 'banheiro', label: 'Banheiro adaptado disponível?', icon: 'body-outline' },
-  { id: 'sinalizacao', label: 'Possui sinalização tátil?', icon: 'eye-outline' },
-  { id: 'espaco', label: 'Espaço adequado para cadeira de rodas?', icon: 'resize-outline' },
-];
-
 export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
-  const { isHighContrast} = useThemeContext();
+  const { isHighContrast } = useThemeContext();
+  const { getUsuarioId, isAuthenticated, getUsuarioNome } = useAuth();
   const theme = getTheme(isHighContrast);
 
-  const [nota, setNota] = useState(0);
-  const [notaHover, setNotaHover] = useState(0);
-  const [criterios, setCriterios] = useState({});
+  // Estados para as 3 notas obrigatórias
+  const [notaVisual, setNotaVisual] = useState(0);
+  const [notaMotora, setNotaMotora] = useState(0);
+  const [notaAuditiva, setNotaAuditiva] = useState(0);
+  
   const [comentario, setComentario] = useState('');
+  const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
-  const handleToggleCriterio = (id) => {
-    setCriterios(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  // Hover states para web
+  const [hoverVisual, setHoverVisual] = useState(0);
+  const [hoverMotora, setHoverMotora] = useState(0);
+  const [hoverAuditiva, setHoverAuditiva] = useState(0);
 
-  const handleEnviar = () => {
-    if (nota === 0) {
-      setErro('Por favor, selecione uma avaliação com estrelas antes de enviar.');
-      return;
-    }
-    setErro('');
-    
-    const avaliacao = {
-      nota,
-      criterios: Object.keys(criterios).filter(key => criterios[key]),
-      comentario: comentario.trim() || null,
-      data: new Date().toISOString(),
-      localId: local?.id,
-      localNome: local?.nome,
-    };
-    
-    onSubmit?.(avaliacao);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setNota(0);
-    setNotaHover(0);
-    setCriterios({});
-    setComentario('');
-    setErro('');
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
-  const renderStars = () => {
+  const renderStars = (nota, setNota, hover, setHover, label, disabled = false) => {
     const stars = [];
-    const displayNota = notaHover || nota;
+    const displayNota = hover || nota;
     
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <TouchableOpacity
           key={i}
-          onPress={() => setNota(i)}
-          onMouseEnter={() => Platform.OS === 'web' && setNotaHover(i)}
-          onMouseLeave={() => Platform.OS === 'web' && setNotaHover(0)}
+          onPress={() => !disabled && setNota(i)}
+          onMouseEnter={() => Platform.OS === 'web' && !disabled && setHover(i)}
+          onMouseLeave={() => Platform.OS === 'web' && !disabled && setHover(0)}
           activeOpacity={0.7}
           style={styles.starButton}
-          accessibilityLabel={`${i} estrelas`}
-          accessibilityHint={`Avaliar com ${i} estrelas`}
+          disabled={disabled}
+          accessibilityLabel={`${label}: ${i} estrelas`}
+          accessibilityHint={`Nota ${i} para ${label.toLowerCase()}`}
         >
           <Ionicons
             name={i <= displayNota ? 'star' : 'star-outline'}
-            size={40}
+            size={32}
             color={i <= displayNota ? theme.colors.warning : theme.colors.textTertiary}
           />
         </TouchableOpacity>
@@ -95,6 +62,89 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
     }
     return stars;
   };
+
+  const getNotaDescricao = (nota) => {
+    if (nota === 0) return 'Selecione uma nota';
+    if (nota === 1) return 'Muito ruim - Precisa melhorar muito';
+    if (nota === 2) return 'Ruim - Vários problemas';
+    if (nota === 3) return 'Regular - Atende parcialmente';
+    if (nota === 4) return 'Bom - Boa acessibilidade';
+    if (nota === 5) return 'Excelente - Totalmente acessível';
+    return '';
+  };
+
+  const handleEnviar = async () => {
+    // Validações
+    if (!isAuthenticated) {
+      Alert.alert('Login necessário', 'Faça login para avaliar um local');
+      onClose();
+      return;
+    }
+
+    const userId = getUsuarioId();
+    if (!userId) {
+      Alert.alert('Erro', 'Usuário não identificado. Faça login novamente.');
+      return;
+    }
+
+    if (notaVisual === 0 || notaMotora === 0 || notaAuditiva === 0) {
+      setErro('Por favor, avalie todos os critérios de acessibilidade');
+      return;
+    }
+
+    setErro('');
+    setLoading(true);
+
+    try {
+      const avaliacaoData = {
+        idLocal: local?.idLocal || local?.id,
+        idUsuario: userId,
+        notaAcessibilidadeVisual: notaVisual,
+        notaAcessibilidadeMotora: notaMotora,
+        notaAcessibilidadeAuditiva: notaAuditiva,
+        comentario: comentario.trim() || null
+      };
+
+      console.log('📝 Enviando avaliação:', avaliacaoData);
+      
+      await onSubmit(avaliacaoData);
+      resetForm();
+      onClose();
+      
+    } catch (error) {
+      console.error('Erro ao enviar avaliação:', error);
+      setErro(error.message || 'Erro ao enviar avaliação');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setNotaVisual(0);
+    setNotaMotora(0);
+    setNotaAuditiva(0);
+    setComentario('');
+    setErro('');
+    setHoverVisual(0);
+    setHoverMotora(0);
+    setHoverAuditiva(0);
+  };
+
+  const handleClose = () => {
+    if (!loading) {
+      resetForm();
+      onClose();
+    }
+  };
+
+  const calcularMedia = () => {
+    const soma = notaVisual + notaMotora + notaAuditiva;
+    const count = [notaVisual, notaMotora, notaAuditiva].filter(n => n > 0).length;
+    if (count === 0) return 0;
+    return (soma / 3).toFixed(1);
+  };
+
+  const todasNotasSelecionadas = notaVisual > 0 && notaMotora > 0 && notaAuditiva > 0;
 
   return (
     <Modal
@@ -114,74 +164,110 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 {/* Header */}
                 <View style={styles.header}>
                   <ThemedText variant="h2" weight="bold" style={styles.titulo}>
-                    Avaliar: {local?.nome}
+                    Avaliar Local
                   </ThemedText>
-                  <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                  <TouchableOpacity onPress={handleClose} style={styles.closeButton} disabled={loading}>
                     <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
 
+                <Spacer size="sm" />
+
+                <View style={styles.localInfo}>
+                  <ThemedText variant="h3" weight="semibold" numberOfLines={2}>
+                    {local?.nome}
+                  </ThemedText>
+                  <ThemedText color="textSecondary" variant="caption">
+                    {local?.categoria}
+                  </ThemedText>
+                </View>
+
                 <Spacer size="md" />
 
-                {/* Subtítulo */}
                 <ThemedText color="textSecondary" style={styles.subtitulo}>
                   Como você avalia a acessibilidade deste local?
                 </ThemedText>
 
-                <Spacer size="md" />
+                <Spacer size="lg" />
 
-                {/* Estrelas de avaliação */}
-                <View style={styles.starsContainer}>
-                  <ThemedText weight="semibold" style={styles.labelEstrelas}>
-                    Clique nas estrelas para avaliar
-                  </ThemedText>
-                  <View style={styles.starsRow}>
-                    {renderStars()}
+                {/* Critério 1: Acessibilidade Visual */}
+                <View style={styles.criterioContainer}>
+                  <View style={styles.criterioHeader}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
+                      <Ionicons name="eye-outline" size={24} color={theme.colors.primary} />
+                    </View>
+                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      Acessibilidade Visual
+                    </ThemedText>
                   </View>
+                  
+                  <View style={styles.starsContainer}>
+                    {renderStars(notaVisual, setNotaVisual, hoverVisual, setHoverVisual, 'Visual', loading)}
+                  </View>
+                  
+                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    {getNotaDescricao(notaVisual)}
+                  </ThemedText>
                 </View>
 
                 <Spacer size="lg" />
 
-                {/* Critérios de Acessibilidade */}
-                <View style={styles.criteriosContainer}>
-                  <ThemedText weight="bold" style={styles.criteriosTitulo}>
-                    Critérios de Acessibilidade
-                  </ThemedText>
+                {/* Critério 2: Acessibilidade Motora */}
+                <View style={styles.criterioContainer}>
+                  <View style={styles.criterioHeader}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
+                      <Ionicons name="body-outline" size={24} color={theme.colors.primary} />
+                    </View>
+                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      Acessibilidade Motora
+                    </ThemedText>
+                  </View>
                   
-                  <Spacer size="sm" />
-
-                  {CRITERIOS_ACESSIBILIDADE.map(criterio => (
-                    <TouchableOpacity
-                      key={criterio.id}
-                      onPress={() => handleToggleCriterio(criterio.id)}
-                      style={styles.criterioItem}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.checkbox,
-                        { 
-                          borderColor: theme.colors.primary,
-                          backgroundColor: criterios[criterio.id] 
-                            ? theme.colors.primary 
-                            : 'transparent'
-                        }
-                      ]}>
-                        {criterios[criterio.id] && (
-                          <Ionicons name="checkmark" size={14} color="#FFF" />
-                        )}
-                      </View>
-                      <Ionicons 
-                        name={criterio.icon} 
-                        size={20} 
-                        color={theme.colors.primary} 
-                        style={styles.criterioIcon}
-                      />
-                      <ThemedText style={styles.criterioLabel}>
-                        {criterio.label}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  ))}
+                  <View style={styles.starsContainer}>
+                    {renderStars(notaMotora, setNotaMotora, hoverMotora, setHoverMotora, 'Motora', loading)}
+                  </View>
+                  
+                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    {getNotaDescricao(notaMotora)}
+                  </ThemedText>
                 </View>
+
+                <Spacer size="lg" />
+
+                {/* Critério 3: Acessibilidade Auditiva */}
+                <View style={styles.criterioContainer}>
+                  <View style={styles.criterioHeader}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
+                      <Ionicons name="ear-outline" size={24} color={theme.colors.primary} />
+                    </View>
+                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      Acessibilidade Auditiva
+                    </ThemedText>
+                  </View>
+                  
+                  <View style={styles.starsContainer}>
+                    {renderStars(notaAuditiva, setNotaAuditiva, hoverAuditiva, setHoverAuditiva, 'Auditiva', loading)}
+                  </View>
+                  
+                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    {getNotaDescricao(notaAuditiva)}
+                  </ThemedText>
+                </View>
+
+                <Spacer size="lg" />
+
+                {/* Média atual */}
+                {todasNotasSelecionadas && (
+                  <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }]}>
+                    <ThemedText weight="bold">Média Geral:</ThemedText>
+                    <View style={styles.mediaStars}>
+                      {renderStars(parseFloat(calcularMedia()), null, null, null, 'Média', true)}
+                    </View>
+                    <ThemedText weight="bold" style={styles.mediaValor}>
+                      {calcularMedia()}
+                    </ThemedText>
+                  </View>
+                )}
 
                 <Spacer size="lg" />
 
@@ -201,9 +287,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     numberOfLines={4}
                     value={comentario}
                     onChangeText={setComentario}
-                    placeholder="Ex: O local possui rampas bem sinalizadas e funcionários treinados..."
+                    placeholder="Ex: O local possui rampas bem sinalizadas, elevador funcionando e funcionários treinados para atender pessoas com deficiência..."
                     altoContraste={isHighContrast}
                     style={styles.comentarioInput}
+                    editable={!loading}
                   />
                 </View>
 
@@ -212,7 +299,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 {/* Mensagem de erro */}
                 {erro ? (
                   <>
-                    <View style={styles.erroContainer}>
+                    <View style={[styles.erroContainer, { backgroundColor: theme.colors.error + '20' }]}>
                       <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
                       <ThemedText color="error" style={styles.erroTexto}>
                         {erro}
@@ -229,6 +316,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     onPress={handleClose}
                     style={styles.botaoCancelar}
                     altoContraste={isHighContrast}
+                    disabled={loading}
                   >
                     Cancelar
                   </Button>
@@ -237,8 +325,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     onPress={handleEnviar}
                     style={styles.botaoEnviar}
                     altoContraste={isHighContrast}
+                    loading={loading}
+                    disabled={loading || !todasNotasSelecionadas}
                   >
-                    Enviar Avaliação
+                    {loading ? 'Enviando...' : 'Enviar Avaliação'}
                   </Button>
                 </View>
 
@@ -261,7 +351,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: Platform.OS === 'web' ? 600 : '90%',
     maxHeight: '90%',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     ...Platform.select({
       web: {
@@ -283,59 +373,67 @@ const styles = StyleSheet.create({
   },
   titulo: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 22,
   },
   closeButton: {
     padding: 8,
   },
+  localInfo: {
+    alignItems: 'center',
+    gap: 4,
+  },
   subtitulo: {
     textAlign: 'center',
   },
-  starsContainer: {
-    alignItems: 'center',
+  criterioContainer: {
     paddingVertical: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 16,
+    paddingHorizontal: 16,
   },
-  labelEstrelas: {
-    marginBottom: 12,
-  },
-  starsRow: {
+  criterioHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  criterioTitulo: {
+    fontSize: 16,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: 8,
+    marginVertical: 8,
   },
   starButton: {
     padding: 4,
   },
-  criteriosContainer: {
-    paddingVertical: 8,
+  notaDescricao: {
+    textAlign: 'center',
+    marginTop: 8,
   },
-  criteriosTitulo: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  criterioItem: {
+  mediaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    gap: 12,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
-  criterioIcon: {
-    marginRight: 12,
+  mediaStars: {
+    flexDirection: 'row',
+    gap: 4,
   },
-  criterioLabel: {
-    flex: 1,
-    fontSize: 14,
+  mediaValor: {
+    fontSize: 18,
   },
   comentarioLabel: {
     fontSize: 16,
@@ -353,8 +451,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 8,
-    backgroundColor: '#FFEBEE',
+    paddingVertical: 12,
     borderRadius: 8,
   },
   erroTexto: {

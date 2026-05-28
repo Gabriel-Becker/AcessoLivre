@@ -261,9 +261,50 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ============================================
+  // HELPERS PARA OBTER DADOS DO USUÁRIO
+  // ============================================
+  
+  const getUsuarioId = useCallback(() => {
+    if (!usuario) return null;
+    
+    // Tenta diferentes propriedades que podem conter o ID
+    const id = usuario.idUsuario || usuario.id || usuario.userId;
+    
+    // Converte para número se for string
+    return id ? Number(id) : null;
+  }, [usuario]);
+
+  const getUsuarioNome = useCallback(() => {
+    if (!usuario) return 'Usuário';
+    return usuario.nome || usuario.name || usuario.displayName || 'Usuário';
+  }, [usuario]);
+
+  const getUsuarioEmail = useCallback(() => {
+    if (!usuario) return null;
+    return usuario.email || null;
+  }, [usuario]);
+
+  const getUsuarioCompleto = useCallback(() => {
+    if (!usuario) return null;
+    
+    return {
+      id: usuario.idUsuario || usuario.id,
+      idUsuario: usuario.idUsuario || usuario.id,
+      nome: usuario.nome || usuario.name || usuario.displayName || 'Usuário',
+      email: usuario.email,
+      ...usuario
+    };
+  }, [usuario]);
+
+  const isUsuarioAutenticado = useCallback(() => {
+    return isAuthenticated && !!usuario && !!token;
+  }, [isAuthenticated, usuario, token]);
+
   return (
     <AuthContext.Provider
       value={{
+        // Valores existentes
         usuario,
         token,
         isAuthenticated,
@@ -272,6 +313,17 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         carregarSessao,
+        
+        // NOVOS HELPERS
+        getUsuarioId,
+        getUsuarioNome,
+        getUsuarioEmail,
+        getUsuarioCompleto,
+        isUsuarioAutenticado,
+        
+        // Atalhos para facilitar
+        userId: getUsuarioId(),
+        userName: getUsuarioNome(),
       }}
     >
       {children}

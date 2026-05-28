@@ -1,30 +1,23 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
-import defaultTheme, { getTheme } from '../../config/theme';
-import { useThemeContext } from '../../context/ThemeContext';
+import theme from '../../config/theme';
 
-export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste }) {
+export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
   const [imageError, setImageError] = useState(false);
-  const { isHighContrast, theme: ctxTheme } = useThemeContext();
-  const contraste = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || defaultTheme;
-  const baseTheme = ctxTheme || t || defaultTheme;
 
   const nome = local?.nome || 'Local sem nome';
+  const categoria = local?.categoria || 'Sem categoria';
   const endereco = local?.endereco;
   const avaliacaoMedia = local?.avaliacaoMedia || 0;
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
-  const imagemParaExibir = imageError
-    ? null
-    : local?.imagemUrl ||
-      local?.imagemPrincipal ||
-      local?.primeiraImagem?.url ||
-      (Array.isArray(local?.imagens) && typeof local.imagens[0] === 'string' ? local.imagens[0] : null) ||
-      local?.imagem ||
-      local?.imagensCompletas?.[0]?.url ||
-      null;
+  const tiposAcessibilidade = local?.tiposAcessibilidade || [];
+
+  const imagemParaExibir = useMemo(() => {
+    if (imageError) return null;
+    return local?.imagemUrl || null;
+  }, [local?.imagemUrl, imageError]);
 
   const handleImageError = () => {
     setImageError(true);
@@ -37,11 +30,11 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={14} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={12} color={theme.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={14} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={12} color={theme.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={14} color={t.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={12} color={theme.colors.textSecondary} />);
       }
     }
     return stars;
@@ -54,23 +47,41 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
       .join(', ');
   };
 
+  const getCategoriaLabel = (cat) => {
+    const labels = {
+      COMERCIAL: 'Comercial',
+      PUBLICO: 'Público',
+      SAUDE: 'Saúde',
+      EDUCACAO: 'Educação',
+      LAZER: 'Lazer',
+      TRANSPORTE: 'Transporte',
+      ALIMENTACAO: 'Alimentação',
+      HOSPEDAGEM: 'Hospedagem',
+      SERVICOS: 'Serviços'
+    };
+    return labels[cat] || cat;
+  };
+
+  const isNew = useMemo(() => {
+    if (!local?.dataCriacao) return false;
+    const dataCriacao = new Date(local.dataCriacao);
+    const agora = new Date();
+    const diffDias = (agora - dataCriacao) / (1000 * 60 * 60 * 24);
+    return diffDias <= 7;
+  }, [local?.dataCriacao]);
+
+  const categoriaLabel = getCategoriaLabel(categoria);
+  const totalRecursos = tiposAcessibilidade.length;
+
   return (
     <TouchableOpacity
       style={[
-        styles.container,
-        {
-          backgroundColor: t.colors.surface,
-          borderColor: contraste ? t.colors.border : t.colors.borderLight,
-          borderWidth: contraste ? 2 : 1,
-          shadowColor: contraste ? 'transparent' : defaultTheme.colors.shadow,
-          shadowOffset: contraste ? { width: 0, height: 0 } : { width: 0, height: 2 },
-          shadowOpacity: contraste ? 0 : 0.12,
-          shadowRadius: contraste ? 0 : 4,
-          elevation: contraste ? 0 : 3,
-        },
+        styles.container, 
+        altoContraste && styles.containerHighContrast,
+        !altoContraste && styles.containerModern
       ]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       <View style={styles.imageContainer}>
         {imagemParaExibir ? (
@@ -81,36 +92,65 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
             onError={handleImageError}
           />
         ) : (
-          <View style={[styles.imagePlaceholder, { backgroundColor: baseTheme.colors.surfaceSecondary }]}>
-            <Ionicons name="image-outline" size={40} color={baseTheme.colors.textTertiary} />
-            <ThemedText color="textTertiary" altoContraste={contraste}>Sem imagem</ThemedText>
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
+            <ThemedText color="textTertiary" variant="caption">Sem imagem</ThemedText>
           </View>
         )}
-
-        {showNewBadge && (
-          <View style={[styles.newBadge, { backgroundColor: baseTheme.colors.secondary, borderColor: contraste ? baseTheme.colors.border : 'transparent' }]}>
-            <ThemedText color="textOnSecondary" weight="bold" altoContraste={contraste}>
+        
+        {(showNewBadge || isNew) && (
+          <View style={styles.newBadge}>
+            <ThemedText color="textOnSecondary" weight="bold" style={{ fontSize: 10 }}>
               NOVO
             </ThemedText>
           </View>
         )}
       </View>
 
-      <View style={[styles.content, { backgroundColor: t.colors.surface }]}>
-        <ThemedText variant="h3" weight="bold" numberOfLines={1} altoContraste={contraste} color={contraste ? 'textPrimary' : 'textPrimary'}>
+      {/* Informações embaixo */}
+      <View style={styles.infoContainer}>
+        {/* Nome do local */}
+        <ThemedText variant="h3" weight="bold" numberOfLines={1} style={styles.nomeLocal}>
           {nome}
         </ThemedText>
 
-        <View style={styles.ratingRow}>
-          {renderStars(avaliacaoMedia)}
-          <ThemedText weight="bold" altoContraste={contraste} color={'textPrimary'}>{avaliacaoMedia.toFixed(1)}</ThemedText>
-          <ThemedText color="textSecondary" altoContraste={contraste}>({totalAvaliacoes})</ThemedText>
+        {/* Linha: Categoria + Avaliação */}
+        <View style={styles.categoriaRatingRow}>
+          <View style={styles.categoriaBadge}>
+            <ThemedText variant="caption" weight="semibold" style={styles.categoriaTexto}>
+              {categoriaLabel}
+            </ThemedText>
+          </View>
+          
+          <View style={styles.ratingContainer}>
+            {renderStars(avaliacaoMedia)}
+            <ThemedText weight="bold" style={styles.ratingNumber}>
+              {avaliacaoMedia.toFixed(1)}
+            </ThemedText>
+            <ThemedText color="textSecondary" style={styles.reviewCount}>
+              ({totalAvaliacoes})
+            </ThemedText>
+          </View>
         </View>
 
+        {/* Endereço */}
         {endereco && (
-          <ThemedText color="textSecondary" numberOfLines={2} altoContraste={contraste}>
-            {formatEnderecoCompleto(endereco)}
-          </ThemedText>
+          <View style={styles.enderecoContainer}>
+            <Ionicons name="location-outline" size={12} color={theme.colors.textSecondary} />
+            <ThemedText color="textSecondary" style={styles.address} numberOfLines={2}>
+              {formatEnderecoCompleto(endereco)}
+            </ThemedText>
+          </View>
+        )}
+
+        {totalRecursos > 0 && (
+          <View style={styles.recursosContainer}>
+            <View style={styles.recursosBadge}>
+              <ThemedText variant="caption" style={styles.recursosTexto}>
+                {totalRecursos}{totalRecursos !== 1 }
+              </ThemedText>
+            </View>
+          </View>
         )}
       </View>
     </TouchableOpacity>
@@ -119,43 +159,136 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
 const styles = StyleSheet.create({
   container: {
-    borderStyle: 'solid',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 16,
   },
+  
+  containerModern: {
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
   containerHighContrast: {
     borderWidth: 2,
     borderColor: '#000',
   },
+  
   imageContainer: {
     width: '100%',
-    height: 160,
+    height: 150,
+    position: 'relative',
+    backgroundColor: theme.colors.background,
   },
+  
   image: {
     width: '100%',
     height: '100%',
   },
+  
   imagePlaceholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.colors.background,
   },
+  
   newBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
-    borderWidth: 1,
-    padding: 6,
-    borderRadius: 20,
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  content: {
+  
+
+  infoContainer: {
     padding: 12,
   },
-  ratingRow: {
+  
+  nomeLocal: {
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  
+  categoriaRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  
+  categoriaBadge: {
+    backgroundColor: '#E8F0FF',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 14,
+  },
+  
+  categoriaTexto: {
+    fontSize: 11,
+    color: theme.colors.primary,
+  },
+  
+  ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginVertical: 6,
+  },
+  
+  ratingNumber: {
+    fontSize: 12,
+  },
+  
+  reviewCount: {
+    fontSize: 10,
+  },
+  
+  enderecoContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 4,
+    marginBottom: 8,
+  },
+  
+  address: {
+    fontSize: 11,
+    lineHeight: 14,
+    flex: 1,
+  },
+  
+
+  recursosContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+  },
+  
+  recursosBadge: {
+    backgroundColor: '#E0E0E0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  
+  recursosTexto: {
+    fontSize: 9,
+    color: '#666666',
+    fontWeight: '500',
   },
 });

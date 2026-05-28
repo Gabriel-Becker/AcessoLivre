@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
+import {
+  View,
+  StyleSheet,
   ActivityIndicator,
   RefreshControl,
   FlatList,
@@ -12,11 +12,14 @@ import {
 import { StatsBanner, LocalCard } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import HomeService from '../../services/HomeService';
+import BuscarService from '../../services/BuscarService';
 import toastHelper from '../../utils/toastHelper';
-import theme, { breakpoints } from '../../config/theme';
 
-const BREAKPOINT_DESKTOP_GRANDE = 1360;
+const BREAKPOINTS = {
+  MOBILE: 600,
+  TABLET: 1000,
+  DESKTOP: 1400
+};
 
 export default function Home({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
@@ -24,13 +27,17 @@ export default function Home({ onNavigate }) {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [estatisticas, setEstatisticas] = useState({});
+  const [estatisticas, setEstatisticas] = useState({
+    totalLocais: 0,
+    totalAvaliacoes: 0,
+    mediaGeral: 0
+  });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
 
   const numColumns = useMemo(() => {
-    if (width >= BREAKPOINT_DESKTOP_GRANDE) return 4;
-    if (width >= breakpoints.desktop) return 3;
-    if (width >= breakpoints.tablet) return 2;
+    if (width >= BREAKPOINTS.DESKTOP) return 4;
+    if (width >= BREAKPOINTS.TABLET) return 3;
+    if (width >= BREAKPOINTS.MOBILE) return 2;
     return 1;
   }, [width]);
 
@@ -39,15 +46,27 @@ export default function Home({ onNavigate }) {
     else setLoading(true);
 
     try {
-      const [stats, locais] = await Promise.all([
-        HomeService.obterEstatisticas(),
-        HomeService.obterLocaisEmDestaque(8),
-      ]);
+      // Carregar estatísticas (locais e avaliações)
+      const stats = await BuscarService.obterEstatisticas();
+      setEstatisticas({
+        totalLocais: stats.totalLocais || 0,
+        totalAvaliacoes: stats.totalAvaliacoes || 0,
+        mediaGeral: stats.mediaGeral || 0
+      });
 
-      setEstatisticas(stats);
+      // Carregar locais em destaque
+      const locais = await BuscarService.obterLocaisEmDestaque(8);
       setLocaisDestaque(locais.filter(l => l?.id));
+      
+      console.log('📊 Home carregada:', {
+        locais: stats.totalLocais,
+        avaliacoes: stats.totalAvaliacoes,
+        destaques: locais.length
+      });
+      
     } catch (e) {
-      toastHelper.showError('Erro ao carregar Home');
+      console.error('Erro ao carregar Home:', e);
+      toastHelper.showError('Erro ao carregar dados da home');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,13 +75,21 @@ export default function Home({ onNavigate }) {
 
   useEffect(() => {
     carregarDados();
-  }, []);
+  }, [carregarDados]);
+
+  const handleRefresh = () => {
+    carregarDados(true);
+  };
+
+  const handleLocalPress = (local) => {
+    onNavigate?.('LocalDetalhes', { id: local.id });
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.cardWrapper}>
       <LocalCard
         local={item}
-        onPress={() => onNavigate?.('LocalDetalhes', { id: item.id })}
+        onPress={() => handleLocalPress(item)}
         altoContraste={isHighContrast}
       />
     </View>
@@ -70,7 +97,7 @@ export default function Home({ onNavigate }) {
 
   if (loading) {
     return (
-      <View style={[styles.loading, { backgroundColor: t.colors.background }]}>
+      <View style={[styles.loading, { backgroundColor: '#f5f5f5' }]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
         <ThemedText>Carregando...</ThemedText>
@@ -79,77 +106,86 @@ export default function Home({ onNavigate }) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.background }]}>
-      <View style={styles.fixedContainer}>
-        <StatsBanner
-          estatisticas={estatisticas}
-          altoContraste={isHighContrast}
-        />
-
-        <View style={styles.sectionHeader}>
-          <ThemedText variant="h2" weight="bold">
-            Locais em Destaque
-          </ThemedText>
-
-          <TouchableOpacity onPress={() => onNavigate?.('Buscar')}>
-            <ThemedText color="primary" weight="semibold">
-              Ver todos →
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      </View>
-
+    <View style={[styles.container, { backgroundColor: '#f5f5f5' }]}>
       <FlatList
         data={locaisDestaque}
         key={numColumns}
         numColumns={numColumns}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
+        ListHeaderComponent={
+          <>
+            <StatsBanner 
+              totalLocais={estatisticas.totalLocais}
+              totalAvaliacoes={estatisticas.totalAvaliacoes}
+            />
+
+            <View style={styles.sectionHeader}>
+              <ThemedText variant="h2" weight="bold">
+                Locais em Destaque
+              </ThemedText>
+
+              <TouchableOpacity onPress={() => onNavigate?.('Buscar')}>
+                <ThemedText color="primary" weight="semibold">
+                  Ver todos →
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => carregarDados(true)}
+            onRefresh={handleRefresh}
             colors={[t.colors.primary]}
+            tintColor={t.colors.primary}
           />
         }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <ThemedText color="textSecondary" align="center">
+              Nenhum local em destaque no momento.
+            </ThemedText>
+          </View>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-
-  fixedContainer: {
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.sm,
-  },
-
-  sectionHeader: {
-    marginTop: theme.spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  listContent: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-  },
-
-  cardWrapper: {
+  container: {
     flex: 1,
-    padding: theme.spacing.sm,
-    minWidth: 260,
-    maxWidth: 400,
   },
-
   loading: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  listContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+  },
+  sectionHeader: {
+    marginTop: 10,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardWrapper: {
+    flex: 1,
+    padding: 6,
+    minWidth: 260,
+    maxWidth: 400,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 48,
   },
 });

@@ -20,8 +20,6 @@ import java.util.Set;
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
-    // ===== MÉTODOS COM JOIN FETCH PARA CARREGAR IMAGENS =====
-    
     @Query("""
         SELECT DISTINCT l
         FROM Local l
@@ -169,4 +167,45 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     @Modifying
     @Query("UPDATE Local l SET l.status = :novoStatus WHERE l.idLocal IN :ids")
     int atualizarStatusEmMassa(@Param("ids") List<Long> ids, @Param("novoStatus") StatusLocal novoStatus);
+
+    @EntityGraph(attributePaths = {"imagens", "endereco", "tiposAcessibilidade"})
+    @Query("""
+        SELECT DISTINCT l
+        FROM Local l
+        LEFT JOIN l.tiposAcessibilidade t
+        WHERE (:searchTerm IS NULL OR :searchTerm = '' OR
+               LOWER(l.nome) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+        AND (:categorias IS NULL OR l.categoria IN :categorias)
+        AND (:recursos IS NULL OR t IN :recursos)
+        AND (:notaMinima IS NULL OR :notaMinima <= 0 OR l.avaliacaoMedia >= :notaMinima)
+        AND l.localPrincipal IS NULL
+    """)
+    Page<Local> buscarComFiltrosAvancados(
+            @Param("searchTerm") String searchTerm,
+            @Param("categorias") Set<Categoria> categorias,
+            @Param("recursos") Set<TipoAcessibilidade> recursos,
+            @Param("notaMinima") Double notaMinima,
+            Pageable pageable
+    );
+
+    /**
+     * Busca locais por nome (ignorando maiúsculas/minúsculas)
+     */
+    Page<Local> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
+
+    /**
+     * Busca locais por categoria
+     */
+    Page<Local> findByCategoriaIn(Set<Categoria> categorias, Pageable pageable);
+
+    /**
+     * Busca locais por recursos de acessibilidade
+     */
+    @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :recursos")
+    Page<Local> findByTiposAcessibilidadeIn(@Param("recursos") Set<TipoAcessibilidade> recursos, Pageable pageable);
+
+    /**
+     * Busca locais com nota mínima
+     */
+    Page<Local> findByAvaliacaoMediaGreaterThanEqual(Double notaMinima, Pageable pageable);
 }

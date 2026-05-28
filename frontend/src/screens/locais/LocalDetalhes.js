@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,11 +6,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   useWindowDimensions,
-  Image,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Dimensions
+  TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -28,16 +24,54 @@ import LocalGallery from '../../components/local/LocalGallery';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import LocalService from '../../services/LocalService';
 import HomeService from '../../services/HomeService';
+import AvaliacaoService from '../../services/AvaliacaoService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const formatarDataRelativa = (dataOriginal) => {
+  if (!dataOriginal) return 'Data não informada';
+  
+  try {
+    let data;
+    
+    if (typeof dataOriginal === 'string') {
+      data = new Date(dataOriginal);
+    } else if (typeof dataOriginal === 'number') {
+      data = new Date(dataOriginal);
+    } else if (dataOriginal instanceof Date) {
+      data = dataOriginal;
+    } else {
+      return 'Data inválida';
+    }
+    
+    if (isNaN(data.getTime())) {
+      return 'Data inválida';
+    }
+    
+    const agora = new Date();
+    const diffMs = agora - data;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Agora mesmo';
+    if (diffMins === 1) return 'Há 1 minuto';
+    if (diffMins < 60) return `Há ${diffMins} minutos`;
+    if (diffHours === 1) return 'Há 1 hora';
+    if (diffHours < 24) return `Há ${diffHours} horas`;
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `Há ${diffDays} dias`;
+    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
+    if (diffDays < 365) return `Há ${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
+    return `Há ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
+    
+  } catch (error) {
+    console.error('Erro ao formatar data:', error);
+    return 'Data inválida';
+  }
+};
 
-// ============================================
-// COMPONENTE DE AVALIAÇÃO INDIVIDUAL
-// ============================================
 const AvaliacaoItem = ({ avaliacao, theme }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
@@ -46,82 +80,82 @@ const AvaliacaoItem = ({ avaliacao, theme }) => {
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={12} color={theme.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={12} color={theme.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={12} color={theme.colors.textSecondary} />);
       }
     }
     return stars;
   };
 
-  const formatarData = (dataString) => {
-    if (!dataString) return '';
-    try {
-      const data = new Date(dataString);
-      return data.toLocaleDateString('pt-BR');
-    } catch {
-      return dataString;
-    }
-  };
-
-  const primeiraLetra = (avaliacao.usuarioNome || 'U').charAt(0).toUpperCase();
+  const nomeUsuario = avaliacao.usuario?.nome || 
+                      avaliacao.usuarioNome || 
+                      avaliacao.nomeUsuario || 
+                      'Usuário';
+  
+  const primeiraLetra = nomeUsuario.charAt(0).toUpperCase();
+  
+  const notaVisual = avaliacao.notaAcessibilidadeVisual || 0;
+  const notaMotora = avaliacao.notaAcessibilidadeMotora || 0;
+  const notaAuditiva = avaliacao.notaAcessibilidadeAuditiva || 0;
+  
+  const mediaGeral = avaliacao.notaGeral || 
+                     avaliacao.nota || 
+                     (notaVisual + notaMotora + notaAuditiva) / 3 || 0;
+  
+  const comentarioReal = avaliacao.comentario || '';
+  const dataOriginal = avaliacao.dataAvaliacao || avaliacao.data;
+  const dataFormatada = formatarDataRelativa(dataOriginal);
 
   return (
     <View style={styles.avaliacaoItem}>
       <View style={styles.avaliacaoHeader}>
         <View style={styles.usuarioInfo}>
-          <View style={[styles.avatar, { backgroundColor: theme.colors.primary + '20' }]}>
-            <ThemedText weight="bold" style={{ color: theme.colors.primary, fontSize: 16 }}>
+          <View style={[styles.avatar, { backgroundColor: theme.colors.primary }]}>
+            <ThemedText color="textOnPrimary" weight="bold" style={styles.avatarTexto}>
               {primeiraLetra}
             </ThemedText>
           </View>
-          <View>
-            <ThemedText weight="semibold" style={styles.usuarioNome}>
-              {avaliacao.usuarioNome || 'Usuário'}
+          
+          <View style={styles.usuarioDetails}>
+            <ThemedText weight="semibold" style={styles.usuarioNome} numberOfLines={1}>
+              {nomeUsuario}
             </ThemedText>
             <View style={styles.estrelasRow}>
-              {renderStars(avaliacao.nota || 0)}
+              {renderStars(mediaGeral)}
+              <ThemedText variant="caption" color="textTertiary" style={styles.dataAvaliacao}>
+                • {dataFormatada}
+              </ThemedText>
             </View>
           </View>
         </View>
-        <ThemedText variant="caption" color="textTertiary" style={styles.dataAvaliacao}>
-          {formatarData(avaliacao.dataCriacao || avaliacao.data)}
-        </ThemedText>
       </View>
       
-      {avaliacao.comentario ? (
-        <ThemedText color="textSecondary" style={styles.comentario}>
-          {avaliacao.comentario}
+      {comentarioReal ? (
+        <ThemedText color="textSecondary" style={styles.comentario} numberOfLines={3}>
+          {comentarioReal}
         </ThemedText>
       ) : null}
     </View>
   );
 };
 
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t } = useThemeContext();
-  const { isAuthenticated, usuario } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
   const { id } = route?.params || {};
 
   const isDesktop = width >= breakpoints.desktop;
-  const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
 
-  const [botaoAtivo, setBotaoAtivo] = useState(null);
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-
-  const resetBotaoAtivo = useCallback(() => {
-    setTimeout(() => setBotaoAtivo(null), 300);
-  }, []);
+  const [descricaoExpandida, setDescricaoExpandida] = useState(false);
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
@@ -142,9 +176,24 @@ export default function LocalDetalhes({ onNavigate, route }) {
       }
       
       const imagensList = dados.imagensCompletas || [];
-      const avaliacoesOrdenadas = [...(dados.avaliacoes || [])].sort((a, b) => {
-        const dataA = new Date(a.dataCriacao || a.data || 0);
-        const dataB = new Date(b.dataCriacao || b.data || 0);
+      
+      let avaliacoes = [];
+      try {
+        const result = await AvaliacaoService.buscarAvaliacoesPorLocal(id);
+        
+        if (result.success && result.data && Array.isArray(result.data)) {
+          avaliacoes = result.data;
+        } else if (dados.avaliacoes) {
+          avaliacoes = dados.avaliacoes;
+        }
+      } catch (err) {
+        console.warn('Erro ao buscar avaliações:', err);
+        if (dados.avaliacoes) avaliacoes = dados.avaliacoes;
+      }
+      
+      const avaliacoesOrdenadas = [...avaliacoes].sort((a, b) => {
+        const dataA = a.dataAvaliacao ? new Date(a.dataAvaliacao) : 0;
+        const dataB = b.dataAvaliacao ? new Date(b.dataAvaliacao) : 0;
         return dataB - dataA;
       });
 
@@ -155,9 +204,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
         tiposAcessibilidade: dados.tiposAcessibilidade || [],
         avaliacaoMedia: dados.avaliacaoMedia || 0,
         totalAvaliacoes: dados.totalAvaliacoes || avaliacoesOrdenadas.length,
+        descricao: dados.descricao || '',
       });
     } catch (err) {
-      console.error('❌ Erro ao carregar local:', err);
+      console.error('Erro ao carregar local:', err);
       setError('Não foi possível carregar os detalhes do local');
       toastHelper.showError('Erro ao carregar detalhes');
     } finally {
@@ -166,33 +216,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
     }
   }, [id]);
 
-  const roleUsuario = String(usuario?.role || '').toUpperCase();
-  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
-
-  const handleEditarLocal = () => {
-    onNavigate?.('Main', { screen: 'Adicionar', localId: id });
-  };
-
-  const handleExcluirLocal = () => {
-    Alert.alert(
-      'Confirmar exclusão',
-      'Deseja realmente excluir este local? A exclusão é lógica e pode ser reversível por um admin.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: async () => {
-          try {
-            await LocalService.removerLocal(id);
-            toastHelper.showSuccess('Local excluído com sucesso');
-            onNavigate?.('Inicio');
-          } catch (err) {
-            console.error('Erro ao excluir local:', err);
-            toastHelper.showError('Erro ao excluir local');
-          }
-        } }
-      ]
-    );
-  };
-
   useEffect(() => {
     carregar();
   }, [carregar]);
@@ -200,26 +223,19 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const handleRefresh = () => carregar(true);
 
   const handleAvaliar = () => {
-    setBotaoAtivo('avaliar');
-    resetBotaoAtivo();
-    
     if (!isAuthenticated) {
+      toastHelper.showInfo('Faça login para avaliar este local');
       onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
       return;
     }
-    
     setModalAvaliacaoVisible(true);
   };
 
   const handleCompartilhar = () => {
-    setBotaoAtivo('compartilhar');
-    resetBotaoAtivo();
     toastHelper.showInfo('Compartilhar em breve');
   };
 
   const handleReportar = () => {
-    setBotaoAtivo('reportar');
-    resetBotaoAtivo();
     onNavigate?.('ReportarProblema', { localId: id, localNome: local?.nome });
   };
 
@@ -227,13 +243,19 @@ export default function LocalDetalhes({ onNavigate, route }) {
     onNavigate?.('TodasAvaliacoes', { localId: id, localNome: local?.nome });
   };
 
-  const handleEnviarAvaliacao = async (avaliacao) => {
+  const handleEnviarAvaliacao = async (avaliacaoData) => {
     try {
-      console.log('Avaliação enviada:', avaliacao);
-      toastHelper.showSuccess('Avaliação enviada com sucesso!');
-      setModalAvaliacaoVisible(false);
-      carregar(true);
+      const result = await AvaliacaoService.criarAvaliacao(avaliacaoData);
+      
+      if (result.success) {
+        toastHelper.showSuccess('Avaliação enviada com sucesso!');
+        setModalAvaliacaoVisible(false);
+        await carregar(true);
+      } else {
+        toastHelper.showError(result.message || 'Erro ao enviar avaliação');
+      }
     } catch (error) {
+      console.error('Erro ao enviar avaliação:', error);
       toastHelper.showError('Erro ao enviar avaliação');
     }
   };
@@ -245,11 +267,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={18} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={16} color={t.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={18} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={16} color={t.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={18} color={t.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={16} color={t.colors.textSecondary} />);
       }
     }
     return stars;
@@ -264,6 +286,41 @@ export default function LocalDetalhes({ onNavigate, route }) {
     if (end.cidade) partes.push(end.cidade);
     if (end.estado) partes.push(end.estado);
     return partes.join(', ');
+  };
+
+  // Renderizar descrição do local
+  const renderDescricaoLocal = () => {
+    const descricao = local?.descricao || '';
+    if (!descricao) return null;
+    
+    const shouldTruncate = descricao.length > 120;
+    const descricaoExibida = descricaoExpandida ? descricao : descricao.substring(0, 120);
+    
+    return (
+      <View style={styles.descricaoContainer}>
+        <View style={styles.descricaoHeader}>
+          <Ionicons name="document-text-outline" size={20} color={t.colors.primary} />
+          <ThemedText weight="bold" style={styles.descricaoTitulo}>
+            Sobre o local
+          </ThemedText>
+        </View>
+        <Spacer size="sm" />
+        <ThemedText color="textSecondary" style={styles.descricaoTexto}>
+          {descricaoExibida}
+          {shouldTruncate && !descricaoExpandida && '...'}
+        </ThemedText>
+        {shouldTruncate && (
+          <TouchableOpacity 
+            onPress={() => setDescricaoExpandida(!descricaoExpandida)} 
+            style={styles.verMaisButtonDescricao}
+          >
+            <ThemedText color="primary" weight="semibold" variant="caption">
+              {descricaoExpandida ? 'Ver menos ▲' : 'Ver mais ▼'}
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   };
 
   if (loading) {
@@ -281,20 +338,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
       <View style={styles.centerContainer}>
         <ThemedText color="error" align="center">{error || 'Local não encontrado'}</ThemedText>
         <Spacer size="md" />
-        <Button
-          variant="primary"
-          onPress={handleRefresh}
-          iconLeft="refresh-outline"
-          altoContraste={isHighContrast}
-        >
+        <Button variant="primary" onPress={handleRefresh} iconLeft="refresh-outline">
           Tentar novamente
         </Button>
         <Spacer size="sm" />
-        <Button
-          variant="outline"
-          onPress={() => onNavigate?.('Inicio')}
-          altoContraste={isHighContrast}
-        >
+        <Button variant="outline" onPress={() => onNavigate?.('Inicio')}>
           Voltar
         </Button>
       </View>
@@ -302,17 +350,12 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }
 
   return (
-    <Container
-      scroll
-      background={isHighContrast ? 'background' : 'backgroundSecondary'}
-      altoContraste={isHighContrast}
-    >
+    <Container scroll background={isHighContrast ? 'background' : 'backgroundSecondary'}>
       <CabecalhoPagina
         titulo="Detalhes do Local"
         subtitulo="Encontre e avalie locais acessíveis"
         onVoltar={() => onNavigate?.('Inicio')}
         textoVoltar="Voltar"
-        altoContraste={isHighContrast}
       />
 
       <ScrollView 
@@ -331,46 +374,177 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <>
             <View style={styles.linhaSuperior}>
               <View style={styles.cardPrincipalWrapper}>
-                <Card altoContraste={isHighContrast} style={styles.cardPrincipal}>
-                  {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
-                  {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, handleEditarLocal, handleExcluirLocal)}
+                <Card style={styles.cardPrincipal}>
+                  <View style={styles.headerLocal}>
+                    <View style={styles.infoLocal}>
+                      <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>
+                        {local.nome}
+                      </ThemedText>
+                      <View style={styles.categoriaBadge}>
+                        <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
+                          {local.categoria}
+                        </ThemedText>
+                      </View>
+                      <View style={styles.enderecoRow}>
+                        <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
+                        <ThemedText color="textSecondary" style={styles.endereco}>
+                          {formatEnderecoCompleto(local.endereco)}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    <View style={styles.ratingBox}>
+                      <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
+                      <ThemedText variant="h2" weight="bold" style={styles.notaMedia}>
+                        {(local.avaliacaoMedia || 0).toFixed(1)}
+                      </ThemedText>
+                      <ThemedText variant="caption" color="textSecondary">
+                        {local.totalAvaliacoes || 0} avaliações
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <Spacer size="lg" />
+                  <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
+                  
+                  {/* CARD DE DESCRIÇÃO - COM ESPAÇAMENTO REDUZIDO */}
+                  {renderDescricaoLocal()}
+                  
+                  <Spacer size="md" />
+
+                  <View style={styles.botoesContainer}>
+                    <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>
+                      Avaliar
+                    </Button>
+                    <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={styles.botaoAcao}>
+                      Compartilhar
+                    </Button>
+                    <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={styles.botaoAcao}>
+                      Reportar
+                    </Button>
+                  </View>
                 </Card>
               </View>
 
               <View style={styles.cardAvaliacoesWrapper}>
-                <Card altoContraste={isHighContrast} style={styles.cardAvaliacoes}>
-                  {renderAvaliacoes(local, t, handleVerTodasAvaliacoes)}
+                <Card style={styles.cardAvaliacoes}>
+                  <View style={styles.headerAvaliacoes}>
+                    <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
+                    <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>
+                      Avaliações Recentes
+                    </ThemedText>
+                    {local.avaliacoes?.length > 0 && (
+                      <TouchableOpacity onPress={handleVerTodasAvaliacoes}>
+                        <ThemedText color="primary" variant="caption" weight="semibold">Ver todas →</ThemedText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Spacer size="sm" />
+
+                  {local.avaliacoes && local.avaliacoes.length > 0 ? (
+                    local.avaliacoes.slice(0, 3).map((item, index) => (
+                      <React.Fragment key={item.id || index}>
+                        <AvaliacaoItem avaliacao={item} theme={t} />
+                        {index < 2 && <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <View style={styles.semAvaliacoes}>
+                      <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
+                      <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
+                      <ThemedText variant="caption" color="textTertiary" align="center">Seja o primeiro a avaliar este local!</ThemedText>
+                    </View>
+                  )}
                 </Card>
               </View>
             </View>
-
             <Spacer size="lg" />
-
-            <Card altoContraste={isHighContrast} style={styles.cardFotos}>
-              {renderFotos(local, t, isHighContrast)}
+            <Card style={styles.cardFotos}>
+              <View style={styles.headerFotos}>
+                <Ionicons name="images-outline" size={22} color={t.colors.primary} />
+                <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>Fotos do Local</ThemedText>
+                {local.imagens?.length > 0 && (
+                  <ThemedText variant="caption" color="textSecondary">
+                    ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
+                  </ThemedText>
+                )}
+              </View>
+              <Spacer size="sm" />
+              <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
             </Card>
           </>
         ) : (
           <>
-            <Card altoContraste={isHighContrast} style={styles.cardPrincipalMobile}>
-              {renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast)}
-              {renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, handleEditarLocal, handleExcluirLocal)}
+            <Card style={styles.cardPrincipalMobile}>
+              <View style={styles.headerLocal}>
+                <View style={styles.infoLocal}>
+                  <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>{local.nome}</ThemedText>
+                  <View style={styles.categoriaBadge}>
+                    <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>{local.categoria}</ThemedText>
+                  </View>
+                  <View style={styles.enderecoRow}>
+                    <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
+                    <ThemedText color="textSecondary" style={styles.endereco}>{formatEnderecoCompleto(local.endereco)}</ThemedText>
+                  </View>
+                </View>
+                <View style={styles.ratingBox}>
+                  <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
+                  <ThemedText variant="h2" weight="bold" style={styles.notaMedia}>{(local.avaliacaoMedia || 0).toFixed(1)}</ThemedText>
+                  <ThemedText variant="caption" color="textSecondary">{local.totalAvaliacoes || 0} avaliações</ThemedText>
+                </View>
+              </View>
+
+              <Spacer size="lg" />
+              <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
+              
+              {renderDescricaoLocal()}
+              
+              <Spacer size="md" />
+              
+              <View style={styles.botoesContainer}>
+                <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>Avaliar</Button>
+                <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={styles.botaoAcao}>Compartilhar</Button>
+                <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={styles.botaoAcao}>Reportar</Button>
+              </View>
             </Card>
-
             <Spacer size="lg" />
-
-            <Card altoContraste={isHighContrast} style={styles.cardFotos}>
-              {renderFotos(local, t, isHighContrast)}
+            <Card style={styles.cardFotos}>
+              <View style={styles.headerFotos}>
+                <Ionicons name="images-outline" size={22} color={t.colors.primary} />
+                <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>Fotos do Local</ThemedText>
+                {local.imagens?.length > 0 && <ThemedText variant="caption" color="textSecondary">({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})</ThemedText>}
+              </View>
+              <Spacer size="sm" />
+              <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
             </Card>
-
             <Spacer size="lg" />
-
-            <Card altoContraste={isHighContrast} style={styles.cardAvaliacoesMobile}>
-              {renderAvaliacoes(local, t, handleVerTodasAvaliacoes)}
+            <Card style={styles.cardAvaliacoesMobile}>
+              <View style={styles.headerAvaliacoes}>
+                <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
+                <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>Avaliações Recentes</ThemedText>
+                {local.avaliacoes?.length > 0 && (
+                  <TouchableOpacity onPress={handleVerTodasAvaliacoes}>
+                    <ThemedText color="primary" variant="caption" weight="semibold">Ver todas →</ThemedText>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Spacer size="sm" />
+              {local.avaliacoes && local.avaliacoes.length > 0 ? (
+                local.avaliacoes.slice(0, 3).map((item, index) => (
+                  <React.Fragment key={item.id || index}>
+                    <AvaliacaoItem avaliacao={item} theme={t} />
+                    {index < 2 && <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />}
+                  </React.Fragment>
+                ))
+              ) : (
+                <View style={styles.semAvaliacoes}>
+                  <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
+                  <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
+                  <ThemedText variant="caption" color="textTertiary" align="center">Seja o primeiro a avaliar este local!</ThemedText>
+                </View>
+              )}
             </Card>
           </>
         )}
-
         <Spacer size="xl" />
       </ScrollView>
 
@@ -384,224 +558,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
   );
 }
 
-// ============================================
-// FUNÇÕES DE RENDERIZAÇÃO
-// ============================================
-
-function renderCardPrincipal(local, t, renderMediaStars, formatEnderecoCompleto, isHighContrast) {
-  return (
-    <>
-      <View style={styles.headerLocal}>
-        <View style={styles.infoLocal}>
-          <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>
-            {local.nome}
-          </ThemedText>
-          
-          <View style={[styles.categoriaBadge, { backgroundColor: t.colors.surfaceSecondary, borderWidth: isHighContrast ? 1 : 0, borderColor: t.colors.border }]}>
-            <ThemedText variant="caption" weight="semibold" altoContraste={isHighContrast} color="textPrimary">
-              {local.categoria}
-            </ThemedText>
-          </View>
-          
-          <View style={styles.enderecoRow}>
-            <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
-            <ThemedText color="textSecondary" style={styles.endereco}>
-              {formatEnderecoCompleto(local.endereco)}
-            </ThemedText>
-          </View>
-        </View>
-
-        <View style={styles.ratingBox}>
-          <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
-          <ThemedText variant="h2" weight="bold" style={styles.notaMedia}>
-            {(local.avaliacaoMedia || 0).toFixed(1)}
-          </ThemedText>
-          <ThemedText variant="caption" color="textSecondary">
-            {local.totalAvaliacoes || 0} avaliações
-          </ThemedText>
-        </View>
-      </View>
-    </>
-  );
-}
-
-function renderRecursosEAcoes(local, t, isHighContrast, handleAvaliar, handleCompartilhar, handleReportar, botaoAtivo, usuario, isAdmin, onEditar, onExcluir) {
-  const getButtonVariant = (botaoNome) => {
-    return botaoAtivo === botaoNome ? 'primary' : 'outline';
-  };
-
-  return (
-    <>
-      <Spacer size="lg" />
-
-      <LocalAccessibility
-        tiposAcessibilidade={local.tiposAcessibilidade}
-        altoContraste={isHighContrast}
-      />
-
-      <Spacer size="lg" />
-
-      <View style={styles.botoesContainer}>
-        <Button
-          variant={getButtonVariant('avaliar')}
-          size="medium"
-          iconLeft="star-outline"
-          onPress={handleAvaliar}
-          altoContraste={isHighContrast}
-          style={styles.botaoAcao}
-        >
-          Avaliar
-        </Button>
-        
-        <Button
-          variant={getButtonVariant('compartilhar')}
-          size="medium"
-          iconLeft="share-social-outline"
-          onPress={handleCompartilhar}
-          altoContraste={isHighContrast}
-          style={styles.botaoAcao}
-        >
-          Compartilhar
-        </Button>
-        
-        <Button
-          variant={getButtonVariant('reportar')}
-          size="medium"
-          iconLeft="flag-outline"
-          onPress={handleReportar}
-          altoContraste={isHighContrast}
-          style={styles.botaoAcao}
-        >
-          Reportar
-        </Button>
-        {(isAdmin || (usuario && usuario.idUsuario === local.idUsuario)) && (
-          <>
-            <Button
-              variant="outline"
-              size="medium"
-              iconLeft="create-outline"
-              onPress={onEditar}
-              altoContraste={isHighContrast}
-              style={styles.botaoAcao}
-            >
-              Editar
-            </Button>
-            <Button
-              variant="danger"
-              size="medium"
-              iconLeft="trash-outline"
-              onPress={onExcluir}
-              altoContraste={isHighContrast}
-              style={styles.botaoAcao}
-            >
-              Excluir
-            </Button>
-          </>
-        )}
-      </View>
-    </>
-  );
-}
-
-function renderFotos(local, t, isHighContrast) {
-  // Extrair URLs das imagens corretamente
-  let imagensUrls = [];
-  
-  if (local.imagens && Array.isArray(local.imagens)) {
-    imagensUrls = local.imagens
-      .map((img) => (typeof img === 'string' ? img : img?.url))
-      .filter((url) => url);
-  } else if (local.imagensUrls && Array.isArray(local.imagensUrls)) {
-    imagensUrls = local.imagensUrls;
-  } else if (local.imagensCompletas && Array.isArray(local.imagensCompletas)) {
-    imagensUrls = local.imagensCompletas
-      .map((img) => img?.url)
-      .filter((url) => url);
-  }
-  
-  const temImagens = imagensUrls.length > 0;
-  
-  return (
-    <>
-      <View style={styles.headerFotos}>
-        <Ionicons name="images-outline" size={22} color={t.colors.primary} />
-        <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>
-          Fotos do Local
-        </ThemedText>
-        {temImagens && (
-          <ThemedText variant="caption" color="textSecondary">
-            ({imagensUrls.length} {imagensUrls.length === 1 ? 'foto' : 'fotos'})
-          </ThemedText>
-        )}
-      </View>
-      <Spacer size="sm" />
-      
-      <LocalGallery
-        imagens={imagensUrls}
-        altoContraste={isHighContrast}
-      />
-    </>
-  );
-}
-
-function renderAvaliacoes(local, t, handleVerTodasAvaliacoes) {
-  return (
-    <>
-      <View style={styles.headerAvaliacoes}>
-        <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
-        <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>
-          Avaliações Recentes
-        </ThemedText>
-      </View>
-
-      <Spacer size="sm" />
-
-      {local.avaliacoes && local.avaliacoes.length > 0 ? (
-        <>
-          {local.avaliacoes.slice(0, 3).map((avaliacao, index) => (
-            <React.Fragment key={index}>
-              <AvaliacaoItem avaliacao={avaliacao} theme={t} />
-              {index < local.avaliacoes.slice(0, 3).length - 1 && (
-                <View style={[styles.divisor, { backgroundColor: t.colors.borderLight }]} />
-              )}
-            </React.Fragment>
-          ))}
-          
-          {local.avaliacoes.length > 3 && (
-            <Button
-              variant="ghost"
-              size="small"
-              onPress={handleVerTodasAvaliacoes}
-              style={styles.verMaisButton}
-              altoContraste={false}
-            >
-              Ver todas as {local.avaliacoes.length} avaliações →
-            </Button>
-          )}
-        </>
-      ) : (
-        <View style={styles.semAvaliacoes}>
-          <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
-          <ThemedText color="textSecondary" align="center">
-            Nenhuma avaliação ainda.
-          </ThemedText>
-          <Button
-            variant="outline"
-            size="small"
-            onPress={handleVerTodasAvaliacoes}
-            iconLeft="star-outline"
-          >
-            Seja o primeiro a avaliar
-          </Button>
-        </View>
-      )}
-    </>
-  );
-}
-
-// ============================================
-// ESTILOS
-// ============================================
 const styles = StyleSheet.create({
   centerContainer: {
     flex: 1,
@@ -613,7 +569,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  // Layout Desktop
   linhaSuperior: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -627,7 +582,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 260,
   },
-  // Cards
   cardPrincipal: {
     padding: 20,
     height: '100%',
@@ -645,7 +599,6 @@ const styles = StyleSheet.create({
   cardFotos: {
     padding: 20,
   },
-  // Header Local
   headerLocal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -660,6 +613,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   categoriaBadge: {
+    backgroundColor: '#E8F0FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
@@ -685,24 +639,17 @@ const styles = StyleSheet.create({
   notaMedia: {
     fontSize: 22,
   },
-  // Botões
   botoesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     gap: 12,
   },
+  botaoAvaliar: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+  },
   botaoAcao: {
     flex: 1,
-  },
-  // Avaliações
-  headerAvaliacoes: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  tituloAvaliacoes: {
-    fontSize: 18,
   },
   headerFotos: {
     flexDirection: 'row',
@@ -713,14 +660,46 @@ const styles = StyleSheet.create({
   tituloFotos: {
     fontSize: 18,
   },
+  headerAvaliacoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  tituloAvaliacoes: {
+    fontSize: 18,
+    flex: 1,
+  },
+  // Estilos para o card de descrição
+  descricaoContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  descricaoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  descricaoTitulo: {
+    fontSize: 15,
+  },
+  descricaoTexto: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'justify',
+  },
+  verMaisButtonDescricao: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
   avaliacaoItem: {
     paddingVertical: 12,
   },
   avaliacaoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   usuarioInfo: {
     flexDirection: 'row',
@@ -728,38 +707,43 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarTexto: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  usuarioDetails: {
+    flex: 1,
+  },
   usuarioNome: {
     fontSize: 14,
-    marginBottom: 4,
   },
   estrelasRow: {
     flexDirection: 'row',
-    gap: 2,
+    alignItems: 'center',
+    gap: 4,
   },
   dataAvaliacao: {
-    fontSize: 11,
+    fontSize: 10,
   },
   comentario: {
-    marginLeft: 50,
-    fontSize: 13,
-    lineHeight: 18,
+    marginLeft: 46,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 4,
   },
   divisor: {
     height: 1,
     marginVertical: 8,
   },
-  verMaisButton: {
-    marginTop: 8,
-  },
   semAvaliacoes: {
     alignItems: 'center',
     paddingVertical: 32,
-    gap: 16,
+    gap: 12,
   },
 });

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
@@ -19,7 +18,6 @@ import {
 import { ThemedText, Spacer } from '../../components/commons';
 import { Container } from '../../components/layout';
 import LocalCard from '../../components/ui/LocalCard';
-
 import { useThemeContext } from '../../context/ThemeContext';
 import BuscarService from '../../services/BuscarService';
 import { breakpoints, getTheme } from '../../config/theme';
@@ -51,184 +49,107 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
-const FiltroCategoria = ({ categoriasSelecionadas, onToggleCategoria, theme, estilos, altoContraste = false }) => {
+
+const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria, theme }) => {
   const [expanded, setExpanded] = useState(true);
-  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textSecondary;
-  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
 
   return (
-    <View style={estilos.filtroGrupo}>
-      <TouchableOpacity 
-        style={estilos.filtroHeader} 
-        onPress={() => setExpanded(!expanded)}
-        activeOpacity={0.7}
-      >
+    <View style={styles.filtroGrupo}>
+      <TouchableOpacity style={styles.filtroHeader} onPress={() => setExpanded(!expanded)} activeOpacity={0.7}>
         <Ionicons name="grid-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Categoria</ThemedText>
-        <Ionicons 
-          name={expanded ? 'chevron-up' : 'chevron-down'} 
-          size={18} 
-          color={corTextoSecundario} 
-        />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Categoria</ThemedText>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textSecondary} />
       </TouchableOpacity>
       
       {expanded && (
-        <View style={estilos.filtroContent}>
+        <View style={styles.filtroContent}>
           {CATEGORIAS.map(categoria => (
-            <TouchableOpacity
-              key={categoria}
-              style={estilos.filtroItem}
-              onPress={() => onToggleCategoria(categoria)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                estilos.checkbox,
-                { 
-                  borderColor: theme.colors.primary,
-                  backgroundColor: categoriasSelecionadas.includes(categoria) 
-                    ? theme.colors.primary 
-                    : 'transparent'
-                }
-              ]}>
-                {categoriasSelecionadas.includes(categoria) && (
-                  <Ionicons name="checkmark" size={12} color="#FFF" />
-                )}
+            <TouchableOpacity key={categoria} style={styles.filtroItem} onPress={() => onToggleCategoria(categoria)} activeOpacity={0.7}>
+              <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: categoriasSelecionadas.includes(categoria) ? theme.colors.primary : 'transparent' }]}>
+                {categoriasSelecionadas.includes(categoria) && <Ionicons name="checkmark" size={12} color="#FFF" />}
               </View>
-              <ThemedText altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.filtroItemLabel}>
-                {CATEGORIAS_LABELS[categoria] || categoria}
-              </ThemedText>
+              <ThemedText style={styles.filtroItemLabel}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
       )}
     </View>
   );
-};
+});
 
-const FiltroAcessibilidade = ({ recursosSelecionados, onToggleRecurso, theme, estilos, altoContraste = false }) => {
+FiltroCategoria.displayName = 'FiltroCategoria';
+
+const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso, theme }) => {
   const [expanded, setExpanded] = useState(false);
-  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textSecondary;
-  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
 
   return (
-    <View style={estilos.filtroGrupo}>
-      <TouchableOpacity 
-        style={estilos.filtroHeader} 
-        onPress={() => setExpanded(!expanded)}
-        activeOpacity={0.7}
-      >
+    <View style={styles.filtroGrupo}>
+      <TouchableOpacity style={styles.filtroHeader} onPress={() => setExpanded(!expanded)} activeOpacity={0.7}>
         <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Acessibilidade</ThemedText>
-        <Ionicons 
-          name={expanded ? 'chevron-up' : 'chevron-down'} 
-          size={18} 
-          color={corTextoSecundario} 
-        />
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textSecondary} />
       </TouchableOpacity>
       
       {expanded && (
-        <View style={estilos.filtroContent}>
+        <View style={styles.filtroContent}>
           {RECURSOS_ACESSIBILIDADE.map(recurso => (
-            <TouchableOpacity
-              key={recurso.id}
-              style={estilos.filtroItem}
-              onPress={() => onToggleRecurso(recurso.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                estilos.checkbox,
-                { 
-                  borderColor: theme.colors.primary,
-                  backgroundColor: recursosSelecionados.includes(recurso.id) 
-                    ? theme.colors.primary 
-                    : 'transparent'
-                }
-              ]}>
-                {recursosSelecionados.includes(recurso.id) && (
-                  <Ionicons name="checkmark" size={12} color="#FFF" />
-                )}
+            <TouchableOpacity key={recurso.id} style={styles.filtroItem} onPress={() => onToggleRecurso(recurso.id)} activeOpacity={0.7}>
+              <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: recursosSelecionados.includes(recurso.id) ? theme.colors.primary : 'transparent' }]}>
+                {recursosSelecionados.includes(recurso.id) && <Ionicons name="checkmark" size={12} color="#FFF" />}
               </View>
-              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={estilos.filtroIcon} />
-              <ThemedText altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.filtroItemLabel}>{recurso.label}</ThemedText>
+              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
+              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
       )}
     </View>
   );
-};
+});
 
-const FiltroNota = ({ notaMinima, onNotaChange, theme, estilos, altoContraste = false }) => {
-  const corTextoSecundario = altoContraste ? theme.colors.textOnPrimary : theme.colors.textTertiary;
-  const corTextoPrincipal = altoContraste ? theme.colors.textOnPrimary : theme.colors.textPrimary;
+FiltroAcessibilidade.displayName = 'FiltroAcessibilidade';
 
+const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
   const renderStars = (nota) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Ionicons
-          key={i}
-          name={i <= nota ? 'star' : 'star-outline'}
-          size={20}
-          color={i <= nota ? theme.colors.warning : corTextoSecundario}
-        />
-      );
+      stars.push(<Ionicons key={i} name={i <= nota ? 'star' : 'star-outline'} size={20} color={i <= nota ? theme.colors.warning : theme.colors.textTertiary} />);
     }
     return stars;
   };
 
   return (
-    <View style={estilos.filtroGrupo}>
-      <View style={estilos.filtroHeader}>
+    <View style={styles.filtroGrupo}>
+      <View style={styles.filtroHeader}>
         <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
-        <ThemedText weight="semibold" altoContraste={altoContraste} color={corTextoPrincipal}>Nota Mínima</ThemedText>
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota Mínima</ThemedText>
       </View>
       
-      <View style={estilos.filtroContent}>
-        <View style={estilos.notaContainer}>
-          <View style={estilos.notaStars}>
-            {renderStars(notaMinima)}
-          </View>
-          <ThemedText weight="bold" altoContraste={altoContraste} color={corTextoPrincipal} style={estilos.notaValor}>
-            {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
-          </ThemedText>
+      <View style={styles.filtroContent}>
+        <View style={styles.notaContainer}>
+          <View style={styles.notaStars}>{renderStars(notaMinima)}</View>
+          <ThemedText weight="bold" style={styles.notaValor}>{notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}</ThemedText>
         </View>
         
-        <View style={estilos.notaSliderContainer}>
+        <View style={styles.notaSliderContainer}>
           {[0, 1, 2, 3, 4, 4.5].map(nota => (
-            <TouchableOpacity
-              key={nota}
-              style={[
-                estilos.notaBotao,
-                notaMinima === nota && estilos.notaBotaoAtivo,
-                { borderColor: theme.colors.primary }
-              ]}
-              onPress={() => onNotaChange(nota)}
-            >
-              <ThemedText 
-                altoContraste={altoContraste}
-                color={notaMinima === nota ? theme.colors.primary : corTextoPrincipal}
-                style={[
-                  estilos.notaBotaoTexto,
-                  notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }
-                ]}
-              >
-                {nota === 0 ? 'Qualquer' : `${nota}+`}
-              </ThemedText>
+            <TouchableOpacity key={nota} style={[styles.notaBotao, notaMinima === nota && styles.notaBotaoAtivo, { borderColor: theme.colors.primary }]} onPress={() => onNotaChange(nota)}>
+              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }]}>{nota === 0 ? 'Qualquer' : `${nota}+`}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
       </View>
     </View>
   );
-};
+});
+
+FiltroNota.displayName = 'FiltroNota';
 
 export default function Buscar({ onNavigate }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
-    const estilos = criarEstilos(t);
-  const corTextoSecundario = isHighContrast ? t.colors.textOnPrimary : t.colors.textSecondary;
-  const corTextoTerciario = isHighContrast ? t.colors.textOnPrimary : t.colors.textTertiary;
+  const theme = getTheme(isHighContrast);
+  const debounceTimer = useRef(null);
 
   const isDesktop = width >= breakpoints.desktop;
   const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
@@ -238,9 +159,10 @@ export default function Buscar({ onNavigate }) {
   const [recursosSelecionados, setRecursosSelecionados] = useState([]);
   const [notaMinima, setNotaMinima] = useState(0);
   const [resultados, setResultados] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalResultados, setTotalResultados] = useState(0);
+  const [carregandoInicial, setCarregandoInicial] = useState(true);
 
   const numColumns = useMemo(() => {
     if (isDesktop) return 2;
@@ -249,25 +171,115 @@ export default function Buscar({ onNavigate }) {
   }, [isDesktop, isTablet]);
 
   const temFiltrosAtivos = useMemo(() => {
-    return searchText !== '' || 
-           categoriasSelecionadas.length > 0 || 
-           recursosSelecionados.length > 0 || 
-           notaMinima > 0;
+    return searchText.trim() !== '' || categoriasSelecionadas.length > 0 || recursosSelecionados.length > 0 || notaMinima > 0;
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    carregarDadosIniciais();
+  }, []);
+
+  const carregarDadosIniciais = async () => {
+    setCarregandoInicial(true);
+    try {
+      await BuscarService.carregarTodosLocais(); 
+      await realizarBusca();
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toastHelper.showError('Erro ao carregar locais');
+    } finally {
+      setCarregandoInicial(false);
+    }
+  };
+
+  // Função principal de busca (100% local)
+  const realizarBusca = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    
+    try {
+      const filtros = {
+        searchText: searchText.trim() || null,
+        categorias: categoriasSelecionadas.length > 0 ? categoriasSelecionadas : null,
+        recursos: recursosSelecionados.length > 0 ? recursosSelecionados : null,
+        notaMinima: notaMinima > 0 ? notaMinima : null
+      };
+      
+      console.log('🔍 Buscando localmente com filtros:', filtros);
+      
+      const response = await BuscarService.buscarLocais(filtros);
+      
+      if (response.success) {
+        setResultados(response.data);
+        setTotalResultados(response.total);
+        
+        if (temFiltrosAtivos && response.total === 0) {
+          toastHelper.showInfo('Nenhum local encontrado com os filtros selecionados');
+        }
+      } else {
+        toastHelper.showError(response.message || 'Erro ao buscar locais');
+        setResultados([]);
+        setTotalResultados(0);
+      }
+    } catch (error) {
+      console.error('❌ Erro na busca:', error);
+      toastHelper.showError('Erro ao buscar locais');
+      setResultados([]);
+      setTotalResultados(0);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima, temFiltrosAtivos]);
+
+  // Debounce para busca por texto
+  const handleSearchTextChange = useCallback((text) => {
+    setSearchText(text);
+    
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      realizarBusca(true);
+    }, 400);
+  }, [realizarBusca]);
+
+  // Buscar quando filtros mudarem
+  const handleFilterChange = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      realizarBusca(true);
+    }, 200);
+  }, [realizarBusca]);
+
+  // Efeito para filtros que não são texto
+  useEffect(() => {
+    if (!carregandoInicial) {
+      handleFilterChange();
+    }
+  }, [categoriasSelecionadas, recursosSelecionados, notaMinima]);
+
+  // Limpar timers ao desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   const toggleCategoria = useCallback((categoria) => {
     setCategoriasSelecionadas(prev =>
-      prev.includes(categoria)
-        ? prev.filter(c => c !== categoria)
-        : [...prev, categoria]
+      prev.includes(categoria) ? prev.filter(c => c !== categoria) : [...prev, categoria]
     );
   }, []);
 
   const toggleRecurso = useCallback((recurso) => {
     setRecursosSelecionados(prev =>
-      prev.includes(recurso)
-        ? prev.filter(r => r !== recurso)
-        : [...prev, recurso]
+      prev.includes(recurso) ? prev.filter(r => r !== recurso) : [...prev, recurso]
     );
   }, []);
 
@@ -276,49 +288,12 @@ export default function Buscar({ onNavigate }) {
     setCategoriasSelecionadas([]);
     setRecursosSelecionados([]);
     setNotaMinima(0);
-  }, []);
-
-  const realizarBusca = useCallback(async (refresh = false) => {
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      const filtros = {
-        searchText: searchText || null,
-        categorias: categoriasSelecionadas.length > 0 ? categoriasSelecionadas : null,
-        recursos: recursosSelecionados.length > 0 ? recursosSelecionados : null,
-        notaMinima: notaMinima > 0 ? notaMinima : null
-      };
-
-      const response = await BuscarService.buscarLocais(filtros);
-      
-      if (response.success) {
-        const locaisSanitizados = BuscarService.sanitizarLocais(response.data);
-        setResultados(locaisSanitizados);
-        setTotalResultados(locaisSanitizados.length);
-      } else {
-        setResultados([]);
-        setTotalResultados(0);
-      }
-      
-    } catch (error) {
-      console.error('Erro na busca:', error);
-      toastHelper.showError('Erro ao buscar locais');
-      setResultados([]);
-      setTotalResultados(0);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      realizarBusca();
-    }, 500);
     
-    return () => clearTimeout(timeout);
-  }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima, realizarBusca]);
+    // Buscar todos os locais após limpar
+    setTimeout(() => {
+      realizarBusca(true);
+    }, 50);
+  }, [realizarBusca]);
 
   const handleLocalPress = useCallback((local) => {
     const localId = BuscarService.getLocalId(local);
@@ -333,47 +308,112 @@ export default function Buscar({ onNavigate }) {
     onNavigate?.('Inicio');
   }, [onNavigate]);
 
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Recarregar cache
+    BuscarService.cache = null;
+    BuscarService.carregarTodosLocais().finally(() => {
+      realizarBusca(false);
+    });
+  }, [realizarBusca]);
+
   const renderEmptyState = () => (
-    <View style={estilos.emptyContainer}>
-      <Ionicons name="search-outline" size={64} color={corTextoTerciario} />
-      <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'}>
-        {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Nenhum local cadastrado ainda'}
+    <View style={styles.emptyContainer}>
+      <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
+      <ThemedText variant="h3" weight="bold" align="center">
+        {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Digite algo para buscar'}
       </ThemedText>
       <Spacer size="sm" />
-      <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center">
+      <ThemedText color="textSecondary" align="center">
         {temFiltrosAtivos 
           ? 'Tente ajustar os filtros ou buscar por outro termo'
-          : 'Seja o primeiro da comunidade a cadastrar um local acessível!'}
+          : 'Busque por nome, categoria ou recursos de acessibilidade'}
       </ThemedText>
     </View>
   );
 
   const renderItem = useCallback(({ item }) => (
-    <View style={estilos.cardWrapper}>
-      <LocalCard
-        local={item}
-        onPress={() => handleLocalPress(item)}
-        altoContraste={isHighContrast}
-      />
+    <View style={styles.cardWrapper}>
+      <LocalCard local={item} onPress={() => handleLocalPress(item)} altoContraste={isHighContrast} />
     </View>
   ), [handleLocalPress, isHighContrast]);
 
-  if (loading && resultados.length === 0) {
-    return (
-      <View style={estilos.loadingContainer}>
-        <ActivityIndicator size="large" color={t.colors.primary} />
+  const renderHeader = () => (
+    <View style={styles.conteudo}>
+      <View style={[styles.colunaFiltros, isDesktop && styles.colunaFiltrosDesktop]}>
+        <View style={[styles.filtrosCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.filtrosHeader}>
+            <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
+            <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>Filtros</ThemedText>
+            {temFiltrosAtivos && (
+              <TouchableOpacity onPress={limparFiltros} style={styles.limparButton}>
+                <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
+                <ThemedText color="error" variant="caption">Limpar</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Spacer size="md" />
+
+          <View style={[styles.searchContainer, { borderColor: theme.colors.border || '#E0E0E0' }]}>
+            <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.textPrimary }]}
+              placeholder="Buscar por nome, endereço ou categoria..."
+              placeholderTextColor={theme.colors.textTertiary}
+              value={searchText}
+              onChangeText={handleSearchTextChange}
+              returnKeyType="search"
+              onSubmitEditing={() => realizarBusca(true)}
+            />
+            {searchText !== '' && (
+              <TouchableOpacity onPress={() => handleSearchTextChange('')}>
+                <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <Spacer size="md" />
+          <FiltroCategoria categoriasSelecionadas={categoriasSelecionadas} onToggleCategoria={toggleCategoria} theme={theme} />
+          <Spacer size="md" />
+          <FiltroAcessibilidade recursosSelecionados={recursosSelecionados} onToggleRecurso={toggleRecurso} theme={theme} />
+          <Spacer size="md" />
+          <FiltroNota notaMinima={notaMinima} onNotaChange={setNotaMinima} theme={theme} />
+          <Spacer size="md" />
+
+          {!isDesktop && (
+            <Button variant="primary" onPress={() => realizarBusca(true)} fullWidth altoContraste={isHighContrast}>
+              Aplicar Filtros
+            </Button>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.colunaResultados}>
+        <View style={styles.resultadosHeader}>
+          <ThemedText variant="h3" weight="bold">
+            {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
+          </ThemedText>
+          {refreshing && <ActivityIndicator size="small" color={theme.colors.primary} />}
+        </View>
         <Spacer size="md" />
-        <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'}>Buscando locais...</ThemedText>
+      </View>
+    </View>
+  );
+
+  // Loading inicial
+  if (carregandoInicial) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Spacer size="md" />
+        <ThemedText color="textSecondary">Carregando locais...</ThemedText>
       </View>
     );
   }
 
   return (
-    <Container
-      scroll
-      background={isHighContrast ? 'background' : 'backgroundSecondary'}
-      altoContraste={isHighContrast}
-    >
+    <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <CabecalhoPagina
         titulo="Buscar Locais"
         subtitulo="Encontre e avalie locais acessíveis"
@@ -382,141 +422,37 @@ export default function Buscar({ onNavigate }) {
         altoContraste={isHighContrast}
       />
 
-      <ScrollView
+      <FlatList
+        data={resultados}
+        key={numColumns}
+        numColumns={numColumns}
+        keyExtractor={(item, index) => String(item.id || index)}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={!loading && renderEmptyState}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={estilos.scrollContent}
         refreshControl={
-          <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => realizarBusca(true)}
-              colors={[t.colors.primary]}
-              tintColor={t.colors.primary}
-            />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
         }
-      >
-        <View style={estilos.conteudo}>
-          <View style={[
-            estilos.colunaFiltros,
-            isDesktop && estilos.colunaFiltrosDesktop
-          ]}>
-            <View style={[estilos.filtrosCard, { backgroundColor: t.colors.surface }]}>
-              <View style={estilos.filtrosHeader}>
-                <Ionicons name="options-outline" size={22} color={t.colors.primary} />
-                <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'} style={estilos.filtrosTitulo}>
-                  Filtros
-                </ThemedText>
-                {temFiltrosAtivos && (
-                  <TouchableOpacity onPress={limparFiltros} style={estilos.limparButton}>
-                    <Ionicons name="close-circle-outline" size={18} color={t.colors.error} />
-                    <ThemedText color="error" variant="caption" altoContraste={isHighContrast}>Limpar</ThemedText>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <Spacer size="md" />
-
-              <View style={estilos.searchContainer}>
-                <Ionicons name="search-outline" size={20} color={corTextoSecundario} />
-                <TextInput
-                  style={[estilos.searchInput, { color: t.colors.textPrimary }]}
-                  placeholder="Buscar por nome..."
-                  placeholderTextColor={isHighContrast ? t.colors.textOnPrimary : t.colors.textTertiary}
-                  value={searchText}
-                  onChangeText={setSearchText}
-                />
-                {searchText !== '' && (
-                  <TouchableOpacity onPress={() => setSearchText('')}>
-                    <Ionicons name="close-circle" size={18} color={corTextoSecundario} />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <Spacer size="md" />
-
-              <FiltroCategoria
-                categoriasSelecionadas={categoriasSelecionadas}
-                onToggleCategoria={toggleCategoria}
-                theme={t}
-                estilos={estilos}
-                altoContraste={isHighContrast}
-              />
-
-              <Spacer size="md" />
-
-              <FiltroAcessibilidade
-                recursosSelecionados={recursosSelecionados}
-                onToggleRecurso={toggleRecurso}
-                theme={t}
-                estilos={estilos}
-                altoContraste={isHighContrast}
-              />
-
-              <Spacer size="md" />
-
-              <FiltroNota
-                notaMinima={notaMinima}
-                onNotaChange={setNotaMinima}
-                theme={t}
-                estilos={estilos}
-                altoContraste={isHighContrast}
-              />
-
-              <Spacer size="md" />
-
-              {!isDesktop && (
-                <Button
-                  variant="primary"
-                  onPress={() => realizarBusca()}
-                  fullWidth
-                  altoContraste={isHighContrast}
-                >
-                  Aplicar Filtros
-                </Button>
-              )}
-            </View>
-          </View>
-
-          <View style={estilos.colunaResultados}>
-            <View style={estilos.resultadosHeader}>
-              <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={isHighContrast ? 'textOnPrimary' : 'textPrimary'}>
-                {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
-              </ThemedText>
-            </View>
-
-            <Spacer size="md" />
-
-            {resultados.length === 0 ? (
-              renderEmptyState()
-            ) : (
-              <FlatList
-                data={resultados}
-                key={numColumns}
-                numColumns={numColumns}
-                keyExtractor={(item) => String(BuscarService.getLocalId(item))}
-                renderItem={renderItem}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={estilos.resultadosGrid}
-              />
-            )}
-          </View>
-        </View>
-
-            <Spacer size="xl" />
-      </ScrollView>
+        initialNumToRender={6}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
     </Container>
   );
 }
 
-const criarEstilos = (t) => StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: t.spacing.md,
-    paddingBottom: t.spacing.lg,
+const styles = StyleSheet.create({
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   conteudo: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: t.spacing.lg,
+    gap: 24,
+    marginBottom: 16,
   },
   colunaFiltros: {
     flex: 1,
@@ -530,20 +466,18 @@ const criarEstilos = (t) => StyleSheet.create({
     minWidth: 280,
   },
   filtrosCard: {
-    borderRadius: t.borderRadius.lg,
-    padding: t.spacing.lg,
+    borderRadius: 16,
+    padding: 20,
     elevation: 2,
-    shadowColor: t.shadows.sm.shadowColor,
-    shadowOffset: t.shadows.sm.shadowOffset,
-    shadowOpacity: t.shadows.sm.shadowOpacity,
-    shadowRadius: t.shadows.sm.shadowRadius,
-    borderWidth: 1,
-    borderColor: t.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   filtrosHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: t.spacing.sm,
+    gap: 10,
   },
   filtrosTitulo: {
     flex: 1,
@@ -552,17 +486,16 @@ const criarEstilos = (t) => StyleSheet.create({
   limparButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: t.spacing.xs,
+    gap: 4,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: t.colors.border,
-    borderRadius: t.borderRadius.md,
-    paddingHorizontal: t.spacing.sm,
-    paddingVertical: t.spacing.sm,
-    gap: t.spacing.sm,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
@@ -571,14 +504,14 @@ const criarEstilos = (t) => StyleSheet.create({
   },
   filtroGrupo: {
     borderTopWidth: 1,
-    borderTopColor: t.colors.border,
-    paddingTop: t.spacing.sm,
+    borderTopColor: '#E0E0E0',
+    paddingTop: 12,
   },
   filtroHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: t.spacing.sm,
-    paddingVertical: t.spacing.sm,
+    gap: 10,
+    paddingVertical: 8,
   },
   filtroTitulo: {
     flex: 1,
@@ -586,17 +519,17 @@ const criarEstilos = (t) => StyleSheet.create({
   },
   filtroContent: {
     paddingLeft: 30,
-    paddingTop: t.spacing.sm,
-    gap: t.spacing.sm,
+    paddingTop: 8,
+    gap: 8,
   },
   filtroItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: t.spacing.sm,
-    paddingVertical: t.spacing.xs,
+    gap: 10,
+    paddingVertical: 6,
   },
   filtroIcon: {
-    marginLeft: t.spacing.xs,
+    marginLeft: 4,
   },
   filtroItemLabel: {
     fontSize: 14,
@@ -605,19 +538,19 @@ const criarEstilos = (t) => StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: t.borderRadius.sm,
+    borderRadius: 6,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notaContainer: {
     alignItems: 'center',
-    gap: t.spacing.sm,
-    marginBottom: t.spacing.sm,
+    gap: 8,
+    marginBottom: 12,
   },
   notaStars: {
     flexDirection: 'row',
-    gap: t.spacing.xs,
+    gap: 6,
   },
   notaValor: {
     fontSize: 14,
@@ -625,19 +558,18 @@ const criarEstilos = (t) => StyleSheet.create({
   notaSliderContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: t.spacing.sm,
+    gap: 8,
     justifyContent: 'center',
   },
   notaBotao: {
-    paddingHorizontal: t.spacing.sm,
-    paddingVertical: t.spacing.xs,
-    borderRadius: t.borderRadius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
     backgroundColor: 'transparent',
-    borderColor: t.colors.border,
   },
   notaBotaoAtivo: {
-    backgroundColor: t.colors.surfaceSecondary,
+    backgroundColor: '#E8F0FF',
   },
   notaBotaoTexto: {
     fontSize: 12,
@@ -646,26 +578,23 @@ const criarEstilos = (t) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: t.spacing.sm,
-  },
-  resultadosGrid: {
-    paddingBottom: t.spacing.md,
+    marginBottom: 8,
   },
   cardWrapper: {
     flex: 1,
-    paddingHorizontal: t.spacing.xs,
-    paddingVertical: t.spacing.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: t.spacing.xxxl,
+    paddingVertical: 48,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: t.spacing.xxxl,
-    gap: t.spacing.sm,
+    paddingVertical: 48,
+    gap: 12,
   },
 });

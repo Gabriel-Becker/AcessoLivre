@@ -1,169 +1,206 @@
 import api from '../api/axios';
-import HomeService from './HomeService';
 
-const BuscarService = {
-  normalizarTexto(valor) {
-    return String(valor || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim()
-      .toLowerCase();
-  },
+class BuscarService {
+  static cache = null;
 
-  obterCategoriaLocal(local) {
-    const categoria = local?.categoria;
-
-    if (!categoria) return '';
-
-    if (typeof categoria === 'string') {
-      return categoria;
-    }
-
-    if (typeof categoria === 'object') {
-      return categoria?.nome || categoria?.descricao || categoria?.value || '';
-    }
-
-    return String(categoria);
-  },
-
-  async buscarLocais(filtros = {}) {
+  /**
+   * Carrega TODOS os locais uma única vez (com cache)
+   * @returns {Promise<Array>}
+   */
+  static async carregarTodosLocais() {
     try {
-      const { searchText, categorias, recursos, notaMinima } = filtros;
-      
-      const temFiltros = searchText || 
-                        (categorias && categorias.length > 0) || 
-                        (recursos && recursos.length > 0) || 
-                        (notaMinima && notaMinima > 0);
-      
-      if (!temFiltros) {
-        const locaisDestaque = await HomeService.obterLocaisEmDestaque(50);
-        return {
-          success: true,
-          data: locaisDestaque,
-          total: locaisDestaque.length,
-          hasFilters: false
-        };
+      // Verificar se já temos cache
+      if (this.cache && this.cache.length > 0) {
+        console.log('📦 Usando cache de locais:', this.cache.length);
+        return this.cache;
       }
       
-      console.log('🔍 BuscarService: Buscando todos os locais para aplicar filtros');
-      
+      console.log('🌐 Buscando todos os locais do backend...');
       const response = await api.get('/locais/todos', {
-        params: { page: 0, size: 100, sort: 'nome,asc' }
+        params: { page: 0, size: 100, sort: 'nome', direction: 'asc' }
       });
       
-      let locais = response.data?.content || response.data || [];
-      locais = this.sanitizarLocais(locais);
+      const locais = response.data?.content || response.data || [];
+      this.cache = this.sanitizarLocais(locais);
       
-      if (searchText) {
-        const searchLower = this.normalizarTexto(searchText);
-        locais = locais.filter(local => 
-          this.normalizarTexto(local.nome).includes(searchLower) ||
-          this.normalizarTexto(local.endereco?.cidade).includes(searchLower)
-        );
-      }
-      
-      if (categorias && categorias.length > 0) {
-        locais = locais.filter(local => 
-          categorias.some(categoria =>
-            this.normalizarTexto(categoria) === this.normalizarTexto(this.obterCategoriaLocal(local))
-          )
-        );
-      }
-      
-      if (recursos && recursos.length > 0) {
-        locais = locais.filter(local => {
-          if (!local.tiposAcessibilidade || local.tiposAcessibilidade.length === 0) {
-            return false;
-          }
-          const tiposNormalizados = local.tiposAcessibilidade.map(tipo => this.normalizarTexto(tipo));
-          return recursos.some(recurso => tiposNormalizados.includes(this.normalizarTexto(recurso)));
-        });
-      }
-      
-      if (notaMinima && notaMinima > 0) {
-        locais = locais.filter(local => 
-          (local.avaliacaoMedia || 0) >= notaMinima
-        );
-      }
-      
-      return {
-        success: true,
-        data: locais,
-        total: locais.length,
-        hasFilters: true
-      };
+      console.log('✅ Carregados', this.cache.length, 'locais');
+      return this.cache;
       
     } catch (error) {
-      console.error('❌ BuscarService: Erro na busca:', error);
-      
-      if (error.response?.status === 404) {
-        return {
-          success: true,
-          data: [],
-          total: 0,
-          hasFilters: true
-        };
-      }
-      
-      throw error;
+      console.error('❌ Erro ao carregar locais:', error);
+      return [];
     }
-  },
-  
+  }
+
   /**
-   * Busca locais por nome (autocomplete)
+   * Busca inteligente com múltiplos filtros (100% frontend)
+   * @param {Object} filtros - Filtros de busca
+   * @returns {Promise<Object>}
    */
-  async buscarPorNome(nome) {
+  static async buscarLocais(filtros) {
     try {
-      if (!nome || nome.length < 2) {
+      console.log('🔍 Filtrando locais localmente:', filtros);
+      
+      // Carregar todos os locais (com cache)
+      let locais = await this.carregarTodosLocais();
+      
+      if (!locais || locais.length === 0) {
         return { success: true, data: [], total: 0 };
       }
       
-      const response = await api.get('/locais/todos', {
-        params: { page: 0, size: 20, sort: 'nome,asc' }
-      });
+      // Aplicar filtros
+      let resultados = [...locais];
       
-      let locais = response.data?.content || response.data || [];
-      locais = this.sanitizarLocais(locais);
-      const searchLower = this.normalizarTexto(nome);
+      // 1. Filtro por texto (nome ou endereço)
+      if (filtros.searchText && filtros.searchText.trim()) {
+        const searchLower = filtros.searchText.toLowerCase().trim();
+        resultados = resultados.filter(local => 
+          local.nome?.toLowerCase().includes(searchLower) ||
+          local.endereco?.logradouro?.toLowerCase().includes(searchLower) ||
+          local.endereco?.cidade?.toLowerCase().includes(searchLower) ||
+          local.endereco?.bairro?.toLowerCase().includes(searchLower) ||
+          local.categoria?.toLowerCase().includes(searchLower)
+        );
+        console.log(`📝 Filtro por texto "${searchLower}": ${resultados.length} resultados`);
+      }
       
-      locais = locais.filter(local => 
-        this.normalizarTexto(local.nome).includes(searchLower) ||
-        this.normalizarTexto(local.endereco?.cidade).includes(searchLower)
-      );
+      // 2. Filtro por categorias
+      if (filtros.categorias && filtros.categorias.length > 0) {
+        resultados = resultados.filter(local => 
+          filtros.categorias.includes(local.categoria)
+        );
+        console.log(`📂 Filtro por categorias: ${resultados.length} resultados`);
+      }
+      
+      // 3. Filtro por recursos de acessibilidade
+      if (filtros.recursos && filtros.recursos.length > 0) {
+        resultados = resultados.filter(local => {
+          if (!local.tiposAcessibilidade || local.tiposAcessibilidade.length === 0) return false;
+          // Verifica se o local possui PELO MENOS UM dos recursos selecionados
+          return filtros.recursos.some(recurso => 
+            local.tiposAcessibilidade.includes(recurso)
+          );
+        });
+        console.log(`♿ Filtro por recursos: ${resultados.length} resultados`);
+      }
+      
+      // 4. Filtro por nota mínima
+      if (filtros.notaMinima && filtros.notaMinima > 0) {
+        resultados = resultados.filter(local => 
+          (local.avaliacaoMedia || 0) >= filtros.notaMinima
+        );
+        console.log(`⭐ Filtro por nota >= ${filtros.notaMinima}: ${resultados.length} resultados`);
+      }
+      
+      // Ordenar resultados (melhores notas primeiro)
+      resultados.sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0));
       
       return {
         success: true,
-        data: locais,
-        total: locais.length
+        data: resultados,
+        total: resultados.length
       };
       
     } catch (error) {
-      console.error('❌ BuscarService: Erro na busca por nome:', error);
-      return { success: true, data: [], total: 0 };
+      console.error('❌ Erro na busca:', error);
+      return { success: false, data: [], total: 0, message: error.message };
     }
-  },
-  
+  }
+
   /**
-   * Sanitiza locais (garante que têm ID)
+   * Busca locais em destaque para a home
+   * @param {number} limit - Limite de resultados
+   * @returns {Promise<Array>}
    */
-  sanitizarLocais(locais) {
+  static async obterLocaisEmDestaque(limit = 8) {
+    try {
+      const locais = await this.carregarTodosLocais();
+      // Ordenar por avaliação e pegar os primeiros
+      const destaques = [...locais]
+        .sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0))
+        .slice(0, limit);
+      return destaques;
+    } catch (error) {
+      console.error('Erro ao buscar destaques:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém estatísticas para a home
+   * @returns {Promise<Object>}
+   */
+  static async obterEstatisticas() {
+    try {
+      const locais = await this.carregarTodosLocais();
+      const totalLocais = locais.length;
+      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
+      const mediaGeral = totalLocais > 0 
+        ? locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0) / totalLocais 
+        : 0;
+      
+      return {
+        totalLocais,
+        totalAvaliacoes,
+        mediaGeral: mediaGeral.toFixed(1),
+        totalUsuarios: 0
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0, totalUsuarios: 0 };
+    }
+  }
+
+  /**
+   * Sanitiza lista de locais para o formato do frontend
+   * @param {Array} locais - Lista de locais do backend
+   * @returns {Array}
+   */
+  static sanitizarLocais(locais) {
     if (!locais || !Array.isArray(locais)) return [];
     
-    return locais.filter(local => {
-      const temId = local?.id || local?.localId || local?.idLocal;
-      if (!temId) {
-        console.warn('⚠️ BuscarService: Local sem ID ignorado', local?.nome);
-      }
-      return temId;
-    });
-  },
-  
-  /**
-   * Obtém ID do local (prioriza id, fallback localId)
-   */
-  getLocalId(local) {
-    return local?.id || local?.localId;
+    return locais
+      .filter(local => local && (local.idLocal || local.id))
+      .map(local => ({
+        id: local.idLocal || local.id,
+        nome: local.nome || 'Sem nome',
+        categoria: local.categoria,
+        descricao: local.descricao,
+        endereco: local.endereco,
+        avaliacaoMedia: local.avaliacaoMedia || 0,
+        totalAvaliacoes: local.totalAvaliacoes || 0,
+        tiposAcessibilidade: local.tiposAcessibilidade || [],
+        imagemUrl: local.imagens?.[0]?.url || local.imagemUrl || null,
+        horarioFuncionamento: local.horarioFuncionamento,
+        telefone: local.telefone,
+        site: local.site
+      }));
   }
-};
+
+  /**
+   * Extrai ID do local de forma segura
+   * @param {Object} local - Objeto local
+   * @returns {number|null}
+   */
+  static getLocalId(local) {
+    return local?.id || local?.idLocal || null;
+  }
+
+  static async obterEstatisticas() {
+    try {
+      const locais = await this.carregarTodosLocais();
+      
+      const totalLocais = locais.length;
+      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
+      const somaNotas = locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0);
+      const mediaGeral = totalLocais > 0 ? (somaNotas / totalLocais).toFixed(1) : 0;
+      
+      return { totalLocais, totalAvaliacoes, mediaGeral };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0 };
+    }
+  }
+}
 
 export default BuscarService;

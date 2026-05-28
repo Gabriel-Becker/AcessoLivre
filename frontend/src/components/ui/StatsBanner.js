@@ -1,40 +1,40 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../commons';
-import { useThemeContext } from '../../context/ThemeContext';
 import theme from '../../config/theme';
 
-export default function StatsBanner({ estatisticas = {}, totalLocais = 0, totalAvaliacoes = 0 }) {
-  const { theme: t, isHighContrast } = useThemeContext();
-
-  const locais = estatisticas?.totalLocais ?? totalLocais;
-  const avaliacoes = estatisticas?.totalAvaliacoes ?? totalAvaliacoes;
-  const estiloTextoAltoContraste = isHighContrast ? styles.textoAltoContraste : null;
+export default function StatsBanner({ totalLocais = 0, totalAvaliacoes = 0 }) {
+  const formatNumber = (num) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.primary }]}>
-      <ThemedText variant="h1" color="textOnPrimary" weight="bold" align="center" style={estiloTextoAltoContraste}>
+    <View style={styles.container}>
+      <ThemedText variant="h1" color="textOnPrimary" weight="bold" align="center">
         Descubra Locais Acessíveis
       </ThemedText>
-      <ThemedText color="textOnPrimary" align="center" style={[styles.subtitle, estiloTextoAltoContraste]}>
+      <ThemedText color="textOnPrimary" align="center" style={styles.subtitle}>
         Juntos construindo um mundo mais inclusivo para todos
       </ThemedText>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <ThemedText variant="h1" color="textOnPrimary" weight="bold" style={estiloTextoAltoContraste}>
-            {formatNumber(locais)}
+          <ThemedText variant="h1" color="textOnPrimary" weight="bold">
+            {formatNumber(totalLocais)}
           </ThemedText>
-          <ThemedText color="textOnPrimary" weight="medium" style={estiloTextoAltoContraste}>
+          <ThemedText color="textOnPrimary" weight="medium">
             Locais Cadastrados
           </ThemedText>
         </View>
 
         <View style={styles.statCard}>
-          <ThemedText variant="h1" color="textOnPrimary" weight="bold" style={estiloTextoAltoContraste}>
-            {formatNumber(avaliacoes)}
+          <ThemedText variant="h1" color="textOnPrimary" weight="bold">
+            {formatNumber(totalAvaliacoes)}
           </ThemedText>
-          <ThemedText color="textOnPrimary" weight="medium" style={estiloTextoAltoContraste}>
+          <ThemedText color="textOnPrimary" weight="medium">
             Avaliações
           </ThemedText>
         </View>
@@ -43,35 +43,26 @@ export default function StatsBanner({ estatisticas = {}, totalLocais = 0, totalA
   );
 }
 
-function formatNumber(num) {
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k';
-  }
-  return num.toString();
-}
-
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xl,
-    marginBottom: theme.spacing.xl,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius?.lg || 16,
+    padding: theme.spacing?.xl || 24,
+    marginHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 16,
   },
   subtitle: {
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.xl,
+    marginTop: theme.spacing?.sm || 8,
+    marginBottom: theme.spacing?.xl || 24,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    gap: theme.spacing.lg,
+    gap: theme.spacing?.lg || 16,
   },
   statCard: {
     flex: 1,
     alignItems: 'center',
-  },
-  textoAltoContraste: {
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1.5,
   },
 });

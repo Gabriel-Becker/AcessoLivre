@@ -68,28 +68,39 @@ public class AvaliacaoService {
     public Avaliacao salvar(AvaliacaoRequestDTO dto) {
         log.info("Salvando avaliação: localId={}, usuarioId={}", dto.getIdLocal(), dto.getIdUsuario());
 
+        // Validar se usuário já avaliou este local
         if (avaliacaoRepository.existsByUsuarioIdUsuarioAndLocalIdLocal(dto.getIdUsuario(), dto.getIdLocal())) {
             log.warn("Usuário já avaliou este local: usuarioId={}, localId={}", dto.getIdUsuario(), dto.getIdLocal());
             throw new IllegalArgumentException("Usuário já avaliou este local");
         }
 
+        // Buscar usuário
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + dto.getIdUsuario()));
 
+        // Buscar local
         Local local = localRepository.findById(dto.getIdLocal())
-                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + dto.getIdLocal()));
 
+        // Calcular média geral
         double media = ((double) dto.getNotaAcessibilidadeVisual()
                 + dto.getNotaAcessibilidadeMotora()
                 + dto.getNotaAcessibilidadeAuditiva()) / 3.0;
 
-        boolean moderado = (dto.getComentario() == null || dto.getComentario().isBlank());
+        // ✅ CORREÇÃO: Para MVP, todas as avaliações são moderadas (aparecem imediatamente)
+        boolean moderado = true;
 
+        // Criar entidade
         Avaliacao avaliacao = AvaliacaoMapper.toEntity(dto, usuario, local, media, moderado);
+        
+        // Salvar
         Avaliacao avaliacaoSalva = avaliacaoRepository.save(avaliacao);
         
+        // Recalcular média do local
         localService.recalcularMediaAvaliacoes(dto.getIdLocal());
-        log.info("Avaliação salva: id={}", avaliacaoSalva.getIdAvaliacao());
+        
+        log.info("✅ Avaliação salva com sucesso: id={}, moderado={}, notaGeral={}, usuario={}", 
+                 avaliacaoSalva.getIdAvaliacao(), moderado, media, usuario.getNome());
         
         return avaliacaoSalva;
     }
