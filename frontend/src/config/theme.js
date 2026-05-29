@@ -97,6 +97,17 @@ export const defaultTheme = {
     xxl: 40,
     xxxl: 48,
   },
+
+  layout: {
+    mobile: {
+      pageHorizontal: 16,
+      pageVertical: 16,
+      cardPadding: 16,
+      sectionGap: 24,
+      touchTargetMinHeight: 44,
+      bottomBarHeight: 72,
+    },
+  },
   
   // Raios de borda
   borderRadius: {

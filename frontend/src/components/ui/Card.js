@@ -15,6 +15,7 @@ export default function Card({
 }) {
   const { isHighContrast, theme: ctxTheme } = useThemeContext();
   const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
+  const cardPadding = t.layout?.mobile?.cardPadding ?? t.spacing.md;
 
   // Estilos baseados na variante
   const getVariantStyles = () => {
@@ -44,9 +45,13 @@ export default function Card({
   };
 
   const variantStyles = getVariantStyles();
+  const contentStyles = {
+    borderRadius: t.borderRadius.xl,
+    padding: cardPadding,
+  };
 
   const cardContent = (
-    <View style={[styles.card, variantStyles, style]} {...props}>
+    <View style={[styles.card, contentStyles, variantStyles, style]} {...props}>
       {children}
     </View>
   );
@@ -64,8 +69,6 @@ export default function Card({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
 });

@@ -190,9 +190,9 @@ function criarEstilos(t, contrasteAtivo) {
   return StyleSheet.create({
     container: {
       backgroundColor: t.colors.surface,
-      borderRadius: 16,
+      borderRadius: t.borderRadius.xl,
       overflow: 'hidden',
-      marginBottom: 16,
+      marginBottom: t.spacing.md,
       borderWidth: contrasteAtivo ? 2 : 1,
       borderColor: contrasteAtivo ? t.colors.border : `${t.colors.primary}30`,
       ...(contrasteAtivo ? t.shadows.none : t.shadows.md),
@@ -230,11 +230,11 @@ function criarEstilos(t, contrasteAtivo) {
       fontSize: 10,
     },
     infoContainer: {
-      padding: 12,
+      padding: t.spacing.md,
     },
     nomeLocal: {
-      fontSize: 15,
-      marginBottom: 6,
+      fontSize: 16,
+      marginBottom: t.spacing.xs,
     },
     categoriaRatingRow: {
       flexDirection: 'row',
@@ -246,9 +246,9 @@ function criarEstilos(t, contrasteAtivo) {
     },
     categoriaBadge: {
       backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : '#E8F0FF',
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-      borderRadius: 14,
+      paddingHorizontal: t.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: t.borderRadius.full,
       borderWidth: contrasteAtivo ? 1 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
@@ -284,9 +284,9 @@ function criarEstilos(t, contrasteAtivo) {
     },
     recursosBadge: {
       backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : '#E0E0E0',
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 12,
+      paddingHorizontal: t.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: t.borderRadius.full,
       borderWidth: contrasteAtivo ? 1 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },

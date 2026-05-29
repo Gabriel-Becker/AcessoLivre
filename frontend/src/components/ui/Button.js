@@ -24,6 +24,7 @@ export default function Button({
 }) {
   const isDisabled = disabled || loading;
   const t = altoContraste ? getTheme(true) : theme;
+  const minTouchHeight = t.layout?.mobile?.touchTargetMinHeight ?? 44;
 
   // Estilos baseados na variante
   const getVariantStyles = () => {
@@ -82,18 +83,18 @@ export default function Button({
     switch (size) {
       case 'small':
         return {
-          container: { paddingVertical: theme.spacing.xs, paddingHorizontal: theme.spacing.md },
+          container: { minHeight: minTouchHeight, paddingVertical: theme.spacing.xs, paddingHorizontal: theme.spacing.md },
           text: { fontSize: theme.typography.fontSize.sm },
         };
       case 'large':
         return {
-          container: { paddingVertical: theme.spacing.md, paddingHorizontal: theme.spacing.lg },
+          container: { minHeight: minTouchHeight + 10, paddingVertical: theme.spacing.md, paddingHorizontal: theme.spacing.lg },
           text: { fontSize: theme.typography.fontSize.lg },
         };
       case 'medium':
       default:
         return {
-          container: { paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.md },
+          container: { minHeight: minTouchHeight, paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.md },
           text: { fontSize: theme.typography.fontSize.md },
         };
     }
@@ -151,7 +152,7 @@ export default function Button({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
