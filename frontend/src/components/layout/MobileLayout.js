@@ -5,6 +5,7 @@ import theme, { getTheme } from '../../config/theme';
 import { ThemedText } from '../commons';
 import SafeArea from './SafeArea';
 import { useAuth } from '../../context/AuthContext';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function MobileLayout({
   children,
@@ -13,7 +14,8 @@ export default function MobileLayout({
   altoContraste = false,
   style,
 }) {
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast } = useThemeContext();
+  const t = getTheme(isHighContrast || altoContraste);
   const { isAuthenticated } = useAuth();
   const TAB_BAR_HEIGHT = 72;
 
@@ -49,18 +51,15 @@ export default function MobileLayout({
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
             <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
           </View>
-          <ThemedText variant="h3" weight="bold">
-            AcessoLivre
-          </ThemedText>
         </View>
 
         <TouchableOpacity
           style={styles.headerAction}
-          onPress={() => navegar('Buscar')}
+          onPress={() => navegar('Configuracoes')}
           accessibilityRole="button"
-          accessibilityLabel="Ir para busca"
+          accessibilityLabel="Ir para configurações"
         >
-          <Ionicons name="search-outline" size={22} color={t.colors.textSecondary} />
+          <Ionicons name="settings-outline" size={22} color={t.colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -113,8 +112,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   brandContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: theme.spacing.sm,
   },
   logoCircle: {
@@ -127,8 +128,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 84,
   },
   tabBar: {

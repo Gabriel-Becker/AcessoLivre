@@ -351,7 +351,7 @@ export default function Buscar({ onNavigate }) {
 
       <Spacer size="md" />
 
-      <View style={[styles.searchContainer, { borderColor: theme.colors.border || '#E0E0E0' }]}>
+      <View style={[styles.searchContainer, { borderColor: theme.colors.border || '#E0E0E0', paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm, borderRadius: theme.borderRadius.md }] }>
         <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.textPrimary }]}
@@ -406,7 +406,7 @@ export default function Buscar({ onNavigate }) {
         keyExtractor={(item, index) => String(item.id || index)}
         renderItem={renderItem}
         ListEmptyComponent={!loading && renderEmptyState}
-        contentContainerStyle={styles.resultadosListContent}
+          contentContainerStyle={[styles.resultadosListContent, { paddingHorizontal: theme.layout?.mobile?.pageHorizontal ?? 16 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
@@ -464,7 +464,7 @@ export default function Buscar({ onNavigate }) {
             </View>
           }
           ListEmptyComponent={!loading && renderEmptyState}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingHorizontal: theme.layout?.mobile?.pageHorizontal ?? 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
@@ -517,7 +517,8 @@ const styles = StyleSheet.create({
   },
   filtrosCard: {
     borderRadius: 16,
-    padding: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

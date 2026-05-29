@@ -135,7 +135,7 @@ export default function Home({ onNavigate }) {
             tintColor={t.colors.primary}
           />
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingHorizontal: t.layout?.mobile?.pageHorizontal ?? 10, paddingBottom: t.layout?.mobile?.pageVertical ?? 20 }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingHorizontal: 10,
     paddingBottom: 20,
   },
   sectionHeader: {
@@ -173,7 +172,7 @@ const styles = StyleSheet.create({
   cardWrapper: {
     flex: 1,
     padding: 6,
-    minWidth: 260,
+    minWidth: 0,
     maxWidth: 400,
   },
   emptyContainer: {

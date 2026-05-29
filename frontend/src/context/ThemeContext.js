@@ -30,7 +30,7 @@ const THEME_PREF_KEY = 'preferenciaTemaAltoContraste';
 const ThemeContext = createContext({});
 
 export const ThemeProvider = ({ children }) => {
-  const [isHighContrast, setIsHighContrast] = useState(false);
+  const [isHighContrast, setIsHighContrast] = useState(true);
 
   useEffect(() => {
     carregarPreferencia();
