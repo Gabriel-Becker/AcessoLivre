@@ -47,7 +47,7 @@ function MainApp({ navigation, route }) {
       return;
     }
 
-    if (screen === 'Admin' && !isAdmin) {
+    if (screen === 'Admin' && (!isAdmin || !isDesktop)) {
       setCurrentScreen('Inicio');
       return;
     }
@@ -78,10 +78,10 @@ function MainApp({ navigation, route }) {
   }, [isAuthenticated, currentScreen]);
 
   useEffect(() => {
-    if (!isAdmin && currentScreen === 'Admin') {
+    if ((!isAdmin || !isDesktop) && currentScreen === 'Admin') {
       setCurrentScreen('Inicio');
     }
-  }, [isAdmin, currentScreen]);
+  }, [isAdmin, isDesktop, currentScreen]);
 
   const renderScreen = () => {
     switch (currentScreen) {
