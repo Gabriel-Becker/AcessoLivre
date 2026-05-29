@@ -277,7 +277,10 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
 
   return (
     <View>
-      <TouchableOpacity style={localStyles.dropArea} onPress={handleSelectFiles}>
+      <TouchableOpacity
+        style={[localStyles.dropArea, { borderColor: isHighContrast ? theme.colors.primary : '#ddd', backgroundColor: isHighContrast ? theme.colors.surface : '#f9f9f9', borderRadius: theme.borderRadius.lg, padding: theme.spacing.lg }]}
+        onPress={handleSelectFiles}
+      >
         <Ionicons name="cloud-upload-outline" size={48} color={isHighContrast ? theme.colors.textPrimary : theme.colors.textSecondary} />
         <ThemedText align="center">Clique para selecionar imagens</ThemedText>
         <ThemedText color="textTertiary" variant="caption" align="center">
@@ -803,6 +806,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       background={isHighContrast ? 'background' : 'backgroundSecondary'}
       altoContraste={isHighContrast}
       contentStyle={estilos.scroll}
+      style={{ paddingHorizontal: 0 }}
     >
       <CabecalhoPagina
         titulo="Adicionar Local"
@@ -1033,65 +1037,67 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             </View>
           </View>
 
-          <View style={estilos.colunaLateral}>
-            <CardInfoIcone
-              titulo="Próximos passos:"
-              icone="navigate-outline"
-              corIcone={t.colors.primary}
-              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
-              altoContraste={isHighContrast}
-            >
-              <ListaMarcadores
-                itens={[
-                  'Após adicionar, você poderá avaliar o local',
-                  'Adicione fotos dos recursos de acessibilidade',
-                  'Compartilhe com a comunidade',
+          {exibirColunaLateral && (
+            <View style={estilos.colunaLateral}>
+              <CardInfoIcone
+                titulo="Próximos passos:"
+                icone="navigate-outline"
+                corIcone={t.colors.primary}
+                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
+                altoContraste={isHighContrast}
+              >
+                <ListaMarcadores
+                  itens={[
+                    'Após adicionar, você poderá avaliar o local',
+                    'Adicione fotos dos recursos de acessibilidade',
+                    'Compartilhe com a comunidade',
+                  ]}
+                  corMarcador={t.colors.primary}
+                  altoContraste={isHighContrast}
+                />
+              </CardInfoIcone>
+
+              <CardInfoIcone
+                titulo="Dica importante:"
+                icone="bulb-outline"
+                corIcone={t.colors.warning}
+                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
+                fundo={fundos.fundoDica}
+                altoContraste={isHighContrast}
+              >
+                <ThemedText color="textSecondary">
+                  Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
+                  diferentes necessidades a encontrar locais adequados para elas.
+                </ThemedText>
+              </CardInfoIcone>
+
+              <CardInfoIcone
+                titulo="Contribua com a Comunidade"
+                icone="heart"
+                corIcone={t.colors.secondary}
+                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
+                fundo={fundos.fundoComunidade}
+                layout="coluna"
+                centralizado
+                altoContraste={isHighContrast}
+              >
+                <ThemedText color="textSecondary" align="center">
+                  Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
+                  mundo mais inclusivo para todos.
+                </ThemedText>
+              </CardInfoIcone>
+
+              <CartaoMetricas
+                titulo="Impacto da Comunidade"
+                metricas={[
+                  { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
+                  { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
+                  { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
                 ]}
-                corMarcador={t.colors.primary}
                 altoContraste={isHighContrast}
               />
-            </CardInfoIcone>
-
-            <CardInfoIcone
-              titulo="Dica importante:"
-              icone="bulb-outline"
-              corIcone={t.colors.warning}
-              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
-              fundo={fundos.fundoDica}
-              altoContraste={isHighContrast}
-            >
-              <ThemedText color="textSecondary">
-                Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
-                diferentes necessidades a encontrar locais adequados para elas.
-              </ThemedText>
-            </CardInfoIcone>
-
-            <CardInfoIcone
-              titulo="Contribua com a Comunidade"
-              icone="heart"
-              corIcone={t.colors.secondary}
-              corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
-              fundo={fundos.fundoComunidade}
-              layout="coluna"
-              centralizado
-              altoContraste={isHighContrast}
-            >
-              <ThemedText color="textSecondary" align="center">
-                Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
-                mundo mais inclusivo para todos.
-              </ThemedText>
-            </CardInfoIcone>
-
-            <CartaoMetricas
-              titulo="Impacto da Comunidade"
-              metricas={[
-                { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
-                { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
-                { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
-              ]}
-              altoContraste={isHighContrast}
-            />
-          </View>
+            </View>
+          )}
         </View>
       </ScrollView>
     </Container>

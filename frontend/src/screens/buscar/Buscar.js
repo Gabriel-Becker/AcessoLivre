@@ -163,6 +163,7 @@ export default function Buscar({ onNavigate }) {
   const [refreshing, setRefreshing] = useState(false);
   const [totalResultados, setTotalResultados] = useState(0);
   const [carregandoInicial, setCarregandoInicial] = useState(true);
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
   const numColumns = useMemo(() => {
     if (isDesktop) return 2;
@@ -458,7 +459,21 @@ export default function Buscar({ onNavigate }) {
           renderItem={renderItem}
           ListHeaderComponent={
             <View style={styles.conteudoMobile}>
-              {renderFiltrosCard()}
+              {!isDesktop && (
+                <View style={styles.filtrosToggleRow}>
+                  <TouchableOpacity
+                    style={styles.filtrosToggleButton}
+                    onPress={() => setMostrarFiltros(prev => !prev)}
+                    accessibilityRole="button"
+                    accessibilityLabel={mostrarFiltros ? 'Ocultar filtros' : 'Mostrar filtros'}
+                  >
+                    <Ionicons name={mostrarFiltros ? 'filter' : 'filter-outline'} size={22} color={theme.colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {isDesktop || mostrarFiltros ? renderFiltrosCard() : null}
+
               {renderResultadosHeader()}
               <Spacer size="md" />
             </View>
@@ -647,5 +662,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 48,
     gap: 12,
+  },
+  filtrosToggleRow: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  filtrosToggleButton: {
+    padding: 8,
+    borderRadius: 8,
   },
 });
