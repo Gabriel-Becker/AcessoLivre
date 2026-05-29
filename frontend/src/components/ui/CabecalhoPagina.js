@@ -22,6 +22,9 @@ export default function CabecalhoPagina({
 
   const estilos = useMemo(() => criarEstilos(t), [t]);
 
+  const showBack = Boolean(onVoltar);
+  const hasRight = Boolean(acaoDireita);
+
   return (
     <View style={[estilos.container, style]}>
       {onVoltar ? (
@@ -39,8 +42,18 @@ export default function CabecalhoPagina({
         <View style={estilos.espacoVoltar} />
       )}
 
-      <View style={estilos.textos}>
-        <ThemedText variant="h1" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
+      <View style={[estilos.textos, !showBack && !hasRight ? estilos.textosCenter : null]}>
+        <ThemedText
+          variant="h1"
+          weight="bold"
+          altoContraste={contrasteAtivo}
+          color={corPrincipal}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+          style={estilos.titulo}
+        >
           {titulo}
         </ThemedText>
         {subtitulo ? (
@@ -83,10 +96,17 @@ function criarEstilos(t) {
     },
     textos: {
       flex: 1,
+      minWidth: 0,
+    },
+    titulo: {
+      flexShrink: 1,
     },
     acaoDireita: {
       minWidth: 40,
       alignItems: 'flex-end',
+    },
+    textosCenter: {
+      alignItems: 'center',
     },
   });
 }

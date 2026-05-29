@@ -12,6 +12,7 @@ import LocalDetalhes from '../screens/locais/LocalDetalhes';
 import Sobre from '../screens/sobre/Sobre';
 import Perfil from '../screens/perfil/Perfil';
 import Admin from '../screens/admin/Admin';
+import Configuracoes from '../screens/config/Configuracoes';
 import theme, { breakpoints } from '../config/theme';
 
 const Stack = createNativeStackNavigator();
@@ -96,6 +97,8 @@ function MainApp({ navigation, route }) {
         return <Sobre onNavigate={handleNavigate} />;
       case 'Perfil':
         return isAuthenticated ? <Perfil /> : <Home />;
+      case 'Configuracoes':
+        return <Configuracoes onNavigate={handleNavigate} />;
       case 'Admin':
         return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
       default:
