@@ -174,19 +174,6 @@ export default function Buscar({ onNavigate }) {
     return searchText.trim() !== '' || categoriasSelecionadas.length > 0 || recursosSelecionados.length > 0 || notaMinima > 0;
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
-  const carregarDadosIniciais = useCallback(async () => {
-    setCarregandoInicial(true);
-    try {
-      await BuscarService.carregarTodosLocais(); 
-      await realizarBusca();
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toastHelper.showError('Erro ao carregar locais');
-    } finally {
-      setCarregandoInicial(false);
-    }
-  }, [realizarBusca]);
-
   // Função principal de busca (100% local)
   const realizarBusca = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -223,6 +210,19 @@ export default function Buscar({ onNavigate }) {
       setRefreshing(false);
     }
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima, temFiltrosAtivos]);
+
+  const carregarDadosIniciais = useCallback(async () => {
+    setCarregandoInicial(true);
+    try {
+      await BuscarService.carregarTodosLocais();
+      await realizarBusca();
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toastHelper.showError('Erro ao carregar locais');
+    } finally {
+      setCarregandoInicial(false);
+    }
+  }, [realizarBusca]);
 
   // Debounce para busca por texto
   const handleSearchTextChange = useCallback((text) => {

@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
 import { ThemedText } from '../commons';
@@ -15,6 +15,7 @@ export default function MobileLayout({
 }) {
   const t = altoContraste ? getTheme(true) : theme;
   const { isAuthenticated } = useAuth();
+  const TAB_BAR_HEIGHT = 72;
 
   const navegar = useCallback(
     (screen) => {
@@ -63,7 +64,7 @@ export default function MobileLayout({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>{children}</View>
+      <View style={[styles.content, { paddingBottom: TAB_BAR_HEIGHT + t.spacing.md }]}>{children}</View>
 
       <View style={[styles.tabBar, { backgroundColor: t.colors.surface, borderTopColor: t.colors.borderLight }]}>
         {tabs.map((tab) => {
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 64,
+    height: 56,
     paddingHorizontal: theme.spacing.md,
     borderBottomWidth: 1,
     flexDirection: 'row',
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.sm,
-    paddingBottom: theme.spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
     paddingTop: theme.spacing.sm,
   },
   tabItem: {
