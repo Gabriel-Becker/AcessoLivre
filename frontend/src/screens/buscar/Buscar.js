@@ -146,7 +146,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
 FiltroNota.displayName = 'FiltroNota';
 
 export default function Buscar({ onNavigate }) {
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast } = useThemeContext();
   const { width } = useWindowDimensions();
   const theme = getTheme(isHighContrast);
   const debounceTimer = useRef(null);
@@ -174,12 +174,7 @@ export default function Buscar({ onNavigate }) {
     return searchText.trim() !== '' || categoriasSelecionadas.length > 0 || recursosSelecionados.length > 0 || notaMinima > 0;
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
-  // Carregar dados iniciais
-  useEffect(() => {
-    carregarDadosIniciais();
-  }, []);
-
-  const carregarDadosIniciais = async () => {
+  const carregarDadosIniciais = useCallback(async () => {
     setCarregandoInicial(true);
     try {
       await BuscarService.carregarTodosLocais(); 
@@ -190,7 +185,7 @@ export default function Buscar({ onNavigate }) {
     } finally {
       setCarregandoInicial(false);
     }
-  };
+  }, [realizarBusca]);
 
   // Função principal de busca (100% local)
   const realizarBusca = useCallback(async (showLoading = false) => {
@@ -253,12 +248,17 @@ export default function Buscar({ onNavigate }) {
     }, 200);
   }, [realizarBusca]);
 
+  // Carregar dados iniciais
+  useEffect(() => {
+    carregarDadosIniciais();
+  }, [carregarDadosIniciais]);
+
   // Efeito para filtros que não são texto
   useEffect(() => {
     if (!carregandoInicial) {
       handleFilterChange();
     }
-  }, [categoriasSelecionadas, recursosSelecionados, notaMinima]);
+  }, [categoriasSelecionadas, recursosSelecionados, notaMinima, carregandoInicial, handleFilterChange]);
 
   // Limpar timers ao desmontar
   useEffect(() => {
@@ -336,66 +336,85 @@ export default function Buscar({ onNavigate }) {
     </View>
   ), [handleLocalPress, isHighContrast]);
 
-  const renderHeader = () => (
-    <View style={styles.conteudo}>
-      <View style={[styles.colunaFiltros, isDesktop && styles.colunaFiltrosDesktop]}>
-        <View style={[styles.filtrosCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.filtrosHeader}>
-            <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
-            <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>Filtros</ThemedText>
-            {temFiltrosAtivos && (
-              <TouchableOpacity onPress={limparFiltros} style={styles.limparButton}>
-                <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
-                <ThemedText color="error" variant="caption">Limpar</ThemedText>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <Spacer size="md" />
-
-          <View style={[styles.searchContainer, { borderColor: theme.colors.border || '#E0E0E0' }]}>
-            <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.textPrimary }]}
-              placeholder="Buscar por nome, endereço ou categoria..."
-              placeholderTextColor={theme.colors.textTertiary}
-              value={searchText}
-              onChangeText={handleSearchTextChange}
-              returnKeyType="search"
-              onSubmitEditing={() => realizarBusca(true)}
-            />
-            {searchText !== '' && (
-              <TouchableOpacity onPress={() => handleSearchTextChange('')}>
-                <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <Spacer size="md" />
-          <FiltroCategoria categoriasSelecionadas={categoriasSelecionadas} onToggleCategoria={toggleCategoria} theme={theme} />
-          <Spacer size="md" />
-          <FiltroAcessibilidade recursosSelecionados={recursosSelecionados} onToggleRecurso={toggleRecurso} theme={theme} />
-          <Spacer size="md" />
-          <FiltroNota notaMinima={notaMinima} onNotaChange={setNotaMinima} theme={theme} />
-          <Spacer size="md" />
-
-          {!isDesktop && (
-            <Button variant="primary" onPress={() => realizarBusca(true)} fullWidth altoContraste={isHighContrast}>
-              Aplicar Filtros
-            </Button>
-          )}
-        </View>
+  const renderFiltrosCard = () => (
+    <View style={[styles.filtrosCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={styles.filtrosHeader}>
+        <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
+        <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>Filtros</ThemedText>
+        {temFiltrosAtivos && (
+          <TouchableOpacity onPress={limparFiltros} style={styles.limparButton}>
+            <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
+            <ThemedText color="error" variant="caption">Limpar</ThemedText>
+          </TouchableOpacity>
+        )}
       </View>
 
-      <View style={styles.colunaResultados}>
-        <View style={styles.resultadosHeader}>
-          <ThemedText variant="h3" weight="bold">
-            {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
-          </ThemedText>
-          {refreshing && <ActivityIndicator size="small" color={theme.colors.primary} />}
-        </View>
-        <Spacer size="md" />
+      <Spacer size="md" />
+
+      <View style={[styles.searchContainer, { borderColor: theme.colors.border || '#E0E0E0' }]}>
+        <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.colors.textPrimary }]}
+          placeholder="Buscar por nome, endereço ou categoria..."
+          placeholderTextColor={theme.colors.textTertiary}
+          value={searchText}
+          onChangeText={handleSearchTextChange}
+          returnKeyType="search"
+          onSubmitEditing={() => realizarBusca(true)}
+        />
+        {searchText !== '' && (
+          <TouchableOpacity onPress={() => handleSearchTextChange('')}>
+            <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </View>
+
+      <Spacer size="md" />
+      <FiltroCategoria categoriasSelecionadas={categoriasSelecionadas} onToggleCategoria={toggleCategoria} theme={theme} />
+      <Spacer size="md" />
+      <FiltroAcessibilidade recursosSelecionados={recursosSelecionados} onToggleRecurso={toggleRecurso} theme={theme} />
+      <Spacer size="md" />
+      <FiltroNota notaMinima={notaMinima} onNotaChange={setNotaMinima} theme={theme} />
+      <Spacer size="md" />
+
+      {!isDesktop && (
+        <Button variant="primary" onPress={() => realizarBusca(true)} fullWidth altoContraste={isHighContrast}>
+          Aplicar Filtros
+        </Button>
+      )}
+    </View>
+  );
+
+  const renderResultadosHeader = () => (
+    <View style={styles.resultadosHeader}>
+      <ThemedText variant="h3" weight="bold">
+        {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
+      </ThemedText>
+      {refreshing && <ActivityIndicator size="small" color={theme.colors.primary} />}
+    </View>
+  );
+
+  const renderResultados = () => (
+    <View style={styles.resultadosContainer}>
+      {renderResultadosHeader()}
+      <Spacer size="md" />
+
+      <FlatList
+        data={resultados}
+        key={numColumns}
+        numColumns={numColumns}
+        keyExtractor={(item, index) => String(item.id || index)}
+        renderItem={renderItem}
+        ListEmptyComponent={!loading && renderEmptyState}
+        contentContainerStyle={styles.resultadosListContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
+        }
+        initialNumToRender={6}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
     </View>
   );
 
@@ -420,23 +439,41 @@ export default function Buscar({ onNavigate }) {
         altoContraste={isHighContrast}
       />
 
-      <FlatList
-        data={resultados}
-        key={numColumns}
-        numColumns={numColumns}
-        keyExtractor={(item, index) => String(item.id || index)}
-        renderItem={renderItem}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!loading && renderEmptyState}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
-        }
-        initialNumToRender={6}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-      />
+      {isDesktop ? (
+        <View style={styles.conteudoDesktop}>
+          <View style={[styles.colunaFiltros, styles.colunaFiltrosDesktop]}>
+            {renderFiltrosCard()}
+          </View>
+
+          <View style={styles.colunaResultadosDesktop}>
+            {renderResultados()}
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={resultados}
+          key={numColumns}
+          numColumns={numColumns}
+          keyExtractor={(item, index) => String(item.id || index)}
+          renderItem={renderItem}
+          ListHeaderComponent={
+            <View style={styles.conteudoMobile}>
+              {renderFiltrosCard()}
+              {renderResultadosHeader()}
+              <Spacer size="md" />
+            </View>
+          }
+          ListEmptyComponent={!loading && renderEmptyState}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
+          }
+          initialNumToRender={6}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
+      )}
     </Container>
   );
 }
@@ -446,11 +483,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  conteudo: {
+  conteudoMobile: {
+    marginBottom: 16,
+  },
+  conteudoDesktop: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 24,
     marginBottom: 16,
+    alignItems: 'flex-start',
   },
   colunaFiltros: {
     flex: 1,
@@ -458,6 +499,17 @@ const styles = StyleSheet.create({
   },
   colunaFiltrosDesktop: {
     maxWidth: 320,
+  },
+  colunaResultadosDesktop: {
+    flex: 1,
+    minWidth: 0,
+  },
+  resultadosContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
+  resultadosListContent: {
+    paddingBottom: 32,
   },
   colunaResultados: {
     flex: 3,

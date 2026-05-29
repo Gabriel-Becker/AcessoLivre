@@ -91,7 +91,7 @@ export default function Home({ onNavigate }) {
 
   if (loading) {
     return (
-      <View style={[styles.loading, { backgroundColor: '#f5f5f5' }]}>
+      <View style={[styles.loading, { backgroundColor: t.colors.backgroundSecondary }]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
         <ThemedText>Carregando...</ThemedText>
@@ -100,7 +100,7 @@ export default function Home({ onNavigate }) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#f5f5f5' }]}>
+    <View style={[styles.container, { backgroundColor: t.colors.backgroundSecondary }]}>
       <FlatList
         data={locaisDestaque}
         key={numColumns}
