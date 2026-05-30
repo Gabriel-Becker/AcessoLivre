@@ -317,10 +317,37 @@ const AuthService = {
         console.error('[AuthService] Token inválido: payload vazio');
         return null;
       }
-      
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+      // Cross-environment base64 decode: try atob, then Buffer (Node/polyfilled), else error gracefully
+      const b64Decode = (input) => {
+        try {
+          if (typeof atob === 'function') return atob(input);
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if (typeof Buffer !== 'undefined') return Buffer.from(input, 'base64').toString('binary');
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if (typeof globalThis !== 'undefined' && typeof globalThis.atob === 'function') return globalThis.atob(input);
+        } catch (e) {
+          // ignore
+        }
+
+        console.error('[AuthService] Nenhuma função de base64 (atob/Buffer) disponível para decodificar token');
+        return null;
+      };
+
+      const decoded = b64Decode(base64);
+      if (decoded === null) return null;
+
       const jsonPayload = decodeURIComponent(
-        atob(base64)
+        decoded
           .split('')
           .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
