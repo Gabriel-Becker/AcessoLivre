@@ -30,6 +30,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
+import HomeService from '../../services/HomeService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
@@ -718,11 +719,12 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             
             formData.append('arquivo', arquivoParaEnviar);
             
-            await api.post('/imagens', formData, {
+            const uploadResp = await api.post('/imagens', formData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
             });
+            console.log('[AdicionarLocal] Upload response:', uploadResp?.data);
             
             imagensEnviadas++;
             
@@ -737,6 +739,23 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           toastHelper.showWarning(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`);
         } else if (imagensEnviadas > 0) {
           toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
+        }
+
+        // Tentativa de obter o local atualizado do backend para confirmar que as imagens foram associadas
+        try {
+          const localAtualizado = await HomeService.buscarLocalPorId(localId);
+          if (localAtualizado && Array.isArray(localAtualizado.imagens) && localAtualizado.imagens.length > 0) {
+            // Se temos imagens, navegar direto para os detalhes do local recém-criado
+            if (onNavigate) {
+              onNavigate('LocalDetalhes', { id: localId });
+            } else if (navigation && navigation.navigate) {
+              navigation.navigate('Main', { screen: 'LocalDetalhes', id: localId });
+            }
+            // encerra aqui para evitar navegar para inicio
+            return;
+          }
+        } catch (e) {
+          console.error('[AdicionarLocal] Erro ao buscar local atualizado:', e);
         }
       }
 
@@ -759,9 +778,15 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       setProgressoImagens({ atual: 0, total: 0 });
       
       if (onNavigate) {
-        onNavigate('Inicio');
-      } else if (navigation) {
-        navigation.goBack();
+        onNavigate('Inicio', { refreshKey: Date.now() });
+      } else if (navigation && typeof navigation.goBack === 'function') {
+        // If we don't have onNavigate callback, try to navigate back and attempt to trigger a reload
+        try {
+          navigation.goBack();
+        } catch (e) {
+          // fallback: navigate to Main Inicio with refresh
+          try { navigation.navigate && navigation.navigate('Main', { screen: 'Inicio', refreshKey: Date.now() }); } catch (err) {}
+        }
       }
       
     } catch (erro) {

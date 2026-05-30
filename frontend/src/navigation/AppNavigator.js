@@ -86,7 +86,7 @@ function MainApp({ navigation, route }) {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'Inicio':
-        return <Home onNavigate={handleNavigate} />;
+        return <Home onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'Buscar':
         return <Buscar onNavigate={handleNavigate} />;
       case 'Adicionar':

@@ -2,6 +2,29 @@ import api from '../api/axios';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
 
+function normalizarUrlImagem(url) {
+  if (!url || typeof url !== 'string') return null;
+
+  const baseURL = (api.defaults.baseURL?.replace(/\/api\/?$/, '') || API_BASE_URL.replace(/\/api\/?$/, '') || 'http://localhost:8080').replace(/\/$/, '');
+
+  if (url.startsWith('data:')) return url;
+
+  if (url.startsWith('http')) {
+    try {
+      const parsed = new URL(url);
+      if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+        return `${baseURL}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+    } catch (e) {
+      // keep original URL if parsing fails
+    }
+    return url;
+  }
+
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${baseURL}${path}`;
+}
+
 const HomeService = {
 
   /**
@@ -109,33 +132,29 @@ const HomeService = {
    * Constrói URL completa da imagem a partir do caminho relativo
    */
   construirUrlImagem(caminhoRelativo) {
-    if (!caminhoRelativo) return null;
-    if (caminhoRelativo.startsWith('http')) return caminhoRelativo;
-    
-    // Garantir que não haja barra duplicada
-    const baseUrl = API_BASE_URL.replace(/\/$/, '');
-    const path = caminhoRelativo.startsWith('/') ? caminhoRelativo : `/${caminhoRelativo}`;
-    
-    return `${baseUrl}${path}`;
+    return normalizarUrlImagem(caminhoRelativo);
   },
 
   /**
    * Extrai todas as imagens do local com URLs completas
    */
   extrairTodasImagens(local) {
-    if (!local || !Array.isArray(local.imagens)) return [];
-    if (local.imagens.length === 0) return [];
+    if (!local || !Array.isArray(local.imagens) || local.imagens.length === 0) return [];
 
     // Usar Set para remover duplicatas por caminhoRelativo
     const mapImagens = new Map();
     
     local.imagens.forEach(img => {
-      if (img.caminhoRelativo && !mapImagens.has(img.caminhoRelativo)) {
-        mapImagens.set(img.caminhoRelativo, {
-          url: this.construirUrlImagem(img.caminhoRelativo),
-          caminhoRelativo: img.caminhoRelativo,
-          idImagem: img.idImagem,
-          ordem: img.ordem || 0
+      const caminho = img?.caminhoRelativo || img?.urlCompleta || img?.url || img?.imagemUrl;
+      const urlNormalizada = normalizarUrlImagem(caminho);
+
+      if (urlNormalizada && !mapImagens.has(urlNormalizada)) {
+        mapImagens.set(urlNormalizada, {
+          url: urlNormalizada,
+          urlCompleta: urlNormalizada,
+          caminhoRelativo: img?.caminhoRelativo || caminho,
+          idImagem: img?.idImagem,
+          ordem: img?.ordem || 0
         });
       }
     });
@@ -196,7 +215,7 @@ const HomeService = {
       totalAvaliacoes: local.totalAvaliacoes || 0,
       
       // Imagens (URLs completas)
-      imagemUrl: primeiraImagemUrl,
+      imagemUrl: primeiraImagemUrl || normalizarUrlImagem(local.imagemUrl) || normalizarUrlImagem(local.imagemPrincipal) || normalizarUrlImagem(local.imagem),
       imagens: imagensUrls,
       imagensCompletas: imagensCompletas, // Objetos completos com metadados
       imagemPrincipal: primeiraImagemUrl,
@@ -229,7 +248,7 @@ const HomeService = {
       isFolha: local.isFolha,
       
       // Imagem legada (fallback)
-      imagem: local.imagem
+      imagem: normalizarUrlImagem(local.imagem)
     };
   },
 

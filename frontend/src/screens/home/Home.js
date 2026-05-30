@@ -21,7 +21,7 @@ const BREAKPOINTS = {
   DESKTOP: 1400
 };
 
-export default function Home({ onNavigate }) {
+export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { width } = useWindowDimensions();
 
@@ -70,6 +70,13 @@ export default function Home({ onNavigate }) {
   useEffect(() => {
     carregarDados();
   }, [carregarDados]);
+
+  // Recarregar quando for solicitada uma atualização a partir de outras telas
+  useEffect(() => {
+    if (routeParams && routeParams.refreshKey) {
+      carregarDados();
+    }
+  }, [routeParams?.refreshKey, carregarDados]);
 
   const handleRefresh = () => {
     carregarDados(true);

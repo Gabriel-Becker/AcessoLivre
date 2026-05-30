@@ -1,4 +1,5 @@
 import api from '../api/axios';
+import LocalService from './LocalService';
 
 class BuscarService {
   static cache = null;
@@ -136,7 +137,14 @@ class BuscarService {
         avaliacaoMedia: local.avaliacaoMedia || 0,
         totalAvaliacoes: local.totalAvaliacoes || 0,
         tiposAcessibilidade: local.tiposAcessibilidade || [],
-        imagemUrl: local.imagens?.[0]?.url || local.imagemUrl || null,
+        imagemUrl:
+          LocalService.getImagemUrl(local.imagemUrl) ||
+          LocalService.getImagemUrl(local.imagemPrincipal) ||
+          LocalService.getImagemUrl(local.imagem) ||
+          LocalService.getImagemUrl(local.imagens?.[0]?.urlCompleta) ||
+          LocalService.getImagemUrl(local.imagens?.[0]?.url) ||
+          LocalService.getImagemUrl(local.imagens?.[0]?.caminhoRelativo) ||
+          null,
         horarioFuncionamento: local.horarioFuncionamento,
         telefone: local.telefone,
         site: local.site

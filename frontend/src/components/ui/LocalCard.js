@@ -20,7 +20,18 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
-    return local?.imagemUrl || null;
+    return (
+      local?.imagemUrl ||
+      local?.imagemPrincipal ||
+      local?.imagem ||
+      local?.primeiraImagem?.urlCompleta ||
+      local?.primeiraImagem?.url ||
+      local?.imagensCompletas?.[0]?.url ||
+      local?.imagensCompletas?.[0]?.urlCompleta ||
+      local?.imagens?.[0]?.url ||
+      local?.imagens?.[0]?.urlCompleta ||
+      null
+    );
   }, [local?.imagemUrl, imageError]);
 
   const handleImageError = () => {

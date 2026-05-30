@@ -101,7 +101,7 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
       activeOpacity={0.85}
     >
       <Image
-        source={{ uri: item.url || item }}
+        source={{ uri: item.url || item.urlCompleta || item.caminhoRelativo || item }}
         style={styles.thumbnailImage}
         resizeMode="cover"
       />
@@ -115,7 +115,7 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
   const renderFullImage = useCallback(({ item }) => (
     <View style={styles.fullImageWrapper}>
       <Image
-        source={{ uri: item.url || item }}
+        source={{ uri: item.url || item.urlCompleta || item.caminhoRelativo || item }}
         style={styles.fullImage}
         resizeMode="contain"
       />
