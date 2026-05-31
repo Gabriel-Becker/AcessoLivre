@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal, useWindowDimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -97,10 +97,14 @@ export default function Login({ navigation }) {
     () =>
       StyleSheet.create({
         wrapper: {
-          flex: 1,
+          flexGrow: 1,
           alignItems: 'center',
           justifyContent: 'center',
           paddingHorizontal: t.spacing.lg,
+          paddingVertical: t.spacing.lg,
+        },
+        scrollContainer: {
+          flexGrow: 1,
         },
         card: {
           width: '100%',
@@ -264,11 +268,17 @@ export default function Login({ navigation }) {
   const conteudoLogin = (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
       >
-        <View style={styles.wrapper}>
-          <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.wrapper}>
+            <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
             <Spacer size="sm" />
             <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
@@ -387,14 +397,15 @@ export default function Login({ navigation }) {
 
             <Spacer size="md" />
 
-            <AuthActions
-              text="Não possui conta?"
-              actionLabel="Cadastre-se"
-              onPress={() => navigation?.navigate?.('Register')}
-              altoContraste={isHighContrast}
-            />
-          </Card>
-        </View>
+              <AuthActions
+                text="Não possui conta?"
+                actionLabel="Cadastre-se"
+                onPress={() => navigation?.navigate?.('Register')}
+                altoContraste={isHighContrast}
+              />
+            </Card>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <Modal

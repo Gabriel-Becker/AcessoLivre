@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -253,13 +253,18 @@ export default function Register({ navigation }) {
 
   const conteudoCadastro = (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
       >
-        <View style={styles.cardWrapper}>
-          <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.cardWrapper}>
+            <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <AuthHeader title="Criar Conta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
 
             <Spacer size="md" />
@@ -426,10 +431,11 @@ export default function Register({ navigation }) {
               onPress={() => navigation?.navigate?.('Login')}
               altoContraste={isHighContrast}
             />
-            <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} altoContraste={isHighContrast} />
-          </Card>
-        </View>
-      </ScrollView>
+              <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} altoContraste={isHighContrast} />
+            </Card>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       </Container>
   );

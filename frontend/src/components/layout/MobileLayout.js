@@ -46,7 +46,11 @@ export default function MobileLayout({
   ];
 
   return (
-    <SafeArea background="background" style={[styles.container, { backgroundColor: t.colors.background }, style]}>
+    <SafeArea
+      background="background"
+      edges={['top', 'left', 'right']}
+      style={[styles.container, { backgroundColor: t.colors.background }, style]}
+    >
       <View style={[styles.header, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }]}>
         <View style={styles.headerAction} />
 
@@ -66,41 +70,46 @@ export default function MobileLayout({
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.content, { paddingBottom: TAB_BAR_HEIGHT + t.spacing.md }]}>{children}</View>
+      <View style={styles.contentWrapper}>
+        <View style={styles.content}>{children}</View>
 
-      <View
-        style={[
-          styles.tabBar,
-          {
-            backgroundColor: t.colors.surface,
-            borderTopColor: t.colors.borderLight,
-            bottom: 0,
-            paddingBottom: Platform.OS === 'ios' ? Math.max(bottomInset, theme.spacing.md) : bottomInset,
-          },
-        ]}
-      >
-        {tabs.map((tab) => {
-          const activeKey = tab.baseKey || tab.key;
-          const ativo = current === activeKey;
+        <View
+          style={[
+            styles.tabBar,
+            {
+              backgroundColor: t.colors.surface,
+              borderTopColor: t.colors.borderLight,
+              bottom: 0,
+              paddingBottom: Platform.OS === 'ios'
+                ? Math.max(insets.bottom, theme.spacing.md)
+                : Math.max(insets.bottom, theme.spacing.sm),
+              minHeight: TAB_BAR_HEIGHT + insets.bottom,
+            },
+          ]}
+        >
+          {tabs.map((tab) => {
+            const activeKey = tab.baseKey || tab.key;
+            const ativo = current === activeKey;
 
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              style={styles.tabItem}
-              onPress={() => navegar(tab.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Ir para ${tab.label}`}
-            >
-              <View style={[styles.tabInner, ativo && [styles.tabInnerAtivo, { backgroundColor: t.colors.backgroundSecondary }]]}>
-                <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={20} color={ativo ? t.colors.primary : t.colors.textSecondary} />
-                <ThemedText style={[styles.tabLabel, { color: ativo ? t.colors.primary : t.colors.textSecondary }]} weight={ativo ? 'semibold' : 'regular'}>
-                  {tab.label}
-                </ThemedText>
-                {ativo ? <View style={[styles.tabIndicator, { backgroundColor: t.colors.primary }]} /> : null}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.tabItem}
+                onPress={() => navegar(tab.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Ir para ${tab.label}`}
+              >
+                <View style={[styles.tabInner, ativo && [styles.tabInnerAtivo, { backgroundColor: t.colors.backgroundSecondary }]]}>
+                  <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={20} color={ativo ? t.colors.primary : t.colors.textSecondary} />
+                  <ThemedText style={[styles.tabLabel, { color: ativo ? t.colors.primary : t.colors.textSecondary }]} weight={ativo ? 'semibold' : 'regular'}>
+                    {tab.label}
+                  </ThemedText>
+                  {ativo ? <View style={[styles.tabIndicator, { backgroundColor: t.colors.primary }]} /> : null}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     </SafeArea>
   );
@@ -143,7 +152,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 0,
     paddingTop: 0,
-    paddingBottom: 84,
+  },
+  contentWrapper: {
+    flex: 1,
   },
   tabBar: {
     position: 'absolute',

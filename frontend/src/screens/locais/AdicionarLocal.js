@@ -3,11 +3,11 @@ import {
   View, 
   StyleSheet, 
   useWindowDimensions, 
-  ScrollView, 
   Image, 
   TouchableOpacity, 
   Alert,
-  Platform
+  Platform,
+  KeyboardAvoidingView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -826,23 +826,27 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   };
 
   return (
-    <Container
-      scroll
-      background={isHighContrast ? 'background' : 'backgroundSecondary'}
-      altoContraste={isHighContrast}
-      contentStyle={estilos.scroll}
-      style={{ paddingHorizontal: 0 }}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
     >
-      <CabecalhoPagina
-        titulo="Adicionar Local"
-        subtitulo="Cadastre um novo local acessível para a comunidade"
-        onVoltar={handleVoltar}
-        textoVoltar="Voltar"
+      <Container
+        scroll
+        background={isHighContrast ? 'background' : 'backgroundSecondary'}
         altoContraste={isHighContrast}
-        style={estilos.header}
-      />
+        contentStyle={estilos.scroll}
+        style={{ paddingHorizontal: 0 }}
+      >
+        <CabecalhoPagina
+          titulo="Adicionar Local"
+          subtitulo="Cadastre um novo local acessível para a comunidade"
+          onVoltar={handleVoltar}
+          textoVoltar="Voltar"
+          altoContraste={isHighContrast}
+          style={estilos.header}
+        />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={estilos.conteudo}>
           <View style={estilos.colunaPrincipal}>
             <CardSecao
@@ -1124,8 +1128,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             </View>
           )}
         </View>
-      </ScrollView>
-    </Container>
+      </Container>
+    </KeyboardAvoidingView>
   );
 }
 
