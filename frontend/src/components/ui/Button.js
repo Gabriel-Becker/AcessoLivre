@@ -3,6 +3,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Button({
   variant = 'primary',
@@ -19,11 +20,14 @@ export default function Button({
   iconSize = 20,
   iconColor,
   align = 'center',
-  altoContraste = false,
+  altoContraste,
   ...props
 }) {
+  const { theme: temaContexto, isHighContrast } = useThemeContext();
   const isDisabled = disabled || loading;
-  const t = altoContraste ? getTheme(true) : theme;
+  const t = typeof altoContraste === 'boolean'
+    ? getTheme(altoContraste)
+    : (temaContexto || getTheme(isHighContrast));
   const minTouchHeight = t.layout?.mobile?.touchTargetMinHeight ?? 44;
 
   // Estilos baseados na variante
@@ -83,19 +87,19 @@ export default function Button({
     switch (size) {
       case 'small':
         return {
-          container: { minHeight: minTouchHeight, paddingVertical: theme.spacing.xs, paddingHorizontal: theme.spacing.md },
-          text: { fontSize: theme.typography.fontSize.sm },
+          container: { minHeight: minTouchHeight, paddingVertical: t.spacing.xs, paddingHorizontal: t.spacing.md },
+          text: { fontSize: t.typography.fontSize.sm },
         };
       case 'large':
         return {
-          container: { minHeight: minTouchHeight + 10, paddingVertical: theme.spacing.md, paddingHorizontal: theme.spacing.lg },
-          text: { fontSize: theme.typography.fontSize.lg },
+          container: { minHeight: minTouchHeight + 10, paddingVertical: t.spacing.md, paddingHorizontal: t.spacing.lg },
+          text: { fontSize: t.typography.fontSize.lg },
         };
       case 'medium':
       default:
         return {
-          container: { minHeight: minTouchHeight, paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.md },
-          text: { fontSize: theme.typography.fontSize.md },
+          container: { minHeight: minTouchHeight, paddingVertical: t.spacing.sm, paddingHorizontal: t.spacing.md },
+          text: { fontSize: t.typography.fontSize.md },
         };
     }
   };

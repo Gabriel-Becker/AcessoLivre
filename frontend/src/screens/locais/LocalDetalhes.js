@@ -149,6 +149,26 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const { id } = route?.params || {};
 
   const isDesktop = width >= breakpoints.desktop;
+  const estilosDinamicos = {
+    centerContainer: {
+      backgroundColor: t.colors.background,
+    },
+    categoriaBadge: {
+      backgroundColor: isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF',
+      borderWidth: isHighContrast ? 1 : 0,
+      borderColor: t.colors.border,
+    },
+    descricaoContainer: {
+      backgroundColor: isHighContrast ? t.colors.surfaceSecondary : '#F8F9FA',
+      borderWidth: 1,
+      borderColor: t.colors.borderLight,
+    },
+    botaoAvaliar: {
+      backgroundColor: t.colors.primary,
+      borderWidth: isHighContrast ? 1 : 0,
+      borderColor: isHighContrast ? t.colors.borderDark : 'transparent',
+    },
+  };
 
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
   const [local, setLocal] = useState(null);
@@ -296,7 +316,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
     const descricaoExibida = descricaoExpandida ? descricao : descricao.substring(0, 120);
     
     return (
-      <View style={styles.descricaoContainer}>
+      <View style={[styles.descricaoContainer, estilosDinamicos.descricaoContainer]}>
         <View style={styles.descricaoHeader}>
           <Ionicons name="document-text-outline" size={20} color={t.colors.primary} />
           <ThemedText weight="bold" style={styles.descricaoTitulo}>
@@ -324,7 +344,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Spacer size="md" />
         <ThemedText color="textSecondary">Carregando detalhes...</ThemedText>
@@ -334,7 +354,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   if (error || !local) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
         <ThemedText color="error" align="center">{error || 'Local não encontrado'}</ThemedText>
         <Spacer size="md" />
         <Button variant="primary" onPress={handleRefresh} iconLeft="refresh-outline">
@@ -349,7 +369,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }
 
   return (
-    <Container scroll background={isHighContrast ? 'background' : 'backgroundSecondary'}>
+    <Container scroll background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <CabecalhoPagina
         titulo="Detalhes do Local"
         subtitulo="Encontre e avalie locais acessíveis"
@@ -373,13 +393,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <>
             <View style={styles.linhaSuperior}>
               <View style={styles.cardPrincipalWrapper}>
-                <Card style={styles.cardPrincipal}>
+                  <Card style={styles.cardPrincipal} altoContraste={isHighContrast}>
                   <View style={styles.headerLocal}>
                     <View style={styles.infoLocal}>
                       <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>
                         {local.nome}
                       </ThemedText>
-                      <View style={styles.categoriaBadge}>
+                      <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
                         <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
                           {local.categoria}
                         </ThemedText>
@@ -403,7 +423,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
                   </View>
 
                   <Spacer size="lg" />
-                  <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
+                  <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
                   
                   {/* CARD DE DESCRIÇÃO - COM ESPAÇAMENTO REDUZIDO */}
                   {renderDescricaoLocal()}
@@ -411,7 +431,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
                   <Spacer size="md" />
 
                   <View style={styles.botoesContainer}>
-                    <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>
+                    <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosDinamicos.botaoAvaliar]}>
                       Avaliar
                     </Button>
                     <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={styles.botaoAcao}>
@@ -425,7 +445,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
               </View>
 
               <View style={styles.cardAvaliacoesWrapper}>
-                <Card style={styles.cardAvaliacoes}>
+                <Card style={styles.cardAvaliacoes} altoContraste={isHighContrast}>
                   <View style={styles.headerAvaliacoes}>
                     <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
                     <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>
@@ -457,7 +477,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
               </View>
             </View>
             <Spacer size="lg" />
-            <Card style={styles.cardFotos}>
+            <Card style={styles.cardFotos} altoContraste={isHighContrast}>
               <View style={styles.headerFotos}>
                 <Ionicons name="images-outline" size={22} color={t.colors.primary} />
                 <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>Fotos do Local</ThemedText>
@@ -473,11 +493,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
           </>
         ) : (
           <>
-            <Card style={styles.cardPrincipalMobile}>
+            <Card style={styles.cardPrincipalMobile} altoContraste={isHighContrast}>
               <View style={styles.headerLocal}>
                 <View style={styles.infoLocal}>
                   <ThemedText variant="h2" weight="bold" style={styles.nomeLocal}>{local.nome}</ThemedText>
-                  <View style={styles.categoriaBadge}>
+                  <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
                     <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>{local.categoria}</ThemedText>
                   </View>
                   <View style={styles.enderecoRow}>
@@ -493,20 +513,20 @@ export default function LocalDetalhes({ onNavigate, route }) {
               </View>
 
               <Spacer size="lg" />
-              <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} />
+              <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
               
               {renderDescricaoLocal()}
               
               <Spacer size="md" />
               
               <View style={styles.botoesContainer}>
-                <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={styles.botaoAvaliar}>Avaliar</Button>
+                <Button variant="primary" size="medium" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosDinamicos.botaoAvaliar]}>Avaliar</Button>
                 <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={styles.botaoAcao}>Compartilhar</Button>
                 <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={styles.botaoAcao}>Reportar</Button>
               </View>
             </Card>
             <Spacer size="lg" />
-            <Card style={styles.cardFotos}>
+            <Card style={styles.cardFotos} altoContraste={isHighContrast}>
               <View style={styles.headerFotos}>
                 <Ionicons name="images-outline" size={22} color={t.colors.primary} />
                 <ThemedText variant="h3" weight="bold" style={styles.tituloFotos}>Fotos do Local</ThemedText>
@@ -516,7 +536,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
               <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
             </Card>
             <Spacer size="lg" />
-            <Card style={styles.cardAvaliacoesMobile}>
+            <Card style={styles.cardAvaliacoesMobile} altoContraste={isHighContrast}>
               <View style={styles.headerAvaliacoes}>
                 <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
                 <ThemedText variant="h3" weight="bold" style={styles.tituloAvaliacoes}>Avaliações Recentes</ThemedText>
@@ -612,7 +632,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   categoriaBadge: {
-    backgroundColor: '#E8F0FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 16,
@@ -645,7 +664,6 @@ const styles = StyleSheet.create({
   },
   botaoAvaliar: {
     flex: 1,
-    backgroundColor: '#007AFF',
   },
   botaoAcao: {
     flex: 1,
@@ -671,7 +689,6 @@ const styles = StyleSheet.create({
   },
   // Estilos para o card de descrição
   descricaoContainer: {
-    backgroundColor: '#F8F9FA',
     borderRadius: 12,
     padding: 16,
     marginTop: 8,
