@@ -1,6 +1,14 @@
 // services/AvaliacaoService.js
 import api from '../api/axios';
 
+const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
+  const status = error?.response?.status;
+  const metodo = String(error?.config?.method || 'get').toLowerCase();
+  const caminho = String(error?.config?.url || '').split('?')[0];
+
+  return status === 401 && metodo === 'get' && caminho.startsWith('/avaliacoes/local/');
+};
+
 class AvaliacaoService {
   /**
    * Busca avaliações de um local
@@ -50,8 +58,10 @@ class AvaliacaoService {
       };
       
     } catch (error) {
-      console.error('❌ Erro ao buscar avaliações:', error);
-      console.error('Detalhes:', error.response?.data);
+      if (!eh401EmLeituraPublicaDeAvaliacoes(error)) {
+        console.error('❌ Erro ao buscar avaliações:', error);
+        console.error('Detalhes:', error.response?.data);
+      }
       
       return {
         success: false,
