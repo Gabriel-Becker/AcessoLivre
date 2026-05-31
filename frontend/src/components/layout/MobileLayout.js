@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import theme, { getTheme } from '../../config/theme';
 import { ThemedText } from '../commons';
 import SafeArea from './SafeArea';
@@ -17,7 +18,9 @@ export default function MobileLayout({
   const { isHighContrast } = useThemeContext();
   const t = getTheme(isHighContrast || altoContraste);
   const { isAuthenticated } = useAuth();
+  const insets = useSafeAreaInsets();
   const TAB_BAR_HEIGHT = 72;
+  const bottomInset = Math.max(insets.bottom, theme.spacing.sm);
 
   const navegar = useCallback(
     (screen) => {
@@ -65,7 +68,17 @@ export default function MobileLayout({
 
       <View style={[styles.content, { paddingBottom: TAB_BAR_HEIGHT + t.spacing.md }]}>{children}</View>
 
-      <View style={[styles.tabBar, { backgroundColor: t.colors.surface, borderTopColor: t.colors.borderLight }]}>
+      <View
+        style={[
+          styles.tabBar,
+          {
+            backgroundColor: t.colors.surface,
+            borderTopColor: t.colors.borderLight,
+            bottom: 0,
+            paddingBottom: Platform.OS === 'ios' ? Math.max(bottomInset, theme.spacing.md) : bottomInset,
+          },
+        ]}
+      >
         {tabs.map((tab) => {
           const activeKey = tab.baseKey || tab.key;
           const ativo = current === activeKey;
@@ -136,14 +149,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
     minHeight: 72,
     borderTopWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.sm,
-    paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
     paddingTop: theme.spacing.sm,
   },
   tabItem: {
