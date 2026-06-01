@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { Container, DesktopLayout, MobileLayout } from '../components/layout';
@@ -14,6 +14,7 @@ import Perfil from '../screens/perfil/Perfil';
 import Admin from '../screens/admin/Admin';
 import Configuracoes from '../screens/config/Configuracoes';
 import theme, { breakpoints } from '../config/theme';
+import { useThemeContext } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,9 +30,11 @@ function LoadingScreen() {
 
 function MainApp({ navigation, route }) {
   const { usuario, isAuthenticated } = useAuth();
+  const { fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
   const screenInicial = route?.params?.screen || 'Inicio';
   const [currentScreen, setCurrentScreen] = useState(screenInicial);
+  const [screenAnterior, setScreenAnterior] = useState('Inicio');
   const isDesktop = width >= breakpoints.desktop;
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
@@ -50,6 +53,10 @@ function MainApp({ navigation, route }) {
     if (screen === 'Admin' && (!isAdmin || !isDesktop)) {
       setCurrentScreen('Inicio');
       return;
+    }
+
+    if (screen === 'MenuLateral') {
+      setScreenAnterior(currentScreen);
     }
 
     navigation?.setParams({
@@ -83,6 +90,12 @@ function MainApp({ navigation, route }) {
     }
   }, [isAdmin, isDesktop, currentScreen]);
 
+  useEffect(() => {
+    if (currentScreen === 'MenuLateral' && fontSizeMultiplier < 1.5) {
+      setCurrentScreen(screenAnterior || 'Inicio');
+    }
+  }, [currentScreen, fontSizeMultiplier, screenAnterior]);
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'Inicio':
@@ -99,6 +112,8 @@ function MainApp({ navigation, route }) {
         return isAuthenticated ? <Perfil /> : <Home />;
       case 'Configuracoes':
         return <Configuracoes onNavigate={handleNavigate} />;
+      case 'MenuLateral':
+        return <View />;
       case 'Admin':
         return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
       default:
@@ -108,7 +123,7 @@ function MainApp({ navigation, route }) {
 
   if (isDesktop) {
     return (
-      <DesktopLayout current={currentScreen} onNavigate={handleNavigate}>
+      <DesktopLayout current={currentScreen} onNavigate={handleNavigate} screenAnterior={screenAnterior}>
         {renderScreen()}
       </DesktopLayout>
     );

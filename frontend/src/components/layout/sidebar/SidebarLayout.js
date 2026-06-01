@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTheme } from '../../../config/theme';
@@ -17,15 +17,16 @@ const OPCOES_FONTE = [
   { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
 ];
 
-export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240 }) {
+export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240, modoExpandido = false }) {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const { isHighContrast, toggleTheme, theme: ctxTheme, fontSizeMultiplier, alterarTamanhoFonte } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = contrasteAtivo ? getTheme(true) : (ctxTheme || getTheme(isHighContrast));
-  const styles = criarEstilos(t);
+  const styles = useMemo(() => criarEstilos(t, modoExpandido), [t, modoExpandido]);
   const { isAuthenticated } = useAuth();
   const corTextoSecundario = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
   const nivelAtual = OPCOES_FONTE.find((opcao) => opcao.valor === fontSizeMultiplier) || OPCOES_FONTE[0];
+  const totalColunasMenu = fontSizeMultiplier >= 2 ? 1 : 2;
 
   const corBordaOpcao = contrasteAtivo ? t.colors.border : t.colors.borderLight;
   const corFundoOpcao = contrasteAtivo ? t.colors.surfaceSecondary : t.colors.backgroundSecondary;
@@ -51,10 +52,18 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
         background="surface"
         style={[
           styles.sidebar,
-          { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura, backgroundColor: t.colors.background },
+          modoExpandido
+            ? {
+                borderRightColor: 'transparent',
+                borderBottomColor: t.colors.borderLight,
+                width: '100%',
+                maxWidth: '100%',
+                backgroundColor: t.colors.background,
+              }
+            : { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura, backgroundColor: t.colors.background },
         ]}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, modoExpandido ? styles.headerExpandido : null]}>
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
             <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
           </View>
@@ -70,29 +79,37 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
           <ThemedText color={corTextoSecundario} size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</ThemedText>
         </View>
 
-        <Spacer size="lg" />
+        <Spacer size={modoExpandido ? 'md' : 'lg'} />
 
-        <View style={styles.menu}>
+        <View style={[styles.menu, modoExpandido ? styles.menuExpandido : null]}>
           {items.map((item) => (
-            <SidebarItem
+            <View
               key={item.key}
-              icon={item.icon}
-              label={item.label}
-              active={item.key === 'Configuracoes' ? showConfigModal : current === item.key}
-              disabled={item.disabled}
-              onPress={
-                item.disabled
-                  ? undefined
-                  : item.key === 'Configuracoes'
-                    ? () => setShowConfigModal(true)
-                    : () => onNavigate && onNavigate(item.key)
-              }
-              altoContraste={contrasteAtivo}
-            />
+              style={[
+                modoExpandido ? styles.menuItemExpandido : null,
+                modoExpandido && totalColunasMenu === 1 ? styles.menuItemExpandidoUmaColuna : null,
+              ]}
+            >
+              <SidebarItem
+                icon={item.icon}
+                label={item.label}
+                active={item.key === 'Configuracoes' ? showConfigModal : current === item.key}
+                disabled={item.disabled}
+                onPress={
+                  item.disabled
+                    ? undefined
+                    : item.key === 'Configuracoes'
+                      ? () => setShowConfigModal(true)
+                      : () => onNavigate && onNavigate(item.key)
+                }
+                altoContraste={contrasteAtivo}
+                modoExpandido={modoExpandido}
+              />
+            </View>
           ))}
         </View>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, modoExpandido ? styles.footerExpandido : null]}>
           <SidebarUserPanel current={current} onNavigate={onNavigate} altoContraste={contrasteAtivo} />
         </View>
       </SafeArea>
@@ -244,15 +261,19 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
   );
 }
 
-const criarEstilos = (t) => StyleSheet.create({
+const criarEstilos = (t, modoExpandido) => StyleSheet.create({
   sidebar: {
     borderRightWidth: 1,
+    borderBottomWidth: modoExpandido ? 1 : 0,
     paddingHorizontal: t.spacing.md,
     paddingTop: t.spacing.lg,
   },
   header: {
     alignItems: 'flex-start',
     gap: 6,
+  },
+  headerExpandido: {
+    alignItems: 'center',
   },
   logoContainer: {
     marginBottom: t.spacing.xs,
@@ -268,9 +289,24 @@ const criarEstilos = (t) => StyleSheet.create({
   menu: {
     gap: 6,
   },
+  menuExpandido: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  menuItemExpandido: {
+    flexGrow: 1,
+    flexBasis: '48%',
+  },
+  menuItemExpandidoUmaColuna: {
+    flexBasis: '100%',
+  },
   footer: {
     marginTop: 'auto',
     paddingBottom: t.spacing.lg,
+  },
+  footerExpandido: {
+    paddingTop: t.spacing.md,
   },
   modalOverlay: {
     flex: 1,

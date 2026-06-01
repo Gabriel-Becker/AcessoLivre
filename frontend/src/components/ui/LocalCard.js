@@ -211,7 +211,7 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
     },
     imageContainer: {
       width: '100%',
-      height: 150 + ((fontSizeMultiplier - 1) * 28),
+      height: 190 + ((fontSizeMultiplier - 1) * 36),
       position: 'relative',
       backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : t.colors.background,
     },
