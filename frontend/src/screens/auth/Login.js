@@ -100,16 +100,16 @@ export default function Login({ navigation }) {
           flexGrow: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: t.spacing.lg,
-          paddingVertical: t.spacing.lg,
+          paddingHorizontal: isDesktop ? t.spacing.xl : t.spacing.lg,
+          paddingVertical: t.spacing.xl,
         },
         scrollContainer: {
           flexGrow: 1,
         },
         card: {
           width: '100%',
-          maxWidth: 440,
-          padding: t.spacing.xl,
+          maxWidth: isDesktop ? 760 : 560,
+          padding: isDesktop ? t.spacing.xl : t.spacing.lg,
           backgroundColor: t.colors.surface,
           borderColor: t.colors.borderLight,
           borderWidth: isHighContrast ? 2 : 1,
@@ -118,20 +118,22 @@ export default function Login({ navigation }) {
         },
         forgot: {
           alignSelf: 'center',
-          marginBottom: t.spacing.md,
+          marginBottom: t.spacing.lg,
         },
         rememberRow: {
           flexDirection: 'row',
           alignItems: 'center',
           alignSelf: 'center',
-          marginBottom: t.spacing.lg,
+          marginBottom: t.spacing.xl,
         },
         rememberLabel: {
           marginLeft: t.spacing.sm,
+          fontSize: 18,
+          lineHeight: 26,
         },
         checkbox: {
-          width: 22,
-          height: 22,
+          width: 28,
+          height: 28,
           borderRadius: t.borderRadius.sm,
           borderWidth: 2,
           borderColor: t.colors.primary,
@@ -141,14 +143,16 @@ export default function Login({ navigation }) {
         },
         helperText: {
           marginTop: -t.spacing.sm,
-          marginBottom: t.spacing.md,
+          marginBottom: t.spacing.lg,
+          fontSize: 18,
+          lineHeight: 26,
         },
         twoFactorInlineBox: {
           borderWidth: isHighContrast ? 2 : 1,
           borderColor: t.colors.borderLight,
           borderRadius: t.borderRadius.md,
-          padding: t.spacing.md,
-          marginBottom: t.spacing.md,
+          padding: t.spacing.lg,
+          marginBottom: t.spacing.lg,
           backgroundColor: isHighContrast ? t.colors.backgroundSecondary : t.colors.surface,
         },
         modalOverlay: {
@@ -160,16 +164,28 @@ export default function Login({ navigation }) {
         },
         modalCard: {
           width: '100%',
-          maxWidth: 420,
+          maxWidth: 620,
           backgroundColor: t.colors.surface,
-          borderRadius: t.borderRadius.lg,
+          borderRadius: t.borderRadius.xl,
           borderWidth: isHighContrast ? 2 : 1,
           borderColor: t.colors.borderLight,
-          padding: t.spacing.lg,
+          padding: t.spacing.xl,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
+        modalTitulo: {
+          fontSize: 24,
+          lineHeight: 30,
+        },
+        modalSubtitulo: {
+          fontSize: 18,
+          lineHeight: 26,
+        },
+        modalTexto: {
+          fontSize: 18,
+          lineHeight: 26,
+        },
       }),
-    [isHighContrast, t]
+    [isDesktop, isHighContrast, t]
   );
 
   const handleSubmitLogin = async (values) => {
@@ -281,7 +297,7 @@ export default function Login({ navigation }) {
             <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <AuthHeader title="Bem-vindo de volta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
             <Spacer size="sm" />
-            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.helperText}>
               Entre com seu e-mail para continuar
             </ThemedText>
 
@@ -420,11 +436,11 @@ export default function Login({ navigation }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
               Verificação em duas etapas
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.modalSubtitulo}>
               Digite o código de 6 dígitos do seu aplicativo autenticador.
             </ThemedText>
 
@@ -486,11 +502,11 @@ export default function Login({ navigation }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
               Conta desativada
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast}>
+            <ThemedText color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
               Sua conta foi desativada, Contate um administrador para mais informações
             </ThemedText>
 
