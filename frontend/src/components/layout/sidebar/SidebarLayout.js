@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
@@ -11,14 +11,26 @@ import SidebarUserPanel from './SidebarUserPanel';
 import SidebarItem from './SidebarItem';
 import { useAuth } from '../../../context/AuthContext';
 
+const OPCOES_FONTE = [
+  { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
+  { valor: 1.5, rotulo: 'Maior', subtitulo: '150%' },
+  { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
+];
+
 export default function SidebarLayout({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240 }) {
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const { isHighContrast, toggleTheme, theme: ctxTheme } = useThemeContext();
+  const { isHighContrast, toggleTheme, theme: ctxTheme, fontSizeMultiplier, alterarTamanhoFonte } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = contrasteAtivo ? getTheme(true) : (ctxTheme || getTheme(isHighContrast));
   const styles = criarEstilos(t);
   const { isAuthenticated } = useAuth();
   const corTextoSecundario = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
+  const nivelAtual = OPCOES_FONTE.find((opcao) => opcao.valor === fontSizeMultiplier) || OPCOES_FONTE[0];
+
+  const corBordaOpcao = contrasteAtivo ? t.colors.border : t.colors.borderLight;
+  const corFundoOpcao = contrasteAtivo ? t.colors.surfaceSecondary : t.colors.backgroundSecondary;
+  const corBordaOpcaoSelecionada = contrasteAtivo ? t.colors.primary : '#4A90E2';
+  const corFundoOpcaoSelecionada = contrasteAtivo ? 'rgba(0, 247, 239, 0.12)' : 'rgba(74, 144, 226, 0.10)';
 
   const items = [
     { key: 'Inicio', label: 'Início', icon: 'home-outline' },
@@ -125,6 +137,89 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
               </View>
             </View>
 
+            <Spacer size="sm" />
+
+            <View style={[styles.settingCard, { backgroundColor: t.colors.backgroundSecondary, borderColor: t.colors.borderLight }]}> 
+              <View style={styles.settingHeader}>
+                <View style={[styles.settingTextBlock, { flex: 1 }]}> 
+                  <View style={styles.settingTitleRow}>
+                    <Ionicons name="text-outline" size={18} color={t.colors.primary} />
+                    <ThemedText variant="h4" weight="bold" altoContraste={altoContraste}>
+                      Tamanho da fonte
+                    </ThemedText>
+                  </View>
+                  <Spacer size="xs" />
+                  <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
+                    Escolha o nível que será aplicado em todas as telas.
+                  </ThemedText>
+                </View>
+
+                <View style={[styles.badgeNivelAtual, { backgroundColor: t.colors.primary }]}> 
+                  <ThemedText weight="bold" color="textOnPrimary" align="center" altoContraste={altoContraste}>
+                    {nivelAtual.subtitulo}
+                  </ThemedText>
+                </View>
+              </View>
+
+              <Spacer size="sm" />
+
+              <View style={styles.grupoFontes}>
+                {OPCOES_FONTE.map((opcao) => {
+                  const selecionado = fontSizeMultiplier === opcao.valor;
+
+                  return (
+                    <TouchableOpacity
+                      key={opcao.valor}
+                      style={[
+                        styles.opcaoFonte,
+                        {
+                          borderColor: corBordaOpcao,
+                          backgroundColor: corFundoOpcao,
+                        },
+                        selecionado
+                          ? {
+                              borderColor: corBordaOpcaoSelecionada,
+                              backgroundColor: corFundoOpcaoSelecionada,
+                            }
+                          : null,
+                      ]}
+                      onPress={() => alterarTamanhoFonte(opcao.valor)}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: selecionado }}
+                    >
+                      <View style={styles.opcaoTopo}>
+                        <ThemedText weight="bold" altoContraste={altoContraste}>
+                          {opcao.subtitulo}
+                        </ThemedText>
+                        <Ionicons
+                          name={selecionado ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={18}
+                          color={selecionado ? corBordaOpcaoSelecionada : corBordaOpcao}
+                        />
+                      </View>
+
+                      <ThemedText
+                        weight="bold"
+                        align="center"
+                        altoContraste={altoContraste}
+                        style={{ fontSize: 15 * opcao.valor, lineHeight: 17 * opcao.valor }}
+                      >
+                        Aa
+                      </ThemedText>
+
+                      <ThemedText weight="semibold" align="center" altoContraste={altoContraste}>
+                        {opcao.rotulo}
+                      </ThemedText>
+                      <ThemedText color={corTextoSecundario} align="center" size="sm" altoContraste={altoContraste}>
+                        Texto de exemplo
+                      </ThemedText>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
             <Spacer size="xs" />
             <Button
               variant="ghost"
@@ -211,9 +306,41 @@ const criarEstilos = (t) => StyleSheet.create({
   settingTextBlock: {
     minWidth: 0,
   },
+  settingTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   switchContainer: {
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
     paddingTop: 2,
+  },
+  badgeNivelAtual: {
+    minWidth: 74,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  grupoFontes: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  opcaoFonte: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 8,
+    minHeight: 132,
+  },
+  opcaoTopo: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });
