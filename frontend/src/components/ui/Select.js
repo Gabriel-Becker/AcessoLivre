@@ -17,6 +17,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Select({
   label,
+  labelStyle,
   placeholder = 'Selecione',
   value,
   options = [],
@@ -71,7 +72,7 @@ export default function Select({
   return (
     <View style={[estilos.container, containerStyle]}>
       {label ? (
-        <ThemedText variant="caption" style={estilos.label} color="textPrimary">
+        <ThemedText variant="caption" style={[estilos.label, labelStyle]} color="textPrimary">
           {label}
         </ThemedText>
       ) : null}

@@ -7,6 +7,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Input({
   label,
+  labelStyle,
   error,
   placeholder,
   value,
@@ -69,7 +70,7 @@ export default function Input({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={[styles.label, { color: t.colors.textPrimary }]}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: t.colors.textPrimary }, labelStyle]}>{label}</Text>}
       
       <View
         style={[

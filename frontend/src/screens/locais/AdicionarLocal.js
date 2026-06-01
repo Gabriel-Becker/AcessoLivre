@@ -17,18 +17,14 @@ import { Container } from '../../components/layout';
 import {
   Button,
   CabecalhoPagina,
-  CardInfoIcone,
   CardSecao,
-  CartaoMetricas,
   CartaoSelecao,
   Input,
-  ListaMarcadores,
   Select,
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { breakpoints } from '../../config/theme';
 import LocalService from '../../services/LocalService';
 import HomeService from '../../services/HomeService';
 import api from '../../api/axios';
@@ -72,8 +68,7 @@ const LIMITES_CAMPOS_LOCAL = {
   estado: 2,
 };
 
-const LARGURA_MINIMA_COLUNA_LATERAL = 1280;
-const LARGURA_MINIMA_DUAS_COLUNAS_COM_LATERAL = 1360;
+const LARGURA_MINIMA_DUAS_COLUNAS_CAMPOS = 1200;
 
 // ============================================
 // COMPONENTE DE UPLOAD DE IMAGENS
@@ -371,11 +366,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario } = useAuth();
   const { width } = useWindowDimensions();
-  
-  const isDesktop = width >= breakpoints.desktop;
-  const isTablet = width >= breakpoints.tablet;
-  const exibirColunaLateral = isDesktop && width >= LARGURA_MINIMA_COLUNA_LATERAL;
-  const usarDuasColunasCampos = isTablet && (!exibirColunaLateral || width >= LARGURA_MINIMA_DUAS_COLUNAS_COM_LATERAL);
+
+  const usarDuasColunasCampos = width >= LARGURA_MINIMA_DUAS_COLUNAS_CAMPOS;
 
   const [formulario, setFormulario] = useState({
     nome: '',
@@ -396,11 +388,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const [imagens, setImagens] = useState([]);
   const [progressoImagens, setProgressoImagens] = useState({ atual: 0, total: 0 });
   const [editingLocalId, setEditingLocalId] = useState(null);
-  const [estatisticas, setEstatisticas] = useState({
-    totalLocais: 0,
-    totalAvaliacoes: 0,
-    totalUsuarios: 0,
-  });
 
   const opcoesCategoria = useMemo(() => {
     return CATEGORIAS.map(categoria => ({
@@ -409,30 +396,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     }));
   }, []);
 
-  const estilos = useMemo(() => criarEstilos(t, isHighContrast, exibirColunaLateral, usarDuasColunasCampos), [
-    exibirColunaLateral,
+  const estilos = useMemo(() => criarEstilos(t, isHighContrast, usarDuasColunasCampos), [
     isHighContrast,
     usarDuasColunasCampos,
     t,
   ]);
-  
-  const fundos = useMemo(
-    () => ({
-      fundoDica: isHighContrast ? t.colors.surface : '#FFF5E1',
-      fundoComunidade: isHighContrast ? t.colors.surface : '#EAF8F0',
-    }),
-    [isHighContrast, t]
-  );
 
   const contadorDescricao = `${formulario.descricao.length}/${LIMITES_CAMPOS_LOCAL.descricao}`;
-
-  useEffect(() => {
-    const carregarEstatisticas = async () => {
-      const stats = await LocalService.obterEstatisticas();
-      setEstatisticas(stats);
-    };
-    carregarEstatisticas();
-  }, []);
 
   useEffect(() => {
     const localId = routeParams?.localId;
@@ -859,10 +829,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Nome do Local *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Ex: Shopping Center Norte"
                     value={formulario.nome}
                     onChangeText={atualizarCampo('nome', LIMITES_CAMPOS_LOCAL.nome)}
                     maxLength={LIMITES_CAMPOS_LOCAL.nome}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -870,10 +843,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Select
                     label="Categoria *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Selecione uma categoria"
                     value={formulario.categoria}
                     options={opcoesCategoria}
                     onSelect={(valor) => atualizarCampo('categoria')(valor)}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoSelect}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -883,11 +859,14 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="CEP *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="88015-200"
                     value={formulario.cep}
                     onChangeText={handleCepChange}
                     keyboardType="numeric"
                     maxLength={9}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -895,11 +874,14 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Estado *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="UF"
                     value={formulario.estado}
                     onChangeText={(valor) => atualizarCampo('estado', LIMITES_CAMPOS_LOCAL.estado)(valor.toUpperCase())}
                     autoCapitalize="characters"
                     maxLength={LIMITES_CAMPOS_LOCAL.estado}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -907,10 +889,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
 
               <Input
                 label="Logradouro *"
+                labelStyle={estilos.campoLabel}
                 placeholder="Ex: Av. Beira-Mar Norte"
                 value={formulario.logradouro}
                 onChangeText={atualizarCampo('logradouro', LIMITES_CAMPOS_LOCAL.logradouro)}
                 maxLength={LIMITES_CAMPOS_LOCAL.logradouro}
+                containerStyle={estilos.campoContainer}
+                style={estilos.campoTexto}
                 altoContraste={isHighContrast}
               />
 
@@ -918,11 +903,14 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Número *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Ex: 1230"
                     value={formulario.numero}
                     onChangeText={atualizarCampo('numero', LIMITES_CAMPOS_LOCAL.numero)}
                     keyboardType="numeric"
                     maxLength={LIMITES_CAMPOS_LOCAL.numero}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -930,10 +918,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Complemento"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Ex: Apto 402"
                     value={formulario.complemento}
                     onChangeText={atualizarCampo('complemento', LIMITES_CAMPOS_LOCAL.complemento)}
                     maxLength={LIMITES_CAMPOS_LOCAL.complemento}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -943,10 +934,13 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Bairro *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Ex: Centro"
                     value={formulario.bairro}
                     onChangeText={atualizarCampo('bairro', LIMITES_CAMPOS_LOCAL.bairro)}
                     maxLength={LIMITES_CAMPOS_LOCAL.bairro}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
@@ -954,17 +948,20 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <View style={estilos.colunaCampo}>
                   <Input
                     label="Cidade *"
+                    labelStyle={estilos.campoLabel}
                     placeholder="Ex: Florianópolis"
                     value={formulario.cidade}
                     onChangeText={atualizarCampo('cidade', LIMITES_CAMPOS_LOCAL.cidade)}
                     maxLength={LIMITES_CAMPOS_LOCAL.cidade}
+                    containerStyle={estilos.campoContainer}
+                    style={estilos.campoTexto}
                     altoContraste={isHighContrast}
                   />
                 </View>
               </View>
 
               <View style={estilos.campoDescricaoHeader}>
-                <ThemedText color="textPrimary" weight="medium">
+                <ThemedText color="textPrimary" weight="medium" style={estilos.campoLabel}>
                   Descrição *
                 </ThemedText>
                 <ThemedText color="textTertiary" variant="caption">
@@ -977,8 +974,10 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 value={formulario.descricao}
                 onChangeText={atualizarCampo('descricao', LIMITES_CAMPOS_LOCAL.descricao)}
                 multiline
-                numberOfLines={4}
+                numberOfLines={5}
                 maxLength={LIMITES_CAMPOS_LOCAL.descricao}
+                containerStyle={estilos.campoContainer}
+                style={[estilos.campoTexto, estilos.campoTextoMultiline]}
                 altoContraste={isHighContrast}
               />
             </CardSecao>
@@ -1057,7 +1056,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 onPress={handleSalvarLocal}
                 iconLeft="add"
                 loading={enviando}
-                fullWidth={!exibirColunaLateral}
+                fullWidth
                 style={estilos.botaoPrincipal}
                 altoContraste={isHighContrast}
               >
@@ -1065,138 +1064,91 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
               </Button>
             </View>
           </View>
-
-          {exibirColunaLateral && (
-            <View style={estilos.colunaLateral}>
-              <CardInfoIcone
-                titulo="Próximos passos:"
-                icone="navigate-outline"
-                corIcone={t.colors.primary}
-                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
-                altoContraste={isHighContrast}
-              >
-                <ListaMarcadores
-                  itens={[
-                    'Após adicionar, você poderá avaliar o local',
-                    'Adicione fotos dos recursos de acessibilidade',
-                    'Compartilhe com a comunidade',
-                  ]}
-                  corMarcador={t.colors.primary}
-                  altoContraste={isHighContrast}
-                />
-              </CardInfoIcone>
-
-              <CardInfoIcone
-                titulo="Dica importante:"
-                icone="bulb-outline"
-                corIcone={t.colors.warning}
-                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#FFF1CC'}
-                fundo={fundos.fundoDica}
-                altoContraste={isHighContrast}
-              >
-                <ThemedText color="textSecondary">
-                  Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com
-                  diferentes necessidades a encontrar locais adequados para elas.
-                </ThemedText>
-              </CardInfoIcone>
-
-              <CardInfoIcone
-                titulo="Contribua com a Comunidade"
-                icone="heart"
-                corIcone={t.colors.secondary}
-                corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#DFF6EA'}
-                fundo={fundos.fundoComunidade}
-                layout="coluna"
-                centralizado
-                altoContraste={isHighContrast}
-              >
-                <ThemedText color="textSecondary" align="center">
-                  Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o
-                  mundo mais inclusivo para todos.
-                </ThemedText>
-              </CardInfoIcone>
-
-              <CartaoMetricas
-                titulo="Impacto da Comunidade"
-                metricas={[
-                  { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
-                  { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
-                  { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
-                ]}
-                altoContraste={isHighContrast}
-              />
-            </View>
-          )}
         </View>
       </Container>
     </KeyboardAvoidingView>
   );
 }
 
-function formatarNumero(valor) {
-  const numero = Number(valor) || 0;
-  if (numero >= 1000) {
-    return `${(numero / 1000).toFixed(1)}k+`;
-  }
-  return String(numero);
-}
-
-function criarEstilos(t, isHighContrast, exibirColunaLateral, usarDuasColunasCampos) {
+function criarEstilos(t, isHighContrast, usarDuasColunasCampos) {
   return StyleSheet.create({
     scroll: {
+      width: '100%',
+      alignSelf: 'center',
+      maxWidth: '100%',
       paddingBottom: t.spacing.xxxl,
+      paddingHorizontal: t.spacing.lg,
     },
     header: {
-      flexDirection: exibirColunaLateral ? 'row' : 'column',
-      alignItems: exibirColunaLateral ? 'center' : 'flex-start',
+      alignItems: 'flex-start',
+      marginBottom: t.spacing.xl,
     },
     conteudo: {
-      flexDirection: exibirColunaLateral ? 'row' : 'column',
+      flexDirection: 'column',
       alignItems: 'flex-start',
-      gap: t.spacing.xl,
+      width: '100%',
+      gap: t.spacing.xxl,
     },
     colunaPrincipal: {
-      flex: 1,
-      minWidth: 0,
-    },
-    colunaLateral: {
-      width: exibirColunaLateral ? 320 : '100%',
+      width: '100%',
       maxWidth: '100%',
-      gap: t.spacing.lg,
     },
     linhaCampos: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: t.spacing.md,
+      gap: t.spacing.lg,
     },
     colunaCampo: {
       flexGrow: 1,
       flexShrink: 1,
-      flexBasis: usarDuasColunasCampos ? '48%' : '100%',
-      minWidth: usarDuasColunasCampos ? 220 : '100%',
+      flexBasis: usarDuasColunasCampos ? '49%' : '100%',
+      minWidth: usarDuasColunasCampos ? 300 : '100%',
       maxWidth: '100%',
+    },
+    campoContainer: {
+      marginBottom: t.spacing.md,
+    },
+    campoLabel: {
+      fontSize: 20,
+      lineHeight: 28,
+    },
+    campoTexto: {
+      fontSize: 19,
+      lineHeight: 26,
+      paddingVertical: t.spacing.md,
+    },
+    campoTextoMultiline: {
+      minHeight: 140,
+    },
+    campoSelect: {
+      minHeight: 56,
+      height: 56,
+      paddingHorizontal: t.spacing.md,
     },
     campoDescricaoHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: t.spacing.xs,
+      marginBottom: t.spacing.sm,
     },
     recursosGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: t.spacing.md,
+      width: '100%',
+      gap: t.spacing.lg,
     },
     recursoItem: {
-      width: usarDuasColunasCampos ? '48%' : '100%',
+      width: '100%',
     },
     botaoContainer: {
-      alignItems: exibirColunaLateral ? 'flex-start' : 'stretch',
-      marginTop: t.spacing.md,
+      alignItems: 'stretch',
+      width: '100%',
+      marginTop: t.spacing.lg,
     },
     botaoPrincipal: {
-      minWidth: exibirColunaLateral ? 240 : '100%',
-      alignSelf: exibirColunaLateral ? 'flex-start' : 'stretch',
+      minHeight: 56,
+      width: '100%',
+      alignSelf: 'stretch',
     },
   });
 }

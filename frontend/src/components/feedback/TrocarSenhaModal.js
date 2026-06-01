@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Modal, View, StyleSheet, Pressable } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Modal, View, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -57,7 +57,8 @@ const schema = z
   });
 
 export default function TrocarSenhaModal({ visible, onClose, altoContraste = false }) {
-  const { theme: t } = useThemeContext();
+  const { theme: t, fontSizeMultiplier } = useThemeContext();
+  const { height } = useWindowDimensions();
   const corPrincipal = altoContraste ? 'textOnPrimary' : 'textPrimary';
   const [submitting, setSubmitting] = useState(false);
   const [tentouTrocarSenha, setTentouTrocarSenha] = useState(false);
@@ -86,6 +87,8 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
   const confirmouSenha = confirmarSenha.length > 0;
   const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(novaSenha));
   const senhasCoincidem = senhaFoiDigitada && confirmouSenha && novaSenha === confirmarSenha;
+
+  const styles = useMemo(() => criarEstilos(t, fontSizeMultiplier, height), [t, fontSizeMultiplier, height]);
 
   const handleTrocarSenha = async (values) => {
     try {
@@ -154,173 +157,196 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
           style={[styles.modalContainer, { backgroundColor: t.colors.surface }]}
           onPress={(event) => event.stopPropagation?.()}
         >
-          <ThemedText variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal}>
-            Trocar Senha
-          </ThemedText>
-          <Spacer size="md" />
-
-          <Controller
-            control={control}
-            name="senhaAtual"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Senha Atual"
-                placeholder="Digite sua senha atual"
-                value={value}
-                onChangeText={(texto) => {
-                  if (erroSenhaAtual) setErroSenhaAtual('');
-                  onChange(texto);
-                }}
-                secureTextEntry
-                leftIcon="lock-closed-outline"
-                error={errors.senhaAtual?.message}
-                altoContraste={altoContraste}
-              />
-            )}
-          />
-
-          {tentouTrocarSenha && erroSenhaAtual ? (
-            <ThemedText color="error" variant="caption" style={styles.inlineError}>
-              {erroSenhaAtual}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal} style={styles.titulo}>
+              Trocar Senha
             </ThemedText>
-          ) : null}
+            <Spacer size="sm" />
 
-          <Controller
-            control={control}
-            name="novaSenha"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Nova Senha"
-                placeholder="Digite a nova senha"
-                value={value}
-                onChangeText={onChange}
-                secureTextEntry
-                leftIcon="key-outline"
-                error={errors.novaSenha ? 'Revise os requisitos abaixo.' : undefined}
-                altoContraste={altoContraste}
-              />
-            )}
-          />
+            <Controller
+              control={control}
+              name="senhaAtual"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Senha Atual"
+                  placeholder="Digite sua senha atual"
+                  value={value}
+                  onChangeText={(texto) => {
+                    if (erroSenhaAtual) setErroSenhaAtual('');
+                    onChange(texto);
+                  }}
+                  secureTextEntry
+                  leftIcon="lock-closed-outline"
+                  error={errors.senhaAtual?.message}
+                  altoContraste={altoContraste}
+                />
+              )}
+            />
 
-          {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
-            <View style={styles.passwordHintContainer}>
-              {requisitosPendentesSenha.map((requisito) => (
-                <View key={requisito.chave} style={styles.passwordHintRow}>
-                  <Ionicons name="close-circle" size={16} color={t.colors.error} />
+            {tentouTrocarSenha && erroSenhaAtual ? (
+              <ThemedText color="error" variant="caption" style={styles.inlineError}>
+                {erroSenhaAtual}
+              </ThemedText>
+            ) : null}
+
+            <Controller
+              control={control}
+              name="novaSenha"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Nova Senha"
+                  placeholder="Digite a nova senha"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry
+                  leftIcon="key-outline"
+                  error={errors.novaSenha ? 'Revise os requisitos abaixo.' : undefined}
+                  altoContraste={altoContraste}
+                />
+              )}
+            />
+
+            {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
+              <View style={styles.passwordHintContainer}>
+                {requisitosPendentesSenha.map((requisito) => (
+                  <View key={requisito.chave} style={styles.passwordHintRow}>
+                    <Ionicons name="close-circle" size={18} color={t.colors.error} />
+                    <ThemedText
+                      variant="caption"
+                      color="error"
+                      style={styles.passwordHintText}
+                      altoContraste={altoContraste}
+                    >
+                      {requisito.texto}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            <Controller
+              control={control}
+              name="confirmarSenha"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Confirmar Nova Senha"
+                  placeholder="Confirme a nova senha"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry
+                  leftIcon="key-outline"
+                  error={errors.confirmarSenha?.message}
+                  altoContraste={altoContraste}
+                />
+              )}
+            />
+
+            {touchedFields.confirmarSenha && confirmouSenha && senhaFoiDigitada ? (
+              <View style={styles.passwordHintContainer}>
+                <View style={styles.passwordHintRow}>
+                  <Ionicons
+                    name={senhasCoincidem ? 'checkmark-circle' : 'close-circle'}
+                    size={18}
+                    color={senhasCoincidem ? t.colors.success : t.colors.error}
+                  />
                   <ThemedText
                     variant="caption"
-                    color="error"
+                    color={senhasCoincidem ? 'success' : 'error'}
                     style={styles.passwordHintText}
                     altoContraste={altoContraste}
                   >
-                    {requisito.texto}
+                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
                   </ThemedText>
                 </View>
-              ))}
-            </View>
-          ) : null}
-
-          <Controller
-            control={control}
-            name="confirmarSenha"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Confirmar Nova Senha"
-                placeholder="Confirme a nova senha"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                leftIcon="key-outline"
-                error={errors.confirmarSenha?.message}
-                altoContraste={altoContraste}
-              />
-            )}
-          />
-
-          {touchedFields.confirmarSenha && confirmouSenha && senhaFoiDigitada ? (
-            <View style={styles.passwordHintContainer}>
-              <View style={styles.passwordHintRow}>
-                <Ionicons
-                  name={senhasCoincidem ? 'checkmark-circle' : 'close-circle'}
-                  size={16}
-                  color={senhasCoincidem ? t.colors.success : t.colors.error}
-                />
-                <ThemedText
-                  variant="caption"
-                  color={senhasCoincidem ? 'success' : 'error'}
-                  style={styles.passwordHintText}
-                  altoContraste={altoContraste}
-                >
-                  {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
-                </ThemedText>
               </View>
-            </View>
-          ) : null}
+            ) : null}
 
-          <Spacer size="md" />
+            <Spacer size="md" />
 
-          <Button
-            variant="primary"
-            size="large"
-            fullWidth
-            onPress={handleSubmit(handleTrocarSenha)}
-            loading={submitting}
-            disabled={submitting}
-            altoContraste={altoContraste}
-          >
-            Salvar
-          </Button>
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={handleSubmit(handleTrocarSenha)}
+              loading={submitting}
+              disabled={submitting}
+              altoContraste={altoContraste}
+            >
+              Salvar
+            </Button>
 
-          <Spacer size="sm" />
+            <Spacer size="sm" />
 
-          <Button
-            variant="ghost"
-            size="large"
-            fullWidth
-            onPress={handleClose}
-            disabled={submitting}
-            altoContraste={altoContraste}
-          >
-            Cancelar
-          </Button>
+            <Button
+              variant="ghost"
+              size="large"
+              fullWidth
+              onPress={handleClose}
+              disabled={submitting}
+              altoContraste={altoContraste}
+            >
+              Cancelar
+            </Button>
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  modalContainer: {
-    width: '100%',
-    maxWidth: 460,
-    borderRadius: 16,
-    padding: 24,
-  },
-  passwordHintContainer: {
-    marginTop: 4,
-    marginBottom: 10,
-    paddingHorizontal: 4,
-  },
-  passwordHintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  passwordHintText: {
-    marginLeft: 6,
-    flexShrink: 1,
-  },
-  inlineError: {
-    textAlign: 'center',
-    marginTop: -4,
-    marginBottom: 8,
-  },
-});
+function criarEstilos(t, fontSizeMultiplier, height) {
+  return StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: t.spacing.lg,
+      paddingVertical: t.spacing.lg,
+    },
+    modalContainer: {
+      width: '100%',
+      maxWidth: fontSizeMultiplier >= 2 ? 780 : 620,
+      maxHeight: Math.min(height - t.spacing.lg * 2, fontSizeMultiplier >= 2 ? 760 : height * 0.9),
+      borderRadius: t.borderRadius.xl,
+      padding: t.spacing.xl,
+      overflow: 'hidden',
+      ...(fontSizeMultiplier >= 2 ? t.shadows.none : t.shadows.md),
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: t.spacing.sm,
+    },
+    titulo: {
+      fontSize: fontSizeMultiplier >= 2 ? 28 : 24,
+      lineHeight: fontSizeMultiplier >= 2 ? 34 : 30,
+    },
+    passwordHintContainer: {
+      marginTop: t.spacing.xs,
+      marginBottom: t.spacing.sm,
+      paddingHorizontal: t.spacing.xs,
+    },
+    passwordHintRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    passwordHintText: {
+      marginLeft: t.spacing.xs,
+      flexShrink: 1,
+      fontSize: fontSizeMultiplier >= 2 ? 16 : 14,
+      lineHeight: fontSizeMultiplier >= 2 ? 22 : 20,
+    },
+    inlineError: {
+      textAlign: 'center',
+      marginTop: -4,
+      marginBottom: t.spacing.xs,
+      fontSize: fontSizeMultiplier >= 2 ? 16 : 14,
+      lineHeight: fontSizeMultiplier >= 2 ? 22 : 20,
+    },
+  });
+}
