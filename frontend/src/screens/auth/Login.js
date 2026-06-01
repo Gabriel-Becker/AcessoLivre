@@ -27,7 +27,7 @@ const schema = z
 
 export default function Login({ navigation }) {
   const { login } = useAuth();
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
   const isDesktop = width >= breakpoints.desktop;
   const [submitting, setSubmitting] = useState(false);
@@ -164,7 +164,7 @@ export default function Login({ navigation }) {
         },
         modalCard: {
           width: '100%',
-          maxWidth: 620,
+          maxWidth: fontSizeMultiplier >= 2 ? 760 : 620,
           backgroundColor: t.colors.surface,
           borderRadius: t.borderRadius.xl,
           borderWidth: isHighContrast ? 2 : 1,
@@ -173,19 +173,19 @@ export default function Login({ navigation }) {
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
         modalTitulo: {
-          fontSize: 24,
-          lineHeight: 30,
+          fontSize: 24 * fontSizeMultiplier,
+          lineHeight: 30 * fontSizeMultiplier,
         },
         modalSubtitulo: {
-          fontSize: 18,
-          lineHeight: 26,
+          fontSize: 18 * fontSizeMultiplier,
+          lineHeight: 26 * fontSizeMultiplier,
         },
         modalTexto: {
-          fontSize: 18,
-          lineHeight: 26,
+          fontSize: 18 * fontSizeMultiplier,
+          lineHeight: 26 * fontSizeMultiplier,
         },
       }),
-    [isDesktop, isHighContrast, t]
+    [fontSizeMultiplier, isDesktop, isHighContrast, t]
   );
 
   const handleSubmitLogin = async (values) => {

@@ -36,15 +36,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tituloPrincipal: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 34,
+    textAlign: 'center',
   },
   subtitulo: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: 'center',
+    maxWidth: 760,
   },
   tituloPagina: {
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 30,
+    lineHeight: 36,
+    textAlign: 'center',
+    maxWidth: 760,
   },
 });

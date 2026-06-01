@@ -19,7 +19,7 @@ const schema = z.object({
 });
 
 export default function ForgotPassword({ navigation }) {
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const [submitting, setSubmitting] = useState(false);
   const [showAccountDisabled, setShowAccountDisabled] = useState(false);
 
@@ -41,37 +41,51 @@ export default function ForgotPassword({ navigation }) {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: t.spacing.lg,
+          paddingHorizontal: fontSizeMultiplier >= 2 ? t.spacing.xl : t.spacing.lg,
+          paddingVertical: t.spacing.xl,
         },
         card: {
           width: '100%',
-          maxWidth: 440,
-          padding: t.spacing.xl,
+          maxWidth: fontSizeMultiplier >= 2 ? 920 : 760,
+          padding: fontSizeMultiplier >= 2 ? t.spacing.xl : t.spacing.lg,
           backgroundColor: t.colors.surface,
           borderColor: t.colors.borderLight,
           borderWidth: isHighContrast ? 2 : 1,
           borderRadius: t.borderRadius.lg,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
+        },
+        introducao: {
+          fontSize: fontSizeMultiplier >= 2 ? 22 : 18,
+          lineHeight: fontSizeMultiplier >= 2 ? 30 : 26,
+          maxWidth: 760,
         },
         modalOverlay: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.45)',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: t.spacing.lg,
+          paddingHorizontal: fontSizeMultiplier >= 2 ? t.spacing.xl : t.spacing.lg,
         },
         modalCard: {
           width: '100%',
-          maxWidth: 420,
+          maxWidth: fontSizeMultiplier >= 2 ? 760 : 620,
           backgroundColor: t.colors.surface,
-          borderRadius: t.borderRadius.lg,
+          borderRadius: t.borderRadius.xl,
           borderWidth: isHighContrast ? 2 : 1,
           borderColor: t.colors.borderLight,
-          padding: t.spacing.lg,
+          padding: t.spacing.xl,
           ...(isHighContrast ? t.shadows.none : t.shadows.md),
         },
+        modalTitulo: {
+          fontSize: fontSizeMultiplier >= 2 ? 30 : 24,
+          lineHeight: fontSizeMultiplier >= 2 ? 36 : 30,
+        },
+        modalTexto: {
+          fontSize: fontSizeMultiplier >= 2 ? 22 : 18,
+          lineHeight: fontSizeMultiplier >= 2 ? 30 : 26,
+        },
       }),
-    [isHighContrast, t]
+    [fontSizeMultiplier, isHighContrast, t]
   );
 
   const onSubmit = async (values) => {
@@ -136,7 +150,7 @@ export default function ForgotPassword({ navigation }) {
                 altoContraste={isHighContrast} 
               />
               <Spacer size="sm" />
-              <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+              <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast} style={styles.introducao}>
                 Digite seu e-mail e enviaremos um código para redefinir sua senha
               </ThemedText>
 
@@ -193,11 +207,11 @@ export default function ForgotPassword({ navigation }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast}>
+            <ThemedText variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
               Conta desativada
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
+            <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
               Sua conta foi desativada, Contate um administrador para mais informações
             </ThemedText>
 
