@@ -84,7 +84,7 @@ export default function Input({
         {leftIcon && (
           <Ionicons
             name={leftIcon}
-            size={20}
+              size={22}
             color={t.colors.textSecondary}
             style={styles.leftIcon}
           />
@@ -129,7 +129,7 @@ export default function Input({
           >
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
+              size={22}
               color={t.colors.textSecondary}
             />
           </TouchableOpacity>
@@ -141,7 +141,7 @@ export default function Input({
           >
             <Ionicons
               name={effectiveRightIcon}
-              size={20}
+              size={22}
               color={t.colors.textSecondary}
             />
           </TouchableOpacity>
@@ -163,43 +163,43 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   label: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.medium,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 2,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm,
-    minHeight: 48,
+    paddingHorizontal: theme.spacing.md,
+    minHeight: 56,
   },
   inputContainerMultiline: {
     alignItems: 'flex-start',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
   },
   input: {
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    paddingVertical: theme.spacing.sm,
+    fontSize: theme.typography.fontSize.lg,
+    paddingVertical: theme.spacing.md,
     outlineStyle: 'none',
   },
   inputWithLeftIcon: {
-    paddingLeft: theme.spacing.xs,
+    paddingLeft: theme.spacing.sm,
   },
   inputWithRightIcon: {
-    paddingRight: theme.spacing.xs,
+    paddingRight: theme.spacing.sm,
   },
   inputMultiline: {
-    minHeight: 100,
+    minHeight: 120,
     textAlignVertical: 'top',
   },
   leftIcon: {
-    marginRight: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
   },
   rightIcon: {
-    marginLeft: theme.spacing.xs,
+    marginLeft: theme.spacing.sm,
     padding: theme.spacing.xs,
   },
   errorContainer: {
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   errorText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.md,
     marginLeft: theme.spacing.xs,
     textAlign: 'center',
   },

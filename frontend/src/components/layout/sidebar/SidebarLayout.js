@@ -123,7 +123,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
         <View style={[styles.modalOverlay, { backgroundColor: t.colors.overlay }]}> 
           <View style={[styles.modalCard, { backgroundColor: t.colors.surface, borderColor: t.colors.borderLight }]}> 
             <View style={[styles.modalIcon, { backgroundColor: t.colors.primary }]}> 
-              <Ionicons name="settings-outline" size={22} color={t.colors.textOnPrimary} />
+              <Ionicons name="settings-outline" size={26} color={t.colors.textOnPrimary} />
             </View>
 
             <Spacer size="sm" />
@@ -131,7 +131,7 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
               Configurações
             </ThemedText>
             <Spacer size="xs" />
-            <ThemedText color={corTextoSecundario} align="center" altoContraste={altoContraste}>
+            <ThemedText color={corTextoSecundario} align="center" altoContraste={altoContraste} style={styles.modalDescricao}>
               Ajuste a acessibilidade do aplicativo sem sair desta tela.
             </ThemedText>
 
@@ -312,13 +312,13 @@ const criarEstilos = (t, modoExpandido) => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: t.spacing.lg,
+    padding: t.spacing.xl,
   },
   modalCard: {
-    width: '92%',
-    maxWidth: 820,
+    width: '96%',
+    maxWidth: 1040,
     alignSelf: 'center',
-    maxHeight: '90%',
+    maxHeight: '94%',
     borderRadius: t.borderRadius.xl,
     borderWidth: 1,
     padding: t.spacing.xl,
@@ -331,8 +331,8 @@ const criarEstilos = (t, modoExpandido) => StyleSheet.create({
     overflow: 'hidden',
   },
   modalIcon: {
-    width: 52,
-    height: 52,
+    width: 60,
+    height: 60,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
@@ -349,6 +349,10 @@ const criarEstilos = (t, modoExpandido) => StyleSheet.create({
   },
   modalScrollContent: {
     paddingBottom: t.spacing.sm,
+  },
+  modalDescricao: {
+    fontSize: 16,
+    lineHeight: 24,
   },
   settingHeader: {
     flexDirection: 'row',

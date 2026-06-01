@@ -42,7 +42,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
 
   const isWideLayout = width >= 1200;
   const estilos = useMemo(() => criarEstilos(t, isWideLayout), [t, isWideLayout]);
-  const larguraModal = width < 768 ? '96%' : width < 1100 ? '84%' : '86%';
+  const larguraModal = width < 768 ? '96%' : width < 1100 ? '90%' : '88%';
 
   const normalizarArray = (valor) => (Array.isArray(valor) ? [...valor].sort().join('|') : '');
 
@@ -277,11 +277,11 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
           >
             <View style={estilos.header}>
               <View style={estilos.headerTexto}>
-                <ThemedText variant="h2" weight="bold" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'}>
+                <ThemedText variant="h2" weight="bold" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'} style={estilos.titulo}>
                   Editar local
                 </ThemedText>
                 <Spacer size="xs" />
-                <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+                <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste} style={estilos.headerSubtitulo}>
                   Ajuste os dados essenciais sem sair do painel de administração.
                 </ThemedText>
               </View>
@@ -506,9 +506,9 @@ function criarEstilos(t, isWideLayout) {
       padding: t.spacing.md,
     },
     container: {
-      maxHeight: '88%',
+      maxHeight: '92%',
       borderRadius: t.borderRadius.xl,
-      padding: t.spacing.lg,
+      padding: t.spacing.xl,
       overflow: 'hidden',
       ...t.shadows.lg,
     },
@@ -523,6 +523,14 @@ function criarEstilos(t, isWideLayout) {
     },
     headerTexto: {
       flex: 1,
+    },
+    titulo: {
+      fontSize: 26,
+      lineHeight: 32,
+    },
+    headerSubtitulo: {
+      fontSize: 16,
+      lineHeight: 24,
     },
     botaoFechar: {
       width: 36,

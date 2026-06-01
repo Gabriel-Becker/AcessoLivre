@@ -182,7 +182,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     onClose();
   };
 
-  const larguraModal = width < 768 ? '92%' : '33%';
+  const larguraModal = width < 768 ? '96%' : width < 1200 ? '44%' : '38%';
 
   return (
     <Modal
@@ -192,9 +192,9 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
       onRequestClose={handleClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: larguraModal }]}>
+        <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: larguraModal }]}> 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <ThemedText variant="h2" weight="bold" align="center">
+            <ThemedText variant="h2" weight="bold" align="center" style={styles.titulo}>
               Editar Usuário
             </ThemedText>
             <Spacer size="sm" />
@@ -343,9 +343,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    maxHeight: '70%',
-    borderRadius: 12,
-    padding: 16,
+    maxHeight: '86%',
+    borderRadius: 18,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -369,5 +369,9 @@ const styles = StyleSheet.create({
   formError: {
     marginTop: 2,
     marginBottom: 10,
+  },
+  titulo: {
+    fontSize: 24,
+    lineHeight: 30,
   },
 });

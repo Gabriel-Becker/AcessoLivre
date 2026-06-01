@@ -15,21 +15,21 @@ export default function TermsModal({ visible, onClose, type = 'terms', altoContr
 
   const styles = useMemo(
     () => {
-      const isSmall = width < 768;
       return StyleSheet.create({
         modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
         modalContainer: {
-          width: '90%',
-          maxWidth: 400,
+          width: width < 768 ? '94%' : '86%',
+          maxWidth: 620,
           backgroundColor: t.colors.surface,
-          borderRadius: 12,
+          borderRadius: 16,
           overflow: 'hidden',
-          maxHeight: '80%',
+          maxHeight: '88%',
         },
-        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0, padding: 16, borderBottomWidth: 1, borderBottomColor: t.colors.borderLight, backgroundColor: t.colors.surface },
-        title: { fontSize: 16, lineHeight: 20 },
-        closeButton: { padding: 6 },
-        content: { padding: 16 },
+        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0, padding: 20, borderBottomWidth: 1, borderBottomColor: t.colors.borderLight, backgroundColor: t.colors.surface },
+        title: { fontSize: 24, lineHeight: 30 },
+        closeButton: { padding: 8 },
+        content: { padding: 20 },
+        texto: { fontSize: 18, lineHeight: 28 },
       });
     },
     [contrasteAtivo, t, width]
@@ -47,12 +47,12 @@ export default function TermsModal({ visible, onClose, type = 'terms', altoContr
               {titulo}
             </ThemedText>
             <Pressable onPress={onClose} accessibilityRole="button" style={styles.closeButton}>
-              <Ionicons name="close" size={20} color={contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary} />
+              <Ionicons name="close" size={24} color={contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 32 }}>
-            <ThemedText altoContraste={contrasteAtivo} color={corPrincipal}>
+            <ThemedText altoContraste={contrasteAtivo} color={corPrincipal} style={styles.texto}>
               {texto}
             </ThemedText>
           </ScrollView>

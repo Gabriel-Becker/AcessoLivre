@@ -3,8 +3,8 @@ import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
-import { CardSecao } from '../../components/ui';
-import { ThemedText, Spacer } from '../../components/commons';
+import { Button, CardSecao } from '../../components/ui';
+import { ThemedText } from '../../components/commons';
 import SidebarItem from '../../components/layout/sidebar/SidebarItem';
 import { useAuth } from '../../context/AuthContext';
 
@@ -96,6 +96,47 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
             ))}
           </View>
         </CardSecao>
+
+        {!isAuthenticated ? (
+          <View style={styles.areaAuth}>
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              onPress={() => onNavigate?.('Login')}
+              align="center"
+              iconLeft="log-in-outline"
+              altoContraste={contrasteAtivo}
+              style={styles.botaoAuth}
+            >
+              Fazer Login
+            </Button>
+
+            <Button
+              variant={contrasteAtivo ? 'outline' : 'ghost'}
+              size="large"
+              fullWidth
+              onPress={() => onNavigate?.('Register')}
+              align="center"
+              iconLeft="person-add-outline"
+              altoContraste={contrasteAtivo}
+              style={[
+                styles.botaoAuth,
+                contrasteAtivo
+                  ? {
+                    backgroundColor: 'transparent',
+                    borderColor: t.colors.primary,
+                    borderWidth: 2,
+                  }
+                  : { backgroundColor: 'transparent' },
+              ]}
+              textStyle={{ color: contrasteAtivo ? t.colors.primary : t.colors.textSecondary }}
+              iconColor={contrasteAtivo ? t.colors.primary : t.colors.textSecondary}
+            >
+              Criar Conta
+            </Button>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -147,6 +188,18 @@ function criarEstilos(t) {
     },
     itemWrapperUmaColuna: {
       flexBasis: '100%',
+    },
+    areaAuth: {
+      marginTop: t.spacing.lg,
+      gap: t.spacing.sm,
+    },
+    botaoAuth: {
+      borderRadius: t.borderRadius.lg,
+      shadowColor: t.shadows.md.shadowColor,
+      shadowOffset: t.shadows.md.shadowOffset,
+      shadowOpacity: t.shadows.md.shadowOpacity,
+      shadowRadius: t.shadows.md.shadowRadius,
+      elevation: t.shadows.md.elevation,
     },
   });
 }

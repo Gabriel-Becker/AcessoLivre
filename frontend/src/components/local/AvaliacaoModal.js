@@ -347,10 +347,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: Platform.OS === 'web' ? 600 : '90%',
-    maxHeight: '90%',
-    borderRadius: 24,
-    padding: 24,
+    width: Platform.OS === 'web' ? 760 : '94%',
+    maxHeight: '94%',
+    borderRadius: 28,
+    padding: 28,
     ...Platform.select({
       web: {
         boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
@@ -371,7 +371,8 @@ const styles = StyleSheet.create({
   },
   titulo: {
     flex: 1,
-    fontSize: 22,
+    fontSize: 26,
+    lineHeight: 32,
   },
   closeButton: {
     padding: 8,
@@ -382,6 +383,8 @@ const styles = StyleSheet.create({
   },
   subtitulo: {
     textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 24,
   },
   criterioContainer: {
     paddingVertical: 16,
@@ -403,7 +406,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   criterioTitulo: {
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 24,
   },
   starsContainer: {
     flexDirection: 'row',

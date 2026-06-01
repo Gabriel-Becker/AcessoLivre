@@ -44,11 +44,11 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
         },
         modalContainer: {
           width: '100%',
-          maxWidth: isMobile ? 420 : 560,
+          maxWidth: isMobile ? 460 : 700,
           maxHeight: Math.min(height - t.spacing.lg * 2, isMobile ? 760 : height * 0.92),
           borderRadius: t.borderRadius.xl,
-          paddingHorizontal: isMobile ? t.spacing.md : t.spacing.lg,
-          paddingVertical: isMobile ? t.spacing.md : t.spacing.lg,
+          paddingHorizontal: isMobile ? t.spacing.md : t.spacing.xl,
+          paddingVertical: isMobile ? t.spacing.md : t.spacing.xl,
           backgroundColor: t.colors.surface,
           borderWidth: contrasteAtivo ? 2 : 0,
           borderColor: contrasteAtivo ? t.colors.border : 'transparent',
@@ -60,6 +60,14 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
         },
         headerSpacing: {
           marginBottom: isMobile ? t.spacing.xs : t.spacing.sm,
+        },
+        titulo: {
+          fontSize: isMobile ? 22 : 26,
+          lineHeight: isMobile ? 28 : 32,
+        },
+        subtitulo: {
+          fontSize: isMobile ? 15 : 16,
+          lineHeight: isMobile ? 22 : 24,
         },
         qrContainer: {
           alignItems: 'center',
@@ -207,10 +215,10 @@ export default function TwoFactorModal({ visible, enabled = false, onClose, onSu
             bounces={false}
             alwaysBounceVertical={false}
           >
-            <ThemedText variant="h2" weight="bold" align="center" altoContraste={contrasteAtivo} color={corPrincipal} style={estilos.headerSpacing}>
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={contrasteAtivo} color={corPrincipal} style={[estilos.headerSpacing, estilos.titulo]}>
               {enabled ? 'Desativar 2FA' : 'Autenticação de Dois Fatores'}
             </ThemedText>
-            <ThemedText color={corSecundaria} align="center" altoContraste={contrasteAtivo}>
+            <ThemedText color={corSecundaria} align="center" altoContraste={contrasteAtivo} style={estilos.subtitulo}>
               {enabled
                 ? 'Digite o código de 6 dígitos do seu aplicativo autenticador para desativar.'
                 : 'Escaneie o QR Code e confirme com o código de 6 dígitos.'}

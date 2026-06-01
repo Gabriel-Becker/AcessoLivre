@@ -121,8 +121,9 @@ export default function Register({ navigation }) {
           flexGrow: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: t.spacing.lg,
-          paddingHorizontal: t.spacing.lg,
+          paddingVertical: t.spacing.xl,
+          paddingHorizontal: isDesktop ? t.spacing.xl : t.spacing.lg,
+          paddingBottom: t.spacing.xl,
         },
         cardWrapper: {
           width: '100%',
@@ -130,8 +131,8 @@ export default function Register({ navigation }) {
         },
         card: {
           width: '100%',
-          maxWidth: 520,
-          padding: t.spacing.xl,
+          maxWidth: isDesktop ? 760 : 560,
+          padding: isDesktop ? t.spacing.xl : t.spacing.lg,
           borderWidth: isHighContrast ? 2 : 1,
           borderColor: isHighContrast ? t.colors.border : t.colors.borderLight,
           borderRadius: t.borderRadius.lg,
@@ -140,13 +141,13 @@ export default function Register({ navigation }) {
         },
         checkboxRow: {
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           alignSelf: 'center',
           marginTop: t.spacing.xs,
         },
         checkbox: {
-          width: 22,
-          height: 22,
+          width: 28,
+          height: 28,
           borderRadius: t.borderRadius.sm,
           borderWidth: 2,
           borderColor: t.colors.primary,
@@ -160,6 +161,17 @@ export default function Register({ navigation }) {
         },
         checkboxLabel: {
           marginLeft: t.spacing.sm,
+          lineHeight: 28,
+          fontSize: 18,
+        },
+        checkboxTexto: {
+          fontSize: 18,
+          lineHeight: 28,
+        },
+        checkboxLink: {
+          fontSize: 18,
+          lineHeight: 28,
+          fontWeight: '600',
         },
         errorText: {
           marginTop: t.spacing.xs,
@@ -180,9 +192,11 @@ export default function Register({ navigation }) {
         passwordHintText: {
           marginLeft: t.spacing.xs,
           flexShrink: 1,
+          lineHeight: 22,
+          fontSize: 16,
         },
       }),
-    [isHighContrast, t]
+    [isDesktop, isHighContrast, t]
   );
 
   const onSubmit = async (values) => {
@@ -392,14 +406,14 @@ export default function Register({ navigation }) {
                     {value ? <Ionicons name="checkmark" size={14} color={t.colors.textOnPrimary} /> : null}
                   </Pressable>
 
-                  <ThemedText color="textSecondary" altoContraste={isHighContrast} style={[styles.checkboxLabel, { flexShrink: 1 }]}> 
+                  <ThemedText color="textSecondary" altoContraste={isHighContrast} style={[styles.checkboxLabel, styles.checkboxTexto, { flexShrink: 1 }]}> 
                     Aceito os {' '}
                     <Pressable onPress={() => { setModalType('terms'); setShowTermsModal(true); }} accessibilityRole="link">
-                      <ThemedText color="primary" weight="bold">termos de uso</ThemedText>
+                      <ThemedText color="primary" weight="semibold" style={styles.checkboxLink}>termos de uso</ThemedText>
                     </Pressable>
                     {' '}e{' '}
                     <Pressable onPress={() => { setModalType('privacy'); setShowTermsModal(true); }} accessibilityRole="link">
-                      <ThemedText color="primary" weight="bold">política de privacidade</ThemedText>
+                      <ThemedText color="primary" weight="semibold" style={styles.checkboxLink}>política de privacidade</ThemedText>
                     </Pressable>
                   </ThemedText>
                 </View>
