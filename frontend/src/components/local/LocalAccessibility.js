@@ -21,8 +21,9 @@ const ACCESSIBILITY_CONFIG = {
 };
 
 export default function LocalAccessibility({ tiposAcessibilidade = [], altoContraste }) {
-  const { isHighContrast } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const t = getTheme(altoContraste ?? isHighContrast);
+  const estilos = useMemo(() => criarEstilos(t, fontSizeMultiplier), [t, fontSizeMultiplier]);
 
   const recursos = useMemo(() => {
     if (!tiposAcessibilidade || tiposAcessibilidade.length === 0) return [];
@@ -45,11 +46,11 @@ export default function LocalAccessibility({ tiposAcessibilidade = [], altoContr
     >
       <View style={styles.container}>
         {recursos.map((recurso, index) => (
-          <View key={index} style={styles.recursoItem}>
-            <View style={[styles.iconWrapper, { backgroundColor: t.colors.backgroundSecondary }]}>
-              <Ionicons name={recurso.icon} size={20} color={t.colors.primary} />
+          <View key={index} style={estilos.recursoItem}>
+            <View style={[estilos.iconWrapper, { backgroundColor: t.colors.backgroundSecondary }]}>
+              <Ionicons name={recurso.icon} size={estilos.tamanhoIcone} color={t.colors.primary} />
             </View>
-            <ThemedText style={styles.recursoLabel}>{recurso.label}</ThemedText>
+            <ThemedText style={estilos.recursoLabel}>{recurso.label}</ThemedText>
           </View>
         ))}
       </View>
@@ -63,20 +64,31 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
   },
-  recursoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: '45%',
-  },
-  iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recursoLabel: {
-    fontSize: 13,
-  },
 });
+
+function criarEstilos(t, fontSizeMultiplier) {
+  const fonteGrande = fontSizeMultiplier >= 1.5;
+  const tamanhoIcone = fonteGrande ? 26 : 22;
+  const tamanhoBase = fonteGrande ? 46 : 40;
+
+  return {
+    recursoItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minWidth: '46%',
+    },
+    iconWrapper: {
+      width: tamanhoBase,
+      height: tamanhoBase,
+      borderRadius: Math.round(tamanhoBase / 2),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tamanhoIcone,
+    recursoLabel: {
+      fontSize: fonteGrande ? t.typography.fontSize.lg : t.typography.fontSize.md,
+      lineHeight: Math.round((fonteGrande ? t.typography.fontSize.lg : t.typography.fontSize.md) * 1.3),
+    },
+  };
+}
