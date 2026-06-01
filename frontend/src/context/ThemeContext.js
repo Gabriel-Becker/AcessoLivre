@@ -26,14 +26,26 @@ function setCookie(name, value, days = 365) {
 }
 
 const THEME_PREF_KEY = 'preferenciaTemaAltoContraste';
+const FONT_SIZE_PREF_KEY = 'preferenciaTamanhoFonte';
+
+function normalizarEscalaFonte(valor) {
+  const escala = Number.parseFloat(String(valor));
+  if (escala === 1 || escala === 1.5 || escala === 2) {
+    return escala;
+  }
+
+  return 1;
+}
 
 const ThemeContext = createContext({});
 
 export const ThemeProvider = ({ children }) => {
   const [isHighContrast, setIsHighContrast] = useState(true);
+  const [fontSizeMultiplier, setFontSizeMultiplier] = useState(1);
 
   useEffect(() => {
     carregarPreferencia();
+    carregarPreferenciaFonte();
   }, []);
 
   const carregarPreferencia = async () => {
@@ -80,12 +92,59 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const carregarPreferenciaFonte = async () => {
+    try {
+      if (isBrowser) {
+        const ls = window.localStorage.getItem(FONT_SIZE_PREF_KEY);
+        if (ls !== null) {
+          setFontSizeMultiplier(normalizarEscalaFonte(ls));
+          return;
+        }
+
+        const c = getCookie(FONT_SIZE_PREF_KEY);
+        if (c !== null) {
+          setFontSizeMultiplier(normalizarEscalaFonte(c));
+          return;
+        }
+      }
+
+      const valor = await AsyncStorage.getItem(FONT_SIZE_PREF_KEY);
+      if (valor !== null) {
+        setFontSizeMultiplier(normalizarEscalaFonte(valor));
+      }
+    } catch (e) {
+      console.error('Erro ao carregar preferência de tamanho de fonte:', e);
+    }
+  };
+
+  const alterarTamanhoFonte = async (novoValor) => {
+    try {
+      const valorNormalizado = normalizarEscalaFonte(novoValor);
+      setFontSizeMultiplier(valorNormalizado);
+      await AsyncStorage.setItem(FONT_SIZE_PREF_KEY, String(valorNormalizado));
+
+      try {
+        if (isBrowser) {
+          const valorTexto = String(valorNormalizado);
+          window.localStorage.setItem(FONT_SIZE_PREF_KEY, valorTexto);
+          setCookie(FONT_SIZE_PREF_KEY, valorTexto);
+        }
+      } catch (e) {
+        // ignore
+      }
+    } catch (e) {
+      console.error('Erro ao salvar preferência de tamanho de fonte:', e);
+    }
+  };
+
   return (
     <ThemeContext.Provider
       value={{
         isHighContrast,
-        theme: getTheme(isHighContrast),
+        fontSizeMultiplier,
+        theme: getTheme(isHighContrast, fontSizeMultiplier),
         toggleTheme,
+        alterarTamanhoFonte,
       }}
     >
       {children}

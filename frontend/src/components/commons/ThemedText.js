@@ -13,9 +13,9 @@ export default function ThemedText({
   style,
   ...props
 }) {
-  const { isHighContrast, theme: ctxTheme } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = getTheme(contrasteAtivo) || ctxTheme || theme;
+  const t = getTheme(contrasteAtivo, fontSizeMultiplier) || theme;
 
   let colorKey = color;
   if (contrasteAtivo && (color === 'textSecondary' || color === 'textTertiary')) {

@@ -305,8 +305,25 @@ export const highContrastTheme = {
 
 export const theme = defaultTheme;
 
-export const getTheme = (isHighContrast = false) => {
-  return isHighContrast ? highContrastTheme : defaultTheme;
+function escalarFontSizes(fontSize = {}, multiplicador = 1) {
+  const fator = [1, 1.5, 2].includes(multiplicador) ? multiplicador : 1;
+
+  return Object.entries(fontSize).reduce((acumulado, [chave, valor]) => {
+    acumulado[chave] = typeof valor === 'number' ? Math.round(valor * fator) : valor;
+    return acumulado;
+  }, {});
+}
+
+export const getTheme = (isHighContrast = false, fontSizeMultiplier = 1) => {
+  const baseTheme = isHighContrast ? highContrastTheme : defaultTheme;
+
+  return {
+    ...baseTheme,
+    typography: {
+      ...baseTheme.typography,
+      fontSize: escalarFontSizes(baseTheme.typography?.fontSize, fontSizeMultiplier),
+    },
+  };
 };
 
 export const animations = {

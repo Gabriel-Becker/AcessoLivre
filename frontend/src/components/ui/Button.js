@@ -23,11 +23,11 @@ export default function Button({
   altoContraste,
   ...props
 }) {
-  const { theme: temaContexto, isHighContrast } = useThemeContext();
+  const { theme: temaContexto, isHighContrast, fontSizeMultiplier } = useThemeContext();
   const isDisabled = disabled || loading;
   const t = typeof altoContraste === 'boolean'
-    ? getTheme(altoContraste)
-    : (temaContexto || getTheme(isHighContrast));
+    ? getTheme(altoContraste, fontSizeMultiplier)
+    : (temaContexto || getTheme(isHighContrast, fontSizeMultiplier));
   const minTouchHeight = t.layout?.mobile?.touchTargetMinHeight ?? 44;
 
   // Estilos baseados na variante
