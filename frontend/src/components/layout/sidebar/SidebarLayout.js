@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
@@ -119,108 +119,115 @@ export default function SidebarLayout({ current = 'Inicio', onNavigate, altoCont
             </ThemedText>
 
             <Spacer size="md" />
-            <View style={[styles.settingCard, { backgroundColor: t.colors.backgroundSecondary, borderColor: t.colors.borderLight }]}> 
-              <View style={styles.settingHeader}>
-                <View style={[styles.settingTextBlock, { flex: 1 }]}> 
-                  <ThemedText variant="h4" weight="bold" altoContraste={altoContraste}>
-                    Alto contraste
-                  </ThemedText>
-                  <Spacer size="xs" />
-                  <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
-                    Ativa contraste máximo para facilitar a leitura.
-                  </ThemedText>
-                </View>
 
-                <View style={styles.switchContainer}>
-                  <Toggle value={isHighContrast} onValueChange={toggleTheme} altoContraste={altoContraste} />
-                </View>
-              </View>
-            </View>
-
-            <Spacer size="sm" />
-
-            <View style={[styles.settingCard, { backgroundColor: t.colors.backgroundSecondary, borderColor: t.colors.borderLight }]}> 
-              <View style={styles.settingHeader}>
-                <View style={[styles.settingTextBlock, { flex: 1 }]}> 
-                  <View style={styles.settingTitleRow}>
-                    <Ionicons name="text-outline" size={18} color={t.colors.primary} />
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={[styles.settingCard, { backgroundColor: t.colors.backgroundSecondary, borderColor: t.colors.borderLight }]}> 
+                <View style={styles.settingHeader}>
+                  <View style={[styles.settingTextBlock, { flex: 1 }]}> 
                     <ThemedText variant="h4" weight="bold" altoContraste={altoContraste}>
-                      Tamanho da fonte
+                      Alto contraste
+                    </ThemedText>
+                    <Spacer size="xs" />
+                    <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
+                      Ativa contraste máximo para facilitar a leitura.
                     </ThemedText>
                   </View>
-                  <Spacer size="xs" />
-                  <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
-                    Escolha o nível que será aplicado em todas as telas.
-                  </ThemedText>
-                </View>
 
-                <View style={[styles.badgeNivelAtual, { backgroundColor: t.colors.primary }]}> 
-                  <ThemedText weight="bold" color="textOnPrimary" align="center" altoContraste={altoContraste}>
-                    {nivelAtual.subtitulo}
-                  </ThemedText>
+                  <View style={styles.switchContainer}>
+                    <Toggle value={isHighContrast} onValueChange={toggleTheme} altoContraste={altoContraste} />
+                  </View>
                 </View>
               </View>
 
               <Spacer size="sm" />
 
-              <View style={styles.grupoFontes}>
-                {OPCOES_FONTE.map((opcao) => {
-                  const selecionado = fontSizeMultiplier === opcao.valor;
+              <View style={[styles.settingCard, { backgroundColor: t.colors.backgroundSecondary, borderColor: t.colors.borderLight }]}> 
+                <View style={styles.settingHeader}>
+                  <View style={[styles.settingTextBlock, { flex: 1 }]}> 
+                    <View style={styles.settingTitleRow}>
+                      <Ionicons name="text-outline" size={18} color={t.colors.primary} />
+                      <ThemedText variant="h4" weight="bold" altoContraste={altoContraste}>
+                        Tamanho da fonte
+                      </ThemedText>
+                    </View>
+                    <Spacer size="xs" />
+                    <ThemedText color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
+                      Escolha o nível que será aplicado em todas as telas.
+                    </ThemedText>
+                  </View>
 
-                  return (
-                    <TouchableOpacity
-                      key={opcao.valor}
-                      style={[
-                        styles.opcaoFonte,
-                        {
-                          borderColor: corBordaOpcao,
-                          backgroundColor: corFundoOpcao,
-                        },
-                        selecionado
-                          ? {
-                              borderColor: corBordaOpcaoSelecionada,
-                              backgroundColor: corFundoOpcaoSelecionada,
-                            }
-                          : null,
-                      ]}
-                      onPress={() => alterarTamanhoFonte(opcao.valor)}
-                      activeOpacity={0.8}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: selecionado }}
-                    >
-                      <View style={styles.opcaoTopo}>
-                        <ThemedText weight="bold" altoContraste={altoContraste}>
-                          {opcao.subtitulo}
-                        </ThemedText>
-                        <Ionicons
-                          name={selecionado ? 'checkmark-circle' : 'ellipse-outline'}
-                          size={18}
-                          color={selecionado ? corBordaOpcaoSelecionada : corBordaOpcao}
-                        />
-                      </View>
+                  <View style={[styles.badgeNivelAtual, { backgroundColor: t.colors.primary }]}> 
+                    <ThemedText weight="bold" color="textOnPrimary" align="center" altoContraste={altoContraste}>
+                      {nivelAtual.subtitulo}
+                    </ThemedText>
+                  </View>
+                </View>
 
-                      <ThemedText
-                        weight="bold"
-                        align="center"
-                        altoContraste={altoContraste}
-                        style={{ fontSize: 15 * opcao.valor, lineHeight: 17 * opcao.valor }}
+                <Spacer size="sm" />
+
+                <View style={styles.grupoFontes}>
+                  {OPCOES_FONTE.map((opcao) => {
+                    const selecionado = fontSizeMultiplier === opcao.valor;
+
+                    return (
+                      <TouchableOpacity
+                        key={opcao.valor}
+                        style={[
+                          styles.opcaoFonte,
+                          {
+                            borderColor: corBordaOpcao,
+                            backgroundColor: corFundoOpcao,
+                          },
+                          selecionado
+                            ? {
+                                borderColor: corBordaOpcaoSelecionada,
+                                backgroundColor: corFundoOpcaoSelecionada,
+                              }
+                            : null,
+                        ]}
+                        onPress={() => alterarTamanhoFonte(opcao.valor)}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: selecionado }}
                       >
-                        Aa
-                      </ThemedText>
+                        <View style={styles.opcaoTopo}>
+                          <ThemedText weight="bold" altoContraste={altoContraste}>
+                            {opcao.subtitulo}
+                          </ThemedText>
+                          <Ionicons
+                            name={selecionado ? 'checkmark-circle' : 'ellipse-outline'}
+                            size={18}
+                            color={selecionado ? corBordaOpcaoSelecionada : corBordaOpcao}
+                          />
+                        </View>
 
-                      <ThemedText weight="semibold" align="center" altoContraste={altoContraste}>
-                        {opcao.rotulo}
-                      </ThemedText>
-                      <ThemedText color={corTextoSecundario} align="center" size="sm" altoContraste={altoContraste}>
-                        Texto de exemplo
-                      </ThemedText>
-                    </TouchableOpacity>
-                  );
-                })}
+                        <ThemedText
+                          weight="bold"
+                          align="center"
+                          altoContraste={altoContraste}
+                          style={{ fontSize: 15 * opcao.valor, lineHeight: 17 * opcao.valor }}
+                        >
+                          Aa
+                        </ThemedText>
+
+                        <ThemedText weight="semibold" align="center" altoContraste={altoContraste}>
+                          {opcao.rotulo}
+                        </ThemedText>
+                        <ThemedText color={corTextoSecundario} align="center" size="sm" altoContraste={altoContraste}>
+                          Texto de exemplo
+                        </ThemedText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
-            </View>
+            </ScrollView>
 
-            <Spacer size="xs" />
+            <Spacer size="sm" />
             <Button
               variant="ghost"
               size="large"
@@ -272,8 +279,10 @@ const criarEstilos = (t) => StyleSheet.create({
     padding: t.spacing.lg,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 640,
+    width: '92%',
+    maxWidth: 820,
+    alignSelf: 'center',
+    maxHeight: '90%',
     borderRadius: t.borderRadius.xl,
     borderWidth: 1,
     padding: t.spacing.xl,
@@ -283,6 +292,7 @@ const criarEstilos = (t) => StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 20,
     elevation: 12,
+    overflow: 'hidden',
   },
   modalIcon: {
     width: 52,
@@ -297,6 +307,12 @@ const criarEstilos = (t) => StyleSheet.create({
     borderWidth: 1,
     paddingVertical: t.spacing.sm,
     paddingHorizontal: t.spacing.md,
+  },
+  modalScroll: {
+    flexGrow: 0,
+  },
+  modalScrollContent: {
+    paddingBottom: t.spacing.sm,
   },
   settingHeader: {
     flexDirection: 'row',
@@ -326,16 +342,18 @@ const criarEstilos = (t) => StyleSheet.create({
   },
   grupoFontes: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   opcaoFonte: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 180,
     borderRadius: 16,
     borderWidth: 1,
     paddingVertical: 14,
     paddingHorizontal: 12,
     gap: 8,
-    minHeight: 132,
+    minHeight: 108,
   },
   opcaoTopo: {
     width: '100%',
