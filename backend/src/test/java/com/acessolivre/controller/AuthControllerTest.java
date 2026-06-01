@@ -38,8 +38,10 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
+import com.acessolivre.exception.UsuarioException;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.EmailNotVerifiedException;
+import com.acessolivre.security.InvalidTwoFactorCodeException;
 import com.acessolivre.security.JwtService;
 import com.acessolivre.security.LoginAttemptService;
 import com.acessolivre.security.TwoFactorRequiredException;
@@ -122,6 +124,22 @@ class AuthControllerTest {
     }
 
     @Test
+    void register_DeveRetornarInternalServerErrorQuandoErroInesperado() {
+        RegisterRequestDTO request = RegisterRequestDTO.builder()
+            .nome("Maria")
+            .email("maria@teste.com")
+            .senha("Senha@123")
+            .build();
+
+        when(registroPendenteService.registrarUsuarioDireto(any(), any(), any()))
+            .thenThrow(new RuntimeException("falha inesperada"));
+
+        ResponseEntity<?> response = authController.register(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void confirmarRegistro_DeveRetornarCreatedQuandoSucesso() {
         VerifyEmailRequestDTO request = VerifyEmailRequestDTO.builder()
             .email("novo@teste.com")
@@ -159,6 +177,21 @@ class AuthControllerTest {
     }
 
     @Test
+    void confirmarRegistro_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        VerifyEmailRequestDTO request = VerifyEmailRequestDTO.builder()
+            .email("novo@teste.com")
+            .codigo("123456")
+            .build();
+
+        when(registroPendenteService.concluirRegistro(any(), any()))
+            .thenThrow(new RuntimeException("falha inesperada"));
+
+        ResponseEntity<?> response = authController.confirmarRegistro(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void reenviarCodigoRegistro_DeveRetornarOkQuandoSucesso() {
         when(registroPendenteService.reenviarCodigo("mask@teste.com")).thenReturn("ma***@teste.com");
 
@@ -176,6 +209,16 @@ class AuthControllerTest {
         ResponseEntity<?> response = authController.reenviarCodigoRegistro("mask@teste.com");
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void reenviarCodigoRegistro_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        when(registroPendenteService.reenviarCodigo("mask@teste.com"))
+            .thenThrow(new RuntimeException("falha inesperada"));
+
+        ResponseEntity<?> response = authController.reenviarCodigoRegistro("mask@teste.com");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
     @Test
@@ -236,6 +279,106 @@ class AuthControllerTest {
     }
 
     @Test
+    void login_DeveRetornarUnauthorizedQuandoUsuarioNaoForEncontradoAposAutenticacao() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("sumiu@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("sumiu@teste.com", "Senha@123", null, null)).thenReturn("token-abc");
+        when(usuarioRepository.findByEmailAndAtivoTrue("sumiu@teste.com")).thenReturn(Optional.empty());
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarForbiddenQuandoUsuarioInativo() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("inativo@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("inativo@teste.com", "Senha@123", null, null))
+            .thenThrow(new UsuarioException.UsuarioInativoException());
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarUnauthorizedQuandoCodigo2FAInvalido() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("2fa@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login(eq("2fa@teste.com"), any(), eq(null), eq(null)))
+            .thenThrow(new InvalidTwoFactorCodeException("codigo inválido"));
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarTooManyRequestsQuandoMensagemBloqueada() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("bloq@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("bloq@teste.com", "Senha@123", null, null))
+            .thenThrow(new RuntimeException("Conta bloqueada"));
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarUnauthorizedComTentativasRestantesQuandoErroGenerico() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("erro@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("erro@teste.com", "Senha@123", null, null))
+            .thenThrow(new RuntimeException("credenciais inválidas"));
+        when(loginAttemptService.tentativasRestantes("erro@teste.com")).thenReturn(2);
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarUnauthorizedComContaBloqueadaTemporariamenteQuandoSemTentativas() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("erro@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("erro@teste.com", "Senha@123", null, null))
+            .thenThrow(new RuntimeException("credenciais inválidas"));
+        when(loginAttemptService.tentativasRestantes("erro@teste.com")).thenReturn(0);
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void login_DeveRetornarUnauthorizedQuandoRuntimeExceptionGenerica() {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setEmail("fatal@teste.com");
+        request.setSenha("Senha@123");
+
+        when(authenticationService.login("fatal@teste.com", "Senha@123", null, null))
+            .thenThrow(new NullPointerException("erro fatal"));
+
+        ResponseEntity<?> response = authController.login(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
     void logout_DeveRetornarBadRequestQuandoTokenNaoForEnviado() {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
@@ -255,6 +398,18 @@ class AuthControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(authenticationService).logout("token-logout", 99L);
+    }
+
+    @Test
+    void logout_DeveRetornarInternalServerErrorQuandoOcorrerErro() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-logout");
+
+        when(jwtService.obterIdUsuarioDoToken("token-logout")).thenThrow(new RuntimeException("jwt inválido"));
+
+        ResponseEntity<?> response = authController.logout(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
     @Test
@@ -300,6 +455,35 @@ class AuthControllerTest {
     }
 
     @Test
+    void setupTwoFactor_DeveRetornarBadRequestQuandoErroDeNegocio() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-2fa");
+
+        Usuario usuario = criarUsuario(55L, "2FA", "2fa@teste.com");
+
+        when(jwtService.obterIdUsuarioDoToken("token-2fa")).thenReturn(55L);
+        when(usuarioRepository.findById(55L)).thenReturn(Optional.of(usuario));
+        when(twoFactorService.prepararConfiguracao(55L)).thenThrow(new IllegalArgumentException("já configurado"));
+
+        ResponseEntity<?> response = authController.setupTwoFactor(request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void setupTwoFactor_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-2fa");
+
+        when(jwtService.obterIdUsuarioDoToken("token-2fa")).thenReturn(55L);
+        when(usuarioRepository.findById(55L)).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.setupTwoFactor(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void enableTwoFactor_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
@@ -330,6 +514,58 @@ class AuthControllerTest {
     }
 
     @Test
+    void enableTwoFactor_DeveRetornarUnauthorizedQuandoTokenSemUserId() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-enable");
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("123456");
+
+        when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(null);
+
+        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void enableTwoFactor_DeveRetornarBadRequestQuandoErroDeNegocio() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-enable");
+
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("123456");
+
+        Usuario usuario = criarUsuario(77L, "Enable", "enable@teste.com");
+
+        when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(77L);
+        when(usuarioRepository.findById(77L)).thenReturn(Optional.of(usuario));
+        when(twoFactorService.habilitar(77L, "123456")).thenThrow(new IllegalArgumentException("código inválido"));
+
+        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void enableTwoFactor_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-enable");
+
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("123456");
+
+        Usuario usuario = criarUsuario(77L, "Enable", "enable@teste.com");
+
+        when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(77L);
+        when(usuarioRepository.findById(77L)).thenReturn(Optional.of(usuario));
+        when(twoFactorService.habilitar(77L, "123456")).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void disableTwoFactor_DeveRetornarOkQuandoSucesso() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-disable");
@@ -349,11 +585,73 @@ class AuthControllerTest {
     }
 
     @Test
+    void disableTwoFactor_DeveRetornarUnauthorizedQuandoTokenSemUserId() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-disable");
+
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("654321");
+
+        when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(null);
+
+        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void disableTwoFactor_DeveRetornarBadRequestQuandoErroDeNegocio() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-disable");
+
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("654321");
+
+        Usuario usuario = criarUsuario(78L, "Disable", "disable@teste.com");
+
+        when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(78L);
+        when(usuarioRepository.findById(78L)).thenReturn(Optional.of(usuario));
+        when(twoFactorService.desabilitar(78L, "654321")).thenThrow(new IllegalArgumentException("código inválido"));
+
+        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void disableTwoFactor_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-disable");
+
+        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        body.setVerificationCode("654321");
+
+        Usuario usuario = criarUsuario(78L, "Disable", "disable@teste.com");
+
+        when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(78L);
+        when(usuarioRepository.findById(78L)).thenReturn(Optional.of(usuario));
+        when(twoFactorService.desabilitar(78L, "654321")).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void twoFactorStatus_DeveRetornarUnauthorizedQuandoTokenInvalido() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-status");
 
         when(jwtService.obterIdUsuarioDoToken("token-status")).thenReturn(null);
+
+        ResponseEntity<?> response = authController.twoFactorStatus(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void twoFactorStatus_DeveRetornarUnauthorizedSemToken() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
 
         ResponseEntity<?> response = authController.twoFactorStatus(request);
 
@@ -375,6 +673,19 @@ class AuthControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(true, response.getBody());
+    }
+
+    @Test
+    void twoFactorStatus_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-status-ok");
+
+        when(jwtService.obterIdUsuarioDoToken("token-status-ok")).thenReturn(90L);
+        when(usuarioRepository.findById(90L)).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.twoFactorStatus(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
     @Test
@@ -410,6 +721,31 @@ class AuthControllerTest {
         ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void me_DeveRetornarUnauthorizedQuandoTokenNaoContiverUserId() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-ok");
+
+        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(null);
+
+        ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void me_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-ok");
+
+        when(authenticationService.isTokenRevoked("token-ok")).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
     @Test
@@ -464,6 +800,22 @@ class AuthControllerTest {
     }
 
     @Test
+    void validateToken_DeveRetornarReasonDeErroQuandoExcecaoForLancada() {
+        ValidateTokenRequestDTO request = new ValidateTokenRequestDTO();
+        request.setToken("token-com-erro");
+
+        when(authenticationService.validateToken("token-com-erro")).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<ValidateTokenResponseDTO> response = authController.validateToken(request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        ValidateTokenResponseDTO body = response.getBody();
+        assertNotNull(body);
+        assertFalse(body.isValid());
+        assertEquals("Erro ao validar token", body.getReason());
+    }
+
+    @Test
     void reautenticar_DeveRetornarUnauthorizedQuandoTokenNaoForEnviado() {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
@@ -513,6 +865,20 @@ class AuthControllerTest {
     }
 
     @Test
+    void reautenticar_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-atual");
+
+        when(jwtService.obterIdUsuarioDoToken("token-atual")).thenReturn(11L);
+        when(authenticationService.isTokenRevoked("token-atual")).thenReturn(false);
+        when(authenticationService.reautenticar(11L, true)).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.reautenticar(11L, true, request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void trocarSenha_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
@@ -534,6 +900,37 @@ class AuthControllerTest {
         ResponseEntity<?> response = authController.trocarSenha(body, request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void trocarSenha_DeveRetornarUnauthorizedQuandoTokenNaoContiverUserId() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-ok");
+
+        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+
+        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(null);
+
+        ResponseEntity<?> response = authController.trocarSenha(body, request);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void trocarSenha_DeveRetornarBadRequestQuandoCredenciaisNaoForemEncontradas() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-ok");
+
+        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+
+        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
+        when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.empty());
+
+        ResponseEntity<?> response = authController.trocarSenha(body, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test
@@ -576,6 +973,27 @@ class AuthControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(usuarioAutenticarRepository).save(auth);
+    }
+
+    @Test
+    void trocarSenha_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token-ok");
+
+        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+
+        UsuarioAutenticar auth = new UsuarioAutenticar();
+        auth.setSenhaHash("hash-atual");
+
+        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
+        when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.of(auth));
+        when(passwordEncoder.matches("Senha@123", "hash-atual")).thenReturn(true);
+        when(passwordEncoder.encode("Nova@123")).thenThrow(new RuntimeException("falha"));
+
+        ResponseEntity<?> response = authController.trocarSenha(body, request);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
     private Usuario criarUsuario(Long id, String nome, String email) {
