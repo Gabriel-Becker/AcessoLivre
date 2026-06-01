@@ -22,7 +22,7 @@ const BREAKPOINTS = {
 };
 
 export default function Home({ onNavigate, routeParams }) {
-  const { isHighContrast, theme: t } = useThemeContext();
+  const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
 
   const [loading, setLoading] = useState(true);
@@ -34,12 +34,65 @@ export default function Home({ onNavigate, routeParams }) {
   });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
 
-  const numColumns = useMemo(() => {
-    if (width >= BREAKPOINTS.DESKTOP) return 4;
-    if (width >= BREAKPOINTS.TABLET) return 3;
-    if (width >= BREAKPOINTS.MOBILE) return 2;
-    return 1;
-  }, [width]);
+  const layoutDestaques = useMemo(() => {
+    if (fontSizeMultiplier >= 2) {
+      return {
+        numColumns: 1,
+        cardMaxWidth: 980,
+        cardFlexBasis: '100%',
+        centralizarCards: true,
+        usarWrapperCentralizado: false,
+      };
+    }
+
+    if (fontSizeMultiplier >= 1.5) {
+      return {
+        numColumns: 2,
+        cardMaxWidth: 760,
+        cardFlexBasis: '49%',
+        centralizarCards: true,
+        usarWrapperCentralizado: true,
+      };
+    }
+
+    if (width >= BREAKPOINTS.DESKTOP) {
+      return {
+        numColumns: 4,
+        cardMaxWidth: 400,
+        cardFlexBasis: '24%',
+        centralizarCards: false,
+        usarWrapperCentralizado: false,
+      };
+    }
+
+    if (width >= BREAKPOINTS.TABLET) {
+      return {
+        numColumns: 3,
+        cardMaxWidth: 460,
+        cardFlexBasis: '32%',
+        centralizarCards: false,
+        usarWrapperCentralizado: false,
+      };
+    }
+
+    if (width >= BREAKPOINTS.MOBILE) {
+      return {
+        numColumns: 2,
+        cardMaxWidth: 560,
+        cardFlexBasis: '48%',
+        centralizarCards: false,
+        usarWrapperCentralizado: false,
+      };
+    }
+
+    return {
+      numColumns: 1,
+      cardMaxWidth: 840,
+      cardFlexBasis: '100%',
+      centralizarCards: true,
+      usarWrapperCentralizado: false,
+    };
+  }, [width, fontSizeMultiplier]);
 
   const carregarDados = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -87,7 +140,16 @@ export default function Home({ onNavigate, routeParams }) {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.cardWrapper}>
+    <View
+      style={[
+        styles.cardWrapper,
+        {
+          maxWidth: layoutDestaques.cardMaxWidth,
+          flexBasis: layoutDestaques.cardFlexBasis,
+        },
+        layoutDestaques.numColumns === 1 ? styles.cardWrapperCentralizado : null,
+      ]}
+    >
       <LocalCard
         local={item}
         onPress={() => handleLocalPress(item)}
@@ -110,10 +172,11 @@ export default function Home({ onNavigate, routeParams }) {
     <View style={[styles.container, { backgroundColor: t.colors.backgroundSecondary }]}>
       <FlatList
         data={locaisDestaque}
-        key={numColumns}
-        numColumns={numColumns}
+        key={layoutDestaques.numColumns}
+        numColumns={layoutDestaques.numColumns}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
+        columnWrapperStyle={layoutDestaques.usarWrapperCentralizado ? styles.columnWrapperCentralizado : undefined}
         ListHeaderComponent={
           <>
             <StatsBanner 
@@ -142,7 +205,10 @@ export default function Home({ onNavigate, routeParams }) {
             tintColor={t.colors.primary}
           />
         }
-        contentContainerStyle={[styles.listContent, { paddingHorizontal: t.layout?.mobile?.pageHorizontal ?? 10, paddingBottom: t.layout?.mobile?.pageVertical ?? 20 }]}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingHorizontal: t.layout?.mobile?.pageHorizontal ?? 10, paddingBottom: t.layout?.mobile?.pageVertical ?? 20 },
+        ]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -168,6 +234,10 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 20,
   },
+  columnWrapperCentralizado: {
+    justifyContent: 'center',
+    gap: 12,
+  },
   sectionHeader: {
     marginTop: 10,
     marginBottom: 10,
@@ -180,7 +250,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 6,
     minWidth: 0,
-    maxWidth: 400,
+    width: '100%',
+  },
+  cardWrapperCentralizado: {
+    alignSelf: 'center',
   },
   emptyContainer: {
     flex: 1,

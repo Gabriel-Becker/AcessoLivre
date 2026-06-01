@@ -7,9 +7,9 @@ import { useThemeContext } from '../../context/ThemeContext';
 
 export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
   const [imageError, setImageError] = useState(false);
-  const { isHighContrast } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
-  const t = getTheme(contrasteAtivo);
+  const t = getTheme(contrasteAtivo, fontSizeMultiplier);
 
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria || 'Sem categoria';
@@ -87,7 +87,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
   const categoriaLabel = getCategoriaLabel(categoria);
   const totalRecursos = tiposAcessibilidade.length;
-  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo), [t, contrasteAtivo]);
+  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo, fontSizeMultiplier), [t, contrasteAtivo, fontSizeMultiplier]);
 
   return (
     <TouchableOpacity
@@ -197,7 +197,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
   );
 }
 
-function criarEstilos(t, contrasteAtivo) {
+function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
   return StyleSheet.create({
     container: {
       backgroundColor: t.colors.surface,
@@ -207,10 +207,11 @@ function criarEstilos(t, contrasteAtivo) {
       borderWidth: contrasteAtivo ? 2 : 1,
       borderColor: contrasteAtivo ? t.colors.border : `${t.colors.primary}30`,
       ...(contrasteAtivo ? t.shadows.none : t.shadows.md),
+      minHeight: 260 + ((fontSizeMultiplier - 1) * 120),
     },
     imageContainer: {
       width: '100%',
-      height: 150,
+      height: 150 + ((fontSizeMultiplier - 1) * 28),
       position: 'relative',
       backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : t.colors.background,
     },
@@ -242,9 +243,10 @@ function criarEstilos(t, contrasteAtivo) {
     },
     infoContainer: {
       padding: t.spacing.md,
+      gap: Math.max(4, t.spacing.xs),
     },
     nomeLocal: {
-      fontSize: 16,
+      fontSize: t.typography.fontSize.md,
       marginBottom: t.spacing.xs,
     },
     categoriaRatingRow: {
@@ -264,7 +266,7 @@ function criarEstilos(t, contrasteAtivo) {
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
     categoriaTexto: {
-      fontSize: 11,
+      fontSize: t.typography.fontSize.xs,
     },
     ratingContainer: {
       flexDirection: 'row',
@@ -272,10 +274,10 @@ function criarEstilos(t, contrasteAtivo) {
       gap: 4,
     },
     ratingNumber: {
-      fontSize: 12,
+      fontSize: t.typography.fontSize.sm,
     },
     reviewCount: {
-      fontSize: 10,
+      fontSize: t.typography.fontSize.xs,
     },
     enderecoContainer: {
       flexDirection: 'row',
@@ -284,8 +286,8 @@ function criarEstilos(t, contrasteAtivo) {
       marginBottom: 8,
     },
     address: {
-      fontSize: 11,
-      lineHeight: 14,
+      fontSize: t.typography.fontSize.xs,
+      lineHeight: t.typography.fontSize.xs * t.typography.lineHeight.normal,
       flex: 1,
     },
     recursosContainer: {
@@ -302,7 +304,7 @@ function criarEstilos(t, contrasteAtivo) {
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
     recursosTexto: {
-      fontSize: 9,
+      fontSize: t.typography.fontSize.xs,
       fontWeight: '500',
     },
   });
