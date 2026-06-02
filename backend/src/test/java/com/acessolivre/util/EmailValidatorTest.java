@@ -9,20 +9,20 @@ class EmailValidatorTest {
 
     @Test
     void isValid_deveRetornarTrue_paraEmailValido() {
-        assertTrue(validator.isValid("test@example.com", null));
-        assertTrue(validator.isValid("test.name@example.co.uk", null));
+        assertTrue(validator.isValid("test@example.com"));
+        assertTrue(validator.isValid("test.name@example.co.uk"));
     }
 
     @Test
     void isValid_deveRetornarFalse_paraEmailInvalido() {
-        assertFalse(validator.isValid("test", null));
-        assertFalse(validator.isValid("test@", null));
-        assertFalse(validator.isValid("@example.com", null));
-        assertFalse(validator.isValid("test@.com", null));
+        assertFalse(validator.isValid("test"));
+        assertFalse(validator.isValid("test@"));
+        assertFalse(validator.isValid("@example.com"));
+        assertFalse(validator.isValid("test@.com"));
     }
 
     @Test
     void isValid_deveRetornarFalse_paraEmailNulo() {
-        assertFalse(validator.isValid(null, null));
+        assertFalse(validator.isValid(null));
     }
 }

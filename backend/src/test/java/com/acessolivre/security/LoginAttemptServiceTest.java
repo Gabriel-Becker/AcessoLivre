@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,44 +16,44 @@ class LoginAttemptServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        // Forçar a inicialização do cache
-        loginAttemptService.loginFailed("test");
-        loginAttemptService.loginSucceeded("test");
-        ReflectionTestUtils.setField(loginAttemptService, "maxAttempts", 3);
     }
 
     @Test
-    void loginFailed_deveIncrementarTentativas() {
+    void loginFalhou_deveBloquearAposMaximoTentativas() {
         String key = "user1";
-        loginAttemptService.loginFailed(key);
-        loginAttemptService.loginFailed(key);
-        assertFalse(loginAttemptService.isBlocked(key));
-        loginAttemptService.loginFailed(key);
-        assertTrue(loginAttemptService.isBlocked(key));
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        assertFalse(loginAttemptService.estaBloqueado(key));
+        loginAttemptService.loginFalhou(key);
+        assertTrue(loginAttemptService.estaBloqueado(key));
     }
 
     @Test
-    void loginSucceeded_deveLimparTentativas() {
+    void loginSucesso_deveLimparTentativas() {
         String key = "user2";
-        loginAttemptService.loginFailed(key);
-        loginAttemptService.loginFailed(key);
-        loginAttemptService.loginSucceeded(key);
-        assertFalse(loginAttemptService.isBlocked(key));
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginSucesso(key);
+        assertFalse(loginAttemptService.estaBloqueado(key));
     }
 
     @Test
-    void isBlocked_deveRetornarFalseParaUsuarioNaoBloqueado() {
+    void estaBloqueado_deveRetornarFalseParaUsuarioNaoBloqueado() {
         String key = "user3";
-        assertFalse(loginAttemptService.isBlocked(key));
+        assertFalse(loginAttemptService.estaBloqueado(key));
     }
 
     @Test
-    void isBlocked_deveRetornarTrueParaUsuarioBloqueado() {
+    void estaBloqueado_deveRetornarTrueParaUsuarioBloqueado() {
         String key = "user4";
-        loginAttemptService.loginFailed(key);
-        loginAttemptCanceled(key);
-        loginAttemptService.loginFailed(key);
-        assertTrue(loginAttemptService.isBlocked(key));
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        loginAttemptService.loginFalhou(key);
+        assertTrue(loginAttemptService.estaBloqueado(key));
     }
 
     private void loginAttemptCanceled(String key) {

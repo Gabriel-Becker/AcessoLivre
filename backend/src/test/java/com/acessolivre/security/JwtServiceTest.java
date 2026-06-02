@@ -38,13 +38,19 @@ class JwtServiceTest {
     @Mock
     private JwtDecoder jwtDecoder;
 
+    @Mock
+    private com.acessolivre.repository.TokenRevogadoRepository tokenRevogadoRepository;
+
+    @Mock
+    private com.acessolivre.repository.UsuarioRepository usuarioRepository;
+
     private RSAKey rsaKey;
 
     @BeforeEach
     void setUp() throws JOSEException {
         MockitoAnnotations.openMocks(this);
         rsaKey = new RSAKeyGenerator(2048).keyID("test-key").generate();
-        jwtService = new JwtService(jwtEncoder, jwtDecoder);
+        jwtService = new JwtService(jwtEncoder, jwtDecoder, tokenRevogadoRepository, usuarioRepository);
     }
 
     @Test
@@ -65,7 +71,7 @@ class JwtServiceTest {
 
         when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any())).thenReturn(jwt);
 
-        String token = jwtService.generateToken(authentication);
+        String token = jwtService.gerarToken(authentication);
 
         assertNotNull(token);
         assertEquals(tokenValue, token);

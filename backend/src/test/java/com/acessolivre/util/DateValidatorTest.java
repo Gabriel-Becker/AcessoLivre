@@ -1,34 +1,35 @@
 package com.acessolivre.util;
 
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class DateValidatorTest {
 
-    private final DateValidator validator = new DateValidator();
-
     @Test
-    void isValid_deveRetornarTrue_paraDataValida() {
-        assertTrue(validator.isValid("10/10/2000", null));
+    void isPast_deveRetornarTrue_paraDataNoPassado() {
+        assertTrue(DateValidator.isPast(LocalDate.now().minusDays(1)));
     }
 
     @Test
-    void isValid_deveRetornarFalse_paraDataInvalida() {
-        assertFalse(validator.isValid("32/10/2000", null));
+    void isFuture_deveRetornarTrue_paraDataNoFuturo() {
+        assertTrue(DateValidator.isFuture(LocalDate.now().plusDays(1)));
     }
 
     @Test
-    void isValid_deveRetornarFalse_paraFormatoInvalido() {
-        assertFalse(validator.isValid("10-10-2000", null));
+    void isMinAge_deveRetornarTrue_quandoAtingeIdadeMinima() {
+        assertTrue(DateValidator.isMinAge(LocalDate.now().minusYears(18), 18));
     }
 
     @Test
-    void isValid_deveRetornarFalse_paraDataNula() {
-        assertFalse(validator.isValid(null, null));
+    void isMinAge_deveRetornarFalse_quandoNaoAtingeIdadeMinima() {
+        assertFalse(DateValidator.isMinAge(LocalDate.now().minusYears(17), 18));
     }
 
     @Test
-    void isValid_deveRetornarFalse_paraDataVazia() {
-        assertFalse(validator.isValid("", null));
+    void calculateAge_deveCalcularIdadeEsperada() {
+        assertEquals(20, DateValidator.calculateAge(LocalDate.now().minusYears(20)));
     }
 }

@@ -15,6 +15,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 class JwtAuthenticationFilterTest {
@@ -49,7 +51,7 @@ class JwtAuthenticationFilterTest {
         String userEmail = "test@example.com";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtService.extractUsername(jwt)).thenReturn(userEmail);
+        when(jwtService.extrairNomeUsuario(jwt)).thenReturn(userEmail);
 
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
@@ -85,10 +87,11 @@ class JwtAuthenticationFilterTest {
     void doFilterInternal_naoDeveAutenticar_quandoUsuarioJaAutenticado() throws ServletException, IOException {
         SecurityContextHolder.getContext().setAuthentication(mock(org.springframework.security.core.Authentication.class));
         when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
+        when(jwtService.extrairNomeUsuario("valid-token")).thenReturn("test@example.com");
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtService, never()).extractUsername(anyString());
+        verify(userDetailsService, never()).loadUserByUsername(anyString());
     }
 }
