@@ -20,6 +20,7 @@ import { Container } from '../../components/layout';
 import LocalAccessibility from '../../components/local/LocalAccessibility';
 import AvaliacaoModal from '../../components/local/AvaliacaoModal';
 import LocalGallery from '../../components/local/LocalGallery';
+import ModalCompartilhar from '../../components/local/ModalCompartilhar';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -206,6 +207,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   };
 
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
+  const [modalCompartilharVisible, setModalCompartilharVisible] = useState(false);
   const [local, setLocal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -289,7 +291,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   };
 
   const handleCompartilhar = () => {
-    toastHelper.showInfo('Compartilhar em breve');
+    setModalCompartilharVisible(true);
   };
 
   const handleReportar = () => {
@@ -621,11 +623,19 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <Spacer size="xl" />
       </ScrollView>
 
+      {/* Modal de Avaliação */}
       <AvaliacaoModal
         visible={modalAvaliacaoVisible}
         onClose={() => setModalAvaliacaoVisible(false)}
         local={local}
         onSubmit={handleEnviarAvaliacao}
+      />
+
+      {/* Modal de Compartilhamento */}
+      <ModalCompartilhar
+        visible={modalCompartilharVisible}
+        onClose={() => setModalCompartilharVisible(false)}
+        local={local}
       />
     </Container>
   );
