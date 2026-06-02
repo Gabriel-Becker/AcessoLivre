@@ -40,6 +40,19 @@ function MainApp({ navigation, route }) {
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
   const navegarInternamente = (screen, params = {}) => {
+    const telasPublicas = ['Inicio', 'Buscar', 'Sobre', 'SobreNos', 'SobreNosScreen'];
+
+    if (telasPublicas.includes(screen)) {
+      navigation?.setParams({
+        ...route?.params,
+        screen: screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen,
+        ...params,
+      });
+
+      setCurrentScreen(screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen);
+      return;
+    }
+
     if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword' || screen === 'ResetPassword') {
       navigation?.navigate?.(screen, params);
       return;

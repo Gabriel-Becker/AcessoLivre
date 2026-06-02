@@ -3,7 +3,30 @@ import AuthService from '../services/AuthService';
 import { triggerLogout } from '../utils/SessionManager';
 import { resetToAuth } from '../navigation/navigationRef';
 
-const normalizarCaminho = (url = '') => String(url).split('?')[0];
+const normalizarCaminho = (url = '') => {
+  const bruto = String(url || '').split('?')[0];
+  if (!bruto) return '';
+
+  // Aceita URL absoluta (http://host/api/rota) e relativa (/rota).
+  let caminho = bruto;
+  try {
+    if (bruto.startsWith('http://') || bruto.startsWith('https://')) {
+      caminho = new URL(bruto).pathname;
+    }
+  } catch {
+    caminho = bruto;
+  }
+
+  if (!caminho.startsWith('/')) {
+    caminho = `/${caminho}`;
+  }
+
+  if (caminho.startsWith('/api/')) {
+    return caminho.replace(/^\/api/, '');
+  }
+
+  return caminho;
+};
 
 const ehRotaPublicaDeLeitura = (config = {}) => {
   const metodo = String(config.method || 'get').toLowerCase();
@@ -86,31 +109,42 @@ api.interceptors.response.use(
       try {
         const originalRequest = requestConfig;
 
+        const tokenAtual = await AuthService.getToken();
+        const temTokenValido = typeof tokenAtual === 'string' && tokenAtual.trim().length > 0;
+
+        // Visitante (sem token) nao deve ser redirecionado para login.
+        if (!temTokenValido) {
+          return Promise.reject(error);
+        }
+
         // avoid infinite retry loops
         if (!originalRequest._retry) {
           originalRequest._retry = true;
 
           try {
-            const currentToken = await AuthService.getToken();
-            const tokenData = AuthService.parseJwt(currentToken);
+            const tokenData = AuthService.parseJwt(tokenAtual);
             const userId = tokenData?.userId || tokenData?.user_id || tokenData?.sub || null;
 
-            if (userId) {
-              // attempt to reauthenticate once
-              const newToken = await AuthService.reautenticar(userId);
-              if (newToken) {
-                await AuthService.setToken(newToken);
-                // update header and retry original request
-                if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
-                  originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
-                } else {
-                  originalRequest.headers = {
-                    ...(originalRequest.headers || {}),
-                    Authorization: `Bearer ${newToken}`,
-                  };
-                }
-                return api(originalRequest);
+            if (!userId) {
+              await AuthService.removeToken();
+              await AuthService.setUserData(null);
+              return Promise.reject(error);
+            }
+
+            // attempt to reauthenticate once
+            const newToken = await AuthService.reautenticar(userId);
+            if (newToken) {
+              await AuthService.setToken(newToken);
+              // update header and retry original request
+              if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+                originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
+              } else {
+                originalRequest.headers = {
+                  ...(originalRequest.headers || {}),
+                  Authorization: `Bearer ${newToken}`,
+                };
               }
+              return api(originalRequest);
             }
           } catch (reauthErr) {
             // fallthrough to logout below
