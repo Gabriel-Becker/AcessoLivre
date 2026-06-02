@@ -19,12 +19,12 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 
-// Configuração das plataformas de compartilhamento (apenas as solicitadas)
+// Configuração das plataformas de compartilhamento
 const PLATAFORMAS_COMPARTILHAMENTO = [
-  { id: 'whatsapp', nome: 'WhatsApp', icon: 'logo-whatsapp', cor: '#25D366', scheme: 'whatsapp://send?text=', packageName: 'com.whatsapp' },
-  { id: 'telegram', nome: 'Telegram', icon: 'logo-telegram', cor: '#26A5E4', scheme: 'tg://msg?text=', packageName: 'org.telegram.messenger' },
-  { id: 'instagram', nome: 'Instagram', icon: 'logo-instagram', cor: '#E4405F', scheme: 'instagram://library?AssetPath=', packageName: 'com.instagram.android' },
-  { id: 'facebook', nome: 'Facebook', icon: 'logo-facebook', cor: '#1877F2', scheme: 'fb://facewebmodal/f?href=', packageName: 'com.facebook.katana' }
+  { id: 'whatsapp', nome: 'WhatsApp', icon: 'logo-whatsapp', cor: '#25D366' },
+  { id: 'telegram', nome: 'Telegram', icon: 'logo-telegram', cor: '#26A5E4' },
+  { id: 'instagram', nome: 'Instagram', icon: 'logo-instagram', cor: '#E4405F' },
+  { id: 'facebook', nome: 'Facebook', icon: 'logo-facebook', cor: '#1877F2' }
 ];
 
 export default function ModalCompartilhar({ visible, onClose, local }) {
@@ -37,7 +37,6 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const nomeLocal = local.nome || 'Local';
   const idLocal = local.id || local.idLocal;
   
-  // Construir URL do local
   const baseUrl = Platform.OS === 'web' 
     ? (typeof window !== 'undefined' ? window.location.origin : 'https://acessolivre.app')
     : 'https://acessolivre.app';
@@ -45,13 +44,22 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const urlLocal = `${baseUrl}/local/${idLocal}`;
   const mensagemCompartilhamento = `📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocal}`;
 
+  // Função para copiar link
+  const copiarLink = async () => {
+    try {
+      await Clipboard.setStringAsync(urlLocal);
+      toastHelper.showSuccess('Link copiado para a área de transferência!');
+    } catch (error) {
+      console.error('Erro ao copiar link:', error);
+      toastHelper.showError('Erro ao copiar link');
+    }
+  };
+
   // Função para compartilhar via WhatsApp
   const compartilharWhatsApp = async () => {
     setCompartilhando(true);
     try {
       const textoEncoded = encodeURIComponent(mensagemCompartilhamento);
-      
-      // Tentar diferentes formas de abrir o WhatsApp
       const urls = [
         `whatsapp://send?text=${textoEncoded}`,
         `https://wa.me/?text=${textoEncoded}`
@@ -72,7 +80,6 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       }
       
       if (!aberto) {
-        // Fallback: usar Share nativo
         await Share.share({
           title: `Compartilhar ${nomeLocal}`,
           message: mensagemCompartilhamento,
@@ -83,7 +90,6 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       onClose();
     } catch (error) {
       console.error('Erro ao compartilhar no WhatsApp:', error);
-      // Fallback final
       await Share.share({
         title: `Compartilhar ${nomeLocal}`,
         message: mensagemCompartilhamento,
@@ -106,7 +112,6 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
         toastHelper.showSuccess('Abrindo Telegram...');
         onClose();
       } else {
-        // Fallback: usar web do Telegram
         const webUrl = `https://t.me/share/url?url=${encodeURIComponent(urlLocal)}&text=${encodeURIComponent(`📍 ${nomeLocal}`)}`;
         await Linking.openURL(webUrl);
         toastHelper.showSuccess('Abrindo Telegram Web...');
@@ -127,8 +132,6 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const compartilharInstagram = async () => {
     setCompartilhando(true);
     try {
-      // Instagram não suporta texto diretamente, apenas imagens
-      // Então copiamos o link e abrimos o app
       await Clipboard.setStringAsync(urlLocal);
       
       const url = `instagram://library?AssetPath=`;
@@ -156,9 +159,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     setCompartilhando(true);
     try {
       const urlEncoded = encodeURIComponent(urlLocal);
-      const textoEncoded = encodeURIComponent(mensagemCompartilhamento);
       
-      // Tentar diferentes formas de abrir o Facebook
       const urls = [
         `fb://facewebmodal/f?href=${urlEncoded}`,
         `https://www.facebook.com/sharer/sharer.php?u=${urlEncoded}`,
@@ -281,7 +282,21 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   </ThemedText>
                 </View>
 
-                <Spacer size="md" />
+                <Spacer size="sm" />
+
+                {/* Botão Copiar Link - ABAIXO DA URL */}
+                <TouchableOpacity
+                  style={[styles.copiarButton, { borderColor: theme.colors.primary + '40' }]}
+                  onPress={copiarLink}
+                  disabled={compartilhando}
+                >
+                  <Ionicons name="copy-outline" size={18} color={theme.colors.primary} />
+                  <ThemedText color="primary" weight="semibold" style={styles.copiarTexto}>
+                    Copiar link
+                  </ThemedText>
+                </TouchableOpacity>
+
+                <Spacer size="lg" />
 
                 {/* Divisão */}
                 <View style={styles.divisao}>
@@ -343,7 +358,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: Platform.OS === 'web' ? 480 : '92%',
-    maxHeight: '80%',
+    maxHeight: '85%',
     borderRadius: 24,
     padding: 24,
     ...Platform.select({
@@ -397,6 +412,20 @@ const styles = StyleSheet.create({
   },
   urlTexto: {
     flex: 1,
+    fontSize: 13,
+  },
+  // Botão Copiar Link - estilizado
+  copiarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginHorizontal: 0,
+  },
+  copiarTexto: {
     fontSize: 13,
   },
   divisao: {

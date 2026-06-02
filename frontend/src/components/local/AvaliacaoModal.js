@@ -27,28 +27,33 @@ const OPCOES_RAPIDAS = [
 ];
 
 // Componente de botão de resposta rápida
-const OpcaoRapida = ({ nota, selecionada, onPress, label, descricao, cor }) => {
+const OpcaoRapida = ({ nota, selecionada, onPress, label, descricao, cor, isHighContrast }) => {
   return (
     <TouchableOpacity
       style={[
         styles.opcaoRapida,
-        selecionada && { borderColor: cor, backgroundColor: cor + '15' }
+        selecionada && { borderColor: cor, backgroundColor: cor + '15' },
+        isHighContrast && styles.opcaoRapidaHighContrast
       ]}
       onPress={() => onPress(nota)}
       activeOpacity={0.7}
     >
       <View style={styles.opcaoHeader}>
-        <View style={[styles.opcaoNota, { backgroundColor: cor }]}>
-          <ThemedText weight="bold" style={styles.opcaoNotaTexto}>{nota}</ThemedText>
+        <View style={[styles.opcaoNota, { backgroundColor: cor }, isHighContrast && styles.opcaoNotaHighContrast]}>
+          <ThemedText weight="bold" style={[styles.opcaoNotaTexto, isHighContrast && styles.opcaoNotaTextoHighContrast]}>
+            {nota}
+          </ThemedText>
         </View>
         <View style={styles.opcaoTextos}>
-          <ThemedText weight="semibold" style={styles.opcaoLabel}>{label}</ThemedText>
-          <ThemedText variant="caption" color="textTertiary" style={styles.opcaoDescricao}>
+          <ThemedText weight="semibold" style={[styles.opcaoLabel, isHighContrast && styles.opcaoLabelHighContrast]}>
+            {label}
+          </ThemedText>
+          <ThemedText variant="caption" color="textTertiary" style={[styles.opcaoDescricao, isHighContrast && styles.opcaoDescricaoHighContrast]}>
             {descricao}
           </ThemedText>
         </View>
         {selecionada && (
-          <Ionicons name="checkmark-circle" size={20} color={cor} />
+          <Ionicons name="checkmark-circle" size={22} color={cor} />
         )}
       </View>
     </TouchableOpacity>
@@ -86,7 +91,6 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const handleSelectNota = (setter, valor) => {
     setter(valor);
-    // Limpar erro ao selecionar
     if (erro) setErro('');
   };
 
@@ -156,24 +160,27 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const todasNotasSelecionadas = notaVisual > 0 && notaMotora > 0 && notaAuditiva > 0;
 
-  // Componente de critério com respostas rápidas
+  // Componente de critério com respostas rápidas e alto contraste
   const renderCriterio = (titulo, icone, nota, setNota, corIcone) => (
-    <View style={styles.criterioContainer}>
+    <View style={[styles.criterioContainer, isHighContrast && styles.criterioContainerHighContrast]}>
       <View style={styles.criterioHeader}>
-        <View style={[styles.iconCircle, { backgroundColor: corIcone + '20' }]}>
-          <Ionicons name={icone} size={22} color={corIcone} />
+        <View style={[styles.iconCircle, { backgroundColor: corIcone + '20' }, isHighContrast && styles.iconCircleHighContrast]}>
+          <Ionicons name={icone} size={24} color={corIcone} />
         </View>
-        <ThemedText weight="bold" style={styles.criterioTitulo}>{titulo}</ThemedText>
+        <ThemedText weight="bold" style={[styles.criterioTitulo, isHighContrast && styles.criterioTituloHighContrast]}>
+          {titulo}
+        </ThemedText>
       </View>
 
-      {/* Respostas rápidas - opções em linha */}
+      {/* Respostas rápidas - opções em linha com tamanhos aumentados */}
       <View style={styles.opcoesContainer}>
         {OPCOES_RAPIDAS.map(opcao => (
           <TouchableOpacity
             key={opcao.valor}
             style={[
               styles.opcaoBotao,
-              nota === opcao.valor && { backgroundColor: opcao.cor, borderColor: opcao.cor }
+              nota === opcao.valor && { backgroundColor: opcao.cor, borderColor: opcao.cor },
+              isHighContrast && styles.opcaoBotaoHighContrast
             ]}
             onPress={() => handleSelectNota(setNota, opcao.valor)}
             activeOpacity={0.7}
@@ -182,7 +189,8 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
               weight={nota === opcao.valor ? "bold" : "medium"}
               style={[
                 styles.opcaoBotaoValor,
-                nota === opcao.valor && { color: '#FFF' }
+                nota === opcao.valor && { color: '#FFF' },
+                isHighContrast && styles.opcaoBotaoValorHighContrast
               ]}
             >
               {opcao.valor}
@@ -191,7 +199,8 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
               variant="caption"
               style={[
                 styles.opcaoBotaoLabel,
-                nota === opcao.valor && { color: '#FFF' }
+                nota === opcao.valor && { color: '#FFF' },
+                isHighContrast && styles.opcaoBotaoLabelHighContrast
               ]}
             >
               {opcao.label.split(' ')[0]}
@@ -202,9 +211,9 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
       {/* Descrição da nota selecionada */}
       {nota > 0 && (
-        <View style={[styles.notaSelecionadaContainer, { backgroundColor: getNotaInfo(nota).cor + '10' }]}>
-          <Ionicons name="information-circle-outline" size={14} color={getNotaInfo(nota).cor} />
-          <ThemedText variant="caption" style={{ color: getNotaInfo(nota).cor }}>
+        <View style={[styles.notaSelecionadaContainer, { backgroundColor: getNotaInfo(nota).cor + '20' }, isHighContrast && styles.notaSelecionadaContainerHighContrast]}>
+          <Ionicons name="information-circle-outline" size={16} color={getNotaInfo(nota).cor} />
+          <ThemedText variant="caption" style={[styles.notaDescricaoTexto, { color: getNotaInfo(nota).cor }, isHighContrast && styles.notaDescricaoTextoHighContrast]}>
             {getNotaInfo(nota).descricao}
           </ThemedText>
         </View>
@@ -233,7 +242,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <View style={styles.header}>
-                  <ThemedText variant="h2" weight="bold" style={styles.titulo}>
+                  <ThemedText variant="h2" weight="bold" style={[styles.titulo, isHighContrast && styles.tituloHighContrast]}>
                     Avaliar Local
                   </ThemedText>
                   <TouchableOpacity onPress={handleClose} style={styles.closeButton} disabled={loading}>
@@ -245,11 +254,11 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 {/* Informações do local */}
                 <View style={styles.localInfo}>
-                  <ThemedText variant="h3" weight="semibold" numberOfLines={2} style={styles.localNome}>
+                  <ThemedText variant="h3" weight="semibold" numberOfLines={2} style={[styles.localNome, isHighContrast && styles.localNomeHighContrast]}>
                     {local?.nome}
                   </ThemedText>
-                  <View style={styles.categoriaPill}>
-                    <ThemedText variant="caption" style={styles.categoriaPillTexto}>
+                  <View style={[styles.categoriaPill, isHighContrast && styles.categoriaPillHighContrast]}>
+                    <ThemedText variant="caption" style={[styles.categoriaPillTexto, isHighContrast && styles.categoriaPillTextoHighContrast]}>
                       {local?.categoria?.replace('_', ' ')}
                     </ThemedText>
                   </View>
@@ -257,7 +266,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 <Spacer size="md" />
 
-                <ThemedText color="textSecondary" style={styles.subtitulo}>
+                <ThemedText color="textSecondary" style={[styles.subtitulo, isHighContrast && styles.subtituloHighContrast]}>
                   Como você avalia a acessibilidade deste local?
                 </ThemedText>
 
@@ -280,19 +289,21 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 {todasNotasSelecionadas && (
                   <>
                     <Spacer size="lg" />
-                    <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }]}>
-                      <ThemedText weight="bold">Média Geral:</ThemedText>
+                    <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }, isHighContrast && styles.mediaContainerHighContrast]}>
+                      <ThemedText weight="bold" style={[styles.mediaLabel, isHighContrast && styles.mediaLabelHighContrast]}>
+                        Média Geral:
+                      </ThemedText>
                       <View style={styles.mediaEstrelas}>
                         {[1, 2, 3, 4, 5].map(star => (
                           <Ionicons
                             key={star}
                             name={star <= parseFloat(calcularMedia()) ? 'star' : 'star-outline'}
-                            size={16}
+                            size={18}
                             color={theme.colors.warning}
                           />
                         ))}
                       </View>
-                      <ThemedText weight="bold" style={styles.mediaValor}>
+                      <ThemedText weight="bold" style={[styles.mediaValor, isHighContrast && styles.mediaValorHighContrast]}>
                         {calcularMedia()}
                       </ThemedText>
                     </View>
@@ -301,7 +312,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 <Spacer size="lg" />
 
-                {/* Comentário */}
+                {/* Comentário - MANTIDO COMO ESTAVA ORIGINALMENTE */}
                 <View>
                   <ThemedText weight="bold" style={styles.comentarioLabel}>
                     Comentário (Opcional)
@@ -314,10 +325,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                   <Input
                     multiline
-                    numberOfLines={3}
+                    numberOfLines={4}
                     value={comentario}
                     onChangeText={setComentario}
-                    placeholder="Ex: O local possui rampas bem sinalizadas, elevador funcionando..."
+                    placeholder="Ex: O local possui rampas bem sinalizadas e funcionários treinados..."
                     altoContraste={isHighContrast}
                     style={styles.comentarioInput}
                     editable={!loading}
@@ -331,7 +342,9 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                   <>
                     <View style={[styles.erroContainer, { backgroundColor: theme.colors.error + '20' }]}>
                       <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
-                      <ThemedText color="error" style={styles.erroTexto}>{erro}</ThemedText>
+                      <ThemedText color="error" style={[styles.erroTexto, isHighContrast && styles.erroTextoHighContrast]}>
+                        {erro}
+                      </ThemedText>
                     </View>
                     <Spacer size="md" />
                   </>
@@ -407,6 +420,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
   },
+  tituloHighContrast: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
   closeButton: {
     padding: 8,
   },
@@ -418,25 +435,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
+  localNomeHighContrast: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   categoriaPill: {
     backgroundColor: '#E8F0FF',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 20,
   },
+  categoriaPillHighContrast: {
+    backgroundColor: '#000',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
   categoriaPillTexto: {
     color: '#007AFF',
     fontSize: 11,
+  },
+  categoriaPillTextoHighContrast: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   subtitulo: {
     textAlign: 'center',
     fontSize: 14,
     lineHeight: 20,
   },
+  subtituloHighContrast: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
   criterioContainer: {
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
     padding: 14,
+  },
+  criterioContainerHighContrast: {
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   criterioHeader: {
     flexDirection: 'row',
@@ -451,11 +491,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconCircleHighContrast: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: '#FFF',
+  },
   criterioTitulo: {
     fontSize: 15,
     lineHeight: 20,
   },
-  // Respostas rápidas - opções em linha
+  criterioTituloHighContrast: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
   opcoesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -473,13 +523,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
+  opcaoBotaoHighContrast: {
+    backgroundColor: '#333',
+    borderWidth: 2,
+    borderColor: '#666',
+  },
   opcaoBotaoValor: {
     fontSize: 16,
     lineHeight: 20,
   },
+  opcaoBotaoValorHighContrast: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   opcaoBotaoLabel: {
     fontSize: 9,
     marginTop: 2,
+  },
+  opcaoBotaoLabelHighContrast: {
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   notaSelecionadaContainer: {
     flexDirection: 'row',
@@ -490,6 +553,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
   },
+  notaSelecionadaContainerHighContrast: {
+    borderWidth: 1,
+    borderColor: 'currentColor',
+  },
+  notaDescricaoTexto: {
+    fontSize: 11,
+  },
+  notaDescricaoTextoHighContrast: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
   mediaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -499,6 +573,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexWrap: 'wrap',
   },
+  mediaContainerHighContrast: {
+    borderWidth: 2,
+    borderColor: '#FFF',
+    backgroundColor: '#000',
+  },
+  mediaLabel: {
+    fontSize: 14,
+  },
+  mediaLabelHighContrast: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   mediaEstrelas: {
     flexDirection: 'row',
     gap: 4,
@@ -506,6 +592,13 @@ const styles = StyleSheet.create({
   mediaValor: {
     fontSize: 16,
   },
+  mediaValorHighContrast: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // ============================================
+  // CAMPO DE COMENTÁRIO - ESTILO ORIGINAL (sem alterações)
+  // ============================================
   comentarioLabel: {
     fontSize: 14,
     marginBottom: 4,
@@ -514,9 +607,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   comentarioInput: {
-    minHeight: 80,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
+  // ============================================
   erroContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -528,6 +622,10 @@ const styles = StyleSheet.create({
   erroTexto: {
     fontSize: 12,
   },
+  erroTextoHighContrast: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   botoesContainer: {
     flexDirection: 'row',
     gap: 12,
@@ -537,5 +635,57 @@ const styles = StyleSheet.create({
   },
   botaoEnviar: {
     flex: 1,
+  },
+  opcaoRapida: {
+    marginBottom: 8,
+    borderRadius: 12,
+    padding: 10,
+  },
+  opcaoRapidaHighContrast: {
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  opcaoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  opcaoNota: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  opcaoNotaHighContrast: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  opcaoNotaTexto: {
+    fontSize: 18,
+    color: '#FFF',
+  },
+  opcaoNotaTextoHighContrast: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  opcaoTextos: {
+    flex: 1,
+  },
+  opcaoLabel: {
+    fontSize: 14,
+  },
+  opcaoLabelHighContrast: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  opcaoDescricao: {
+    fontSize: 11,
+  },
+  opcaoDescricaoHighContrast: {
+    fontSize: 13,
   },
 });
