@@ -27,6 +27,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import LocalService from '../../services/LocalService';
 import HomeService from '../../services/HomeService';
+import BuscarService from '../../services/BuscarService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
@@ -70,9 +71,6 @@ const LIMITES_CAMPOS_LOCAL = {
 
 const LARGURA_MINIMA_DUAS_COLUNAS_CAMPOS = 1200;
 
-// ============================================
-// COMPONENTE DE UPLOAD DE IMAGENS
-// ============================================
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -359,9 +357,6 @@ const localStyles = StyleSheet.create({
   },
 });
 
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 export default function AdicionarLocal({ onNavigate, navigation, routeParams }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario } = useAuth();
@@ -603,9 +598,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return true;
   };
 
-  // ============================================
-  // MÉTODO PRINCIPAL - SALVAR LOCAL COM UPLOAD
-  // ============================================
   const handleSalvarLocal = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -646,6 +638,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         localId = localResponse.idLocal || localResponse.id;
       }
 
+      // Upload das imagens
       if (imagens.length > 0) {
         toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
         
@@ -710,27 +703,11 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         } else if (imagensEnviadas > 0) {
           toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
         }
-
-        // Tentativa de obter o local atualizado do backend para confirmar que as imagens foram associadas
-        try {
-          const localAtualizado = await HomeService.buscarLocalPorId(localId);
-          if (localAtualizado && Array.isArray(localAtualizado.imagens) && localAtualizado.imagens.length > 0) {
-            // Se temos imagens, navegar direto para os detalhes do local recém-criado
-            if (onNavigate) {
-              onNavigate('LocalDetalhes', { id: localId });
-            } else if (navigation && navigation.navigate) {
-              navigation.navigate('Main', { screen: 'LocalDetalhes', id: localId });
-            }
-            // encerra aqui para evitar navegar para inicio
-            return;
-          }
-        } catch (e) {
-          console.error('[AdicionarLocal] Erro ao buscar local atualizado:', e);
-        }
       }
 
-      toastHelper.showSuccess('Local adicionado com sucesso!');
+      toastHelper.showSuccess(editingLocalId ? 'Local atualizado com sucesso!' : 'Local adicionado com sucesso!');
 
+      // Limpar formulário
       setFormulario({
         nome: '',
         categoria: null,
@@ -746,16 +723,31 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       setRecursosSelecionados({});
       setImagens([]);
       setProgressoImagens({ atual: 0, total: 0 });
+      setEditingLocalId(null);
       
+      // ============================================
+      // CRÍTICO: INVALIDAR CACHE DO BUSCAR SERVICE
+      // ============================================
+      // Forçar recarga do cache na próxima busca
+      BuscarService.invalidateCache();
+      
+      // Forçar recarga da Home via callback com timestamp
       if (onNavigate) {
-        onNavigate('Inicio', { refreshKey: Date.now() });
+        // Navegar para Home com um timestamp para forçar refresh
+        onNavigate('Inicio', { 
+          refreshKey: Date.now(),
+          forceRefresh: true 
+        });
       } else if (navigation && typeof navigation.goBack === 'function') {
-        // If we don't have onNavigate callback, try to navigate back and attempt to trigger a reload
         try {
           navigation.goBack();
         } catch (e) {
-          // fallback: navigate to Main Inicio with refresh
-          try { navigation.navigate && navigation.navigate('Main', { screen: 'Inicio', refreshKey: Date.now() }); } catch (err) {}
+          try { 
+            navigation.navigate && navigation.navigate('Main', { 
+              screen: 'Inicio', 
+              params: { refreshKey: Date.now(), forceRefresh: true } 
+            }); 
+          } catch (err) {}
         }
       }
       

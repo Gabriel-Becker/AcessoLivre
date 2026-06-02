@@ -28,9 +28,6 @@ import AvaliacaoService from '../../services/AvaliacaoService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
-// ============================================
-// HOOK PARA ATUALIZAÇÃO AUTOMÁTICA DO TEMPO
-// ============================================
 const useCurrentTime = () => {
   const [now, setNow] = useState(Date.now());
 
@@ -45,9 +42,6 @@ const useCurrentTime = () => {
   return now;
 };
 
-// ============================================
-// FUNÇÃO DE FORMATAÇÃO DE DATA RELATIVA
-// ============================================
 const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
   if (!dataOriginal) return 'Data não informada';
   
@@ -91,9 +85,6 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
   }
 };
 
-// ============================================
-// COMPONENTE DE AVALIAÇÃO INDIVIDUAL
-// ============================================
 const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
@@ -168,9 +159,6 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   );
 };
 
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { isAuthenticated } = useAuth();
