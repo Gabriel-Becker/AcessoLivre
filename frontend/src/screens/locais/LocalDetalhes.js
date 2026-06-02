@@ -28,7 +28,27 @@ import AvaliacaoService from '../../services/AvaliacaoService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
-const formatarDataRelativa = (dataOriginal) => {
+// ============================================
+// HOOK PARA ATUALIZAÇÃO AUTOMÁTICA DO TEMPO
+// ============================================
+const useCurrentTime = () => {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return now;
+};
+
+// ============================================
+// FUNÇÃO DE FORMATAÇÃO DE DATA RELATIVA
+// ============================================
+const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
   if (!dataOriginal) return 'Data não informada';
   
   try {
@@ -48,7 +68,7 @@ const formatarDataRelativa = (dataOriginal) => {
       return 'Data inválida';
     }
     
-    const agora = new Date();
+    const agora = new Date(agoraTimestamp);
     const diffMs = agora - data;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
@@ -71,7 +91,10 @@ const formatarDataRelativa = (dataOriginal) => {
   }
 };
 
-const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos }) => {
+// ============================================
+// COMPONENTE DE AVALIAÇÃO INDIVIDUAL
+// ============================================
+const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
     const fullStars = Math.floor(nota);
@@ -79,11 +102,11 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos }) => {
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={12} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={12} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={12} color={theme.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
       }
     }
     return stars;
@@ -106,7 +129,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos }) => {
   
   const comentarioReal = avaliacao.comentario || '';
   const dataOriginal = avaliacao.dataAvaliacao || avaliacao.data;
-  const dataFormatada = formatarDataRelativa(dataOriginal);
+  const dataFormatada = formatarDataRelativa(dataOriginal, now);
 
   return (
     <View style={[styles.avaliacaoItem, estilosDinamicos.avaliacaoItem]}>
@@ -123,10 +146,14 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos }) => {
               {nomeUsuario}
             </ThemedText>
             <View style={styles.estrelasRow}>
-              {renderStars(mediaGeral)}
-              <ThemedText variant="caption" color="textTertiary" style={[styles.dataAvaliacao, estilosDinamicos.dataAvaliacao]}>
-                • {dataFormatada}
-              </ThemedText>
+              <View style={styles.starsContainer}>
+                {renderStars(mediaGeral)}
+              </View>
+              <View style={styles.dataContainer}>
+                <ThemedText variant="caption" color="textTertiary" style={[styles.dataAvaliacao, estilosDinamicos.dataAvaliacao]}>
+                  {dataFormatada}
+                </ThemedText>
+              </View>
             </View>
           </View>
         </View>
@@ -141,16 +168,21 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos }) => {
   );
 };
 
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
   const { id } = route?.params || {};
+  const now = useCurrentTime();
 
   const isDesktop = width >= breakpoints.desktop;
   const zoomAtivo = fontSizeMultiplier >= 1.5;
   const layoutEmpilhado = width < 1280 || fontSizeMultiplier >= 1.5;
   const corFundoPagina = isHighContrast ? t.colors.background : t.colors.backgroundSecondary;
+  
   const estilosZoom = useMemo(
     () =>
       criarEstilosDinamicos({
@@ -191,6 +223,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [descricaoExpandida, setDescricaoExpandida] = useState(false);
+  const [mostrarTodasAvaliacoes, setMostrarTodasAvaliacoes] = useState(false);
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
@@ -240,6 +273,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
         totalAvaliacoes: dados.totalAvaliacoes || avaliacoesOrdenadas.length,
         descricao: dados.descricao || '',
       });
+      
+      setMostrarTodasAvaliacoes(false);
     } catch (err) {
       console.error('Erro ao carregar local:', err);
       setError('Não foi possível carregar os detalhes do local');
@@ -322,7 +357,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
     return partes.join(', ');
   };
 
-  // Renderizar descrição do local
   const renderDescricaoLocal = () => {
     const descricao = local?.descricao || '';
     if (!descricao) return null;
@@ -354,6 +388,112 @@ export default function LocalDetalhes({ onNavigate, route }) {
           </TouchableOpacity>
         )}
       </View>
+    );
+  };
+
+  const renderAvaliacoes = () => {
+    if (!local.avaliacoes || local.avaliacoes.length === 0) {
+      return (
+        <View style={styles.semAvaliacoes}>
+          <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
+          <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
+          <ThemedText variant="caption" color="textTertiary" align="center">
+            Seja o primeiro a avaliar este local!
+          </ThemedText>
+        </View>
+      );
+    }
+
+    const avaliacoesVisiveis = mostrarTodasAvaliacoes
+      ? local.avaliacoes.slice(0, 6)
+      : local.avaliacoes.slice(0, 3);
+    
+    const temMaisAvaliacoes = local.avaliacoes.length > 3;
+    const precisaScroll = local.avaliacoes.length > 6 && mostrarTodasAvaliacoes;
+
+    const conteudoAvaliacoes = (
+      <>
+        {avaliacoesVisiveis.map((item, index) => (
+          <React.Fragment key={item.id || index}>
+            <AvaliacaoItem 
+              avaliacao={item} 
+              theme={t} 
+              estilosDinamicos={estilosZoom} 
+              now={now}
+            />
+            {index < avaliacoesVisiveis.length - 1 && (
+              <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />
+            )}
+          </React.Fragment>
+        ))}
+      </>
+    );
+
+    return (
+      <>
+        <View style={[styles.headerAvaliacoes, estilosZoom.headerAvaliacoes]}>
+          <View style={styles.headerAvaliacoesLeft}>
+            <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
+            <ThemedText variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>
+              Avaliações Recentes
+            </ThemedText>
+            <View style={styles.totalBadge}>
+              <ThemedText variant="caption" weight="bold" style={styles.totalBadgeTexto}>
+                {local.avaliacoes.length}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
+        <Spacer size="sm" />
+
+        {precisaScroll ? (
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={true}
+            style={styles.avaliacoesContainerScroll}
+          >
+            {conteudoAvaliacoes}
+          </ScrollView>
+        ) : (
+          <View style={styles.avaliacoesContainer}>
+            {conteudoAvaliacoes}
+          </View>
+        )}
+
+        {temMaisAvaliacoes && !mostrarTodasAvaliacoes && (
+          <TouchableOpacity
+            style={styles.verMaisComentarios}
+            onPress={() => setMostrarTodasAvaliacoes(true)}
+          >
+            <ThemedText color="primary" weight="semibold">
+              Ver mais comentários
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+
+        {mostrarTodasAvaliacoes && local.avaliacoes.length > 3 && (
+          <TouchableOpacity
+            style={styles.verMaisComentarios}
+            onPress={() => setMostrarTodasAvaliacoes(false)}
+          >
+            <ThemedText color="primary" weight="semibold">
+              Mostrar menos
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+
+        {local.avaliacoes.length > 6 && mostrarTodasAvaliacoes && (
+          <TouchableOpacity
+            style={styles.verTodasPagina}
+            onPress={handleVerTodasAvaliacoes}
+          >
+            <ThemedText color="textSecondary" variant="caption">
+              Ver todas em nova página →
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+      </>
     );
   };
 
@@ -419,179 +559,77 @@ export default function LocalDetalhes({ onNavigate, route }) {
           />
         }
       >
-        {isDesktop ? (
-          <>
-            <View style={[styles.linhaSuperior, estilosZoom.linhaSuperior]}>
-              <View style={[styles.cardPrincipalWrapper, estilosZoom.cardPrincipalWrapper]}>
-                  <Card style={[styles.cardPrincipal, estilosZoom.cardPrincipal]} altoContraste={isHighContrast}>
-                  <View style={[styles.headerLocal, estilosZoom.headerLocal]}>
-                    <View style={styles.infoLocal}>
-                      <ThemedText variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>
-                        {local.nome}
-                      </ThemedText>
-                      <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
-                        <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
-                          {local.categoria}
-                        </ThemedText>
-                      </View>
-                      <View style={[styles.enderecoRow, estilosZoom.enderecoRow]}>
-                        <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
-                        <ThemedText color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>
-                          {formatEnderecoCompleto(local.endereco)}
-                        </ThemedText>
-                      </View>
-                    </View>
-                    <View style={[styles.ratingBox, estilosZoom.ratingBox]}>
-                      <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
-                      <ThemedText variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>
-                        {(local.avaliacaoMedia || 0).toFixed(1)}
-                      </ThemedText>
-                      <ThemedText variant="caption" color="textSecondary">
-                        {local.totalAvaliacoes || 0} avaliações
-                      </ThemedText>
-                    </View>
-                  </View>
-
-                  <Spacer size="lg" />
-                  <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
-                  
-                  {/* CARD DE DESCRIÇÃO - COM ESPAÇAMENTO REDUZIDO */}
-                  {renderDescricaoLocal()}
-                  
-                  <Spacer size="xl" />
-
-                  <View style={[styles.botoesContainer, estilosZoom.botoesContainer]}>
-                    <Button variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>
-                      Avaliar
-                    </Button>
-                    <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
-                      Compartilhar
-                    </Button>
-                    <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={[styles.botaoAcao, estilosZoom.botao]}>
-                      Reportar
-                    </Button>
-                  </View>
-                </Card>
+        <Card style={[styles.cardPrincipal, estilosZoom.cardPrincipal]} altoContraste={isHighContrast}>
+          <View style={[styles.headerLocal, estilosZoom.headerLocal]}>
+            <View style={styles.infoLocal}>
+              <ThemedText variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>
+                {local.nome}
+              </ThemedText>
+              <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
+                <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
+                  {local.categoria}
+                </ThemedText>
+              </View>
+              <View style={[styles.enderecoRow, estilosZoom.enderecoRow]}>
+                <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
+                <ThemedText color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>
+                  {formatEnderecoCompleto(local.endereco)}
+                </ThemedText>
               </View>
             </View>
-            <Spacer size="lg" />
-            <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
-              <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
-                <Ionicons name="images-outline" size={22} color={t.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
-                {local.imagens?.length > 0 && (
-                  <ThemedText variant="caption" color="textSecondary">
-                    ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
-                  </ThemedText>
-                )}
-              </View>
-              <Spacer size="sm" />
-              <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
-            </Card>
-            <Spacer size="lg" />
-            <Card style={[styles.cardAvaliacoesMobile, estilosZoom.cardAvaliacoesMobile]} altoContraste={isHighContrast}>
-              <View style={[styles.headerAvaliacoes, estilosZoom.headerAvaliacoes]}>
-                <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>
-                  Avaliações Recentes
-                </ThemedText>
-                {local.avaliacoes?.length > 0 && (
-                  <TouchableOpacity onPress={handleVerTodasAvaliacoes}>
-                    <ThemedText color="primary" variant="caption" weight="semibold">Ver todas →</ThemedText>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <Spacer size="sm" />
+            <View style={[styles.ratingBox, estilosZoom.ratingBox]}>
+              <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
+              <ThemedText variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>
+                {(local.avaliacaoMedia || 0).toFixed(1)}
+              </ThemedText>
+              <ThemedText variant="caption" color="textSecondary">
+                {local.totalAvaliacoes || 0} avaliações
+              </ThemedText>
+            </View>
+          </View>
 
-              {local.avaliacoes && local.avaliacoes.length > 0 ? (
-                local.avaliacoes.slice(0, 3).map((item, index) => (
-                  <React.Fragment key={item.id || index}>
-                    <AvaliacaoItem avaliacao={item} theme={t} estilosDinamicos={estilosZoom} />
-                    {index < 2 && <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />}
-                  </React.Fragment>
-                ))
-              ) : (
-                <View style={styles.semAvaliacoes}>
-                  <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
-                  <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
-                  <ThemedText variant="caption" color="textTertiary" align="center">Seja o primeiro a avaliar este local!</ThemedText>
-                </View>
-              )}
-            </Card>
-          </>
-        ) : (
-          <>
-            <Card style={[styles.cardPrincipalMobile, estilosZoom.cardPrincipalMobile]} altoContraste={isHighContrast}>
-              <View style={[styles.headerLocal, estilosZoom.headerLocal]}>
-                <View style={styles.infoLocal}>
-                  <ThemedText variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>{local.nome}</ThemedText>
-                  <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
-                    <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>{local.categoria}</ThemedText>
-                  </View>
-                  <View style={[styles.enderecoRow, estilosZoom.enderecoRow]}>
-                    <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
-                    <ThemedText color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>{formatEnderecoCompleto(local.endereco)}</ThemedText>
-                  </View>
-                </View>
-                <View style={[styles.ratingBox, estilosZoom.ratingBox]}>
-                  <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
-                  <ThemedText variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>{(local.avaliacaoMedia || 0).toFixed(1)}</ThemedText>
-                  <ThemedText variant="caption" color="textSecondary">{local.totalAvaliacoes || 0} avaliações</ThemedText>
-                </View>
-              </View>
+          <Spacer size="lg" />
+          <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
+          
+          {renderDescricaoLocal()}
+          
+          <Spacer size="xl" />
 
-              <Spacer size="lg" />
-              <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
-              
-              {renderDescricaoLocal()}
-              
-              <Spacer size="xl" />
-              
-              <View style={[styles.botoesContainer, estilosZoom.botoesContainer]}>
-                <Button variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>Avaliar</Button>
-                <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>Compartilhar</Button>
-                <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={[styles.botaoAcao, estilosZoom.botao]}>Reportar</Button>
-              </View>
-            </Card>
-            <Spacer size="lg" />
-            <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
-              <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
-                <Ionicons name="images-outline" size={22} color={t.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
-                {local.imagens?.length > 0 && <ThemedText variant="caption" color="textSecondary">({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})</ThemedText>}
-              </View>
-              <Spacer size="sm" />
-              <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
-            </Card>
-            <Spacer size="lg" />
-            <Card style={[styles.cardAvaliacoesMobile, estilosZoom.cardAvaliacoesMobile]} altoContraste={isHighContrast}>
-              <View style={[styles.headerAvaliacoes, estilosZoom.headerAvaliacoes]}>
-                <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
-                <ThemedText variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>Avaliações Recentes</ThemedText>
-                {local.avaliacoes?.length > 0 && (
-                  <TouchableOpacity onPress={handleVerTodasAvaliacoes}>
-                    <ThemedText color="primary" variant="caption" weight="semibold">Ver todas →</ThemedText>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <Spacer size="sm" />
-              {local.avaliacoes && local.avaliacoes.length > 0 ? (
-                local.avaliacoes.slice(0, 3).map((item, index) => (
-                  <React.Fragment key={item.id || index}>
-                    <AvaliacaoItem avaliacao={item} theme={t} estilosDinamicos={estilosZoom} />
-                    {index < 2 && <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />}
-                  </React.Fragment>
-                ))
-              ) : (
-                <View style={styles.semAvaliacoes}>
-                  <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
-                  <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
-                  <ThemedText variant="caption" color="textTertiary" align="center">Seja o primeiro a avaliar este local!</ThemedText>
-                </View>
-              )}
-            </Card>
-          </>
-        )}
+          <View style={[styles.botoesContainer, estilosZoom.botoesContainer]}>
+            <Button variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>
+              Avaliar
+            </Button>
+            <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
+              Compartilhar
+            </Button>
+            <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={[styles.botaoAcao, estilosZoom.botao]}>
+              Reportar
+            </Button>
+          </View>
+        </Card>
+
+        <Spacer size="lg" />
+
+        <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
+          <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
+            <Ionicons name="images-outline" size={22} color={t.colors.primary} />
+            <ThemedText variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
+            {local.imagens?.length > 0 && (
+              <ThemedText variant="caption" color="textSecondary">
+                ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
+              </ThemedText>
+            )}
+          </View>
+          <Spacer size="sm" />
+          <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
+        </Card>
+
+        <Spacer size="lg" />
+
+        <Card style={[styles.cardAvaliacoes, estilosZoom.cardAvaliacoes]} altoContraste={isHighContrast}>
+          {renderAvaliacoes()}
+        </Card>
+
         <Spacer size="xl" />
       </ScrollView>
 
@@ -616,32 +654,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  linhaSuperior: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  cardPrincipalWrapper: {
-    flex: 2,
-    minWidth: 280,
-  },
-  cardAvaliacoesWrapper: {
-    flex: 1,
-    minWidth: 260,
-  },
   cardPrincipal: {
     padding: 20,
   },
-  cardPrincipalMobile: {
+  cardFotos: {
     padding: 20,
   },
   cardAvaliacoes: {
-    padding: 20,
-  },
-  cardAvaliacoesMobile: {
-    padding: 20,
-  },
-  cardFotos: {
     padding: 20,
   },
   headerLocal: {
@@ -704,16 +723,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   headerAvaliacoes: {
+    marginBottom: 8,
+  },
+  headerAvaliacoesLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
   },
   tituloAvaliacoes: {
     fontSize: 18,
-    flex: 1,
   },
-  // Estilos para o card de descrição
+  totalBadge: {
+    backgroundColor: '#E8F0FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  totalBadgeTexto: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
   descricaoContainer: {
     borderRadius: 12,
     padding: 16,
@@ -738,7 +768,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   avaliacaoItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 14,
   },
   avaliacaoHeader: {
     marginBottom: 6,
@@ -749,9 +781,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -764,20 +796,34 @@ const styles = StyleSheet.create({
   },
   usuarioNome: {
     fontSize: 14,
+    fontWeight: '600',
   },
   estrelasRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    flexWrap: 'wrap',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  dataContainer: {
+    marginLeft: 12,
+    paddingLeft: 10,
+    borderLeftWidth: 1,
+    borderLeftColor: '#E5E7EB',
+    justifyContent: 'center',
   },
   dataAvaliacao: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '500',
   },
   comentario: {
-    marginLeft: 46,
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
+    marginLeft: 50,
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 20,
   },
   divisor: {
     height: 1,
@@ -800,6 +846,25 @@ const styles = StyleSheet.create({
   },
   textoVoltarTopo: {
     lineHeight: 22,
+  },
+  avaliacoesContainer: {
+    width: '100%',
+  },
+  avaliacoesContainerScroll: {
+    maxHeight: 520,
+    width: '100%',
+  },
+  verMaisComentarios: {
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  verTodasPagina: {
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 8,
   },
 });
 
@@ -843,35 +908,13 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
       paddingHorizontal: width >= 1280 ? t.spacing.xl : t.spacing.md,
       paddingTop: zoomAtivo ? t.spacing.sm : 0,
     },
-    linhaSuperior: {
-      flexDirection: layoutEmpilhado ? 'column' : 'row',
-      alignItems: 'stretch',
-      marginTop: zoomAtivo ? t.spacing.sm : 0,
-    },
-    cardPrincipalWrapper: {
-      flex: layoutEmpilhado ? 0 : 2,
-      width: '100%',
-      minWidth: 0,
-    },
-    cardAvaliacoesWrapper: {
-      flex: layoutEmpilhado ? 0 : 1,
-      width: '100%',
-      minWidth: 0,
-      marginTop: layoutEmpilhado ? 0 : t.spacing.xl * 2,
-    },
     cardPrincipal: {
       padding: fonteGrande ? 24 : 20,
     },
-    cardPrincipalMobile: {
+    cardFotos: {
       padding: fonteGrande ? 24 : 20,
     },
     cardAvaliacoes: {
-      padding: fonteGrande ? 24 : 20,
-    },
-    cardAvaliacoesMobile: {
-      padding: fonteGrande ? 24 : 20,
-    },
-    cardFotos: {
       padding: fonteGrande ? 24 : 20,
     },
     headerLocal: {
@@ -934,12 +977,14 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
       lineHeight: Math.round(t.typography.fontSize.md * 1.45),
     },
     avaliacaoItem: {
-      paddingVertical: fonteGrande ? 14 : 12,
+      paddingVertical: fonteGrande ? 16 : 14,
+      paddingHorizontal: fonteGrande ? 16 : 12,
+      borderRadius: fonteGrande ? 16 : 14,
     },
     avatar: {
-      width: fonteGrande ? 42 : 36,
-      height: fonteGrande ? 42 : 36,
-      borderRadius: fonteGrande ? 21 : 18,
+      width: fonteGrande ? 44 : 40,
+      height: fonteGrande ? 44 : 40,
+      borderRadius: fonteGrande ? 22 : 20,
     },
     avatarTexto: {
       fontSize: t.typography.fontSize.md,
@@ -953,7 +998,8 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
       fontSize: t.typography.fontSize.sm,
     },
     comentario: {
-      marginLeft: fonteGrande ? 52 : 46,
+      marginLeft: fonteGrande ? 56 : 50,
+      marginTop: fonteGrande ? 10 : 8,
       fontSize: t.typography.fontSize.md,
       lineHeight: Math.round(t.typography.fontSize.md * 1.4),
     },
