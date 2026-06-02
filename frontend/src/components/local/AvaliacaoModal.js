@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,74 +7,90 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Platform,
-  Alert
+  Alert,
+  useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText, Spacer } from '../commons';
 import { Button, Input } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { getTheme } from '../../config/theme';
+import { getTheme, breakpoints } from '../../config/theme';
+
+// Opções rápidas para notas (1 a 5)
+const OPCOES_RAPIDAS = [
+  { valor: 1, label: 'Muito Ruim', cor: '#FF6B6B', descricao: 'Precisa melhorar muito' },
+  { valor: 2, label: 'Ruim', cor: '#FFB347', descricao: 'Vários problemas' },
+  { valor: 3, label: 'Regular', cor: '#FFD93D', descricao: 'Atende parcialmente' },
+  { valor: 4, label: 'Bom', cor: '#6BCB77', descricao: 'Boa acessibilidade' },
+  { valor: 5, label: 'Excelente', cor: '#4D96FF', descricao: 'Totalmente acessível' }
+];
+
+// Componente de botão de resposta rápida
+const OpcaoRapida = ({ nota, selecionada, onPress, label, descricao, cor }) => {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.opcaoRapida,
+        selecionada && { borderColor: cor, backgroundColor: cor + '15' }
+      ]}
+      onPress={() => onPress(nota)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.opcaoHeader}>
+        <View style={[styles.opcaoNota, { backgroundColor: cor }]}>
+          <ThemedText weight="bold" style={styles.opcaoNotaTexto}>{nota}</ThemedText>
+        </View>
+        <View style={styles.opcaoTextos}>
+          <ThemedText weight="semibold" style={styles.opcaoLabel}>{label}</ThemedText>
+          <ThemedText variant="caption" color="textTertiary" style={styles.opcaoDescricao}>
+            {descricao}
+          </ThemedText>
+        </View>
+        {selecionada && (
+          <Ionicons name="checkmark-circle" size={20} color={cor} />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
   const { isHighContrast } = useThemeContext();
-  const { getUsuarioId, isAuthenticated, getUsuarioNome } = useAuth();
+  const { getUsuarioId, isAuthenticated } = useAuth();
+  const { width } = useWindowDimensions();
   const theme = getTheme(isHighContrast);
+
+  // Responsividade - definir largura baseada no dispositivo
+  const isMobile = width < breakpoints?.tablet || width < 768;
+  const modalWidth = useMemo(() => {
+    if (Platform.OS === 'web') {
+      if (width >= 1200) return '45%';
+      if (width >= 768) return '55%';
+      return '92%';
+    }
+    return '92%';
+  }, [width]);
 
   // Estados para as 3 notas obrigatórias
   const [notaVisual, setNotaVisual] = useState(0);
   const [notaMotora, setNotaMotora] = useState(0);
   const [notaAuditiva, setNotaAuditiva] = useState(0);
-  
   const [comentario, setComentario] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
-  // Hover states para web
-  const [hoverVisual, setHoverVisual] = useState(0);
-  const [hoverMotora, setHoverMotora] = useState(0);
-  const [hoverAuditiva, setHoverAuditiva] = useState(0);
-
-  const renderStars = (nota, setNota, hover, setHover, label, disabled = false) => {
-    const stars = [];
-    const displayNota = hover || nota;
-    
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <TouchableOpacity
-          key={i}
-          onPress={() => !disabled && setNota(i)}
-          onMouseEnter={() => Platform.OS === 'web' && !disabled && setHover(i)}
-          onMouseLeave={() => Platform.OS === 'web' && !disabled && setHover(0)}
-          activeOpacity={0.7}
-          style={styles.starButton}
-          disabled={disabled}
-          accessibilityLabel={`${label}: ${i} estrelas`}
-          accessibilityHint={`Nota ${i} para ${label.toLowerCase()}`}
-        >
-          <Ionicons
-            name={i <= displayNota ? 'star' : 'star-outline'}
-            size={32}
-            color={i <= displayNota ? theme.colors.warning : theme.colors.textTertiary}
-          />
-        </TouchableOpacity>
-      );
-    }
-    return stars;
+  const getNotaInfo = (nota) => {
+    return OPCOES_RAPIDAS.find(o => o.valor === nota) || OPCOES_RAPIDAS[0];
   };
 
-  const getNotaDescricao = (nota) => {
-    if (nota === 0) return 'Selecione uma nota';
-    if (nota === 1) return 'Muito ruim - Precisa melhorar muito';
-    if (nota === 2) return 'Ruim - Vários problemas';
-    if (nota === 3) return 'Regular - Atende parcialmente';
-    if (nota === 4) return 'Bom - Boa acessibilidade';
-    if (nota === 5) return 'Excelente - Totalmente acessível';
-    return '';
+  const handleSelectNota = (setter, valor) => {
+    setter(valor);
+    // Limpar erro ao selecionar
+    if (erro) setErro('');
   };
 
   const handleEnviar = async () => {
-    // Validações
     if (!isAuthenticated) {
       Alert.alert('Login necessário', 'Faça login para avaliar um local');
       onClose();
@@ -123,9 +139,6 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
     setNotaAuditiva(0);
     setComentario('');
     setErro('');
-    setHoverVisual(0);
-    setHoverMotora(0);
-    setHoverAuditiva(0);
   };
 
   const handleClose = () => {
@@ -137,12 +150,67 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const calcularMedia = () => {
     const soma = notaVisual + notaMotora + notaAuditiva;
-    const count = [notaVisual, notaMotora, notaAuditiva].filter(n => n > 0).length;
-    if (count === 0) return 0;
+    if (notaVisual === 0 || notaMotora === 0 || notaAuditiva === 0) return 0;
     return (soma / 3).toFixed(1);
   };
 
   const todasNotasSelecionadas = notaVisual > 0 && notaMotora > 0 && notaAuditiva > 0;
+
+  // Componente de critério com respostas rápidas
+  const renderCriterio = (titulo, icone, nota, setNota, corIcone) => (
+    <View style={styles.criterioContainer}>
+      <View style={styles.criterioHeader}>
+        <View style={[styles.iconCircle, { backgroundColor: corIcone + '20' }]}>
+          <Ionicons name={icone} size={22} color={corIcone} />
+        </View>
+        <ThemedText weight="bold" style={styles.criterioTitulo}>{titulo}</ThemedText>
+      </View>
+
+      {/* Respostas rápidas - opções em linha */}
+      <View style={styles.opcoesContainer}>
+        {OPCOES_RAPIDAS.map(opcao => (
+          <TouchableOpacity
+            key={opcao.valor}
+            style={[
+              styles.opcaoBotao,
+              nota === opcao.valor && { backgroundColor: opcao.cor, borderColor: opcao.cor }
+            ]}
+            onPress={() => handleSelectNota(setNota, opcao.valor)}
+            activeOpacity={0.7}
+          >
+            <ThemedText
+              weight={nota === opcao.valor ? "bold" : "medium"}
+              style={[
+                styles.opcaoBotaoValor,
+                nota === opcao.valor && { color: '#FFF' }
+              ]}
+            >
+              {opcao.valor}
+            </ThemedText>
+            <ThemedText
+              variant="caption"
+              style={[
+                styles.opcaoBotaoLabel,
+                nota === opcao.valor && { color: '#FFF' }
+              ]}
+            >
+              {opcao.label.split(' ')[0]}
+            </ThemedText>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Descrição da nota selecionada */}
+      {nota > 0 && (
+        <View style={[styles.notaSelecionadaContainer, { backgroundColor: getNotaInfo(nota).cor + '10' }]}>
+          <Ionicons name="information-circle-outline" size={14} color={getNotaInfo(nota).cor} />
+          <ThemedText variant="caption" style={{ color: getNotaInfo(nota).cor }}>
+            {getNotaInfo(nota).descricao}
+          </ThemedText>
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <Modal
@@ -152,13 +220,17 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+        <View style={styles.overlay}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={[
               styles.modalContainer,
-              { backgroundColor: theme.colors.surface }
+              { 
+                backgroundColor: theme.colors.surface,
+                width: modalWidth,
+                maxWidth: isMobile ? 500 : 700
+              }
             ]}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <View style={styles.header}>
                   <ThemedText variant="h2" weight="bold" style={styles.titulo}>
@@ -171,13 +243,16 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 <Spacer size="sm" />
 
+                {/* Informações do local */}
                 <View style={styles.localInfo}>
-                  <ThemedText variant="h3" weight="semibold" numberOfLines={2}>
+                  <ThemedText variant="h3" weight="semibold" numberOfLines={2} style={styles.localNome}>
                     {local?.nome}
                   </ThemedText>
-                  <ThemedText color="textSecondary" variant="caption">
-                    {local?.categoria}
-                  </ThemedText>
+                  <View style={styles.categoriaPill}>
+                    <ThemedText variant="caption" style={styles.categoriaPillTexto}>
+                      {local?.categoria?.replace('_', ' ')}
+                    </ThemedText>
+                  </View>
                 </View>
 
                 <Spacer size="md" />
@@ -189,82 +264,39 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 <Spacer size="lg" />
 
                 {/* Critério 1: Acessibilidade Visual */}
-                <View style={styles.criterioContainer}>
-                  <View style={styles.criterioHeader}>
-                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
-                      <Ionicons name="eye-outline" size={24} color={theme.colors.primary} />
-                    </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
-                      Acessibilidade Visual
-                    </ThemedText>
-                  </View>
-                  
-                  <View style={styles.starsContainer}>
-                    {renderStars(notaVisual, setNotaVisual, hoverVisual, setHoverVisual, 'Visual', loading)}
-                  </View>
-                  
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
-                    {getNotaDescricao(notaVisual)}
-                  </ThemedText>
-                </View>
+                {renderCriterio('Acessibilidade Visual', 'eye-outline', notaVisual, setNotaVisual, theme.colors.primary)}
 
-                <Spacer size="lg" />
+                <Spacer size="md" />
 
                 {/* Critério 2: Acessibilidade Motora */}
-                <View style={styles.criterioContainer}>
-                  <View style={styles.criterioHeader}>
-                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
-                      <Ionicons name="body-outline" size={24} color={theme.colors.primary} />
-                    </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
-                      Acessibilidade Motora
-                    </ThemedText>
-                  </View>
-                  
-                  <View style={styles.starsContainer}>
-                    {renderStars(notaMotora, setNotaMotora, hoverMotora, setHoverMotora, 'Motora', loading)}
-                  </View>
-                  
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
-                    {getNotaDescricao(notaMotora)}
-                  </ThemedText>
-                </View>
+                {renderCriterio('Acessibilidade Motora', 'body-outline', notaMotora, setNotaMotora, '#4CAF50')}
 
-                <Spacer size="lg" />
+                <Spacer size="md" />
 
                 {/* Critério 3: Acessibilidade Auditiva */}
-                <View style={styles.criterioContainer}>
-                  <View style={styles.criterioHeader}>
-                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
-                      <Ionicons name="ear-outline" size={24} color={theme.colors.primary} />
-                    </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
-                      Acessibilidade Auditiva
-                    </ThemedText>
-                  </View>
-                  
-                  <View style={styles.starsContainer}>
-                    {renderStars(notaAuditiva, setNotaAuditiva, hoverAuditiva, setHoverAuditiva, 'Auditiva', loading)}
-                  </View>
-                  
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
-                    {getNotaDescricao(notaAuditiva)}
-                  </ThemedText>
-                </View>
-
-                <Spacer size="lg" />
+                {renderCriterio('Acessibilidade Auditiva', 'ear-outline', notaAuditiva, setNotaAuditiva, '#FF9800')}
 
                 {/* Média atual */}
                 {todasNotasSelecionadas && (
-                  <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }]}>
-                    <ThemedText weight="bold">Média Geral:</ThemedText>
-                    <View style={styles.mediaStars}>
-                      {renderStars(parseFloat(calcularMedia()), null, null, null, 'Média', true)}
+                  <>
+                    <Spacer size="lg" />
+                    <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }]}>
+                      <ThemedText weight="bold">Média Geral:</ThemedText>
+                      <View style={styles.mediaEstrelas}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Ionicons
+                            key={star}
+                            name={star <= parseFloat(calcularMedia()) ? 'star' : 'star-outline'}
+                            size={16}
+                            color={theme.colors.warning}
+                          />
+                        ))}
+                      </View>
+                      <ThemedText weight="bold" style={styles.mediaValor}>
+                        {calcularMedia()}
+                      </ThemedText>
                     </View>
-                    <ThemedText weight="bold" style={styles.mediaValor}>
-                      {calcularMedia()}
-                    </ThemedText>
-                  </View>
+                  </>
                 )}
 
                 <Spacer size="lg" />
@@ -282,10 +314,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                   <Input
                     multiline
-                    numberOfLines={4}
+                    numberOfLines={3}
                     value={comentario}
                     onChangeText={setComentario}
-                    placeholder="Ex: O local possui rampas bem sinalizadas, elevador funcionando e funcionários treinados para atender pessoas com deficiência..."
+                    placeholder="Ex: O local possui rampas bem sinalizadas, elevador funcionando..."
                     altoContraste={isHighContrast}
                     style={styles.comentarioInput}
                     editable={!loading}
@@ -299,9 +331,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                   <>
                     <View style={[styles.erroContainer, { backgroundColor: theme.colors.error + '20' }]}>
                       <Ionicons name="alert-circle" size={16} color={theme.colors.error} />
-                      <ThemedText color="error" style={styles.erroTexto}>
-                        {erro}
-                      </ThemedText>
+                      <ThemedText color="error" style={styles.erroTexto}>{erro}</ThemedText>
                     </View>
                     <Spacer size="md" />
                   </>
@@ -345,15 +375,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
-    width: Platform.OS === 'web' ? 760 : '94%',
-    maxHeight: '94%',
-    borderRadius: 28,
-    padding: 28,
+    maxHeight: '90%',
+    borderRadius: 24,
+    padding: 20,
     ...Platform.select({
       web: {
-        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
       },
       default: {
         elevation: 10,
@@ -364,6 +394,9 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  scrollContent: {
+    paddingBottom: 8,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -371,81 +404,117 @@ const styles = StyleSheet.create({
   },
   titulo: {
     flex: 1,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 28,
   },
   closeButton: {
     padding: 8,
   },
   localInfo: {
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+  },
+  localNome: {
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  categoriaPill: {
+    backgroundColor: '#E8F0FF',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  categoriaPillTexto: {
+    color: '#007AFF',
+    fontSize: 11,
   },
   subtitulo: {
     textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 20,
   },
   criterioContainer: {
-    paddingVertical: 16,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
     borderRadius: 16,
-    paddingHorizontal: 16,
+    padding: 14,
   },
   criterioHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 12,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   criterioTitulo: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 20,
   },
-  starsContainer: {
+  // Respostas rápidas - opções em linha
+  opcoesContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    marginVertical: 8,
+    marginBottom: 10,
   },
-  starButton: {
-    padding: 4,
+  opcaoBotao: {
+    flex: 1,
+    minWidth: 60,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  notaDescricao: {
-    textAlign: 'center',
-    marginTop: 8,
+  opcaoBotaoValor: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  opcaoBotaoLabel: {
+    fontSize: 9,
+    marginTop: 2,
+  },
+  notaSelecionadaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginTop: 4,
   },
   mediaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 12,
+    flexWrap: 'wrap',
   },
-  mediaStars: {
+  mediaEstrelas: {
     flexDirection: 'row',
     gap: 4,
   },
   mediaValor: {
-    fontSize: 18,
+    fontSize: 16,
   },
   comentarioLabel: {
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 4,
   },
   comentarioHint: {
     marginBottom: 8,
   },
   comentarioInput: {
-    minHeight: 100,
+    minHeight: 80,
     textAlignVertical: 'top',
   },
   erroContainer: {
@@ -453,11 +522,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   erroTexto: {
-    fontSize: 13,
+    fontSize: 12,
   },
   botoesContainer: {
     flexDirection: 'row',
