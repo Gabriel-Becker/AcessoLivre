@@ -25,6 +25,9 @@ export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
 
+  const refreshKey = routeParams?.refreshKey;
+  const forceRefresh = routeParams?.forceRefresh;
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [estatisticas, setEstatisticas] = useState({
@@ -94,12 +97,17 @@ export default function Home({ onNavigate, routeParams }) {
     };
   }, [width, fontSizeMultiplier]);
 
-  const carregarDados = useCallback(async (isRefresh = false) => {
+  const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
-      // Carregar estatísticas (locais e avaliações)
+      // Se forçar recarga, invalidar cache (se o método existir)
+      if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
+        BuscarService.invalidateCache();
+        console.log('🔄 Cache invalidado por força');
+      }
+      
       const stats = await BuscarService.obterEstatisticas();
       setEstatisticas({
         totalLocais: stats.totalLocais || 0,
@@ -107,9 +115,15 @@ export default function Home({ onNavigate, routeParams }) {
         mediaGeral: stats.mediaGeral || 0
       });
 
-      // Carregar locais em destaque
       const locais = await BuscarService.obterLocaisEmDestaque(8);
       setLocaisDestaque(locais.filter(l => l?.id));
+      
+      console.log('📊 Home carregada:', {
+        locais: stats.totalLocais,
+        avaliacoes: stats.totalAvaliacoes,
+        destaques: locais.length,
+        forcarRecarga
+      });
       
     } catch (e) {
       console.error('Erro ao carregar Home:', e);
@@ -118,21 +132,23 @@ export default function Home({ onNavigate, routeParams }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, []); 
 
+  
   useEffect(() => {
-    carregarDados();
+    carregarDados(false, false);
   }, [carregarDados]);
 
-  // Recarregar quando for solicitada uma atualização a partir de outras telas
+  
   useEffect(() => {
-    if (routeParams && routeParams.refreshKey) {
-      carregarDados();
+    if (refreshKey || forceRefresh) {
+      console.log('🔄 Recarregando Home devido a parâmetros:', { refreshKey, forceRefresh });
+      carregarDados(false, forceRefresh === true);
     }
-  }, [routeParams?.refreshKey, carregarDados]);
+  }, [refreshKey, forceRefresh, carregarDados]); 
 
   const handleRefresh = () => {
-    carregarDados(true);
+    carregarDados(true, true);
   };
 
   const handleLocalPress = (local) => {

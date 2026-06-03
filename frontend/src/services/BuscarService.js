@@ -10,17 +10,19 @@ class BuscarService {
    */
   static async carregarTodosLocais() {
     try {
-      // Verificar se já temos cache
       if (this.cache && this.cache.length > 0) {
+        console.log('📦 Usando cache de locais:', this.cache.length);
         return this.cache;
       }
 
+      console.log('🌐 Buscando todos os locais do backend...');
       const response = await api.get('/locais/todos', {
         params: { page: 0, size: 100, sort: 'nome', direction: 'asc' }
       });
       
       const locais = response.data?.content || response.data || [];
       this.cache = this.sanitizarLocais(locais);
+      console.log('✅ Cache atualizado com', this.cache.length, 'locais');
 
       return this.cache;
       
@@ -28,6 +30,24 @@ class BuscarService {
       console.error('❌ Erro ao carregar locais:', error);
       return [];
     }
+  }
+
+  /**
+   * Invalida o cache de locais para forçar recarga
+   */
+  static invalidateCache() {
+    console.log('🔄 Invalidando cache de locais');
+    this.cache = null;
+  }
+
+  /**
+   * Recarrega todos os locais do backend (força atualização)
+   * @returns {Promise<Array>}
+   */
+  static async recarregarTodosLocais() {
+    console.log('🌐 Recarregando todos os locais do backend...');
+    this.cache = null; // Limpa cache primeiro
+    return this.carregarTodosLocais();
   }
 
   /**
@@ -44,10 +64,8 @@ class BuscarService {
         return { success: true, data: [], total: 0 };
       }
       
-      // Aplicar filtros
       let resultados = [...locais];
       
-      // 1. Filtro por texto (nome ou endereço)
       if (filtros.searchText && filtros.searchText.trim()) {
         const searchLower = filtros.searchText.toLowerCase().trim();
         resultados = resultados.filter(local => 
@@ -59,32 +77,27 @@ class BuscarService {
         );
       }
       
-      // 2. Filtro por categorias
       if (filtros.categorias && filtros.categorias.length > 0) {
         resultados = resultados.filter(local => 
           filtros.categorias.includes(local.categoria)
         );
       }
       
-      // 3. Filtro por recursos de acessibilidade
       if (filtros.recursos && filtros.recursos.length > 0) {
         resultados = resultados.filter(local => {
           if (!local.tiposAcessibilidade || local.tiposAcessibilidade.length === 0) return false;
-          // Verifica se o local possui PELO MENOS UM dos recursos selecionados
           return filtros.recursos.some(recurso => 
             local.tiposAcessibilidade.includes(recurso)
           );
         });
       }
-      
-      // 4. Filtro por nota mínima
+
       if (filtros.notaMinima && filtros.notaMinima > 0) {
         resultados = resultados.filter(local => 
           (local.avaliacaoMedia || 0) >= filtros.notaMinima
         );
       }
       
-      // Ordenar resultados (melhores notas primeiro)
       resultados.sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0));
       
       return {
@@ -107,7 +120,6 @@ class BuscarService {
   static async obterLocaisEmDestaque(limit = 8) {
     try {
       const locais = await this.carregarTodosLocais();
-      // Ordenar por avaliação e pegar os primeiros
       const destaques = [...locais]
         .sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0))
         .slice(0, limit);
@@ -160,6 +172,10 @@ class BuscarService {
     return local?.id || local?.idLocal || null;
   }
 
+  /**
+   * Obtém estatísticas para a home
+   * @returns {Promise<Object>}
+   */
   static async obterEstatisticas() {
     try {
       const locais = await this.carregarTodosLocais();
@@ -168,6 +184,8 @@ class BuscarService {
       const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
       const somaNotas = locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0);
       const mediaGeral = totalLocais > 0 ? (somaNotas / totalLocais).toFixed(1) : 0;
+      
+      console.log('📊 Estatísticas:', { totalLocais, totalAvaliacoes, mediaGeral });
       
       return { totalLocais, totalAvaliacoes, mediaGeral };
     } catch (error) {
