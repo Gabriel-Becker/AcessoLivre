@@ -578,13 +578,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   
-  // Layout Mobile
   listContentMobile: {
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
   
-  // Cards - Padronizado com TabelaPlanilhaAdmin
   filtrosCard: {
     padding: 16,
     borderRadius: 14,
@@ -605,7 +603,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   
-  // Search Container - ESTILO PADRONIZADO com o card
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -712,8 +709,9 @@ const styles = StyleSheet.create({
   },
   
   cardWrapper: {
-    flexBasis: '33.333%',
-    maxWidth: '33.333%',
+    flex: 1,
+    minWidth: 260,
+    maxWidth: 400,
     paddingHorizontal: 6,
     paddingVertical: 8,
   },

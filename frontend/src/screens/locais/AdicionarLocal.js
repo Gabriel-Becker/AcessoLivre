@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -7,7 +7,10 @@ import {
   TouchableOpacity, 
   Alert,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Modal,
+  ActivityIndicator,
+  TextInput as RNTextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -71,6 +74,347 @@ const LIMITES_CAMPOS_LOCAL = {
 
 const LARGURA_MINIMA_DUAS_COLUNAS_CAMPOS = 1200;
 
+// ============================================
+// ESTILOS DOS MODAIS
+// ============================================
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  container: {
+    width: Platform.OS === 'web' ? 500 : '92%',
+    maxWidth: 520,
+    borderRadius: 24,
+    padding: 24,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+      },
+      default: {
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+    }),
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  titulo: {
+    flex: 1,
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  closeButton: {
+    padding: 8,
+    marginRight: -8,
+  },
+  descricao: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  pergunta: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+  },
+  sugestoesContainer: {
+    marginTop: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  sugestaoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+  },
+  sugestaoTexto: {
+    fontSize: 13,
+  },
+  observacao: {
+    textAlign: 'center',
+  },
+  botoesRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  botaoIndependente: {
+    flex: 1,
+  },
+  botaoVincular: {
+    flex: 1,
+  },
+  botaoCancelar: {
+    flex: 1,
+  },
+  botaoSalvar: {
+    flex: 1,
+  },
+});
+
+// ============================================
+// MODAL DE VERIFICAÇÃO DE HIERARQUIA
+// ============================================
+const ModalHierarquia = ({ visible, onClose, onIndependente, onVincular, theme, isHighContrast, nomeLocal }) => {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+    >
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.container, { backgroundColor: theme.colors.surface }]}>
+          <View style={modalStyles.header}>
+            <View style={modalStyles.headerIcon}>
+              <Ionicons name="git-branch-outline" size={24} color={theme.colors.primary} />
+            </View>
+            <ThemedText variant="h2" weight="bold" style={modalStyles.titulo}>
+              Verifique a hierarquia do local
+            </ThemedText>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <Spacer size="sm" />
+
+          <ThemedText color="textSecondary" style={modalStyles.descricao}>
+            {`Parece que "${nomeLocal || 'este local'}" pode estar dentro de outro estabelecimento, como um shopping, escritório compartilhado, galeria, etc.`}
+          </ThemedText>
+
+          <Spacer size="lg" />
+
+          <ThemedText weight="bold" style={modalStyles.pergunta}>
+            Deseja vinculá-lo a um local principal?
+          </ThemedText>
+
+          <Spacer size="md" />
+
+          <View style={modalStyles.botoesRow}>
+            <Button
+              variant="outline"
+              size="medium"
+              onPress={onIndependente}
+              style={modalStyles.botaoIndependente}
+              altoContraste={isHighContrast}
+            >
+              Não, salvar como local independente
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onPress={onVincular}
+              style={modalStyles.botaoVincular}
+              altoContraste={isHighContrast}
+            >
+              Sim, vincular a um local principal
+            </Button>
+          </View>
+
+          <Spacer size="md" />
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ============================================
+// MODAL DE VINCULAR LOCAL PRINCIPAL
+// ============================================
+const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast, localNome }) => {
+  const [localPrincipal, setLocalPrincipal] = useState('');
+  const [buscando, setBuscando] = useState(false);
+  const [sugestoes, setSugestoes] = useState([]);
+  const debounceTimer = useRef(null);
+
+  const buscarLocais = async (texto) => {
+    if (!texto || texto.length < 2) {
+      setSugestoes([]);
+      return;
+    }
+
+    setBuscando(true);
+    try {
+      const response = await api.get('/locais/buscar', {
+        params: { searchText: texto, page: 0, size: 10 }
+      });
+      const locais = response.data?.content || response.data || [];
+      setSugestoes(locais.map(l => ({ id: l.idLocal, nome: l.nome })));
+    } catch (error) {
+      console.error('Erro ao buscar locais:', error);
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  const handleChangeText = (texto) => {
+    setLocalPrincipal(texto);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => buscarLocais(texto), 500);
+  };
+
+  const handleSelecionarSugestao = (sugestao) => {
+    setLocalPrincipal(sugestao.nome);
+    setSugestoes([]);
+  };
+
+  const handleSalvar = () => {
+    if (!localPrincipal.trim()) {
+      toastHelper.showError('Informe o local principal');
+      return;
+    }
+    onSalvar(localPrincipal.trim());
+    setLocalPrincipal('');
+    setSugestoes([]);
+  };
+
+  const handleCancelar = () => {
+    setLocalPrincipal('');
+    setSugestoes([]);
+    onClose();
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleCancelar}
+      statusBarTranslucent={true}
+    >
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.container, { backgroundColor: theme.colors.surface }]}>
+          <View style={modalStyles.header}>
+            <View style={modalStyles.headerIcon}>
+              <Ionicons name="link-outline" size={24} color={theme.colors.primary} />
+            </View>
+            <ThemedText variant="h2" weight="bold" style={modalStyles.titulo}>
+              Vincular a um local principal
+            </ThemedText>
+            <TouchableOpacity onPress={handleCancelar} style={modalStyles.closeButton}>
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <Spacer size="sm" />
+
+          <ThemedText color="textSecondary" style={modalStyles.descricao}>
+            Informe o estabelecimento principal onde este local está situado.
+          </ThemedText>
+
+          <Spacer size="lg" />
+
+          <ThemedText weight="semibold" style={modalStyles.label}>
+            Local principal
+          </ThemedText>
+
+          <Spacer size="xs" />
+
+          <View style={[modalStyles.inputContainer, { borderColor: theme.colors.borderLight }]}>
+            <Ionicons name="business-outline" size={20} color={theme.colors.textSecondary} />
+            <RNTextInput
+              style={[modalStyles.input, { color: theme.colors.textPrimary }]}
+              placeholder="Digite o nome do local principal"
+              placeholderTextColor={theme.colors.textTertiary}
+              value={localPrincipal}
+              onChangeText={handleChangeText}
+            />
+            {buscando && <ActivityIndicator size="small" color={theme.colors.primary} />}
+          </View>
+
+          {sugestoes.length > 0 && (
+            <View style={[modalStyles.sugestoesContainer, { backgroundColor: theme.colors.surfaceSecondary }]}>
+              {sugestoes.map((sugestao, index) => (
+                <TouchableOpacity
+                  key={sugestao.id || index}
+                  style={[modalStyles.sugestaoItem, { borderBottomColor: theme.colors.borderLight }]}
+                  onPress={() => handleSelecionarSugestao(sugestao)}
+                >
+                  <Ionicons name="location-outline" size={16} color={theme.colors.primary} />
+                  <ThemedText style={modalStyles.sugestaoTexto}>{sugestao.nome}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <Spacer size="md" />
+
+          <ThemedText variant="caption" color="textTertiary" style={modalStyles.observacao}>
+            Este vínculo poderá ser alterado depois nas configurações do local.
+          </ThemedText>
+
+          <Spacer size="lg" />
+
+          <View style={modalStyles.botoesRow}>
+            <Button
+              variant="outline"
+              size="medium"
+              onPress={handleCancelar}
+              style={modalStyles.botaoCancelar}
+              altoContraste={isHighContrast}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onPress={handleSalvar}
+              style={modalStyles.botaoSalvar}
+              altoContraste={isHighContrast}
+            >
+              Salvar
+            </Button>
+          </View>
+
+          <Spacer size="md" />
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// ============================================
+// COMPONENTE DE UPLOAD DE IMAGENS
+// ============================================
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -357,6 +701,9 @@ const localStyles = StyleSheet.create({
   },
 });
 
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function AdicionarLocal({ onNavigate, navigation, routeParams }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario } = useAuth();
@@ -383,6 +730,10 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const [imagens, setImagens] = useState([]);
   const [progressoImagens, setProgressoImagens] = useState({ atual: 0, total: 0 });
   const [editingLocalId, setEditingLocalId] = useState(null);
+  
+  // Estados para modais de hierarquia
+  const [showModalHierarquia, setShowModalHierarquia] = useState(false);
+  const [showModalVincular, setShowModalVincular] = useState(false);
 
   const opcoesCategoria = useMemo(() => {
     return CATEGORIAS.map(categoria => ({
@@ -598,170 +949,204 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return true;
   };
 
-  const handleSalvarLocal = async () => {
+  // Função para salvar o local no backend
+  const salvarLocalNoBackend = async (idLocalPrincipal = null) => {
+    const cepLimpo = formulario.cep.replace(/\D/g, '');
+    
+    const payloadLocal = {
+      nome: formulario.nome.trim(),
+      descricao: formulario.descricao.trim(),
+      categoria: formulario.categoria,
+      tiposAcessibilidade: obterTiposAcessibilidadeArray(),
+      idUsuario: usuario.idUsuario,
+      endereco: {
+        cep: cepLimpo,
+        logradouro: formulario.logradouro.trim(),
+        numero: formulario.numero.trim(),
+        complemento: formulario.complemento?.trim() || '',
+        bairro: formulario.bairro.trim(),
+        cidade: formulario.cidade.trim(),
+        estado: formulario.estado.trim().toUpperCase(),
+        idUsuario: usuario.idUsuario,
+      },
+    };
+
+    if (idLocalPrincipal) {
+      payloadLocal.idLocalPrincipal = idLocalPrincipal;
+    }
+
+    let localId = null;
+    if (editingLocalId) {
+      await LocalService.atualizarLocal(editingLocalId, payloadLocal);
+      localId = editingLocalId;
+    } else {
+      const localResponse = await LocalService.cadastrarLocal(payloadLocal);
+      localId = localResponse.idLocal || localResponse.id;
+    }
+
+    return localId;
+  };
+
+  // Função para fazer upload das imagens
+  const uploadImagens = async (localId) => {
+    if (imagens.length === 0) return { enviadas: 0, erros: 0 };
+
+    let imagensEnviadas = 0;
+    let imagensComErro = 0;
+
+    for (let i = 0; i < imagens.length; i++) {
+      try {
+        setProgressoImagens({ atual: i + 1, total: imagens.length });
+        
+        const imagem = imagens[i];
+        const formData = new FormData();
+        formData.append('idLocal', String(localId));
+        
+        let arquivoParaEnviar;
+        
+        if (Platform.OS === 'web') {
+          if (imagem.file) {
+            arquivoParaEnviar = imagem.file;
+          } else if (imagem.uri && imagem.uri.startsWith('blob:')) {
+            const response = await fetch(imagem.uri);
+            const blob = await response.blob();
+            const fileName = imagem.name || `image_${Date.now()}.jpg`;
+            const fileType = imagem.type || 'image/jpeg';
+            arquivoParaEnviar = new File([blob], fileName, { type: fileType });
+          } else {
+            arquivoParaEnviar = {
+              uri: imagem.uri,
+              name: imagem.name || `image_${Date.now()}.jpg`,
+              type: imagem.type || 'image/jpeg',
+            };
+          }
+        } else {
+          arquivoParaEnviar = {
+            uri: imagem.uri,
+            name: imagem.name || `image_${Date.now()}.jpg`,
+            type: imagem.type || 'image/jpeg',
+          };
+        }
+        
+        formData.append('arquivo', arquivoParaEnviar);
+        
+        await api.post('/imagens', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        
+        imagensEnviadas++;
+      } catch (erroImagem) {
+        console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);
+        imagensComErro++;
+      }
+    }
+    
+    return { enviadas: imagensEnviadas, erros: imagensComErro };
+  };
+
+  // Função principal que inicia o fluxo de hierarquia
+  const iniciarFluxoSave = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
 
-    const tiposAcessibilidade = obterTiposAcessibilidadeArray();
-    if (tiposAcessibilidade.length === 0) return;
+    setShowModalHierarquia(true);
+  };
 
+  // Salvar como local independente (sem local principal)
+  const handleSalvarIndependente = async () => {
+    setShowModalHierarquia(false);
     setEnviando(true);
     setProgressoImagens({ atual: 0, total: imagens.length });
 
     try {
-      const cepLimpo = formulario.cep.replace(/\D/g, '');
+      const localId = await salvarLocalNoBackend(null);
       
-      const payloadLocal = {
-        nome: formulario.nome.trim(),
-        descricao: formulario.descricao.trim(),
-        categoria: formulario.categoria,
-        tiposAcessibilidade: tiposAcessibilidade,
-        idUsuario: usuario.idUsuario,
-        endereco: {
-          cep: cepLimpo,
-          logradouro: formulario.logradouro.trim(),
-          numero: formulario.numero.trim(),
-          complemento: formulario.complemento?.trim() || '',
-          bairro: formulario.bairro.trim(),
-          cidade: formulario.cidade.trim(),
-          estado: formulario.estado.trim().toUpperCase(),
-          idUsuario: usuario.idUsuario,
-        },
-      };
-
-      let localId = null;
-      if (editingLocalId) {
-        await LocalService.atualizarLocal(editingLocalId, payloadLocal);
-        localId = editingLocalId;
-      } else {
-        const localResponse = await LocalService.cadastrarLocal(payloadLocal);
-        localId = localResponse.idLocal || localResponse.id;
-      }
-
-      // Upload das imagens
-      if (imagens.length > 0) {
-        toastHelper.showInfo(`Enviando ${imagens.length} imagem(ns)...`);
-        
-        let imagensEnviadas = 0;
-        let imagensComErro = 0;
-
-        for (let i = 0; i < imagens.length; i++) {
-          try {
-            setProgressoImagens({ atual: i + 1, total: imagens.length });
-            
-            const imagem = imagens[i];
-            
-            const formData = new FormData();
-            formData.append('idLocal', String(localId));
-            
-            let arquivoParaEnviar;
-            
-            if (Platform.OS === 'web') {
-              if (imagem.file) {
-                arquivoParaEnviar = imagem.file;
-              } else if (imagem.uri && imagem.uri.startsWith('blob:')) {
-                const response = await fetch(imagem.uri);
-                const blob = await response.blob();
-                const fileName = imagem.name || `image_${Date.now()}.jpg`;
-                const fileType = imagem.type || 'image/jpeg';
-                arquivoParaEnviar = new File([blob], fileName, { type: fileType });
-              } else {
-                arquivoParaEnviar = {
-                  uri: imagem.uri,
-                  name: imagem.name || `image_${Date.now()}.jpg`,
-                  type: imagem.type || 'image/jpeg',
-                };
-              }
-            } else {
-              arquivoParaEnviar = {
-                uri: imagem.uri,
-                name: imagem.name || `image_${Date.now()}.jpg`,
-                type: imagem.type || 'image/jpeg',
-              };
-            }
-            
-            formData.append('arquivo', arquivoParaEnviar);
-            
-            const uploadResp = await api.post('/imagens', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            });
-            console.log('[AdicionarLocal] Upload response:', uploadResp?.data);
-            
-            imagensEnviadas++;
-            
-          } catch (erroImagem) {
-            console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);
-            console.error('Detalhes:', erroImagem.response?.data);
-            imagensComErro++;
-          }
-        }
-        
-        if (imagensComErro > 0) {
-          toastHelper.showWarning(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`);
-        } else if (imagensEnviadas > 0) {
-          toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
-        }
+      const { enviadas, erros } = await uploadImagens(localId);
+      
+      if (erros > 0) {
+        toastHelper.showWarning(`${enviadas} imagem(ns) enviadas, ${erros} falha(s)`);
+      } else if (enviadas > 0) {
+        toastHelper.showSuccess(`${enviadas} imagem(ns) enviadas com sucesso!`);
       }
 
       toastHelper.showSuccess(editingLocalId ? 'Local atualizado com sucesso!' : 'Local adicionado com sucesso!');
-
-      // Limpar formulário
-      setFormulario({
-        nome: '',
-        categoria: null,
-        cep: '',
-        logradouro: '',
-        numero: '',
-        complemento: '',
-        bairro: '',
-        cidade: '',
-        estado: '',
-        descricao: '',
-      });
-      setRecursosSelecionados({});
-      setImagens([]);
-      setProgressoImagens({ atual: 0, total: 0 });
-      setEditingLocalId(null);
       
-      // ============================================
-      // CRÍTICO: INVALIDAR CACHE DO BUSCAR SERVICE
-      // ============================================
-      // Forçar recarga do cache na próxima busca
+      limparFormulario();
       BuscarService.invalidateCache();
       
-      // Forçar recarga da Home via callback com timestamp
       if (onNavigate) {
-        // Navegar para Home com um timestamp para forçar refresh
-        onNavigate('Inicio', { 
-          refreshKey: Date.now(),
-          forceRefresh: true 
-        });
-      } else if (navigation && typeof navigation.goBack === 'function') {
-        try {
-          navigation.goBack();
-        } catch (e) {
-          try { 
-            navigation.navigate && navigation.navigate('Main', { 
-              screen: 'Inicio', 
-              params: { refreshKey: Date.now(), forceRefresh: true } 
-            }); 
-          } catch (err) {}
-        }
+        onNavigate('Inicio', { refreshKey: Date.now(), forceRefresh: true });
       }
       
     } catch (erro) {
       console.error('❌ Erro ao cadastrar local:', erro);
-      const mensagem = erro.response?.data?.message || 
-                      erro.response?.data?.error ||
-                      erro.message ||
-                      'Erro ao cadastrar local. Tente novamente.';
+      const mensagem = erro.response?.data?.message || erro.message || 'Erro ao cadastrar local. Tente novamente.';
       toastHelper.showError(typeof mensagem === 'string' ? mensagem : JSON.stringify(mensagem));
     } finally {
       setEnviando(false);
       setProgressoImagens({ atual: 0, total: 0 });
     }
+  };
+
+  // Abrir modal para vincular a local principal
+  const handleAbrirVincular = () => {
+    setShowModalHierarquia(false);
+    setShowModalVincular(true);
+  };
+
+  // Salvar com local principal
+  const handleSalvarComVinculo = async (nomeLocalPrincipal) => {
+    setShowModalVincular(false);
+    setEnviando(true);
+    setProgressoImagens({ atual: 0, total: imagens.length });
+
+    try {
+      const localId = await salvarLocalNoBackend(null);
+      
+      const { enviadas, erros } = await uploadImagens(localId);
+      
+      if (erros > 0) {
+        toastHelper.showWarning(`${enviadas} imagem(ns) enviadas, ${erros} falha(s)`);
+      } else if (enviadas > 0) {
+        toastHelper.showSuccess(`${enviadas} imagem(ns) enviadas com sucesso!`);
+      }
+
+      toastHelper.showSuccess(editingLocalId ? 'Local atualizado com sucesso!' : 'Local adicionado com sucesso!');
+      
+      limparFormulario();
+      BuscarService.invalidateCache();
+      
+      if (onNavigate) {
+        onNavigate('Inicio', { refreshKey: Date.now(), forceRefresh: true });
+      }
+      
+    } catch (erro) {
+      console.error('❌ Erro ao cadastrar local:', erro);
+      const mensagem = erro.response?.data?.message || erro.message || 'Erro ao cadastrar local. Tente novamente.';
+      toastHelper.showError(typeof mensagem === 'string' ? mensagem : JSON.stringify(mensagem));
+    } finally {
+      setEnviando(false);
+      setProgressoImagens({ atual: 0, total: 0 });
+    }
+  };
+
+  const limparFormulario = () => {
+    setFormulario({
+      nome: '',
+      categoria: null,
+      cep: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      descricao: '',
+    });
+    setRecursosSelecionados({});
+    setImagens([]);
+    setProgressoImagens({ atual: 0, total: 0 });
+    setEditingLocalId(null);
   };
 
   const handleVoltar = () => {
@@ -788,277 +1173,299 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
-    >
-      <Container
-        scroll
-        background={isHighContrast ? 'background' : 'backgroundSecondary'}
-        altoContraste={isHighContrast}
-        contentStyle={estilos.scroll}
-        style={{ paddingHorizontal: 0 }}
+    <>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
       >
-        <CabecalhoPagina
-          titulo="Adicionar Local"
-          subtitulo="Cadastre um novo local acessível para a comunidade"
-          onVoltar={handleVoltar}
-          textoVoltar="Voltar"
+        <Container
+          scroll
+          background={isHighContrast ? 'background' : 'backgroundSecondary'}
           altoContraste={isHighContrast}
-          style={estilos.header}
-        />
+          contentStyle={estilos.scroll}
+          style={{ paddingHorizontal: 0 }}
+        >
+          <CabecalhoPagina
+            titulo="Adicionar Local"
+            subtitulo="Cadastre um novo local acessível para a comunidade"
+            onVoltar={handleVoltar}
+            textoVoltar="Voltar"
+            altoContraste={isHighContrast}
+            style={estilos.header}
+          />
 
-        <View style={estilos.conteudo}>
-          <View style={estilos.colunaPrincipal}>
-            <CardSecao
-              titulo="Informações Básicas"
-              icone="document-text-outline"
-              corIcone={t.colors.primary}
-              altoContraste={isHighContrast}
-            >
-              <View style={estilos.linhaCampos}>
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Nome do Local *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Ex: Shopping Center Norte"
-                    value={formulario.nome}
-                    onChangeText={atualizarCampo('nome', LIMITES_CAMPOS_LOCAL.nome)}
-                    maxLength={LIMITES_CAMPOS_LOCAL.nome}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-
-                <View style={estilos.colunaCampo}>
-                  <Select
-                    label="Categoria *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Selecione uma categoria"
-                    value={formulario.categoria}
-                    options={opcoesCategoria}
-                    onSelect={(valor) => atualizarCampo('categoria')(valor)}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoSelect}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-              </View>
-
-              <View style={estilos.linhaCampos}>
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="CEP *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="88015-200"
-                    value={formulario.cep}
-                    onChangeText={handleCepChange}
-                    keyboardType="numeric"
-                    maxLength={9}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Estado *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="UF"
-                    value={formulario.estado}
-                    onChangeText={(valor) => atualizarCampo('estado', LIMITES_CAMPOS_LOCAL.estado)(valor.toUpperCase())}
-                    autoCapitalize="characters"
-                    maxLength={LIMITES_CAMPOS_LOCAL.estado}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-              </View>
-
-              <Input
-                label="Logradouro *"
-                labelStyle={estilos.campoLabel}
-                placeholder="Ex: Av. Beira-Mar Norte"
-                value={formulario.logradouro}
-                onChangeText={atualizarCampo('logradouro', LIMITES_CAMPOS_LOCAL.logradouro)}
-                maxLength={LIMITES_CAMPOS_LOCAL.logradouro}
-                containerStyle={estilos.campoContainer}
-                style={estilos.campoTexto}
-                altoContraste={isHighContrast}
-              />
-
-              <View style={estilos.linhaCampos}>
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Número *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Ex: 1230"
-                    value={formulario.numero}
-                    onChangeText={atualizarCampo('numero', LIMITES_CAMPOS_LOCAL.numero)}
-                    keyboardType="numeric"
-                    maxLength={LIMITES_CAMPOS_LOCAL.numero}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Complemento"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Ex: Apto 402"
-                    value={formulario.complemento}
-                    onChangeText={atualizarCampo('complemento', LIMITES_CAMPOS_LOCAL.complemento)}
-                    maxLength={LIMITES_CAMPOS_LOCAL.complemento}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-              </View>
-
-              <View style={estilos.linhaCampos}>
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Bairro *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Ex: Centro"
-                    value={formulario.bairro}
-                    onChangeText={atualizarCampo('bairro', LIMITES_CAMPOS_LOCAL.bairro)}
-                    maxLength={LIMITES_CAMPOS_LOCAL.bairro}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-
-                <View style={estilos.colunaCampo}>
-                  <Input
-                    label="Cidade *"
-                    labelStyle={estilos.campoLabel}
-                    placeholder="Ex: Florianópolis"
-                    value={formulario.cidade}
-                    onChangeText={atualizarCampo('cidade', LIMITES_CAMPOS_LOCAL.cidade)}
-                    maxLength={LIMITES_CAMPOS_LOCAL.cidade}
-                    containerStyle={estilos.campoContainer}
-                    style={estilos.campoTexto}
-                    altoContraste={isHighContrast}
-                  />
-                </View>
-              </View>
-
-              <View style={estilos.campoDescricaoHeader}>
-                <ThemedText color="textPrimary" weight="medium" style={estilos.campoLabel}>
-                  Descrição *
-                </ThemedText>
-                <ThemedText color="textTertiary" variant="caption">
-                  {contadorDescricao}
-                </ThemedText>
-              </View>
-
-              <Input
-                placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
-                value={formulario.descricao}
-                onChangeText={atualizarCampo('descricao', LIMITES_CAMPOS_LOCAL.descricao)}
-                multiline
-                numberOfLines={5}
-                maxLength={LIMITES_CAMPOS_LOCAL.descricao}
-                containerStyle={estilos.campoContainer}
-                style={[estilos.campoTexto, estilos.campoTextoMultiline]}
-                altoContraste={isHighContrast}
-              />
-            </CardSecao>
-
-            <CardSecao
-              titulo="Recursos de Acessibilidade"
-              descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
-              icone="accessibility-outline"
-              corIcone={t.colors.secondary}
-              altoContraste={isHighContrast}
-            >
-              <View style={estilos.recursosGrid}>
-                {RECURSOS_ACESSIBILIDADE.map((recurso) => (
-                  <CartaoSelecao
-                    key={recurso.id}
-                    titulo={recurso.titulo}
-                    descricao={recurso.descricao}
-                    icone={recurso.icon}
-                    corDestaque={obterCorRecurso(recurso.cor)}
-                    selecionado={!!recursosSelecionados[recurso.id]}
-                    onPress={() => alternarRecurso(recurso.id)}
-                    altoContraste={isHighContrast}
-                    style={estilos.recursoItem}
-                  />
-                ))}
-              </View>
-              
-              <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.borderLight }}>
-                <ThemedText color="textSecondary" variant="caption">
-                  {Object.values(recursosSelecionados).filter(Boolean).length} recurso(s) selecionado(s)
-                </ThemedText>
-              </View>
-            </CardSecao>
-
-            <CardSecao
-              titulo="Fotos do Local"
-              descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (máx. 5 fotos)"
-              icone="camera-outline"
-              corIcone={t.colors.primary}
-              altoContraste={isHighContrast}
-            >
-              <ImageUploadArea
-                images={imagens}
-                onAddImages={adicionarImagens}
-                onRemoveImage={removerImagem}
-                isHighContrast={isHighContrast}
-                theme={t}
-              />
-              
-              {enviando && progressoImagens.total > 0 && (
-                <View style={{ marginTop: 16 }}>
-                  <ThemedText variant="caption" align="center">
-                    Enviando imagens: {progressoImagens.atual} de {progressoImagens.total}
-                  </ThemedText>
-                  <View style={{ 
-                    height: 4, 
-                    backgroundColor: t.colors.borderLight, 
-                    borderRadius: 2, 
-                    marginTop: 8,
-                    overflow: 'hidden'
-                  }}>
-                    <View style={{ 
-                      width: `${(progressoImagens.atual / progressoImagens.total) * 100}%`, 
-                      height: '100%', 
-                      backgroundColor: t.colors.primary 
-                    }} />
-                  </View>
-                </View>
-              )}
-            </CardSecao>
-
-            <View style={estilos.botaoContainer}>
-              <Button
-                variant="primary"
-                size="large"
-                onPress={handleSalvarLocal}
-                iconLeft="add"
-                loading={enviando}
-                fullWidth
-                style={estilos.botaoPrincipal}
+          <View style={estilos.conteudo}>
+            <View style={estilos.colunaPrincipal}>
+              <CardSecao
+                titulo="Informações Básicas"
+                icone="document-text-outline"
+                corIcone={t.colors.primary}
                 altoContraste={isHighContrast}
               >
-                {enviando ? 'Salvando...' : (editingLocalId ? 'Salvar Alterações' : 'Adicionar Local')}
-              </Button>
+                <View style={estilos.linhaCampos}>
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Nome do Local *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Ex: Shopping Center Norte"
+                      value={formulario.nome}
+                      onChangeText={atualizarCampo('nome', LIMITES_CAMPOS_LOCAL.nome)}
+                      maxLength={LIMITES_CAMPOS_LOCAL.nome}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+
+                  <View style={estilos.colunaCampo}>
+                    <Select
+                      label="Categoria *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Selecione uma categoria"
+                      value={formulario.categoria}
+                      options={opcoesCategoria}
+                      onSelect={(valor) => atualizarCampo('categoria')(valor)}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoSelect}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+                </View>
+
+                <View style={estilos.linhaCampos}>
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="CEP *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="88015-200"
+                      value={formulario.cep}
+                      onChangeText={handleCepChange}
+                      keyboardType="numeric"
+                      maxLength={9}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Estado *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="UF"
+                      value={formulario.estado}
+                      onChangeText={(valor) => atualizarCampo('estado', LIMITES_CAMPOS_LOCAL.estado)(valor.toUpperCase())}
+                      autoCapitalize="characters"
+                      maxLength={LIMITES_CAMPOS_LOCAL.estado}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+                </View>
+
+                <Input
+                  label="Logradouro *"
+                  labelStyle={estilos.campoLabel}
+                  placeholder="Ex: Av. Beira-Mar Norte"
+                  value={formulario.logradouro}
+                  onChangeText={atualizarCampo('logradouro', LIMITES_CAMPOS_LOCAL.logradouro)}
+                  maxLength={LIMITES_CAMPOS_LOCAL.logradouro}
+                  containerStyle={estilos.campoContainer}
+                  style={estilos.campoTexto}
+                  altoContraste={isHighContrast}
+                />
+
+                <View style={estilos.linhaCampos}>
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Número *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Ex: 1230"
+                      value={formulario.numero}
+                      onChangeText={atualizarCampo('numero', LIMITES_CAMPOS_LOCAL.numero)}
+                      keyboardType="numeric"
+                      maxLength={LIMITES_CAMPOS_LOCAL.numero}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Complemento"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Ex: Apto 402"
+                      value={formulario.complemento}
+                      onChangeText={atualizarCampo('complemento', LIMITES_CAMPOS_LOCAL.complemento)}
+                      maxLength={LIMITES_CAMPOS_LOCAL.complemento}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+                </View>
+
+                <View style={estilos.linhaCampos}>
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Bairro *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Ex: Centro"
+                      value={formulario.bairro}
+                      onChangeText={atualizarCampo('bairro', LIMITES_CAMPOS_LOCAL.bairro)}
+                      maxLength={LIMITES_CAMPOS_LOCAL.bairro}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+
+                  <View style={estilos.colunaCampo}>
+                    <Input
+                      label="Cidade *"
+                      labelStyle={estilos.campoLabel}
+                      placeholder="Ex: Florianópolis"
+                      value={formulario.cidade}
+                      onChangeText={atualizarCampo('cidade', LIMITES_CAMPOS_LOCAL.cidade)}
+                      maxLength={LIMITES_CAMPOS_LOCAL.cidade}
+                      containerStyle={estilos.campoContainer}
+                      style={estilos.campoTexto}
+                      altoContraste={isHighContrast}
+                    />
+                  </View>
+                </View>
+
+                <View style={estilos.campoDescricaoHeader}>
+                  <ThemedText color="textPrimary" weight="medium" style={estilos.campoLabel}>
+                    Descrição *
+                  </ThemedText>
+                  <ThemedText color="textTertiary" variant="caption">
+                    {contadorDescricao}
+                  </ThemedText>
+                </View>
+
+                <Input
+                  placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
+                  value={formulario.descricao}
+                  onChangeText={atualizarCampo('descricao', LIMITES_CAMPOS_LOCAL.descricao)}
+                  multiline
+                  numberOfLines={5}
+                  maxLength={LIMITES_CAMPOS_LOCAL.descricao}
+                  containerStyle={estilos.campoContainer}
+                  style={[estilos.campoTexto, estilos.campoTextoMultiline]}
+                  altoContraste={isHighContrast}
+                />
+              </CardSecao>
+
+              <CardSecao
+                titulo="Recursos de Acessibilidade"
+                descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
+                icone="accessibility-outline"
+                corIcone={t.colors.secondary}
+                altoContraste={isHighContrast}
+              >
+                <View style={estilos.recursosGrid}>
+                  {RECURSOS_ACESSIBILIDADE.map((recurso) => (
+                    <CartaoSelecao
+                      key={recurso.id}
+                      titulo={recurso.titulo}
+                      descricao={recurso.descricao}
+                      icone={recurso.icon}
+                      corDestaque={obterCorRecurso(recurso.cor)}
+                      selecionado={!!recursosSelecionados[recurso.id]}
+                      onPress={() => alternarRecurso(recurso.id)}
+                      altoContraste={isHighContrast}
+                      style={estilos.recursoItem}
+                    />
+                  ))}
+                </View>
+                
+                <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.borderLight }}>
+                  <ThemedText color="textSecondary" variant="caption">
+                    {Object.values(recursosSelecionados).filter(Boolean).length} recurso(s) selecionado(s)
+                  </ThemedText>
+                </View>
+              </CardSecao>
+
+              <CardSecao
+                titulo="Fotos do Local"
+                descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (máx. 5 fotos)"
+                icone="camera-outline"
+                corIcone={t.colors.primary}
+                altoContraste={isHighContrast}
+              >
+                <ImageUploadArea
+                  images={imagens}
+                  onAddImages={adicionarImagens}
+                  onRemoveImage={removerImagem}
+                  isHighContrast={isHighContrast}
+                  theme={t}
+                />
+                
+                {enviando && progressoImagens.total > 0 && (
+                  <View style={{ marginTop: 16 }}>
+                    <ThemedText variant="caption" align="center">
+                      Enviando imagens: {progressoImagens.atual} de {progressoImagens.total}
+                    </ThemedText>
+                    <View style={{ 
+                      height: 4, 
+                      backgroundColor: t.colors.borderLight, 
+                      borderRadius: 2, 
+                      marginTop: 8,
+                      overflow: 'hidden'
+                    }}>
+                      <View style={{ 
+                        width: `${(progressoImagens.atual / progressoImagens.total) * 100}%`, 
+                        height: '100%', 
+                        backgroundColor: t.colors.primary 
+                      }} />
+                    </View>
+                  </View>
+                )}
+              </CardSecao>
+
+              <View style={estilos.botaoContainer}>
+                <Button
+                  variant="primary"
+                  size="large"
+                  onPress={iniciarFluxoSave}
+                  iconLeft="add"
+                  loading={enviando}
+                  fullWidth
+                  style={estilos.botaoPrincipal}
+                  altoContraste={isHighContrast}
+                >
+                  {enviando ? 'Salvando...' : (editingLocalId ? 'Salvar Alterações' : 'Adicionar Local')}
+                </Button>
+              </View>
             </View>
           </View>
-        </View>
-      </Container>
-    </KeyboardAvoidingView>
+        </Container>
+      </KeyboardAvoidingView>
+
+      {/* Modais - FORA do Container para garantir sobreposição */}
+      <ModalHierarquia
+        visible={showModalHierarquia}
+        onClose={() => setShowModalHierarquia(false)}
+        onIndependente={handleSalvarIndependente}
+        onVincular={handleAbrirVincular}
+        theme={t}
+        isHighContrast={isHighContrast}
+        nomeLocal={formulario.nome}
+      />
+
+      <ModalVincularLocal
+        visible={showModalVincular}
+        onClose={() => setShowModalVincular(false)}
+        onSalvar={handleSalvarComVinculo}
+        theme={t}
+        isHighContrast={isHighContrast}
+        localNome={formulario.nome}
+      />
+    </>
   );
 }
 
