@@ -1,4 +1,3 @@
-// LocalPageController.java
 package com.acessolivre.controller;
 
 import com.acessolivre.model.Local;
@@ -22,42 +21,47 @@ public class LocalPageController {
     @GetMapping("/{id}")
     public String paginaLocal(@PathVariable Long id, Model model) {
         try {
+            // Buscar local
             Local local = localService.buscarPorIdComImagens(id)
                     .orElseThrow(() -> new RuntimeException("Local não encontrado"));
             
-            model.addAttribute("nome", local.getNome());
-            model.addAttribute("categoria", local.getCategoria());
-            model.addAttribute("avaliacaoMedia", local.getAvaliacaoMedia());
-            model.addAttribute("totalAvaliacoes", local.getTotalAvaliacoes());
-            model.addAttribute("descricao", local.getDescricao());
+            // Dados que temos certeza que existem
+            model.addAttribute("nome", local.getNome() != null ? local.getNome() : "Local sem nome");
+            model.addAttribute("categoria", local.getCategoria() != null ? local.getCategoria().toString() : "Não informada");
+            model.addAttribute("id", local.getIdLocal());
+            model.addAttribute("avaliacaoMedia", local.getAvaliacaoMedia() != null ? local.getAvaliacaoMedia() : 0.0);
+            model.addAttribute("descricao", local.getDescricao() != null ? local.getDescricao() : "");
             
+            // Total de avaliações (usando valor padrão)
+            model.addAttribute("totalAvaliacoes", 0);
+            
+            // Endereço
+            String endereco = "Endereço não informado";
             if (local.getEndereco() != null) {
-                String enderecoCompleto = String.format("%s, %s - %s/%s",
-                    local.getEndereco().getLogradouro(),
-                    local.getEndereco().getNumero(),
-                    local.getEndereco().getCidade(),
-                    local.getEndereco().getEstado()
-                );
-                model.addAttribute("endereco", enderecoCompleto);
+                StringBuilder sb = new StringBuilder();
+                if (local.getEndereco().getLogradouro() != null) sb.append(local.getEndereco().getLogradouro());
+                if (local.getEndereco().getNumero() != null) sb.append(", ").append(local.getEndereco().getNumero());
+                if (local.getEndereco().getCidade() != null) sb.append(" - ").append(local.getEndereco().getCidade());
+                if (local.getEndereco().getEstado() != null) sb.append("/").append(local.getEndereco().getEstado());
+                endereco = sb.length() > 0 ? sb.toString() : "Endereço não informado";
             }
+            model.addAttribute("endereco", endereco);
             
-            if (local.getImagens() != null && !local.getImagens().isEmpty()) {
-                String imagemUrl = local.getImagens().get(0).getUrlCompleta();
-                model.addAttribute("imagemUrl", imagemUrl);
-            } else {
-                model.addAttribute("imagemUrl", "/images/default-local.png");
-            }
+            // Imagem padrão
+            model.addAttribute("imagemUrl", "https://acessolivre.app/images/default-local.png");
             
-            int fullStars = (int) Math.floor(local.getAvaliacaoMedia() != null ? local.getAvaliacaoMedia() : 0);
-            boolean hasHalfStar = (local.getAvaliacaoMedia() != null && 
-                                   local.getAvaliacaoMedia() % 1 >= 0.5);
-            model.addAttribute("fullStars", fullStars);
-            model.addAttribute("hasHalfStar", hasHalfStar);
+            // Estrelas
+            double media = local.getAvaliacaoMedia() != null ? local.getAvaliacaoMedia() : 0;
+            model.addAttribute("fullStars", (int) Math.floor(media));
+            model.addAttribute("hasHalfStar", (media - Math.floor(media)) >= 0.5);
+            
+            log.info("Página do local {} carregada", id);
             
             return "local-page";
             
         } catch (Exception e) {
             log.error("Erro ao carregar página do local {}: {}", id, e.getMessage());
+            model.addAttribute("erro", "Local não encontrado");
             return "error";
         }
     }

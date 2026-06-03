@@ -9,12 +9,12 @@ import {
   Platform,
   Share,
   Alert,
-  Linking
+  Linking,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { ThemedText, Spacer } from '../commons';
-import { Button } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
@@ -37,17 +37,21 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const nomeLocal = local.nome || 'Local';
   const idLocal = local.id || local.idLocal;
   
+  // URL para compartilhar (aponta para a página com Open Graph)
   const baseUrl = Platform.OS === 'web' 
     ? (typeof window !== 'undefined' ? window.location.origin : 'https://acessolivre.app')
     : 'https://acessolivre.app';
   
-  const urlLocal = `${baseUrl}/local/${idLocal}`;
-  const mensagemCompartilhamento = `📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocal}`;
-
+  // URL da página do local (com Open Graph para preview)
+  const urlLocalPage = `${baseUrl}/local/${idLocal}`;
+  
+  // URL para fallback (quando Open Graph não funciona)
+  const urlLocal = `${baseUrl}/#/local/${idLocal}`;
+  
   const copiarLink = async () => {
     try {
-      await Clipboard.setStringAsync(urlLocal);
-      toastHelper.showSuccess('Link copiado para a área de transferência!');
+      await Clipboard.setStringAsync(urlLocalPage);
+      toastHelper.showSuccess('Link copiado! O link já contém preview do local.');
     } catch (error) {
       console.error('Erro ao copiar link:', error);
       toastHelper.showError('Erro ao copiar link');
@@ -59,9 +63,9 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     
     try {
       const result = await Share.share({
-        title: `Compartilhar ${nomeLocal}`,
-        message: mensagemCompartilhamento,
-        url: Platform.OS === 'ios' ? urlLocal : undefined,
+        title: `${nomeLocal} - Acesso Livre`,
+        message: `📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`,
+        url: Platform.OS === 'ios' ? urlLocalPage : undefined,
       });
       
       if (result.action === Share.sharedAction) {
@@ -71,23 +75,16 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     } catch (error) {
       console.error('Erro ao compartilhar:', error);
       await copiarLink();
-      Alert.alert(
-        'Não foi possível compartilhar',
-        'O link foi copiado para você compartilhar manualmente.',
-        [{ text: 'OK', onPress: onClose }]
-      );
     } finally {
       setCompartilhando(false);
     }
   };
 
-  // WhatsApp - suporta web e mobile
   const compartilharWhatsApp = async () => {
     setCompartilhando(true);
     try {
-      const textoEncoded = encodeURIComponent(mensagemCompartilhamento);
+      const textoEncoded = encodeURIComponent(`📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`);
       
-      // Web: usar URL web, Mobile: tentar deep link primeiro
       if (Platform.OS === 'web') {
         const webUrl = `https://wa.me/?text=${textoEncoded}`;
         window.open(webUrl, '_blank');
@@ -105,6 +102,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
           onClose();
         }
       }
+      toastHelper.showSuccess('Abrindo WhatsApp...');
     } catch (error) {
       console.error('Erro no WhatsApp:', error);
       await compartilharNativo();
@@ -113,18 +111,16 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     }
   };
 
-  // Facebook - suporta web e mobile
   const compartilharFacebook = async () => {
     setCompartilhando(true);
     try {
-      const urlEncoded = encodeURIComponent(urlLocal);
+      const urlEncoded = encodeURIComponent(urlLocalPage);
       
       if (Platform.OS === 'web') {
         const webUrl = `https://www.facebook.com/sharer/sharer.php?u=${urlEncoded}`;
         window.open(webUrl, '_blank');
         onClose();
       } else {
-        // Tentar deep link primeiro
         const deepLink = `fb://facewebmodal/f?href=${urlEncoded}`;
         const canOpen = await Linking.canOpenURL(deepLink);
         
@@ -137,6 +133,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
           onClose();
         }
       }
+      toastHelper.showSuccess('Abrindo Facebook...');
     } catch (error) {
       console.error('Erro no Facebook:', error);
       await compartilharNativo();
@@ -145,15 +142,14 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     }
   };
 
-  // Instagram - apenas copia link (não suporta compartilhamento direto)
   const compartilharInstagram = async () => {
     setCompartilhando(true);
     try {
-      await Clipboard.setStringAsync(urlLocal);
+      await Clipboard.setStringAsync(urlLocalPage);
       
       if (Platform.OS === 'web') {
         window.open('https://www.instagram.com', '_blank');
-        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar.');
+        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar. O link terá preview automático.');
       } else {
         const deepLink = `instagram://library?AssetPath=`;
         const canOpen = await Linking.canOpenURL(deepLink);
@@ -169,38 +165,38 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       onClose();
     } catch (error) {
       console.error('Erro no Instagram:', error);
-      await Clipboard.setStringAsync(urlLocal);
-      toastHelper.showSuccess('Link copiado! Compartilhe manualmente no Instagram.');
+      await Clipboard.setStringAsync(urlLocalPage);
+      toastHelper.showSuccess('Link copiado! O link contém preview do local.');
       onClose();
     } finally {
       setCompartilhando(false);
     }
   };
 
-  // Telegram - suporta web e mobile
   const compartilharTelegram = async () => {
     setCompartilhando(true);
     try {
-      const textoEncoded = encodeURIComponent(mensagemCompartilhamento);
-      const urlEncoded = encodeURIComponent(urlLocal);
+      const urlEncoded = encodeURIComponent(urlLocalPage);
+      const textoEncoded = encodeURIComponent(`📍 ${nomeLocal}\n\nConfira este local acessível!`);
       
       if (Platform.OS === 'web') {
-        const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${encodeURIComponent(`📍 ${nomeLocal}`)}`;
+        const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${textoEncoded}`;
         window.open(webUrl, '_blank');
         onClose();
       } else {
-        const deepLink = `tg://msg?text=${textoEncoded}`;
+        const deepLink = `tg://msg?url=${urlEncoded}&text=${textoEncoded}`;
         const canOpen = await Linking.canOpenURL(deepLink);
         
         if (canOpen) {
           await Linking.openURL(deepLink);
           onClose();
         } else {
-          const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${encodeURIComponent(`📍 ${nomeLocal}`)}`;
+          const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${textoEncoded}`;
           await Linking.openURL(webUrl);
           onClose();
         }
       }
+      toastHelper.showSuccess('Abrindo Telegram...');
     } catch (error) {
       console.error('Erro no Telegram:', error);
       await compartilharNativo();
@@ -279,10 +275,42 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
 
                 <Spacer size="lg" />
 
+                {/* Preview do card que será compartilhado */}
+                <View style={[styles.previewContainer, { backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F8F9FA' }]}>
+                  <View style={styles.previewHeader}>
+                    <View style={styles.previewIcon}>
+                      <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                    </View>
+                    <ThemedText variant="caption" color="textSecondary">WhatsApp Preview</ThemedText>
+                  </View>
+                  <View style={styles.previewCard}>
+                    {local.imagemUrl ? (
+                      <Image source={{ uri: local.imagemUrl }} style={styles.previewImage} />
+                    ) : (
+                      <View style={styles.previewImagePlaceholder}>
+                        <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
+                      </View>
+                    )}
+                    <View style={styles.previewContent}>
+                      <ThemedText weight="bold" numberOfLines={1} style={styles.previewTitle}>
+                        {nomeLocal}
+                      </ThemedText>
+                      <ThemedText variant="caption" color="textSecondary" numberOfLines={2}>
+                        {local.categoria} • ⭐ {local.avaliacaoMedia?.toFixed(1) || 0} ({local.totalAvaliacoes || 0} avaliações)
+                      </ThemedText>
+                      <ThemedText variant="caption" color="textTertiary" numberOfLines={1}>
+                        {urlLocalPage}
+                      </ThemedText>
+                    </View>
+                  </View>
+                </View>
+
+                <Spacer size="md" />
+
                 <View style={[styles.urlContainer, { backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F5F5F5' }]}>
                   <Ionicons name="link-outline" size={20} color={theme.colors.primary} />
                   <ThemedText color="textSecondary" style={styles.urlTexto} numberOfLines={1}>
-                    {urlLocal}
+                    {urlLocalPage}
                   </ThemedText>
                   <TouchableOpacity onPress={copiarLink} style={styles.copiarIcon}>
                     <Ionicons name="copy-outline" size={20} color={theme.colors.primary} />
@@ -308,7 +336,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                 <View style={[styles.footer, { borderTopColor: theme.colors.borderLight }]}>
                   <Ionicons name="information-circle-outline" size={14} color={theme.colors.textTertiary} />
                   <ThemedText variant="caption" color="textTertiary" align="center" style={styles.footerTexto}>
-                    Ao compartilhar, você ajuda a tornar as informações acessíveis para mais pessoas.
+                    O link compartilhado inclui um preview com foto e informações do local.
                   </ThemedText>
                 </View>
 
@@ -339,7 +367,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: Platform.OS === 'web' ? 480 : '92%',
     maxWidth: 520,
-    maxHeight: '75%',
+    maxHeight: '85%',
     borderRadius: 24,
     padding: 24,
     ...Platform.select({
@@ -373,6 +401,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 8,
+  },
+  previewContainer: {
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 8,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  previewIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#25D36615',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewCard: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      },
+      default: {
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+    }),
+  },
+  previewImage: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#F0F0F0',
+  },
+  previewImagePlaceholder: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewContent: {
+    flex: 1,
+    padding: 10,
+    justifyContent: 'center',
+  },
+  previewTitle: {
+    fontSize: 14,
+    marginBottom: 4,
   },
   urlContainer: {
     flexDirection: 'row',

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local não encontrado - Acesso Livre</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: #FFE5E5;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        h1 { font-size: 24px; margin-bottom: 12px; color: #333; }
+        p { color: #666; margin-bottom: 24px; line-height: 1.5; }
+        .button {
+            display: inline-block;
+            background: #007AFF;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF4444" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        <h1>Local não encontrado</h1>
+        <p th:if="${erro}" th:text="${erro}">O local que você está procurando não existe ou foi removido.</p>
+        <p th:unless="${erro}">O local que você está procurando não existe ou foi removido.</p>
+        <a href="https://acessolivre.app" class="button">Ir para o início</a>
+    </div>
+</body>
+</html>
