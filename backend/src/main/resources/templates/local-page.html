@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" th:content="${nome} | Acesso Livre">
+    <meta property="og:description" th:content="'📍 ' + ${categoria} + ' • ⭐ ' + ${avaliacaoMedia} + ' (' + ${totalAvaliacoes} + ' avaliações) • ' + ${endereco}">
+    <meta property="og:image" th:content="${imagemUrl}">
+    <meta property="og:url" th:content="'https://acessolivre.app/local/' + ${id}">
+    <meta property="og:site_name" content="Acesso Livre">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${nome} | Acesso Livre">
+    <meta name="twitter:description" th:content="'📍 ' + ${categoria} + ' • ⭐ ' + ${avaliacaoMedia} + ' (' + ${totalAvaliacoes} + ' avaliações)'">
+    <meta name="twitter:image" th:content="${imagemUrl}">
+    
+    <!-- Outros metadados -->
+    <meta name="description" th:content="'Descubra ' + ${nome} + ' - um local acessível em ' + ${endereco} + '. ' + ${descricao}">
+    
+    <title th:content="${nome} | Acesso Livre - Locais Acessíveis"></title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .card {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+        
+        .card-content {
+            padding: 24px;
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        
+        .card-category {
+            display: inline-block;
+            background: #E8F0FF;
+            color: #007AFF;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .card-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .stars {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .star {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .star-filled {
+            fill: #FFD700;
+        }
+        
+        .star-half {
+            fill: #FFD700;
+        }
+        
+        .star-empty {
+            fill: #E0E0E0;
+        }
+        
+        .rating-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .rating-count {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .card-address {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 16px;
+            padding: 8px 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .card-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .card-button {
+            display: block;
+            background: #007AFF;
+            color: white;
+            text-align: center;
+            padding: 14px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .card-button:hover {
+            background: #0056b3;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        @media (max-width: 480px) {
+            .card-content {
+                padding: 16px;
+            }
+            .card-title {
+                font-size: 20px;
+            }
+            .card-image {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img class="card-image" th:src="${imagemUrl}" th:alt="${nome}">
+        
+        <div class="card-content">
+            <span class="card-category" th:text="${categoria}"></span>
+            <h1 class="card-title" th:text="${nome}"></h1>
+            
+            <div class="card-rating">
+                <div class="stars">
+                    <!-- Gerar estrelas dinamicamente -->
+                    <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                        <svg class="star" viewBox="0 0 24 24" th:if="${i <= fullStars}">
+                            <path class="star-filled" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <svg class="star" viewBox="0 0 24 24" th:if="${i == fullStars + 1 and hasHalfStar}">
+                            <path class="star-half" d="M12 15.4V6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+                        </svg>
+                        <svg class="star" viewBox="0 0 24 24" th:if="${i > fullStars + 1 or (i > fullStars and not hasHalfStar)}">
+                            <path class="star-empty" d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+                        </svg>
+                    </th:block>
+                </div>
+                <span class="rating-value" th:text="${avaliacaoMedia}"></span>
+                <span class="rating-count" th:text="'(' + ${totalAvaliacoes} + ' avaliações)'"></span>
+            </div>
+            
+            <div class="card-address">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                <span th:text="${endereco}"></span>
+            </div>
+            
+            <div class="card-description" th:text="${descricao}"></div>
+            
+            <a th:href="'https://acessolivre.app/local/' + ${id}" class="card-button">
+                Ver detalhes no Acesso Livre →
+            </a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>📍 Acesso Livre - Encontre locais acessíveis perto de você</p>
+    </div>
+</body>
+</html>
