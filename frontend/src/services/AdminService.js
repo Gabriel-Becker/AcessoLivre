@@ -20,6 +20,24 @@ const AdminService = {
     return response.data;
   },
 
+  async obterRelatorioUsuarios({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    const response = await api.get('/admin/relatorios/usuarios', { params });
+    return response.data;
+  },
+
+  async obterRelatorioLocais({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    const response = await api.get('/admin/relatorios/locais', { params });
+    return response.data;
+  },
+
   async alterarRoleUsuario(idUsuario, novaRole) {
     const response = await api.put(`/admin/usuarios/${idUsuario}/role`, {
       novaRole,

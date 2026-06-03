@@ -1,6 +1,7 @@
 package com.acessolivre.controller;
 
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.acessolivre.dto.request.AlterarRoleRequestDTO;
 import com.acessolivre.dto.response.AvaliacaoResponseDTO;
@@ -119,6 +121,20 @@ public class AdminController {
     @GetMapping("/relatorios/estatisticas-gerais")
     public ResponseEntity<Map<String, Object>> obterEstatisticasGerais() {
         return ResponseEntity.ok(adminService.obterEstatisticasGerais());
+    }
+
+    @GetMapping("/relatorios/usuarios")
+    public ResponseEntity<Map<String, Object>> obterRelatorioUsuarios(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok(adminService.obterRelatorioUsuarios(dataInicio, dataFim));
+    }
+
+    @GetMapping("/relatorios/locais")
+    public ResponseEntity<Map<String, Object>> obterRelatorioLocais(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok(adminService.obterRelatorioLocais(dataInicio, dataFim));
     }
 
     @GetMapping("/relatorios/locais-por-estado")
