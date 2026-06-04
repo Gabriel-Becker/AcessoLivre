@@ -396,4 +396,25 @@ public class LocalController {
         
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<Page<LocalResponseDTO>> buscarPorNome(
+            @RequestParam(required = false) String searchText,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nome") String sort,
+            @RequestParam(defaultValue = "asc") String direction) {
+        
+        log.info("GET /api/locais/buscar - Buscando locais por nome: {}", searchText);
+        
+        int pageSize = validatePageSize(size);
+        String sortField = validateSortField(sort);
+        Sort.Direction sortDirection = validateSortDirection(direction);
+        
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(sortDirection, sortField));
+        Page<Local> locais = localService.buscarPorNomePaginado(searchText, pageable);
+        Page<LocalResponseDTO> response = locais.map(LocalMapper::toResponse);
+        
+        return ResponseEntity.ok(response);
+    }
 }

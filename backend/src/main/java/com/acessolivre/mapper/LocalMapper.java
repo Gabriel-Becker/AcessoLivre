@@ -25,6 +25,7 @@ public class LocalMapper {
                 .avaliacaoMedia(0.0)
                 .localPrincipal(null)
                 .tiposAcessibilidade(new HashSet<>())
+                .nomeLocalPrincipal(dto.getNomeLocalPrincipal())
                 .build();
         
         if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
@@ -54,7 +55,6 @@ public class LocalMapper {
                     .map(ImagemMapper::toResponse)
                     .collect(Collectors.toList());
             
-    
             Imagem primeiraImagem = imagensOrdenadas.get(0);
             ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
             if (primeiraImagemDTO != null) {
@@ -66,7 +66,7 @@ public class LocalMapper {
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
                 .descricao(entity.getDescricao())
-                .imagemUrl(imagemUrl)  // ← Agora é URL completa!
+                .imagemUrl(imagemUrl)
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .categoria(entity.getCategoria())
@@ -81,7 +81,8 @@ public class LocalMapper {
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha())
                 .imagens(imagensDTO)
-                .totalImagens(imagensDTO.size());
+                .totalImagens(imagensDTO.size())
+                .nomeLocalPrincipal(entity.getNomeLocalPrincipal());
 
         if (entity.getLocalPrincipal() != null) {
             builder.idLocalPrincipal(entity.getLocalPrincipal().getIdLocal());
@@ -121,7 +122,7 @@ public class LocalMapper {
         return LocalResumoResponseDTO.builder()
                 .idLocal(entity.getIdLocal())
                 .nome(entity.getNome())
-                .imagem(imagemUrl)  // ← URL completa
+                .imagem(imagemUrl)
                 .avaliacaoMedia(entity.getAvaliacaoMedia())
                 .status(entity.getStatus())
                 .build();
@@ -150,5 +151,8 @@ public class LocalMapper {
         if (dto.getTiposAcessibilidade() != null && !dto.getTiposAcessibilidade().isEmpty()) {
             entity.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());
         }
+        
+        // Atualiza o nome do local principal
+        entity.setNomeLocalPrincipal(dto.getNomeLocalPrincipal());
     }
 }

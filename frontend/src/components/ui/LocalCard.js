@@ -11,28 +11,61 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
 
+  // ============================================
+  // DADOS DO LOCAL - COM LOGS PARA DEBUG
+  // ============================================
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria || 'Sem categoria';
   const endereco = local?.endereco;
   const avaliacaoMedia = local?.avaliacaoMedia || 0;
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
   const tiposAcessibilidade = local?.tiposAcessibilidade || [];
+  
+  // DEBUG: Nome do local principal
+  const nomeLocalPrincipal = local?.nomeLocalPrincipal || local?.nome_local_principal || null;
+  console.log(`🔍 [LocalCard] ${nome} - nomeLocalPrincipal:`, nomeLocalPrincipal);
+
+  // DEBUG: Data de criação
+  const dataCriacaoRaw = local?.dataCriacao;
+  console.log(`🔍 [LocalCard] ${nome} - dataCriacao raw:`, dataCriacaoRaw);
+
+  // Extrair valores para dependências do useMemo
+  const imagemUrl = local?.imagemUrl;
+  const imagemPrincipal = local?.imagemPrincipal;
+  const imagem = local?.imagem;
+  const primeiraImagemUrl = local?.primeiraImagem?.url;
+  const primeiraImagemUrlCompleta = local?.primeiraImagem?.urlCompleta;
+  const imagensCompletasUrl = local?.imagensCompletas?.[0]?.url;
+  const imagensCompletasUrlCompleta = local?.imagensCompletas?.[0]?.urlCompleta;
+  const imagensUrl = local?.imagens?.[0]?.url;
+  const imagensUrlCompleta = local?.imagens?.[0]?.urlCompleta;
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
     return (
-      local?.imagemUrl ||
-      local?.imagemPrincipal ||
-      local?.imagem ||
-      local?.primeiraImagem?.urlCompleta ||
-      local?.primeiraImagem?.url ||
-      local?.imagensCompletas?.[0]?.url ||
-      local?.imagensCompletas?.[0]?.urlCompleta ||
-      local?.imagens?.[0]?.url ||
-      local?.imagens?.[0]?.urlCompleta ||
+      imagemUrl ||
+      imagemPrincipal ||
+      imagem ||
+      primeiraImagemUrlCompleta ||
+      primeiraImagemUrl ||
+      imagensCompletasUrlCompleta ||
+      imagensCompletasUrl ||
+      imagensUrlCompleta ||
+      imagensUrl ||
       null
     );
-  }, [local?.imagemUrl, imageError]);
+  }, [
+    imageError,
+    imagemUrl,
+    imagemPrincipal,
+    imagem,
+    primeiraImagemUrl,
+    primeiraImagemUrlCompleta,
+    imagensCompletasUrl,
+    imagensCompletasUrlCompleta,
+    imagensUrl,
+    imagensUrlCompleta
+  ]);
 
   const handleImageError = () => {
     setImageError(true);
@@ -45,11 +78,11 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={18} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star" size={16} color="#FFD700" />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={18} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star-half" size={16} color="#FFD700" />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={18} color="#CCCCCC" />);
+        stars.push(<Ionicons key={i} name="star-outline" size={16} color="#CCCCCC" />);
       }
     }
     return stars;
@@ -81,23 +114,65 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
     return labels[cat] || cat;
   };
 
-  // Verificar se é novo (últimos 7 dias)
+  // ============================================
+  // BADGE NOVO - VERSÃO CORRIGIDA (suporta microssegundos)
+  // ============================================
   const isNew = useMemo(() => {
-    if (!local?.dataCriacao) return false;
-    const dataCriacao = new Date(local.dataCriacao);
-    const agora = new Date();
-    const diffDias = (agora - dataCriacao) / (1000 * 60 * 60 * 24);
-    return diffDias <= 7;
-  }, [local?.dataCriacao]);
+    if (!dataCriacaoRaw) {
+      console.log(`🔍 [LocalCard] ${nome} - Sem dataCriacao`);
+      return false;
+    }
+    
+    try {
+      // Limpar a string de data para remover microssegundos
+      let dataLimpa = dataCriacaoRaw;
+      
+      // Remover microssegundos (ex: "2026-06-04T04:29:43.833847" -> "2026-06-04T04:29:43.833")
+      if (typeof dataLimpa === 'string' && dataLimpa.includes('.')) {
+        const partes = dataLimpa.split('.');
+        if (partes.length > 1) {
+          // Manter apenas os primeiros 3 dígitos dos milissegundos
+          dataLimpa = `${partes[0]}.${partes[1].substring(0, 3)}`;
+        }
+      }
+      
+      const dataCriacaoDate = new Date(dataLimpa);
+      const agora = new Date();
+      
+      // Verificar se a data é válida
+      if (isNaN(dataCriacaoDate.getTime())) {
+        console.log(`🔍 [LocalCard] ${nome} - Data inválida:`, dataCriacaoRaw);
+        return false;
+      }
+      
+      const diffMs = agora - dataCriacaoDate;
+      const diffDias = diffMs / (1000 * 60 * 60 * 24);
+      const isNewResult = diffDias <= 7;
+      
+      console.log(`🔍 [LocalCard] ${nome} - data: ${dataCriacaoDate.toISOString()}, diffDias: ${diffDias.toFixed(2)}, isNew: ${isNewResult}`);
+      
+      return isNewResult;
+    } catch (error) {
+      console.error(`🔍 [LocalCard] ${nome} - Erro ao processar data:`, error);
+      return false;
+    }
+  }, [dataCriacaoRaw, nome]);
 
   const categoriaLabel = getCategoriaLabel(categoria);
   const totalRecursos = tiposAcessibilidade.length;
 
-  // Calcular total de imagens
-  const totalImagens = local?.imagens?.length || local?.imagensCompletas?.length || 0;
+  // ============================================
+  // TOTAL DE IMAGENS - USANDO CAMPO DIRETO DO BACKEND
+  // ============================================
+  const totalImagens = local?.totalImagens || 0;
   const imagemAtual = 1;
+  
+  console.log(`🔍 [LocalCard] ${nome} - totalImagens:`, totalImagens);
 
-  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo, fontSizeMultiplier), [t, contrasteAtivo, fontSizeMultiplier]);
+  // Verificar se é recomendado (nota superior a 4)
+  const isRecomendado = avaliacaoMedia > 4;
+
+  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo), [t, contrasteAtivo]);
 
   return (
     <TouchableOpacity
@@ -128,7 +203,7 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
 
-        {/* Badge de imagem (ex: 1/5) */}
+        {/* Badge de imagem (ex: 1/5) - com zIndex para garantir visibilidade */}
         {totalImagens > 0 && (
           <View style={estilos.imagemBadge}>
             <ThemedText weight="bold" style={estilos.imagemBadgeTexto}>
@@ -140,11 +215,21 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
       {/* Conteúdo do Card */}
       <View style={estilos.contentContainer}>
-        {/* Nome do local e Categoria na mesma linha */}
+        {/* Área do nome + vínculo e categoria */}
         <View style={styles.nomeCategoriaRow}>
-          <ThemedText weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
-            {nome}
-          </ThemedText>
+          <View style={{ flex: 1 }}>
+            <ThemedText weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
+              {nome}
+            </ThemedText>
+            
+            {/* Vínculo com local principal (dentro da área do nome) */}
+            {nomeLocalPrincipal && nomeLocalPrincipal.trim() && (
+              <ThemedText numberOfLines={1} style={estilos.nomeLocalPrincipal}>
+                Dentro de {nomeLocalPrincipal}
+              </ThemedText>
+            )}
+          </View>
+
           <View style={estilos.categoriaBadge}>
             <ThemedText style={estilos.categoriaTexto}>{categoriaLabel}</ThemedText>
           </View>
@@ -156,17 +241,15 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           <ThemedText weight="bold" style={estilos.ratingNumber}>
             {avaliacaoMedia.toFixed(1)}
           </ThemedText>
+          <ThemedText style={estilos.ratingCount}>
+            ({totalAvaliacoes})
+          </ThemedText>
         </View>
-
-        {/* Texto "Baseado em X avaliações" */}
-        <ThemedText style={estilos.baseadoTexto}>
-          Baseado em {totalAvaliacoes} {totalAvaliacoes === 1 ? 'avaliação' : 'avaliações'}
-        </ThemedText>
 
         {/* Endereço em duas linhas */}
         {endereco && (enderecoLinha1 || enderecoLinha2) && (
           <View style={estilos.enderecoContainer}>
-            <Ionicons name="location" size={16} color={t.colors.primary} style={estilos.enderecoIcon} />
+            <Ionicons name="location-outline" size={14} color="#888888" style={estilos.enderecoIcon} />
             <View style={estilos.enderecoTextos}>
               {enderecoLinha1 ? (
                 <ThemedText style={estilos.enderecoLinha1} numberOfLines={1}>
@@ -182,29 +265,29 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
 
-        {/* Recomendado + Recursos na mesma linha */}
+        {/* Recomendado + Recursos na mesma linha - RECURSOS SEMPRE NO CANTO DIREITO */}
         <View style={estilos.recomendadoRecursosRow}>
-          <View style={estilos.recomendadoContainer}>
-            <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-            <ThemedText weight="semibold" style={estilos.recomendadoTexto}>
-              Recomendado
-            </ThemedText>
-          </View>
-
-          {/* Recursos (apenas número) */}
-          {totalRecursos > 0 && (
-            <View style={estilos.recursosContainer}>
-              <Ionicons name="accessibility" size={16} color={t.colors.primary} />
-              <View style={estilos.recursosBadge}>
-                <ThemedText weight="bold" style={estilos.recursosNumero}>
-                  +{totalRecursos}
-                </ThemedText>
-                <ThemedText style={estilos.recursosLabel}>
-                  recursos
-                </ThemedText>
-              </View>
+          {isRecomendado && (
+            <View style={estilos.recomendadoContainer}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <ThemedText weight="semibold" style={estilos.recomendadoTexto}>
+                Recomendado
+              </ThemedText>
             </View>
           )}
+
+          {/* Recursos - SEMPRE no canto direito, mesmo sem Recomendado */}
+          <View style={estilos.recursosContainer}>
+            <Ionicons name="accessibility-outline" size={14} color={t.colors.primary} />
+            <View style={estilos.recursosBadge}>
+              <ThemedText weight="bold" style={estilos.recursosNumero}>
+                +{totalRecursos}
+              </ThemedText>
+              <ThemedText style={estilos.recursosLabel}>
+                recursos
+              </ThemedText>
+            </View>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -214,34 +297,31 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 const styles = StyleSheet.create({
   nomeCategoriaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 8,
-    flexWrap: 'wrap',
     gap: 8,
   },
 });
 
-function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
-  const fonteBase = fontSizeMultiplier || 1;
-  
+function criarEstilos(t, contrasteAtivo) {
   return StyleSheet.create({
     container: {
       backgroundColor: '#FFFFFF',
-      borderRadius: 24,
+      borderRadius: 20,
       overflow: 'hidden',
       marginBottom: 16,
       borderWidth: contrasteAtivo ? 2 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.08,
-      shadowRadius: 16,
-      elevation: 5,
+      shadowRadius: 12,
+      elevation: 4,
     },
     imageContainer: {
       width: '100%',
-      height: 220,
+      height: 200,
       position: 'relative',
       backgroundColor: '#F5F5F5',
     },
@@ -271,6 +351,7 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 3,
+      zIndex: 10,
     },
     newBadgeText: {
       fontSize: 11,
@@ -281,62 +362,69 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
       position: 'absolute',
       bottom: 12,
       right: 12,
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 16,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.2)',
+      borderColor: 'rgba(255,255,255,0.3)',
+      zIndex: 10,
+      elevation: 5,
     },
     imagemBadgeTexto: {
-      fontSize: 11,
+      fontSize: 12,
       color: '#FFFFFF',
+      fontWeight: 'bold',
     },
     contentContainer: {
-      padding: 16,
+      padding: 14,
     },
     nomeLocal: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: 'bold',
       color: '#1A1A1A',
-      flex: 1,
+      marginBottom: 2,
+    },
+    nomeLocalPrincipal: {
+      fontSize: 11,
+      color: '#888888',
+      marginTop: 2,
     },
     categoriaBadge: {
       backgroundColor: '#EAF3FF',
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 16,
+      alignSelf: 'flex-start',
     },
     categoriaTexto: {
-      fontSize: 12,
+      fontSize: 11,
       color: '#2563EB',
-      fontWeight: '700',
+      fontWeight: '600',
     },
     ratingContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      marginBottom: 4,
+      gap: 6,
+      marginBottom: 10,
     },
     starsContainer: {
       flexDirection: 'row',
       gap: 2,
     },
     ratingNumber: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: 'bold',
       color: '#1A1A1A',
     },
-    baseadoTexto: {
+    ratingCount: {
       fontSize: 12,
-      color: '#4CAF50',
-      fontWeight: '500',
-      marginBottom: 12,
+      color: '#666666',
     },
     enderecoContainer: {
       flexDirection: 'row',
-      marginBottom: 12,
-      gap: 8,
+      marginBottom: 10,
+      gap: 6,
     },
     enderecoIcon: {
       marginTop: 2,
@@ -345,20 +433,21 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
       flex: 1,
     },
     enderecoLinha1: {
-      fontSize: 13,
+      fontSize: 12,
       color: '#666666',
-      lineHeight: 18,
+      lineHeight: 16,
     },
     enderecoLinha2: {
-      fontSize: 13,
+      fontSize: 12,
       color: '#666666',
-      lineHeight: 18,
+      lineHeight: 16,
     },
     recomendadoRecursosRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingTop: 12,
+      width: '100%',
+      paddingTop: 10,
       borderTopWidth: 1,
       borderTopColor: '#F0F0F0',
     },
@@ -368,7 +457,7 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
       gap: 6,
     },
     recomendadoTexto: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
       color: '#1A1A1A',
     },
@@ -383,12 +472,12 @@ function criarEstilos(t, contrasteAtivo, fontSizeMultiplier) {
       gap: 2,
     },
     recursosNumero: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: 'bold',
       color: '#2563EB',
     },
     recursosLabel: {
-      fontSize: 12,
+      fontSize: 11,
       color: '#666666',
     },
   });

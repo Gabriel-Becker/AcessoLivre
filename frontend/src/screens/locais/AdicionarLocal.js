@@ -29,7 +29,6 @@ import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import LocalService from '../../services/LocalService';
-import HomeService from '../../services/HomeService';
 import BuscarService from '../../services/BuscarService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
@@ -258,7 +257,7 @@ const ModalHierarquia = ({ visible, onClose, onIndependente, onVincular, theme, 
 };
 
 // ============================================
-// MODAL DE VINCULAR LOCAL PRINCIPAL
+// MODAL DE VINCULAR LOCAL PRINCIPAL (VERSÃO DECLARATIVA)
 // ============================================
 const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast, localNome }) => {
   const [localPrincipal, setLocalPrincipal] = useState('');
@@ -278,7 +277,10 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
         params: { searchText: texto, page: 0, size: 10 }
       });
       const locais = response.data?.content || response.data || [];
-      setSugestoes(locais.map(l => ({ id: l.idLocal, nome: l.nome })));
+      setSugestoes(locais.map(l => ({ 
+        id: l.idLocal, 
+        nome: l.nome 
+      })));
     } catch (error) {
       console.error('Erro ao buscar locais:', error);
     } finally {
@@ -299,7 +301,7 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
 
   const handleSalvar = () => {
     if (!localPrincipal.trim()) {
-      toastHelper.showError('Informe o local principal');
+      toastHelper.showError('Informe o nome do local principal');
       return;
     }
     onSalvar(localPrincipal.trim());
@@ -344,7 +346,7 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
           <Spacer size="lg" />
 
           <ThemedText weight="semibold" style={modalStyles.label}>
-            Local principal
+            Local principal *
           </ThemedText>
 
           <Spacer size="xs" />
@@ -353,7 +355,7 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
             <Ionicons name="business-outline" size={20} color={theme.colors.textSecondary} />
             <RNTextInput
               style={[modalStyles.input, { color: theme.colors.textPrimary }]}
-              placeholder="Digite o nome do local principal"
+              placeholder="Digite o nome do local principal (ex: Shopping Beiramar)"
               placeholderTextColor={theme.colors.textTertiary}
               value={localPrincipal}
               onChangeText={handleChangeText}
@@ -361,8 +363,18 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
             {buscando && <ActivityIndicator size="small" color={theme.colors.primary} />}
           </View>
 
+          <View style={{ marginTop: 8 }}>
+            <ThemedText variant="caption" color="textTertiary">
+              💡 Dica: Se o local principal ainda não existe, não se preocupe! 
+              Você pode informar o nome e depois ele poderá ser vinculado automaticamente.
+            </ThemedText>
+          </View>
+
           {sugestoes.length > 0 && (
-            <View style={[modalStyles.sugestoesContainer, { backgroundColor: theme.colors.surfaceSecondary }]}>
+            <View style={[modalStyles.sugestoesContainer, { backgroundColor: theme.colors.surfaceSecondary, marginTop: 12 }]}>
+              <ThemedText variant="caption" style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
+                Locais existentes com nome similar:
+              </ThemedText>
               {sugestoes.map((sugestao, index) => (
                 <TouchableOpacity
                   key={sugestao.id || index}
@@ -380,6 +392,7 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
 
           <ThemedText variant="caption" color="textTertiary" style={modalStyles.observacao}>
             Este vínculo poderá ser alterado depois nas configurações do local.
+            O local principal não precisa existir no sistema ainda.
           </ThemedText>
 
           <Spacer size="lg" />
@@ -400,6 +413,7 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
               onPress={handleSalvar}
               style={modalStyles.botaoSalvar}
               altoContraste={isHighContrast}
+              disabled={!localPrincipal.trim()}
             >
               Salvar
             </Button>
@@ -949,8 +963,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return true;
   };
 
-  // Função para salvar o local no backend
-  const salvarLocalNoBackend = async (idLocalPrincipal = null) => {
+  // Função para salvar o local no backend (VERSÃO DECLARATIVA)
+  const salvarLocalNoBackend = async (nomeLocalPrincipal = null) => {
     const cepLimpo = formulario.cep.replace(/\D/g, '');
     
     const payloadLocal = {
@@ -971,8 +985,10 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       },
     };
 
-    if (idLocalPrincipal) {
-      payloadLocal.idLocalPrincipal = idLocalPrincipal;
+    // Adiciona nomeLocalPrincipal se fornecido (NÃO USA MAIS ID)
+    if (nomeLocalPrincipal) {
+      payloadLocal.nomeLocalPrincipal = nomeLocalPrincipal;
+      console.log(`📌 Vinculando ao local principal: ${nomeLocalPrincipal}`);
     }
 
     let localId = null;
@@ -1094,14 +1110,15 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     setShowModalVincular(true);
   };
 
-  // Salvar com local principal
+  // Salvar com local principal (VERSÃO DECLARATIVA - recebe apenas nome)
   const handleSalvarComVinculo = async (nomeLocalPrincipal) => {
     setShowModalVincular(false);
     setEnviando(true);
     setProgressoImagens({ atual: 0, total: imagens.length });
 
     try {
-      const localId = await salvarLocalNoBackend(null);
+      // Passar apenas o nome do local principal
+      const localId = await salvarLocalNoBackend(nomeLocalPrincipal);
       
       const { enviadas, erros } = await uploadImagens(localId);
       

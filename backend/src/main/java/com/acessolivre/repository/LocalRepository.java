@@ -52,7 +52,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
         WHERE l.idLocal = :id AND l.status <> :status
     """)
     Optional<Local> findByIdWithImages(@Param("id") Long id, @Param("status") StatusLocal status);
-    
+    Optional<Local> findByNomeIgnoreCase(String nome);
     // ===== MÉTODOS EXISTENTES =====
     
     @Override
