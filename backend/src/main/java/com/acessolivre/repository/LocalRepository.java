@@ -20,39 +20,35 @@ import java.util.Set;
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
+    // CORRIGIDO: Removeu o JOIN FETCH de tiposAcessibilidade para evitar produto cartesiano
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l
-        LEFT JOIN FETCH l.imagens
-        LEFT JOIN FETCH l.endereco
-        LEFT JOIN FETCH l.tiposAcessibilidade
-        LEFT JOIN FETCH l.usuario
         WHERE l.localPrincipal IS NULL AND l.status <> :status
     """)
     Page<Local> findAllLocaisRaizWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
+    // CORRIGIDO: Usa EntityGraph em vez de múltiplos JOIN FETCH
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l
-        LEFT JOIN FETCH l.imagens
-        LEFT JOIN FETCH l.endereco
-        LEFT JOIN FETCH l.tiposAcessibilidade
-        LEFT JOIN FETCH l.usuario
         WHERE l.status <> :status
     """)
     Page<Local> findAllWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
+    // CORRIGIDO: Removeu o JOIN FETCH de tiposAcessibilidade
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l
-        LEFT JOIN FETCH l.imagens
-        LEFT JOIN FETCH l.endereco
-        LEFT JOIN FETCH l.tiposAcessibilidade
-        LEFT JOIN FETCH l.usuario
         WHERE l.idLocal = :id AND l.status <> :status
     """)
     Optional<Local> findByIdWithImages(@Param("id") Long id, @Param("status") StatusLocal status);
+    
     Optional<Local> findByNomeIgnoreCase(String nome);
+    
     // ===== MÉTODOS EXISTENTES =====
     
     @Override
@@ -188,24 +184,12 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
             Pageable pageable
     );
 
-    /**
-     * Busca locais por nome (ignorando maiúsculas/minúsculas)
-     */
     Page<Local> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 
-    /**
-     * Busca locais por categoria
-     */
     Page<Local> findByCategoriaIn(Set<Categoria> categorias, Pageable pageable);
 
-    /**
-     * Busca locais por recursos de acessibilidade
-     */
     @Query("SELECT DISTINCT l FROM Local l JOIN l.tiposAcessibilidade t WHERE t IN :recursos")
     Page<Local> findByTiposAcessibilidadeIn(@Param("recursos") Set<TipoAcessibilidade> recursos, Pageable pageable);
 
-    /**
-     * Busca locais com nota mínima
-     */
     Page<Local> findByAvaliacaoMediaGreaterThanEqual(Double notaMinima, Pageable pageable);
 }

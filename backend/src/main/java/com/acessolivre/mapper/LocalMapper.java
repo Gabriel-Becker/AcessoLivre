@@ -40,7 +40,7 @@ public class LocalMapper {
             return null;
         }
 
-        // ===== PROCESSAR IMAGENS =====
+        // ===== PROCESSAR IMAGENS COM DEDUPLICAÇÃO =====
         List<ImagemResponseDTO> imagensDTO = new ArrayList<>();
         String imagemUrl = null;
         
@@ -50,15 +50,21 @@ public class LocalMapper {
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .collect(Collectors.toList());
             
-            // Converte todas as imagens para DTO
+            // CORRIGIDO: Deduplicação das imagens por ID para evitar duplicatas causadas por produto cartesiano
             imagensDTO = imagensOrdenadas.stream()
-                    .map(ImagemMapper::toResponse)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toMap(
+                            Imagem::getIdImagem,
+                            ImagemMapper::toResponse,
+                            (existing, replacement) -> existing, // Mantém a primeira ocorrência
+                            LinkedHashMap::new // Mantém ordem de inserção
+                    ))
+                    .values()
+                    .stream()
+                    .toList();
             
-            Imagem primeiraImagem = imagensOrdenadas.get(0);
-            ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
-            if (primeiraImagemDTO != null) {
-                imagemUrl = primeiraImagemDTO.getUrlCompleta();
+            // Pega a primeira imagem para URL (já deduplicada)
+            if (!imagensDTO.isEmpty()) {
+                imagemUrl = imagensDTO.get(0).getUrlCompleta();
             }
         }
 
@@ -81,7 +87,7 @@ public class LocalMapper {
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha())
                 .imagens(imagensDTO)
-                .totalImagens(imagensDTO.size())
+                .totalImagens(imagensDTO.size()) // Agora reflete o total correto após deduplicação
                 .nomeLocalPrincipal(entity.getNomeLocalPrincipal());
 
         if (entity.getLocalPrincipal() != null) {
@@ -107,10 +113,19 @@ public class LocalMapper {
         
         String imagemUrl = null;
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
+            // CORRIGIDO: Deduplicação também no resumo
             Imagem primeiraImagem = entity.getImagens().stream()
-                    .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
+                    .collect(Collectors.toMap(
+                            Imagem::getIdImagem,
+                            img -> img,
+                            (existing, replacement) -> existing,
+                            LinkedHashMap::new
+                    ))
+                    .values()
+                    .stream()
                     .findFirst()
                     .orElse(null);
+                    
             if (primeiraImagem != null) {
                 ImagemResponseDTO primeiraImagemDTO = ImagemMapper.toResponse(primeiraImagem);
                 if (primeiraImagemDTO != null) {
