@@ -5,67 +5,29 @@ import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
-export default function LocalCard({ local, onPress, showNewBadge = false, altoContraste = false }) {
+export default function LocalCard({ local, onPress, altoContraste = false }) {
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
 
-  // ============================================
-  // DADOS DO LOCAL - COM LOGS PARA DEBUG
-  // ============================================
+
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria || 'Sem categoria';
   const endereco = local?.endereco;
   const avaliacaoMedia = local?.avaliacaoMedia || 0;
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
   const tiposAcessibilidade = local?.tiposAcessibilidade || [];
-  
-  // DEBUG: Nome do local principal
-  const nomeLocalPrincipal = local?.nomeLocalPrincipal || local?.nome_local_principal || null;
-  console.log(`🔍 [LocalCard] ${nome} - nomeLocalPrincipal:`, nomeLocalPrincipal);
+  const nomeLocalPrincipal = local?.nomeLocalPrincipal || null;
+  const totalImagens = local?.totalImagens ?? 0;
+  const isNew = local?.isMaisRecente === true;
 
-  // DEBUG: Data de criação
-  const dataCriacaoRaw = local?.dataCriacao;
-  console.log(`🔍 [LocalCard] ${nome} - dataCriacao raw:`, dataCriacaoRaw);
-
-  // Extrair valores para dependências do useMemo
-  const imagemUrl = local?.imagemUrl;
-  const imagemPrincipal = local?.imagemPrincipal;
-  const imagem = local?.imagem;
-  const primeiraImagemUrl = local?.primeiraImagem?.url;
-  const primeiraImagemUrlCompleta = local?.primeiraImagem?.urlCompleta;
-  const imagensCompletasUrl = local?.imagensCompletas?.[0]?.url;
-  const imagensCompletasUrlCompleta = local?.imagensCompletas?.[0]?.urlCompleta;
-  const imagensUrl = local?.imagens?.[0]?.url;
-  const imagensUrlCompleta = local?.imagens?.[0]?.urlCompleta;
+  const imagemUrl = local?.imagemUrl || local?.imagens?.[0]?.urlCompleta || local?.imagens?.[0]?.url || null;
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
-    return (
-      imagemUrl ||
-      imagemPrincipal ||
-      imagem ||
-      primeiraImagemUrlCompleta ||
-      primeiraImagemUrl ||
-      imagensCompletasUrlCompleta ||
-      imagensCompletasUrl ||
-      imagensUrlCompleta ||
-      imagensUrl ||
-      null
-    );
-  }, [
-    imageError,
-    imagemUrl,
-    imagemPrincipal,
-    imagem,
-    primeiraImagemUrl,
-    primeiraImagemUrlCompleta,
-    imagensCompletasUrl,
-    imagensCompletasUrlCompleta,
-    imagensUrl,
-    imagensUrlCompleta
-  ]);
+    return imagemUrl;
+  }, [imageError, imagemUrl]);
 
   const handleImageError = () => {
     setImageError(true);
@@ -88,7 +50,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
     return stars;
   };
 
-  // Endereço em duas linhas
   const enderecoLinha1 = [
     endereco?.logradouro,
     endereco?.numero
@@ -114,62 +75,8 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
     return labels[cat] || cat;
   };
 
-  // ============================================
-  // BADGE NOVO - VERSÃO CORRIGIDA (suporta microssegundos)
-  // ============================================
-  const isNew = useMemo(() => {
-    if (!dataCriacaoRaw) {
-      console.log(`🔍 [LocalCard] ${nome} - Sem dataCriacao`);
-      return false;
-    }
-    
-    try {
-      // Limpar a string de data para remover microssegundos
-      let dataLimpa = dataCriacaoRaw;
-      
-      // Remover microssegundos (ex: "2026-06-04T04:29:43.833847" -> "2026-06-04T04:29:43.833")
-      if (typeof dataLimpa === 'string' && dataLimpa.includes('.')) {
-        const partes = dataLimpa.split('.');
-        if (partes.length > 1) {
-          // Manter apenas os primeiros 3 dígitos dos milissegundos
-          dataLimpa = `${partes[0]}.${partes[1].substring(0, 3)}`;
-        }
-      }
-      
-      const dataCriacaoDate = new Date(dataLimpa);
-      const agora = new Date();
-      
-      // Verificar se a data é válida
-      if (isNaN(dataCriacaoDate.getTime())) {
-        console.log(`🔍 [LocalCard] ${nome} - Data inválida:`, dataCriacaoRaw);
-        return false;
-      }
-      
-      const diffMs = agora - dataCriacaoDate;
-      const diffDias = diffMs / (1000 * 60 * 60 * 24);
-      const isNewResult = diffDias <= 7;
-      
-      console.log(`🔍 [LocalCard] ${nome} - data: ${dataCriacaoDate.toISOString()}, diffDias: ${diffDias.toFixed(2)}, isNew: ${isNewResult}`);
-      
-      return isNewResult;
-    } catch (error) {
-      console.error(`🔍 [LocalCard] ${nome} - Erro ao processar data:`, error);
-      return false;
-    }
-  }, [dataCriacaoRaw, nome]);
-
   const categoriaLabel = getCategoriaLabel(categoria);
   const totalRecursos = tiposAcessibilidade.length;
-
-  // ============================================
-  // TOTAL DE IMAGENS - USANDO CAMPO DIRETO DO BACKEND
-  // ============================================
-  const totalImagens = local?.totalImagens || 0;
-  const imagemAtual = 1;
-  
-  console.log(`🔍 [LocalCard] ${nome} - totalImagens:`, totalImagens);
-
-  // Verificar se é recomendado (nota superior a 4)
   const isRecomendado = avaliacaoMedia > 4;
 
   const estilos = useMemo(() => criarEstilos(t, contrasteAtivo), [t, contrasteAtivo]);
@@ -195,19 +102,19 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
         
-        {/* Badge NOVO - Azul moderno no canto superior esquerdo */}
-        {(showNewBadge || isNew) && (
+        {/* Badge NOVO */}
+        {isNew && (
           <View style={estilos.newBadge}>
             <Ionicons name="sparkles" size={12} color="#FFF" />
             <ThemedText weight="bold" style={estilos.newBadgeText}>Novo</ThemedText>
           </View>
         )}
 
-        {/* Badge de imagem (ex: 1/5) - com zIndex para garantir visibilidade */}
+        {/* Badge de imagem */}
         {totalImagens > 0 && (
           <View style={estilos.imagemBadge}>
             <ThemedText weight="bold" style={estilos.imagemBadgeTexto}>
-              {imagemAtual}/{totalImagens}
+              1/{totalImagens}
             </ThemedText>
           </View>
         )}
@@ -215,17 +122,16 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
 
       {/* Conteúdo do Card */}
       <View style={estilos.contentContainer}>
-        {/* Área do nome + vínculo e categoria */}
         <View style={styles.nomeCategoriaRow}>
           <View style={{ flex: 1 }}>
             <ThemedText weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
               {nome}
             </ThemedText>
             
-            {/* Vínculo com local principal (dentro da área do nome) */}
+            {/* Vínculo com local principal */}
             {nomeLocalPrincipal && nomeLocalPrincipal.trim() && (
               <ThemedText numberOfLines={1} style={estilos.nomeLocalPrincipal}>
-                Dentro de {nomeLocalPrincipal}
+                {nomeLocalPrincipal}
               </ThemedText>
             )}
           </View>
@@ -246,7 +152,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </ThemedText>
         </View>
 
-        {/* Endereço em duas linhas */}
         {endereco && (enderecoLinha1 || enderecoLinha2) && (
           <View style={estilos.enderecoContainer}>
             <Ionicons name="location-outline" size={14} color="#888888" style={estilos.enderecoIcon} />
@@ -265,7 +170,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
           </View>
         )}
 
-        {/* Recomendado + Recursos na mesma linha - RECURSOS SEMPRE NO CANTO DIREITO */}
         <View style={estilos.recomendadoRecursosRow}>
           {isRecomendado && (
             <View style={estilos.recomendadoContainer}>
@@ -276,7 +180,6 @@ export default function LocalCard({ local, onPress, showNewBadge = false, altoCo
             </View>
           )}
 
-          {/* Recursos - SEMPRE no canto direito, mesmo sem Recomendado */}
           <View style={estilos.recursosContainer}>
             <Ionicons name="accessibility-outline" size={14} color={t.colors.primary} />
             <View style={estilos.recursosBadge}>

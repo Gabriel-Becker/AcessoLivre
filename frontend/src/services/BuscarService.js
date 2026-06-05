@@ -1,63 +1,59 @@
 import api from '../api/axios';
-import LocalService from './LocalService';
+import LocalMapper from './LocalMapper';
 
 class BuscarService {
   static cache = null;
+  static cacheTimestamp = null;
+  static CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
-  /**
-   * Carrega TODOS os locais uma única vez (com cache)
-   * @returns {Promise<Array>}
-   */
-  static async carregarTodosLocais() {
+  static async carregarTodosLocais(forceRefresh = false) {
     try {
-      if (this.cache && this.cache.length > 0) {
+      const agora = Date.now();
+      const cacheValido = !forceRefresh && 
+                          this.cache && 
+                          this.cache.length > 0 && 
+                          (agora - this.cacheTimestamp) < this.CACHE_DURATION;
+
+      if (cacheValido) {
         console.log('📦 Usando cache de locais:', this.cache.length);
         return this.cache;
       }
 
-      console.log('🌐 Buscando todos os locais do backend...');
+      console.log(' Buscando todos os locais do backend...');
       const response = await api.get('/locais/todos', {
-        params: { page: 0, size: 100, sort: 'nome', direction: 'asc' }
+        params: { page: 0, size: 1000, sort: 'nome', direction: 'asc' }
       });
       
-      const locais = response.data?.content || response.data || [];
-      this.cache = this.sanitizarLocais(locais);
-      console.log('✅ Cache atualizado com', this.cache.length, 'locais');
-
+      const rawLocais = response.data?.content || response.data || [];
+      
+      const locais = LocalMapper.fromApiList(rawLocais);
+      
+      this.cache = locais;
+      this.cacheTimestamp = agora;
+      
+      console.log(' Cache atualizado com', this.cache.length, 'locais');
       return this.cache;
       
     } catch (error) {
-      console.error('❌ Erro ao carregar locais:', error);
+      console.error('Erro ao carregar locais:', error);
       return [];
     }
   }
 
-  /**
-   * Invalida o cache de locais para forçar recarga
-   */
   static invalidateCache() {
-    console.log('🔄 Invalidando cache de locais');
+    console.log(' Invalidando cache de locais');
     this.cache = null;
+    this.cacheTimestamp = null;
   }
 
-  /**
-   * Recarrega todos os locais do backend (força atualização)
-   * @returns {Promise<Array>}
-   */
   static async recarregarTodosLocais() {
     console.log('🌐 Recarregando todos os locais do backend...');
-    this.cache = null; // Limpa cache primeiro
-    return this.carregarTodosLocais();
+    return this.carregarTodosLocais(true);
   }
 
-  /**
-   * Busca inteligente com múltiplos filtros (100% frontend)
-   * @param {Object} filtros - Filtros de busca
-   * @returns {Promise<Object>}
-   */
   static async buscarLocais(filtros) {
     try {
-      // Carregar todos os locais (com cache)
+    
       let locais = await this.carregarTodosLocais();
       
       if (!locais || locais.length === 0) {
@@ -107,87 +103,30 @@ class BuscarService {
       };
       
     } catch (error) {
-      console.error('❌ Erro na busca:', error);
+      console.error(' Erro na busca:', error);
       return { success: false, data: [], total: 0, message: error.message };
     }
   }
 
-  /**
-   * Busca locais em destaque para a home
-   * @param {number} limit - Limite de resultados
-   * @returns {Promise<Array>}
-   */
   static async obterLocaisEmDestaque(limit = 8) {
     try {
       const locais = await this.carregarTodosLocais();
+
       const destaques = [...locais]
         .sort((a, b) => (b.avaliacaoMedia || 0) - (a.avaliacaoMedia || 0))
         .slice(0, limit);
-      return destaques;
+      
+      return LocalMapper.markNewest(destaques);
     } catch (error) {
       console.error('Erro ao buscar destaques:', error);
       return [];
     }
   }
 
-  /**
-   * Sanitiza lista de locais para o formato do frontend
-   * @param {Array} locais - Lista de locais do backend
-   * @returns {Array}
-   */
-  static sanitizarLocais(locais) {
-    if (!locais || !Array.isArray(locais)) return [];
-    
-    return locais
-      .filter(local => local && (local.idLocal || local.id))
-      .map(local => ({
-        id: local.idLocal || local.id,
-        nome: local.nome || 'Sem nome',
-        categoria: local.categoria,
-        descricao: local.descricao,
-        endereco: local.endereco,
-        avaliacaoMedia: local.avaliacaoMedia || 0,
-        totalAvaliacoes: local.totalAvaliacoes || 0,
-        tiposAcessibilidade: local.tiposAcessibilidade || [],
-        imagemUrl:
-          LocalService.getImagemUrl(local.imagemUrl) ||
-          LocalService.getImagemUrl(local.imagemPrincipal) ||
-          LocalService.getImagemUrl(local.imagem) ||
-          LocalService.getImagemUrl(local.imagens?.[0]?.urlCompleta) ||
-          LocalService.getImagemUrl(local.imagens?.[0]?.url) ||
-          LocalService.getImagemUrl(local.imagens?.[0]?.caminhoRelativo) ||
-          null,
-        horarioFuncionamento: local.horarioFuncionamento,
-        telefone: local.telefone,
-        site: local.site
-      }));
-  }
-
-  /**
-   * Extrai ID do local de forma segura
-   * @param {Object} local - Objeto local
-   * @returns {number|null}
-   */
-  static getLocalId(local) {
-    return local?.id || local?.idLocal || null;
-  }
-
-  /**
-   * Obtém estatísticas para a home
-   * @returns {Promise<Object>}
-   */
   static async obterEstatisticas() {
     try {
       const locais = await this.carregarTodosLocais();
-      
-      const totalLocais = locais.length;
-      const totalAvaliacoes = locais.reduce((sum, local) => sum + (local.totalAvaliacoes || 0), 0);
-      const somaNotas = locais.reduce((sum, local) => sum + (local.avaliacaoMedia || 0), 0);
-      const mediaGeral = totalLocais > 0 ? (somaNotas / totalLocais).toFixed(1) : 0;
-      
-      console.log('📊 Estatísticas:', { totalLocais, totalAvaliacoes, mediaGeral });
-      
-      return { totalLocais, totalAvaliacoes, mediaGeral };
+      return LocalMapper.calcularEstatisticas(locais);
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
       return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0 };

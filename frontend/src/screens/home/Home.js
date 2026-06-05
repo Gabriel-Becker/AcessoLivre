@@ -1,3 +1,5 @@
+// frontend/src/screens/Home.js
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -102,7 +104,6 @@ export default function Home({ onNavigate, routeParams }) {
     else setLoading(true);
 
     try {
-      // Se forçar recarga, invalidar cache (se o método existir)
       if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
         BuscarService.invalidateCache();
         console.log('🔄 Cache invalidado por força');
@@ -115,8 +116,9 @@ export default function Home({ onNavigate, routeParams }) {
         mediaGeral: stats.mediaGeral || 0
       });
 
+      // O BuscarService.obterLocaisEmDestaque já retorna com isMaisRecente
       const locais = await BuscarService.obterLocaisEmDestaque(8);
-      setLocaisDestaque(locais.filter(l => l?.id));
+      setLocaisDestaque(locais);
       
       console.log('📊 Home carregada:', {
         locais: stats.totalLocais,
@@ -132,20 +134,18 @@ export default function Home({ onNavigate, routeParams }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []); 
+  }, []);
 
-  
   useEffect(() => {
     carregarDados(false, false);
   }, [carregarDados]);
 
-  
   useEffect(() => {
     if (refreshKey || forceRefresh) {
       console.log('🔄 Recarregando Home devido a parâmetros:', { refreshKey, forceRefresh });
       carregarDados(false, forceRefresh === true);
     }
-  }, [refreshKey, forceRefresh, carregarDados]); 
+  }, [refreshKey, forceRefresh, carregarDados]);
 
   const handleRefresh = () => {
     carregarDados(true, true);

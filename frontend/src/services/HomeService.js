@@ -1,4 +1,5 @@
 import api from '../api/axios';
+import LocalMapper from './LocalMapper';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -16,7 +17,7 @@ function normalizarUrlImagem(url) {
         return `${baseURL}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
     } catch (e) {
-      // keep original URL if parsing fails
+
     }
     return url;
   }
@@ -27,9 +28,6 @@ function normalizarUrlImagem(url) {
 
 const HomeService = {
 
-  /**
-   * Busca estatísticas básicas (apenas locais)
-   */
   async obterEstatisticas() {
     try {
       const response = await api.get('/locais/todos', {
@@ -44,12 +42,9 @@ const HomeService = {
     }
   },
 
-  /**
-   * Busca estatísticas reais e completas do sistema
-   */
   async obterEstatisticasReais() {
     try {
-      // Buscar total de locais
+
       let totalLocais = 0;
       try {
         const locaisResponse = await api.get('/locais/todos', {
@@ -59,7 +54,6 @@ const HomeService = {
       } catch (e) {
       }
 
-      // Buscar total de usuários (endpoint pode não existir ainda)
       let totalUsuarios = 0;
       try {
         const usuariosResponse = await api.get('/usuarios', {
@@ -67,11 +61,9 @@ const HomeService = {
         });
         totalUsuarios = usuariosResponse.data?.totalElements || 0;
       } catch (e) {
-        // Fallback: tentar buscar do token ou estimativa
-        totalUsuarios = 1; // pelo menos o usuário atual
+        totalUsuarios = 1;
       }
 
-      // Buscar total de avaliações
       let totalAvaliacoes = 0;
       try {
         const avaliacoesResponse = await api.get('/avaliacoes', {
@@ -88,36 +80,34 @@ const HomeService = {
     }
   },
 
-  /**
-   * Busca locais em destaque (os mais recentes)
-   */
   async obterLocaisEmDestaque(limite = 4) {
     try {
       const response = await api.get('/locais/todos', {
         params: { page: 0, size: limite, sort: 'dataCriacao,desc' }
       });
 
-      const locais = response.data?.content || [];
-      return locais.map(local => this.formatarLocal(local));
+      const rawLocais = response.data?.content || [];
+      
+      const locais = LocalMapper.fromApiList(rawLocais);
+      
+      return LocalMapper.markNewest(locais);
     } catch (erro) {
       console.error('Erro ao buscar locais em destaque:', erro);
       return [];
     }
   },
 
-  /**
-   * Lista todos os locais com paginação
-   */
   async listarTodosLocais(page = 0, size = 10) {
     try {
       const response = await api.get('/locais/todos', {
         params: { page, size, sort: 'dataCriacao,desc' }
       });
 
-      const locais = response.data?.content || [];
+      const rawLocais = response.data?.content || [];
+      const locais = LocalMapper.fromApiList(rawLocais);
 
       return {
-        locais: locais.map(local => this.formatarLocal(local)),
+        locais,
         totalPages: response.data?.totalPages || 0,
         totalElements: response.data?.totalElements || 0,
         currentPage: page
@@ -128,20 +118,13 @@ const HomeService = {
     }
   },
 
-  /**
-   * Constrói URL completa da imagem a partir do caminho relativo
-   */
   construirUrlImagem(caminhoRelativo) {
     return normalizarUrlImagem(caminhoRelativo);
   },
 
-  /**
-   * Extrai todas as imagens do local com URLs completas
-   */
   extrairTodasImagens(local) {
     if (!local || !Array.isArray(local.imagens) || local.imagens.length === 0) return [];
 
-    // Usar Set para remover duplicatas por caminhoRelativo
     const mapImagens = new Map();
     
     local.imagens.forEach(img => {
@@ -159,102 +142,20 @@ const HomeService = {
       }
     });
     
-    // Ordenar por ordem
-    const imagensOrdenadas = Array.from(mapImagens.values())
+    return Array.from(mapImagens.values())
       .sort((a, b) => a.ordem - b.ordem);
-    
-    return imagensOrdenadas;
   },
 
-  /**
-   * Extrai apenas as URLs das imagens (array de strings)
-   */
   extrairUrlsImagens(local) {
     const imagens = this.extrairTodasImagens(local);
     return imagens.map(img => img.url);
   },
 
-  /**
-   * Extrai a primeira imagem do local (thumbnail)
-   */
   extrairPrimeiraImagem(local) {
     const imagens = this.extrairTodasImagens(local);
     return imagens.length > 0 ? imagens[0].url : null;
   },
 
-  /**
-   * Extrai a primeira imagem do local (objeto completo)
-   */
-  extrairPrimeiraImagemObjeto(local) {
-    const imagens = this.extrairTodasImagens(local);
-    return imagens.length > 0 ? imagens[0] : null;
-  },
-
-  /**
-   * Formata os dados do local para o padrão do frontend
-   */
-  formatarLocal(local) {
-    if (!local) return null;
-    
-    const imagensCompletas = this.extrairTodasImagens(local);
-    const imagensUrls = imagensCompletas.map(img => img.url);
-    const primeiraImagemUrl = this.extrairPrimeiraImagem(local);
-    const primeiraImagemObj = this.extrairPrimeiraImagemObjeto(local);
-
-    return {
-      // Identificação
-      id: local.idLocal,
-      idLocal: local.idLocal,
-      nome: local.nome,
-      descricao: local.descricao,
-      categoria: local.categoria,
-      status: local.status,
-      
-      // Avaliações
-      avaliacaoMedia: local.avaliacaoMedia || 0,
-      totalAvaliacoes: local.totalAvaliacoes || 0,
-      
-      // Imagens (URLs completas)
-      imagemUrl: primeiraImagemUrl || normalizarUrlImagem(local.imagemUrl) || normalizarUrlImagem(local.imagemPrincipal) || normalizarUrlImagem(local.imagem),
-      imagens: imagensUrls,
-      imagensCompletas: imagensCompletas, // Objetos completos com metadados
-      imagemPrincipal: primeiraImagemUrl,
-      primeiraImagem: primeiraImagemObj,
-      
-      // Tipos de acessibilidade
-      tiposAcessibilidade: local.tiposAcessibilidade || [],
-      idUsuario: local.idUsuario,
-      
-      // Datas
-      dataCriacao: local.dataCriacao,
-      dataAtualizacao: local.dataAtualizacao,
-      
-      // Endereço
-      endereco: local.endereco ? {
-        logradouro: local.endereco.logradouro,
-        numero: local.endereco.numero,
-        complemento: local.endereco.complemento,
-        bairro: local.endereco.bairro,
-        cidade: local.endereco.cidade,
-        estado: local.endereco.estado,
-        cep: local.endereco.cep
-      } : null,
-      
-      // Hierarquia
-      localPrincipal: local.localPrincipal,
-      subLocais: local.subLocais || [],
-      nivelHierarquia: local.nivelHierarquia,
-      isRaiz: local.isRaiz,
-      isFolha: local.isFolha,
-      
-      // Imagem legada (fallback)
-      imagem: normalizarUrlImagem(local.imagem)
-    };
-  },
-
-  /**
-   * Busca um local específico por ID
-   */
   async buscarLocalPorId(id) {
     if (!id) {
       console.error('ID não informado para buscarLocalPorId');
@@ -263,28 +164,25 @@ const HomeService = {
     
     try {
       const response = await api.get(`/locais/${id}`);
-      return this.formatarLocal(response.data);
+      return LocalMapper.fromApi(response.data);
     } catch (erro) {
       console.error(`Erro ao buscar local ${id}:`, erro);
       return null;
     }
   },
 
-  /**
-   * Busca locais por categoria
-   */
   async buscarPorCategoria(categoria, page = 0, size = 10) {
     try {
       const response = await api.get(`/locais/categoria/${categoria}`, {
         params: { page, size }
       });
       
-      const locais = response.data?.content || response.data || [];
-      const isArray = Array.isArray(locais);
+      const rawLocais = response.data?.content || response.data || [];
+      const locais = LocalMapper.fromApiList(rawLocais);
       
       return {
-        locais: (isArray ? locais : []).map(local => this.formatarLocal(local)),
-        totalElements: isArray ? locais.length : (response.data?.totalElements || 0),
+        locais,
+        totalElements: response.data?.totalElements || locais.length,
         totalPages: response.data?.totalPages || 1,
         currentPage: page
       };
@@ -294,21 +192,18 @@ const HomeService = {
     }
   },
 
-  /**
-   * Busca locais por tipo de acessibilidade
-   */
   async buscarPorTipoAcessibilidade(tipo, page = 0, size = 10) {
     try {
       const response = await api.get(`/locais/tipo-acessibilidade/${tipo}`, {
         params: { page, size }
       });
       
-      const locais = response.data?.content || response.data || [];
-      const isArray = Array.isArray(locais);
+      const rawLocais = response.data?.content || response.data || [];
+      const locais = LocalMapper.fromApiList(rawLocais);
       
       return {
-        locais: (isArray ? locais : []).map(local => this.formatarLocal(local)),
-        totalElements: isArray ? locais.length : (response.data?.totalElements || 0),
+        locais,
+        totalElements: response.data?.totalElements || locais.length,
         totalPages: response.data?.totalPages || 1,
         currentPage: page
       };
@@ -318,21 +213,19 @@ const HomeService = {
     }
   },
 
-  /**
-   * Busca locais por nome (busca textual)
-   */
+
   async buscarPorNome(nome, page = 0, size = 10) {
     try {
       const response = await api.get('/locais/buscar', {
         params: { nome, page, size }
       });
       
-      const locais = response.data?.content || response.data || [];
-      const isArray = Array.isArray(locais);
+      const rawLocais = response.data?.content || response.data || [];
+      const locais = LocalMapper.fromApiList(rawLocais);
       
       return {
-        locais: (isArray ? locais : []).map(local => this.formatarLocal(local)),
-        totalElements: isArray ? locais.length : (response.data?.totalElements || 0),
+        locais,
+        totalElements: response.data?.totalElements || locais.length,
         totalPages: response.data?.totalPages || 1,
         currentPage: page
       };
