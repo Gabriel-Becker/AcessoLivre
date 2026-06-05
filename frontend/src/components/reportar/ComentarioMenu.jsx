@@ -10,9 +10,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import ReportarModal from './ReportarModal';
+import { useAuth } from '../../context/AuthContext';
+import toastHelper from '../../utils/toastHelper';
 
 const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
   const { isHighContrast, theme: t } = useThemeContext();
+  const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   
@@ -21,7 +24,17 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
 
   const handleReportar = () => {
     setMenuVisible(false);
+    
+    if (!isAuthenticated) {
+      toastHelper.showInfo('Faça login para reportar este comentário');
+      return;
+    }
+    
     setShowReportarModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowReportarModal(false);
   };
 
   return (
@@ -30,6 +43,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
         onPress={() => setMenuVisible(true)}
         style={styles.menuButton}
         accessibilityLabel="Mais opções"
+        activeOpacity={0.7}
       >
         <Ionicons name="ellipsis-vertical" size={18} color={t.colors.textSecondary} />
       </TouchableOpacity>
@@ -75,9 +89,9 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
 
       <ReportarModal
         visible={showReportarModal}
-        onClose={() => setShowReportarModal(false)}
+        onClose={handleModalClose}
         tipo="COMENTARIO"
-        targetId={comentario.id}
+        targetId={comentario?.id || comentario?.idAvaliacao}
         targetName={`Comentário de ${autorNome || 'usuário'}`}
       />
     </>
@@ -88,6 +102,7 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 8,
     marginLeft: 4,
+    marginRight: -4,
   },
   modalOverlay: {
     flex: 1,

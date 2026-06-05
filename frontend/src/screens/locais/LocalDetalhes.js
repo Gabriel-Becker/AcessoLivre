@@ -21,6 +21,8 @@ import LocalAccessibility from '../../components/local/LocalAccessibility';
 import AvaliacaoModal from '../../components/local/AvaliacaoModal';
 import LocalGallery from '../../components/local/LocalGallery';
 import ModalCompartilhar from '../../components/local/ModalCompartilhar';
+import ReportarModal from '../../components/reportar/ReportarModal';
+import ComentarioMenu from '../../components/reportar/ComentarioMenu';
 
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -86,6 +88,7 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
   }
 };
 
+// Componente de Avaliação com Menu de Reportar
 const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
@@ -149,6 +152,13 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
             </View>
           </View>
         </View>
+
+        {/* Menu de três pontos para reportar comentário */}
+        <ComentarioMenu 
+          comentario={avaliacao}
+          autorNome={nomeUsuario}
+          showReportar={true}
+        />
       </View>
       
       {comentarioReal ? (
@@ -171,6 +181,19 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const zoomAtivo = fontSizeMultiplier >= 1.5;
   const layoutEmpilhado = width < 1280 || fontSizeMultiplier >= 1.5;
   const corFundoPagina = isHighContrast ? t.colors.background : t.colors.backgroundSecondary;
+  
+  // Estados existentes
+  const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
+  const [modalCompartilharVisible, setModalCompartilharVisible] = useState(false);
+  const [local, setLocal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [descricaoExpandida, setDescricaoExpandida] = useState(false);
+  const [mostrarTodasAvaliacoes, setMostrarTodasAvaliacoes] = useState(false);
+  
+  // NOVO: Estado para modal de reportar local
+  const [showReportarLocalModal, setShowReportarLocalModal] = useState(false);
   
   const estilosZoom = useMemo(
     () =>
@@ -205,15 +228,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
       borderColor: isHighContrast ? t.colors.borderDark : 'transparent',
     },
   };
-
-  const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
-  const [modalCompartilharVisible, setModalCompartilharVisible] = useState(false);
-  const [local, setLocal] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [descricaoExpandida, setDescricaoExpandida] = useState(false);
-  const [mostrarTodasAvaliacoes, setMostrarTodasAvaliacoes] = useState(false);
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
@@ -298,8 +312,14 @@ export default function LocalDetalhes({ onNavigate, route }) {
     setModalCompartilharVisible(true);
   };
 
-  const handleReportar = () => {
-    onNavigate?.('ReportarProblema', { localId: id, localNome: local?.nome });
+  // NOVO: Handler para reportar o local
+  const handleReportarLocal = () => {
+    if (!isAuthenticated) {
+      toastHelper.showInfo('Faça login para reportar este local');
+      onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
+      return;
+    }
+    setShowReportarLocalModal(true);
   };
 
   const handleVerTodasAvaliacoes = () => {
@@ -586,7 +606,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
               Compartilhar
             </Button>
-            <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportar} style={[styles.botaoAcao, estilosZoom.botao]}>
+            {/* NOVO: Botão Reportar Local */}
+            <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportarLocal} style={[styles.botaoAcao, estilosZoom.botao]}>
               Reportar
             </Button>
           </View>
@@ -630,6 +651,15 @@ export default function LocalDetalhes({ onNavigate, route }) {
         visible={modalCompartilharVisible}
         onClose={() => setModalCompartilharVisible(false)}
         local={local}
+      />
+
+      {/* NOVO: Modal de Reportar Local */}
+      <ReportarModal
+        visible={showReportarLocalModal}
+        onClose={() => setShowReportarLocalModal(false)}
+        tipo="LOCAL"
+        targetId={local.id}
+        targetName={local.nome}
       />
     </Container>
   );
@@ -766,11 +796,15 @@ const styles = StyleSheet.create({
   },
   avaliacaoHeader: {
     marginBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   usuarioInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
   },
   avatar: {
     width: 40,
