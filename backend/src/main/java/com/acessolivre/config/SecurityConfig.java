@@ -75,17 +75,21 @@ public class SecurityConfig {
                     "/api/avaliacoes/*",
                     "/api/avaliacoes/local/**"
                 ).permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/denuncias").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/denuncias/estatisticas").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/denuncias/target").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/denuncias/check").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/denuncias/{id}").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/denuncias").authenticated()
-                .requestMatchers(HttpMethod.PATCH, "/api/denuncias/{id}/status").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/denuncias/status/massa").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/denuncias/{id}").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/denuncias/massa").hasRole("ADMIN")
-                .requestMatchers("/api/denuncias/**").hasRole("ADMIN")
+                  // Usuários autenticados
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/denuncias"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/denuncias/check"
+                ).authenticated()
+
+                // Administração
+                .requestMatchers(
+                    "/api/denuncias/**"
+                ).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));

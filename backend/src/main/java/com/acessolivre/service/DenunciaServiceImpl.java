@@ -41,6 +41,7 @@ public class DenunciaServiceImpl implements DenunciaService {
                  request.getTipo(), request.getTargetId(), usuarioId);
 
         // Verificar se usuário já denunciou este target
+        // ✅ CORRIGIDO: Usando o nome correto do método
         if (usuarioJaDenunciou(usuarioId, request.getTipo(), request.getTargetId())) {
             throw new IllegalStateException("Você já denunciou este item");
         }
@@ -59,7 +60,7 @@ public class DenunciaServiceImpl implements DenunciaService {
     public DenunciaResponseDTO buscarPorId(Long id) {
         return denunciaRepository.findById(id)
                 .map(denunciaMapper::toResponseDTO)
-                .orElseThrow(() -> new DenunciaException("Denúncia não encontrada"));
+                .orElseThrow(() -> new DenunciaException("Denúncia não encontrada com ID: " + id));
     }
 
     @Override
@@ -85,7 +86,7 @@ public class DenunciaServiceImpl implements DenunciaService {
         log.info("Atualizando status da denúncia {} para {}", id, novoStatus);
         
         Denuncia denuncia = denunciaRepository.findById(id)
-                .orElseThrow(() -> new DenunciaException("Denúncia não encontrada"));
+                .orElseThrow(() -> new DenunciaException("Denúncia não encontrada com ID: " + id));
         
         denuncia.setStatus(novoStatus);
         
@@ -99,6 +100,7 @@ public class DenunciaServiceImpl implements DenunciaService {
         }
         
         Denuncia updated = denunciaRepository.save(denuncia);
+        log.info("Status da denúncia {} atualizado para {}", id, novoStatus);
         return denunciaMapper.toResponseDTO(updated);
     }
 
@@ -108,10 +110,11 @@ public class DenunciaServiceImpl implements DenunciaService {
         log.info("Excluindo denúncia - ID: {}", id);
         
         if (!denunciaRepository.existsById(id)) {
-            throw new DenunciaException("Denúncia não encontrada");
+            throw new DenunciaException("Denúncia não encontrada com ID: " + id);
         }
         
         denunciaRepository.deleteById(id);
+        log.info("Denúncia {} excluída com sucesso", id);
     }
 
     @Override
@@ -119,11 +122,13 @@ public class DenunciaServiceImpl implements DenunciaService {
     public void excluirDenunciasEmMassa(List<Long> ids) {
         log.info("Excluindo denúncias em massa - IDs: {}", ids);
         denunciaRepository.deleteAllById(ids);
+        log.info("{} denúncias excluídas", ids.size());
     }
 
     @Override
     public boolean usuarioJaDenunciou(Long usuarioId, TipoDenuncia tipo, Long targetId) {
-        return denunciaRepository.existsByTipoAndTargetIdAndUsuarioId(tipo, targetId, usuarioId);
+        // ✅ CORRIGIDO: Chamando o método correto do repository
+        return denunciaRepository.existsByTipoAndTargetIdAndUsuario(tipo, targetId, usuarioId);
     }
 
     @Override

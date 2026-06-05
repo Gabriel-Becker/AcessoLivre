@@ -1,12 +1,12 @@
 package com.acessolivre.exception;
 
-public class DenunciaNotFoundException extends RuntimeException {
+public class DenunciaException extends RuntimeException {
     
-    public DenunciaNotFoundException(Long id) {
-        super("Denúncia não encontrada com ID: " + id);
+    public DenunciaException(String message) {
+        super(message);
     }
     
-    public DenunciaNotFoundException(String message) {
-        super(message);
+    public DenunciaException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

@@ -27,7 +27,7 @@ public class DenunciaMapper {
         UsuarioResumoDTO usuarioResumo = null;
         if (entity.getUsuario() != null) {
             usuarioResumo = UsuarioResumoDTO.builder()
-                    .id(entity.getUsuario().getId())
+                    .id(entity.getUsuario().getIdUsuario())  // ← CORRIGIDO: getId() → getIdUsuario()
                     .nome(entity.getUsuario().getNome())
                     .email(entity.getUsuario().getEmail())
                     .build();
