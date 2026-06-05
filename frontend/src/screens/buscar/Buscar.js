@@ -23,6 +23,7 @@ import { Container } from '../../components/layout';
 import LocalCard from '../../components/ui/LocalCard';
 import { useThemeContext } from '../../context/ThemeContext';
 import BuscarService from '../../services/BuscarService';
+import LocalMapper from '../../services/LocalMapper';
 import { breakpoints, getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
 import toastHelper from '../../utils/toastHelper';
@@ -52,7 +53,12 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
-// Componente de input de busca - ESTILO PADRONIZADO
+const BREAKPOINTS = {
+  MOBILE: 768,
+  TABLET: 1200,
+  DESKTOP: 1400,
+};
+
 const SearchInput = React.memo(({ onSearch, theme }) => {
   const [text, setText] = useState('');
   const inputRef = useRef(null);
@@ -96,8 +102,7 @@ const SearchInput = React.memo(({ onSearch, theme }) => {
 
 SearchInput.displayName = 'SearchInput';
 
-// Componente de filtro de categoria - ESTILO PADRONIZADO
-const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria, theme }) => {
+const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria, theme, isDesktop }) => {
   const [expanded, setExpanded] = useState(true);
 
   const toggleExpand = useCallback(() => {
@@ -124,7 +129,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
               <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: categoriasSelecionadas.includes(categoria) ? theme.colors.primary : 'transparent' }]}>
                 {categoriasSelecionadas.includes(categoria) && <Ionicons name="checkmark" size={12} color="#FFF" />}
               </View>
-              <ThemedText style={styles.filtroItemLabel}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
+              <ThemedText style={[styles.filtroItemLabel, { fontSize: isDesktop ? 13 : 14 }]}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -135,8 +140,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
 
 FiltroCategoria.displayName = 'FiltroCategoria';
 
-// Componente de filtro de acessibilidade - ESTILO PADRONIZADO
-const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso, theme }) => {
+const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso, theme, isDesktop }) => {
   const [expanded, setExpanded] = useState(true);
 
   const toggleExpand = useCallback(() => {
@@ -163,8 +167,8 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
               <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: recursosSelecionados.includes(recurso.id) ? theme.colors.primary : 'transparent' }]}>
                 {recursosSelecionados.includes(recurso.id) && <Ionicons name="checkmark" size={12} color="#FFF" />}
               </View>
-              <Ionicons name={recurso.icon} size={16} color={theme.colors.primary} style={styles.filtroIcon} />
-              <ThemedText style={styles.filtroItemLabel}>{recurso.label}</ThemedText>
+              <Ionicons name={recurso.icon} size={isDesktop ? 14 : 16} color={theme.colors.primary} style={styles.filtroIcon} />
+              <ThemedText style={[styles.filtroItemLabel, { fontSize: isDesktop ? 13 : 14 }]}>{recurso.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -175,15 +179,15 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
 
 FiltroAcessibilidade.displayName = 'FiltroAcessibilidade';
 
-// Componente de filtro de nota - ESTILO PADRONIZADO
-const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
+const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop }) => {
   const renderStars = useCallback((nota) => {
     const stars = [];
+    const starSize = isDesktop ? 16 : 20;
     for (let i = 1; i <= 5; i++) {
-      stars.push(<Ionicons key={i} name={i <= nota ? 'star' : 'star-outline'} size={20} color={i <= nota ? theme.colors.warning : theme.colors.textTertiary} />);
+      stars.push(<Ionicons key={i} name={i <= nota ? 'star' : 'star-outline'} size={starSize} color={i <= nota ? theme.colors.warning : theme.colors.textTertiary} />);
     }
     return stars;
-  }, [theme.colors.warning, theme.colors.textTertiary]);
+  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop]);
 
   return (
     <View style={styles.filtroGrupo}>
@@ -195,7 +199,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
       <View style={styles.filtroContent}>
         <View style={styles.notaContainer}>
           <View style={styles.notaStars}>{renderStars(notaMinima)}</View>
-          <ThemedText weight="bold" style={styles.notaValor}>{notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}</ThemedText>
+          <ThemedText weight="bold" style={[styles.notaValor, { fontSize: isDesktop ? 13 : 14 }]}>{notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}</ThemedText>
         </View>
         
         <View style={styles.notaSliderContainer}>
@@ -205,7 +209,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
               style={[styles.notaBotao, notaMinima === nota && styles.notaBotaoAtivo, { borderColor: theme.colors.primary }]} 
               onPress={() => onNotaChange(nota)}
             >
-              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }]}>{nota === 0 ? 'Qualquer' : `${nota}+`}</ThemedText>
+              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }, { fontSize: isDesktop ? 11 : 12 }]}>{nota === 0 ? 'Qualquer' : `${nota}+`}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -216,7 +220,6 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme }) => {
 
 FiltroNota.displayName = 'FiltroNota';
 
-// Componente de Filtros Card - ESTÁVEL, sem recriação
 const FiltrosCard = React.memo(({ 
   onSearchChange,
   categoriasSelecionadas,
@@ -253,11 +256,11 @@ const FiltrosCard = React.memo(({
       />
 
       <Spacer size="md" />
-      <FiltroCategoria categoriasSelecionadas={categoriasSelecionadas} onToggleCategoria={onToggleCategoria} theme={theme} />
+      <FiltroCategoria categoriasSelecionadas={categoriasSelecionadas} onToggleCategoria={onToggleCategoria} theme={theme} isDesktop={isDesktop} />
       <Spacer size="md" />
-      <FiltroAcessibilidade recursosSelecionados={recursosSelecionados} onToggleRecurso={onToggleRecurso} theme={theme} />
+      <FiltroAcessibilidade recursosSelecionados={recursosSelecionados} onToggleRecurso={onToggleRecurso} theme={theme} isDesktop={isDesktop} />
       <Spacer size="md" />
-      <FiltroNota notaMinima={notaMinima} onNotaChange={onNotaChange} theme={theme} />
+      <FiltroNota notaMinima={notaMinima} onNotaChange={onNotaChange} theme={theme} isDesktop={isDesktop} />
 
       {!isDesktop && (
         <>
@@ -277,10 +280,19 @@ export default function Buscar({ onNavigate }) {
   const { isHighContrast } = useThemeContext();
   const { width } = useWindowDimensions();
   const theme = getTheme(isHighContrast);
-  const isDesktop = width >= breakpoints.desktop;
-  const isTablet = width >= breakpoints.tablet && width < breakpoints.desktop;
+  
+  const isDesktop = width >= BREAKPOINTS.TABLET;
+  const isTablet = width >= BREAKPOINTS.MOBILE && width < BREAKPOINTS.TABLET;
+  const isMobile = width < BREAKPOINTS.MOBILE;
 
-  // Estados
+  const numColumns = useMemo(() => {
+    if (isDesktop) return 3;
+    if (isTablet) return 2;
+    return 1;
+  }, [isDesktop, isTablet]);
+
+  const cardCompact = useMemo(() => isDesktop, [isDesktop]);
+
   const [searchText, setSearchText] = useState('');
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
   const [recursosSelecionados, setRecursosSelecionados] = useState([]);
@@ -291,18 +303,10 @@ export default function Buscar({ onNavigate }) {
   const [totalResultados, setTotalResultados] = useState(0);
   const [carregandoInicial, setCarregandoInicial] = useState(true);
 
-  // Desktop: exatamente 3 cards por linha com tamanho fixo
-  const numColumns = useMemo(() => {
-    if (isDesktop) return 3;
-    if (isTablet) return 2;
-    return 1;
-  }, [isDesktop, isTablet]);
-
   const temFiltrosAtivos = useMemo(() => {
     return searchText.trim() !== '' || categoriasSelecionadas.length > 0 || recursosSelecionados.length > 0 || notaMinima > 0;
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
-  // Função de busca
   const realizarBusca = useCallback(async () => {
     try {
       const filtros = {
@@ -314,15 +318,19 @@ export default function Buscar({ onNavigate }) {
       
       const response = await BuscarService.buscarLocais(filtros);
       
-      if (response.success) {
-        setResultados(response.data);
+      if (response.success && response.data) {
+        const locais = response.data.map(local => ({
+          ...local,
+          isMaisRecente: local.isMaisRecente || false
+        }));
+        setResultados(locais);
         setTotalResultados(response.total);
       } else {
         setResultados([]);
         setTotalResultados(0);
       }
     } catch (error) {
-      console.error('❌ Erro na busca:', error);
+      console.error(' Erro na busca:', error);
       setResultados([]);
       setTotalResultados(0);
     } finally {
@@ -331,7 +339,6 @@ export default function Buscar({ onNavigate }) {
     }
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
-  // Carregar dados iniciais
   const carregarDadosIniciais = useCallback(async () => {
     setCarregandoInicial(true);
     try {
@@ -350,10 +357,12 @@ export default function Buscar({ onNavigate }) {
     carregarDadosIniciais();
   }, [carregarDadosIniciais]);
 
-  // Efeito para filtros - SEM scroll automático
   useEffect(() => {
     if (!carregandoInicial) {
-      realizarBusca();
+      const debounce = setTimeout(() => {
+        realizarBusca();
+      }, 300);
+      return () => clearTimeout(debounce);
     }
   }, [categoriasSelecionadas, recursosSelecionados, notaMinima, carregandoInicial, realizarBusca]);
 
@@ -380,8 +389,7 @@ export default function Buscar({ onNavigate }) {
     setRecursosSelecionados([]);
     setNotaMinima(0);
     setLoading(true);
-    setTimeout(() => realizarBusca(), 50);
-  }, [realizarBusca]);
+  }, []);
 
   const aplicarFiltros = useCallback(() => {
     setLoading(true);
@@ -389,7 +397,7 @@ export default function Buscar({ onNavigate }) {
   }, [realizarBusca]);
 
   const handleLocalPress = useCallback((local) => {
-    const localId = BuscarService.getLocalId(local);
+    const localId = local?.id || local?.idLocal;
     if (localId) {
       onNavigate?.('LocalDetalhes', { id: localId });
     } else {
@@ -403,15 +411,16 @@ export default function Buscar({ onNavigate }) {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    BuscarService.cache = null;
-    BuscarService.carregarTodosLocais().finally(() => {
+    BuscarService.invalidateCache();
+    BuscarService.carregarTodosLocais(true).finally(() => {
       realizarBusca();
     });
   }, [realizarBusca]);
 
   const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="search-outline" size={64} color={theme.colors.textTertiary} />
+      <Ionicons name="search-outline" size={isDesktop ? 48 : 64} color={theme.colors.textTertiary} />
+      <Spacer size="md" />
       <ThemedText variant="h3" weight="bold" align="center">
         {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Digite algo para buscar'}
       </ThemedText>
@@ -422,15 +431,19 @@ export default function Buscar({ onNavigate }) {
           : 'Busque por nome, categoria ou recursos de acessibilidade'}
       </ThemedText>
     </View>
-  ), [temFiltrosAtivos, theme.colors.textTertiary, theme.colors.textSecondary]);
+  ), [temFiltrosAtivos, theme.colors.textTertiary, theme.colors.textSecondary, isDesktop]);
 
   const renderItem = useCallback(({ item }) => (
     <View style={styles.cardWrapper}>
-      <LocalCard local={item} onPress={() => handleLocalPress(item)} altoContraste={isHighContrast} />
+      <LocalCard 
+        local={item} 
+        onPress={() => handleLocalPress(item)} 
+        altoContraste={isHighContrast}
+        compact={cardCompact}
+      />
     </View>
-  ), [handleLocalPress, isHighContrast]);
+  ), [handleLocalPress, isHighContrast, cardCompact]);
 
-  // Loading inicial
   if (carregandoInicial) {
     return (
       <View style={styles.loadingContainer}>
@@ -452,6 +465,7 @@ export default function Buscar({ onNavigate }) {
       />
 
       {isDesktop ? (
+        
         <View style={styles.conteudoDesktop}>
           {/* Coluna de Filtros */}
           <View style={styles.colunaFiltrosDesktop}>
@@ -479,7 +493,6 @@ export default function Buscar({ onNavigate }) {
             </ScrollView>
           </View>
 
-          {/* Coluna de Resultados - 3 cards por linha com tamanho fixo */}
           <View style={styles.colunaResultadosDesktop}>
             <View style={styles.resultadosHeader}>
               <ThemedText variant="h3" weight="bold">
@@ -493,7 +506,7 @@ export default function Buscar({ onNavigate }) {
               data={resultados}
               key={numColumns}
               numColumns={numColumns}
-              keyExtractor={(item, index) => String(item.id || index)}
+              keyExtractor={(item, index) => String(item.id || item.idLocal || index)}
               renderItem={renderItem}
               ListEmptyComponent={!loading && renderEmptyState}
               contentContainerStyle={styles.resultadosListContent}
@@ -508,11 +521,12 @@ export default function Buscar({ onNavigate }) {
           </View>
         </View>
       ) : (
+
         <FlatList
           data={resultados}
           key={numColumns}
           numColumns={numColumns}
-          keyExtractor={(item, index) => String(item.id || index)}
+          keyExtractor={(item, index) => String(item.id || item.idLocal || index)}
           renderItem={renderItem}
           ListHeaderComponent={
             <>
@@ -579,7 +593,7 @@ const styles = StyleSheet.create({
   },
   
   listContentMobile: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 32,
   },
   
@@ -587,6 +601,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 14,
     overflow: 'hidden',
+    marginHorizontal: 12,
+    marginTop: 8,
   },
   filtrosHeader: {
     flexDirection: 'row',
@@ -602,7 +618,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  
+
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -616,7 +632,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 0,
   },
-  
+
   filtroGrupo: {
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
@@ -647,7 +663,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   filtroItemLabel: {
-    fontSize: 14,
     flex: 1,
   },
   checkbox: {
@@ -668,9 +683,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
-  notaValor: {
-    fontSize: 14,
-  },
+  notaValor: {},
   notaSliderContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -687,14 +700,13 @@ const styles = StyleSheet.create({
   notaBotaoAtivo: {
     backgroundColor: '#E8F0FF',
   },
-  notaBotaoTexto: {
-    fontSize: 12,
-  },
-  
+  notaBotaoTexto: {},
+ 
   resultadosHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 8,
     marginBottom: 8,
   },
   resultadosHeaderMobile: {
@@ -702,6 +714,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 16,
+    marginHorizontal: 12,
     marginBottom: 8,
   },
   resultadosListContent: {
@@ -711,7 +724,7 @@ const styles = StyleSheet.create({
   cardWrapper: {
     flex: 1,
     minWidth: 260,
-    maxWidth: 400,
+    maxWidth: isDesktop => isDesktop ? 400 : '100%',
     paddingHorizontal: 6,
     paddingVertical: 8,
   },

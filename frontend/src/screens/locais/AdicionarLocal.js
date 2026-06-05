@@ -73,9 +73,6 @@ const LIMITES_CAMPOS_LOCAL = {
 
 const LARGURA_MINIMA_DUAS_COLUNAS_CAMPOS = 1200;
 
-// ============================================
-// ESTILOS DOS MODAIS
-// ============================================
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -188,9 +185,6 @@ const modalStyles = StyleSheet.create({
   },
 });
 
-// ============================================
-// MODAL DE VERIFICAÇÃO DE HIERARQUIA
-// ============================================
 const ModalHierarquia = ({ visible, onClose, onIndependente, onVincular, theme, isHighContrast, nomeLocal }) => {
   return (
     <Modal
@@ -256,9 +250,6 @@ const ModalHierarquia = ({ visible, onClose, onIndependente, onVincular, theme, 
   );
 };
 
-// ============================================
-// MODAL DE VINCULAR LOCAL PRINCIPAL (VERSÃO DECLARATIVA)
-// ============================================
 const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast, localNome }) => {
   const [localPrincipal, setLocalPrincipal] = useState('');
   const [buscando, setBuscando] = useState(false);
@@ -426,9 +417,6 @@ const ModalVincularLocal = ({ visible, onClose, onSalvar, theme, isHighContrast,
   );
 };
 
-// ============================================
-// COMPONENTE DE UPLOAD DE IMAGENS
-// ============================================
 const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, theme }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -715,9 +703,6 @@ const localStyles = StyleSheet.create({
   },
 });
 
-// ============================================
-// COMPONENTE PRINCIPAL
-// ============================================
 export default function AdicionarLocal({ onNavigate, navigation, routeParams }) {
   const { isHighContrast, theme: t } = useThemeContext();
   const { usuario } = useAuth();
@@ -963,7 +948,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return true;
   };
 
-  // Função para salvar o local no backend (VERSÃO DECLARATIVA)
   const salvarLocalNoBackend = async (nomeLocalPrincipal = null) => {
     const cepLimpo = formulario.cep.replace(/\D/g, '');
     
@@ -985,7 +969,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       },
     };
 
-    // Adiciona nomeLocalPrincipal se fornecido (NÃO USA MAIS ID)
     if (nomeLocalPrincipal) {
       payloadLocal.nomeLocalPrincipal = nomeLocalPrincipal;
       console.log(`📌 Vinculando ao local principal: ${nomeLocalPrincipal}`);
@@ -1003,7 +986,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return localId;
   };
 
-  // Função para fazer upload das imagens
   const uploadImagens = async (localId) => {
     if (imagens.length === 0) return { enviadas: 0, erros: 0 };
 
@@ -1052,7 +1034,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         
         imagensEnviadas++;
       } catch (erroImagem) {
-        console.error(`❌ Erro na imagem ${i + 1}:`, erroImagem);
+        console.error(` Erro na imagem ${i + 1}:`, erroImagem);
         imagensComErro++;
       }
     }
@@ -1060,7 +1042,6 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return { enviadas: imagensEnviadas, erros: imagensComErro };
   };
 
-  // Função principal que inicia o fluxo de hierarquia
   const iniciarFluxoSave = async () => {
     if (enviando) return;
     if (!validarFormulario()) return;
@@ -1104,13 +1085,11 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     }
   };
 
-  // Abrir modal para vincular a local principal
   const handleAbrirVincular = () => {
     setShowModalHierarquia(false);
     setShowModalVincular(true);
   };
 
-  // Salvar com local principal (VERSÃO DECLARATIVA - recebe apenas nome)
   const handleSalvarComVinculo = async (nomeLocalPrincipal) => {
     setShowModalVincular(false);
     setEnviando(true);
