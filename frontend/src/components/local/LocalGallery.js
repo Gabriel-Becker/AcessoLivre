@@ -1,4 +1,3 @@
-// components/local/LocalGallery.js
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
@@ -17,44 +16,28 @@ import { breakpoints } from '../../config/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function LocalGallery({ imagens, altoContraste = false }) {
+export default function LocalGallery({ imagens = [], altoContraste = false }) {
   const { theme: t } = useThemeContext();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { width } = useWindowDimensions();
   const flatListRef = useRef(null);
 
-  // Calcular tamanho das imagens baseado na largura da tela
   const imageSize = useMemo(() => {
     if (width >= breakpoints.desktop) return 180;
     if (width >= breakpoints.tablet) return 150;
     return 110;
   }, [width]);
 
-  // Se não houver imagens, mostra placeholder
-  if (!imagens || imagens.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="camera-outline" size={48} color={t.colors.textTertiary} />
-        <ThemedText color="textSecondary" align="center">
-          Nenhuma foto disponível
-        </ThemedText>
-      </View>
-    );
-  }
-
-  // Abrir modal com a imagem selecionada
   const openImageModal = useCallback((index) => {
     setSelectedImageIndex(index);
     setModalVisible(true);
   }, []);
 
-  // Fechar modal
   const closeModal = useCallback(() => {
     setModalVisible(false);
   }, []);
 
-  // Navegar para imagem anterior
   const goToPrevious = useCallback(() => {
     if (selectedImageIndex > 0) {
       const newIndex = selectedImageIndex - 1;
@@ -67,7 +50,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
     }
   }, [selectedImageIndex]);
 
-  // Navegar para próxima imagem
   const goToNext = useCallback(() => {
     if (selectedImageIndex < imagens.length - 1) {
       const newIndex = selectedImageIndex + 1;
@@ -80,7 +62,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
     }
   }, [selectedImageIndex, imagens.length]);
 
-  // Scroll finalizado no FlatList do modal
   const onScrollEnd = useCallback((event) => {
     const contentOffset = event.nativeEvent.contentOffset;
     const viewSize = event.nativeEvent.layoutMeasurement;
@@ -90,7 +71,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
     }
   }, [selectedImageIndex]);
 
-  // Renderizar cada thumbnail
   const renderThumbnail = useCallback(({ item, index }) => (
     <TouchableOpacity
       style={[
@@ -111,7 +91,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
     </TouchableOpacity>
   ), [imageSize, openImageModal]);
 
-  // Renderizar imagem em tela cheia no modal
   const renderFullImage = useCallback(({ item }) => (
     <View style={styles.fullImageWrapper}>
       <Image
@@ -122,15 +101,22 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
     </View>
   ), []);
 
-  // Key extractor para thumbnails
-  const thumbnailKeyExtractor = useCallback((item, index) => `thumbnail_${index}`, []);
+  const thumbnailKeyExtractor = useCallback((_, index) => `thumbnail_${index}`, []);
+  const modalKeyExtractor = useCallback((_, index) => `modal_${index}`, []);
 
-  // Key extractor para modal
-  const modalKeyExtractor = useCallback((item, index) => `modal_${index}`, []);
+  if (!imagens || imagens.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="camera-outline" size={48} color={t.colors.textTertiary} />
+        <ThemedText color="textSecondary" align="center">
+          Nenhuma foto disponível
+        </ThemedText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Grid de miniaturas */}
       <FlatList
         data={imagens}
         keyExtractor={thumbnailKeyExtractor}
@@ -141,7 +127,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
         columnWrapperStyle={styles.gridRow}
       />
 
-      {/* Modal para visualização em tela cheia */}
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -149,26 +134,22 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
         onRequestClose={closeModal}
       >
         <View style={styles.modalContainer}>
-          {/* Botão de fechar */}
           <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
             <Ionicons name="close" size={28} color="#FFF" />
           </TouchableOpacity>
 
-          {/* Botão de navegação anterior */}
           {imagens.length > 1 && selectedImageIndex > 0 && (
             <TouchableOpacity style={styles.navButtonLeft} onPress={goToPrevious}>
               <Ionicons name="chevron-back" size={40} color="#FFF" />
             </TouchableOpacity>
           )}
 
-          {/* Botão de navegação próxima */}
           {imagens.length > 1 && selectedImageIndex < imagens.length - 1 && (
             <TouchableOpacity style={styles.navButtonRight} onPress={goToNext}>
               <Ionicons name="chevron-forward" size={40} color="#FFF" />
             </TouchableOpacity>
           )}
 
-          {/* FlatList horizontal com as imagens em tela cheia */}
           <FlatList
             ref={flatListRef}
             data={imagens}
@@ -186,7 +167,6 @@ export default function LocalGallery({ imagens, altoContraste = false }) {
             })}
           />
 
-          {/* Indicador de posição */}
           <View style={styles.counterContainer}>
             <ThemedText style={styles.counterText}>
               {selectedImageIndex + 1} / {imagens.length}
@@ -243,7 +223,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
     borderRadius: 12,
   },
-  // Modal styles
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.95)',
