@@ -70,7 +70,11 @@ public class Local {
     @JoinColumn(name = "idendereco")
     private Endereco endereco;
 
-    // ===== AUTO-RELACIONAMENTO (Hierarquia) =====
+    // ===== NOVO CAMPO DECLARATIVO =====
+    @Column(name = "nome_local_principal", length = 200)
+    private String nomeLocalPrincipal;
+
+    // ===== AUTO-RELACIONAMENTO (Hierarquia) - Mantido para compatibilidade futura =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idlocal_principal")
     @JsonIgnore
@@ -99,10 +103,6 @@ public class Local {
 
     // ===== MÉTODOS AUXILIARES PARA HIERARQUIA =====
     
-    /**
-     * Adiciona um sub-local a este local
-     * @param subLocal o local filho
-     */
     public void adicionarSubLocal(Local subLocal) {
         if (subLocal != null) {
             subLocais.add(subLocal);
@@ -111,10 +111,6 @@ public class Local {
         }
     }
     
-    /**
-     * Remove um sub-local deste local
-     * @param subLocal o local filho
-     */
     public void removerSubLocal(Local subLocal) {
         if (subLocal != null) {
             subLocais.remove(subLocal);
@@ -123,26 +119,16 @@ public class Local {
         }
     }
     
-    /**
-     * Verifica se é um local raiz (não tem pai)
-     */
     public boolean isRaiz() {
         return localPrincipal == null;
     }
     
-    /**
-     * Verifica se é um local folha (não tem filhos)
-     */
     public boolean isFolha() {
         return subLocais == null || subLocais.isEmpty();
     }
     
     // ===== MÉTODOS AUXILIARES PARA IMAGENS =====
     
-    /**
-     * Adiciona uma imagem ao local
-     * @param imagem a imagem a ser adicionada
-     */
     public void addImagem(Imagem imagem) {
         if (imagem != null) {
             imagens.add(imagem);
@@ -150,10 +136,6 @@ public class Local {
         }
     }
     
-    /**
-     * Remove uma imagem do local
-     * @param imagem a imagem a ser removida
-     */
     public void removeImagem(Imagem imagem) {
         if (imagem != null) {
             imagens.remove(imagem);
@@ -172,15 +154,12 @@ public class Local {
                     .findFirst()
                     .orElse(null);
             if (primeira != null) {
-                return primeira.getCaminhoRelativo();  // ← CORRETO
+                return primeira.getCaminhoRelativo();
             }
         }
         return imagem;
     }
     
-    /**
-     * Retorna a quantidade de imagens
-     */
     public int getTotalImagens() {
         return imagens != null ? imagens.size() : 0;
     }

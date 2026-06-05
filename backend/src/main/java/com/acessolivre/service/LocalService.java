@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -203,6 +204,38 @@ public class LocalService {
         return localRepository.buscarPorNomeLike(nome, pageable);
     }
 
+    // ===== NOVO MÉTODO ADICIONADO =====
+    @Transactional(readOnly = true)
+    public Page<Local> buscarPorNomePaginado(String nome, Pageable pageable) {
+        log.info("Buscando locais por nome com paginação: {}", nome);
+        
+        if (nome == null || nome.trim().isEmpty()) {
+            log.info("Nome vazio, retornando locais raiz");
+            return listarLocaisRaizComImagens(pageable);
+        }
+        
+        // Busca no repository usando o método existente
+        Page<Local> pagina = localRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
+        
+        // Filtra locais inativos
+        List<Local> locaisFiltrados = pagina.getContent().stream()
+                .filter(local -> local.getStatus() != StatusLocal.INATIVO)
+                .collect(Collectors.toList());
+        
+        // Força o carregamento das imagens para evitar LazyInitializationException
+        for (Local local : locaisFiltrados) {
+            if (local.getImagens() != null) {
+                local.getImagens().size(); // Inicializa a coleção de imagens
+            }
+            if (local.getEndereco() != null) {
+                local.getEndereco().getCep(); // Força carregamento do endereço
+            }
+        }
+        
+        log.info("Encontrados {} locais para o nome '{}'", locaisFiltrados.size(), nome);
+        return new PageImpl<>(locaisFiltrados, pageable, pagina.getTotalElements());
+    }
+
     private Page<Local> filtrarLocaisNaoInativos(Page<Local> pagina, Pageable pageable) {
         List<Local> filtrados = pagina.getContent().stream()
                 .filter(local -> local.getStatus() != StatusLocal.INATIVO)
@@ -228,23 +261,50 @@ public class LocalService {
 
         Usuario usuario = validarUsuario(dto.getIdUsuario());
         Endereco endereco = resolverEndereco(dto);
-        Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
-        validarHierarquia(localPrincipal, null);
+        
+        // NOVA ABORDAGEM DECLARATIVA
+        // Se houver nomeLocalPrincipal, tenta encontrar o local principal existente
+        // Caso contrário, apenas armazena o nome para vínculo futuro
+        Local localPrincipal = null;
+        if (dto.getNomeLocalPrincipal() != null && !dto.getNomeLocalPrincipal().trim().isEmpty()) {
+            String nomePrincipal = dto.getNomeLocalPrincipal().trim();
+            log.info("📌 Vinculando ao local principal: {}", nomePrincipal);
+            
+            // Tenta encontrar um local existente com esse nome
+            Optional<Local> principalExistente = localRepository.findByNomeIgnoreCase(nomePrincipal);
+            
+            if (principalExistente.isPresent()) {
+                localPrincipal = principalExistente.get();
+                validarHierarquia(localPrincipal, null);
+                log.info("✅ Local principal encontrado! ID: {}", localPrincipal.getIdLocal());
+            } else {
+                log.info("ℹ️ Local principal '{}' não encontrado no sistema. Será armazenado apenas o nome para vínculo futuro.", nomePrincipal);
+            }
+        }
         
         Local local = LocalMapper.toEntity(dto, usuario, endereco);
-        local.setLocalPrincipal(localPrincipal); 
+        local.setLocalPrincipal(localPrincipal);
+        local.setNomeLocalPrincipal(dto.getNomeLocalPrincipal()); // Armazena o nome declarado
+        
+        // Ajusta nível de hierarquia se encontrou o local principal
+        if (localPrincipal != null) {
+            local.setNivelHierarquia(localPrincipal.getNivelHierarquia() + 1);
+            log.info("📊 Nível hierarquia definido: {}", local.getNivelHierarquia());
+        }
         
         Local salvo = localRepository.save(local);
         
         if (localPrincipal != null) {
             localPrincipal.adicionarSubLocal(salvo);
             localRepository.save(localPrincipal);
+            log.info("✅ Sub-local adicionado ao pai ID: {}", localPrincipal.getIdLocal());
         }
         
-        log.info("Local salvo com sucesso. ID: {}", salvo.getIdLocal());
+        log.info("✅ Local salvo com sucesso. ID: {}, Nível hierarquia: {}", 
+                salvo.getIdLocal(), salvo.getNivelHierarquia());
         return salvo;
     }
-    
+        
     @Transactional
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
         log.info("Atualizando local: id={}", id);
@@ -543,12 +603,12 @@ public class LocalService {
         
         Set<Categoria> categorias = filtros.getCategorias();
         if (categorias != null && categorias.isEmpty()) {
-            categorias = null;  // Evita IN () que causaria erro
+            categorias = null;
         }
         
         Set<TipoAcessibilidade> recursos = filtros.getRecursos();
         if (recursos != null && recursos.isEmpty()) {
-            recursos = null;  // Evita IN () que causaria erro
+            recursos = null;
         }
         
         Double notaMinima = filtros.getNotaMinima();
@@ -562,7 +622,6 @@ public class LocalService {
             return localRepository.findAll(pageable);
         }
         
-        // CORRIGIDO: usar o método correto que existe no Repository
         return localRepository.buscarComFiltrosAvancados(
             searchTerm, 
             categorias, 

@@ -1,3 +1,5 @@
+// frontend/src/screens/Home.js
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -15,10 +17,11 @@ import { useThemeContext } from '../../context/ThemeContext';
 import BuscarService from '../../services/BuscarService';
 import toastHelper from '../../utils/toastHelper';
 
+// Breakpoints para grid responsivo
 const BREAKPOINTS = {
-  MOBILE: 600,
-  TABLET: 1000,
-  DESKTOP: 1400
+  MOBILE: 768,
+  TABLET: 1200,
+  DESKTOP: 1400,
 };
 
 export default function Home({ onNavigate, routeParams }) {
@@ -37,72 +40,64 @@ export default function Home({ onNavigate, routeParams }) {
   });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
 
-  const layoutDestaques = useMemo(() => {
-    if (fontSizeMultiplier >= 2) {
-      return {
-        numColumns: 1,
-        cardMaxWidth: 980,
-        cardFlexBasis: '100%',
-        centralizarCards: true,
-        usarWrapperCentralizado: false,
-      };
-    }
-
+  // ============================================
+  // CONFIGURAÇÃO DO GRID RESPONSIVO
+  // ============================================
+  const gridConfig = useMemo(() => {
+    // Para fontes muito grandes, manter 1 coluna
     if (fontSizeMultiplier >= 1.5) {
       return {
-        numColumns: 2,
-        cardMaxWidth: 760,
-        cardFlexBasis: '49%',
-        centralizarCards: true,
-        usarWrapperCentralizado: true,
+        numColumns: 1,
+        contentContainerStyle: styles.listContentCentralizado,
+        columnWrapperStyle: null,
+        cardMarginHorizontal: 0,
       };
     }
 
+    // Desktop: 3 colunas
     if (width >= BREAKPOINTS.DESKTOP) {
       return {
-        numColumns: 4,
-        cardMaxWidth: 400,
-        cardFlexBasis: '24%',
-        centralizarCards: false,
-        usarWrapperCentralizado: false,
+        numColumns: 3,
+        contentContainerStyle: styles.listContent,
+        columnWrapperStyle: styles.columnWrapperDesktop,
+        cardMarginHorizontal: 8,
       };
     }
 
+    // Tablet: 2 colunas
     if (width >= BREAKPOINTS.TABLET) {
       return {
-        numColumns: 3,
-        cardMaxWidth: 460,
-        cardFlexBasis: '32%',
-        centralizarCards: false,
-        usarWrapperCentralizado: false,
-      };
-    }
-
-    if (width >= BREAKPOINTS.MOBILE) {
-      return {
         numColumns: 2,
-        cardMaxWidth: 560,
-        cardFlexBasis: '48%',
-        centralizarCards: false,
-        usarWrapperCentralizado: false,
+        contentContainerStyle: styles.listContent,
+        columnWrapperStyle: styles.columnWrapperTablet,
+        cardMarginHorizontal: 6,
       };
     }
 
+    // Mobile: 1 coluna
     return {
       numColumns: 1,
-      cardMaxWidth: 840,
-      cardFlexBasis: '100%',
-      centralizarCards: true,
-      usarWrapperCentralizado: false,
+      contentContainerStyle: styles.listContentCentralizado,
+      columnWrapperStyle: null,
+      cardMarginHorizontal: 0,
     };
   }, [width, fontSizeMultiplier]);
+
+  // ============================================
+  // LAYOUT DO CARD
+  // ============================================
+  const cardLayout = useMemo(() => {
+    if (width >= BREAKPOINTS.DESKTOP) {
+      return { compact: true };
+    }
+    return { compact: false };
+  }, [width]);
 
   const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
-      // Se forçar recarga, invalidar cache (se o método existir)
       if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
         BuscarService.invalidateCache();
         console.log('🔄 Cache invalidado por força');
@@ -115,14 +110,15 @@ export default function Home({ onNavigate, routeParams }) {
         mediaGeral: stats.mediaGeral || 0
       });
 
-      const locais = await BuscarService.obterLocaisEmDestaque(8);
-      setLocaisDestaque(locais.filter(l => l?.id));
+      const locais = await BuscarService.obterLocaisEmDestaque(12); // Aumentar para 12 no desktop
+      setLocaisDestaque(locais);
       
       console.log('📊 Home carregada:', {
         locais: stats.totalLocais,
         avaliacoes: stats.totalAvaliacoes,
         destaques: locais.length,
-        forcarRecarga
+        forcarRecarga,
+        gridColumns: gridConfig.numColumns
       });
       
     } catch (e) {
@@ -132,20 +128,18 @@ export default function Home({ onNavigate, routeParams }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []); 
+  }, [gridConfig.numColumns]);
 
-  
   useEffect(() => {
     carregarDados(false, false);
   }, [carregarDados]);
 
-  
   useEffect(() => {
     if (refreshKey || forceRefresh) {
       console.log('🔄 Recarregando Home devido a parâmetros:', { refreshKey, forceRefresh });
       carregarDados(false, forceRefresh === true);
     }
-  }, [refreshKey, forceRefresh, carregarDados]); 
+  }, [refreshKey, forceRefresh, carregarDados]);
 
   const handleRefresh = () => {
     carregarDados(true, true);
@@ -155,24 +149,31 @@ export default function Home({ onNavigate, routeParams }) {
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
-  const renderItem = ({ item }) => (
-    <View
-      style={[
+  const renderItem = ({ item, index }) => {
+    // Adicionar margem lateral nos cards do desktop/tablet
+    const marginLeft = (gridConfig.cardMarginHorizontal && index % gridConfig.numColumns === 0) 
+      ? { marginLeft: 0 } 
+      : {};
+    const marginRight = (gridConfig.cardMarginHorizontal && (index + 1) % gridConfig.numColumns === 0)
+      ? { marginRight: 0 }
+      : {};
+
+    return (
+      <View style={[
         styles.cardWrapper,
-        {
-          maxWidth: layoutDestaques.cardMaxWidth,
-          flexBasis: layoutDestaques.cardFlexBasis,
-        },
-        layoutDestaques.numColumns === 1 ? styles.cardWrapperCentralizado : null,
-      ]}
-    >
-      <LocalCard
-        local={item}
-        onPress={() => handleLocalPress(item)}
-        altoContraste={isHighContrast}
-      />
-    </View>
-  );
+        marginLeft,
+        marginRight,
+        gridConfig.cardMarginHorizontal ? { marginHorizontal: gridConfig.cardMarginHorizontal / 2 } : {}
+      ]}>
+        <LocalCard
+          local={item}
+          onPress={() => handleLocalPress(item)}
+          altoContraste={isHighContrast}
+          compact={cardLayout.compact}
+        />
+      </View>
+    );
+  };
 
   if (loading) {
     return (
@@ -188,11 +189,12 @@ export default function Home({ onNavigate, routeParams }) {
     <View style={[styles.container, { backgroundColor: t.colors.backgroundSecondary }]}>
       <FlatList
         data={locaisDestaque}
-        key={layoutDestaques.numColumns}
-        numColumns={layoutDestaques.numColumns}
+        key={gridConfig.numColumns}
+        numColumns={gridConfig.numColumns}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
-        columnWrapperStyle={layoutDestaques.usarWrapperCentralizado ? styles.columnWrapperCentralizado : undefined}
+        columnWrapperStyle={gridConfig.columnWrapperStyle}
+        contentContainerStyle={gridConfig.contentContainerStyle}
         ListHeaderComponent={
           <>
             <StatsBanner 
@@ -221,10 +223,6 @@ export default function Home({ onNavigate, routeParams }) {
             tintColor={t.colors.primary}
           />
         }
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingHorizontal: t.layout?.mobile?.pageHorizontal ?? 10, paddingBottom: t.layout?.mobile?.pageVertical ?? 20 },
-        ]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -248,28 +246,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  columnWrapperCentralizado: {
-    justifyContent: 'center',
+  listContentCentralizado: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  columnWrapperDesktop: {
+    justifyContent: 'flex-start',
     gap: 12,
+    marginBottom: 8,
+  },
+  columnWrapperTablet: {
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
   },
   sectionHeader: {
     marginTop: 10,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    marginBottom: 16,
+    paddingHorizontal: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   cardWrapper: {
     flex: 1,
-    padding: 6,
+    marginBottom: 12,
     minWidth: 0,
-    width: '100%',
-  },
-  cardWrapperCentralizado: {
-    alignSelf: 'center',
   },
   emptyContainer: {
     flex: 1,
