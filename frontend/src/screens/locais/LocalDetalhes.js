@@ -153,7 +153,6 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
           </View>
         </View>
 
-        {/* Menu de três pontos para reportar comentário */}
         <ComentarioMenu 
           comentario={avaliacao}
           autorNome={nomeUsuario}
@@ -182,7 +181,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const layoutEmpilhado = width < 1280 || fontSizeMultiplier >= 1.5;
   const corFundoPagina = isHighContrast ? t.colors.background : t.colors.backgroundSecondary;
   
-  // Estados existentes
+  // Estados
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
   const [modalCompartilharVisible, setModalCompartilharVisible] = useState(false);
   const [local, setLocal] = useState(null);
@@ -191,8 +190,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const [error, setError] = useState(null);
   const [descricaoExpandida, setDescricaoExpandida] = useState(false);
   const [mostrarTodasAvaliacoes, setMostrarTodasAvaliacoes] = useState(false);
-  
-  // NOVO: Estado para modal de reportar local
   const [showReportarLocalModal, setShowReportarLocalModal] = useState(false);
   
   const estilosZoom = useMemo(
@@ -229,6 +226,64 @@ export default function LocalDetalhes({ onNavigate, route }) {
     },
   };
 
+  // Função para extrair URLs das imagens de forma consistente
+  const extrairUrlsImagens = useCallback((dados) => {
+    if (!dados) return [];
+    
+    // Debug: verificar estrutura recebida
+    console.log('🔍 [LocalDetalhes] Extraindo imagens de:', {
+      temImagens: !!dados.imagens,
+      imagensLength: dados.imagens?.length,
+      temImagensCompletas: !!dados.imagensCompletas,
+      imagensCompletasLength: dados.imagensCompletas?.length,
+      temImagemUrl: !!dados.imagemUrl,
+      temImagemPrincipal: !!dados.imagemPrincipal,
+    });
+    
+    // Prioridade 1: imagensCompletas (objetos completos)
+    if (dados.imagensCompletas && Array.isArray(dados.imagensCompletas) && dados.imagensCompletas.length > 0) {
+      const urls = dados.imagensCompletas
+        .map(img => img?.url || img?.urlCompleta || img?.caminhoRelativo)
+        .filter(Boolean);
+      
+      if (urls.length > 0) {
+        console.log('✅ Usando imagensCompletas:', urls.length);
+        return urls;
+      }
+    }
+    
+    // Prioridade 2: imagens (array de objetos)
+    if (dados.imagens && Array.isArray(dados.imagens) && dados.imagens.length > 0) {
+      const urls = dados.imagens
+        .map(img => {
+          // Tenta extrair URL de diferentes formatos
+          if (typeof img === 'string') return img;
+          return img?.urlCompleta || img?.url || img?.caminhoRelativo || img?.imagemUrl;
+        })
+        .filter(Boolean);
+      
+      if (urls.length > 0) {
+        console.log('✅ Usando imagens:', urls.length);
+        return urls;
+      }
+    }
+    
+    // Prioridade 3: imagemUrl única
+    if (dados.imagemUrl) {
+      console.log('✅ Usando imagemUrl única');
+      return [dados.imagemUrl];
+    }
+    
+    // Prioridade 4: imagemPrincipal
+    if (dados.imagemPrincipal) {
+      console.log('✅ Usando imagemPrincipal única');
+      return [dados.imagemPrincipal];
+    }
+    
+    console.log('⚠️ Nenhuma imagem encontrada');
+    return [];
+  }, []);
+
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
       setError('ID do local não informado');
@@ -248,7 +303,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       }
       
       const imagensList = HomeService.extrairTodasImagens(dados);
-      
+
       let avaliacoes = [];
       try {
         const result = await AvaliacaoService.buscarAvaliacoesPorLocal(id);
@@ -270,7 +325,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
       setLocal({
         ...dados,
-        imagens: imagensList,
+        imagens:  imagensList,
+        imagensCompletas: dados.imagensCompletas || dados.imagens || [],
         avaliacoes: avaliacoesOrdenadas,
         tiposAcessibilidade: dados.tiposAcessibilidade || [],
         avaliacaoMedia: dados.avaliacaoMedia || 0,
@@ -312,7 +368,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
     setModalCompartilharVisible(true);
   };
 
-  // NOVO: Handler para reportar o local
   const handleReportarLocal = () => {
     if (!isAuthenticated) {
       toastHelper.showInfo('Faça login para reportar este local');
@@ -606,7 +661,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
             <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
               Compartilhar
             </Button>
-            {/* NOVO: Botão Reportar Local */}
             <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportarLocal} style={[styles.botaoAcao, estilosZoom.botao]}>
               Reportar
             </Button>
@@ -615,18 +669,21 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
         <Spacer size="lg" />
 
+        {/* CORRIGIDO: Card de Fotos com verificação de imagens */}
         <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
           <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
             <Ionicons name="images-outline" size={22} color={t.colors.primary} />
             <ThemedText variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
-            {local.imagens?.length > 0 && (
+            {local.imagens && local.imagens.length > 0 && (
               <ThemedText variant="caption" color="textSecondary">
                 ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
               </ThemedText>
             )}
           </View>
           <Spacer size="sm" />
+
           <LocalGallery imagens={local.imagens || []} />
+
         </Card>
 
         <Spacer size="lg" />
@@ -638,7 +695,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <Spacer size="xl" />
       </ScrollView>
 
-      {/* Modal de Avaliação */}
       <AvaliacaoModal
         visible={modalAvaliacaoVisible}
         onClose={() => setModalAvaliacaoVisible(false)}
@@ -646,14 +702,12 @@ export default function LocalDetalhes({ onNavigate, route }) {
         onSubmit={handleEnviarAvaliacao}
       />
 
-      {/* Modal de Compartilhamento */}
       <ModalCompartilhar
         visible={modalCompartilharVisible}
         onClose={() => setModalCompartilharVisible(false)}
         local={local}
       />
 
-      {/* NOVO: Modal de Reportar Local */}
       <ReportarModal
         visible={showReportarLocalModal}
         onClose={() => setShowReportarLocalModal(false)}
@@ -858,6 +912,12 @@ const styles = StyleSheet.create({
   semAvaliacoes: {
     alignItems: 'center',
     paddingVertical: 32,
+    gap: 12,
+  },
+  semImagensContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
     gap: 12,
   },
   botaoVoltarTopo: {
