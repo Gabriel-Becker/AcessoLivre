@@ -5,8 +5,11 @@ import Toast, { BaseToast } from 'react-native-toast-message';
 import './src/api/interceptors';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import navigationRef from './src/navigation/navigationRef';
+import { navigationRef } from './src/navigation/navigationRef';
+import NavigationService from './src/services/acessibilidade/NavigationService';
+import VoiceButton from './src/components/acessibilidade/VoiceButton';
 
 const linking = {
   prefixes: ['http://localhost:8081', 'frontend://'],
@@ -36,10 +39,17 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <NavigationContainer ref={navigationRef} linking={linking} fallback={null}>
-            <AppNavigator />
-          </NavigationContainer>
-          <Toast config={toastConfig} />
+          <AccessibilityProvider>
+            <NavigationContainer 
+              ref={navigationRef}
+              linking={linking} 
+              fallback={null}
+            >
+              <AppNavigator />
+            </NavigationContainer>
+            <Toast config={toastConfig} />
+            <VoiceButton />
+          </AccessibilityProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -1,6 +1,4 @@
-// frontend/src/screens/Home.js
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,6 +12,8 @@ import {
 import { StatsBanner, LocalCard } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
+import { AccessibilityContext } from '../../context/AccessibilityContext';
+import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
 import toastHelper from '../../utils/toastHelper';
 
@@ -26,6 +26,7 @@ const BREAKPOINTS = {
 
 export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
+  const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
 
   const refreshKey = routeParams?.refreshKey;
@@ -39,10 +40,8 @@ export default function Home({ onNavigate, routeParams }) {
     mediaGeral: 0
   });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
+  const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
-  // ============================================
-  // CONFIGURAÇÃO DO GRID RESPONSIVO
-  // ============================================
   const gridConfig = useMemo(() => {
     // Para fontes muito grandes, manter 1 coluna
     if (fontSizeMultiplier >= 1.5) {
@@ -83,15 +82,48 @@ export default function Home({ onNavigate, routeParams }) {
     };
   }, [width, fontSizeMultiplier]);
 
-  // ============================================
-  // LAYOUT DO CARD
-  // ============================================
   const cardLayout = useMemo(() => {
     if (width >= BREAKPOINTS.DESKTOP) {
       return { compact: true };
     }
     return { compact: false };
   }, [width]);
+
+  const anunciarHome = useCallback(() => {
+    if (!voiceEnabled) return;
+
+    const totalLocaisMsg = estatisticas.totalLocais > 0 
+      ? `Temos ${estatisticas.totalLocais} locais cadastrados.` 
+      : '';
+    
+    const destaqueMsg = locaisDestaque.length > 0
+      ? `Mostrando ${locaisDestaque.length} locais em destaque.`
+      : 'Nenhum local em destaque no momento.';
+
+    VoiceService.speak(`Bem-vindo à página inicial. ${totalLocaisMsg} ${destaqueMsg} Você pode pedir ajuda a qualquer momento.`);
+  }, [voiceEnabled, estatisticas.totalLocais, locaisDestaque.length]);
+
+  const anunciarEstatisticas = useCallback(() => {
+    if (!voiceEnabled) return;
+    VoiceService.speak(`Total de ${estatisticas.totalLocais} locais cadastrados e ${estatisticas.totalAvaliacoes} avaliações.`);
+  }, [voiceEnabled, estatisticas.totalLocais, estatisticas.totalAvaliacoes]);
+
+  const buscarLocalPorNome = useCallback((nomeLocal) => {
+    if (!nomeLocal) return false;
+    
+    const localEncontrado = locaisDestaque.find(local => 
+      local.nome?.toLowerCase().includes(nomeLocal.toLowerCase())
+    );
+    
+    if (localEncontrado) {
+      VoiceService.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
+      onNavigate?.('LocalDetalhes', { id: localEncontrado.id });
+      return true;
+    }
+    
+    VoiceService.speak(`Não encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
+    return false;
+  }, [locaisDestaque, onNavigate]);
 
   const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
     if (isRefresh) setRefreshing(true);
@@ -110,7 +142,7 @@ export default function Home({ onNavigate, routeParams }) {
         mediaGeral: stats.mediaGeral || 0
       });
 
-      const locais = await BuscarService.obterLocaisEmDestaque(12); // Aumentar para 12 no desktop
+      const locais = await BuscarService.obterLocaisEmDestaque(12);
       setLocaisDestaque(locais);
       
       console.log('📊 Home carregada:', {
@@ -141,16 +173,36 @@ export default function Home({ onNavigate, routeParams }) {
     }
   }, [refreshKey, forceRefresh, carregarDados]);
 
+  // Anunciar quando os dados carregarem e o voice estiver ativo
+  useEffect(() => {
+    if (!loading && voiceEnabled && !voiceFeedbackGiven && locaisDestaque.length > 0) {
+      anunciarHome();
+      setVoiceFeedbackGiven(true);
+    }
+  }, [loading, voiceEnabled, locaisDestaque.length, anunciarHome, voiceFeedbackGiven]);
+
+  // Resetar feedback quando o voice for reativado
+  useEffect(() => {
+    if (!voiceEnabled) {
+      setVoiceFeedbackGiven(false);
+    }
+  }, [voiceEnabled]);
+
   const handleRefresh = () => {
+    if (voiceEnabled) {
+      VoiceService.speak('Atualizando a página inicial');
+    }
     carregarDados(true, true);
   };
 
   const handleLocalPress = (local) => {
+    if (voiceEnabled) {
+      VoiceService.speak(`Abrindo detalhes de ${local.nome}`);
+    }
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
   const renderItem = ({ item, index }) => {
-    // Adicionar margem lateral nos cards do desktop/tablet
     const marginLeft = (gridConfig.cardMarginHorizontal && index % gridConfig.numColumns === 0) 
       ? { marginLeft: 0 } 
       : {};
@@ -200,6 +252,7 @@ export default function Home({ onNavigate, routeParams }) {
             <StatsBanner 
               totalLocais={estatisticas.totalLocais}
               totalAvaliacoes={estatisticas.totalAvaliacoes}
+              onPressStats={voiceEnabled ? anunciarEstatisticas : undefined}
             />
 
             <View style={styles.sectionHeader}>
@@ -207,7 +260,11 @@ export default function Home({ onNavigate, routeParams }) {
                 Locais em Destaque
               </ThemedText>
 
-              <TouchableOpacity onPress={() => onNavigate?.('Buscar')}>
+              <TouchableOpacity 
+                onPress={() => onNavigate?.('Buscar')}
+                accessibilityLabel="Ver todos os locais"
+                accessibilityRole="button"
+              >
                 <ThemedText color="primary" weight="semibold">
                   Ver todos →
                 </ThemedText>
