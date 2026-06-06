@@ -1,8 +1,9 @@
+// src/services/ReportarService.js
+
 import api from '../api/axios';
 
 class ReportarService {
-  static reports = [];
-  static baseURL = '/reportar';
+  static baseURL = '/denuncias';
 
   /**
    * Cria uma nova denúncia
@@ -11,28 +12,10 @@ class ReportarService {
    */
   static async create(data) {
     try {
-      // TODO: Quando o backend estiver pronto, descomentar:
-      // const response = await api.post(this.baseURL, data);
-      // return { success: true, data: response.data };
-      
-      // Mock para desenvolvimento
-      console.log('📝 ReportarService.create:', data);
-      
-      const newReport = {
-        id: Date.now(),
-        ...data,
-        createdAt: new Date().toISOString(),
-        status: 'PENDING',
-      };
-      
-      this.reports.unshift(newReport);
-      
-      // Simular delay de rede
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      const response = await api.post(this.baseURL, data);
       return { 
         success: true, 
-        data: newReport,
+        data: response.data,
         message: 'Denúncia enviada com sucesso!'
       };
     } catch (error) {
@@ -51,25 +34,38 @@ class ReportarService {
    */
   static async getAll(filters = {}) {
     try {
-      // TODO: Quando o backend estiver pronto:
-      // const response = await api.get(this.baseURL, { params: filters });
-      // return { success: true, data: response.data };
+      const params = {};
       
-      // Mock
-      let reports = [...this.reports];
-      
-      if (filters.tipo) {
-        reports = reports.filter(r => r.tipo === filters.tipo);
+      if (filters.status && filters.status !== 'todos') {
+        params.status = filters.status;
+      }
+      if (filters.tipo && filters.tipo !== 'todos') {
+        params.tipo = filters.tipo;
+      }
+      if (filters.search) {
+        params.search = filters.search;
       }
       
-      if (filters.status) {
-        reports = reports.filter(r => r.status === filters.status);
+      const response = await api.get(this.baseURL, { params });
+      
+      // A resposta pode vir em diferentes formatos
+      let denuncias = [];
+      if (response.data?.content) {
+        denuncias = response.data.content;
+      } else if (Array.isArray(response.data)) {
+        denuncias = response.data;
+      } else if (response.data?.data) {
+        denuncias = response.data.data;
       }
       
-      return { success: true, data: reports };
+      return { success: true, data: denuncias };
     } catch (error) {
       console.error('Erro ao listar denúncias:', error);
-      return { success: false, data: [], message: error.message };
+      return { 
+        success: false, 
+        data: [], 
+        message: error.response?.data?.message || 'Erro ao carregar denúncias' 
+      };
     }
   }
 
@@ -80,10 +76,15 @@ class ReportarService {
    */
   static async getById(id) {
     try {
-      const report = this.reports.find(r => r.id === parseInt(id));
-      return { success: true, data: report };
+      const response = await api.get(`${this.baseURL}/${id}`);
+      return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, data: null, message: error.message };
+      console.error('Erro ao buscar denúncia:', error);
+      return { 
+        success: false, 
+        data: null, 
+        message: error.response?.data?.message || 'Denúncia não encontrada' 
+      };
     }
   }
 
@@ -95,13 +96,14 @@ class ReportarService {
    */
   static async updateStatus(id, status) {
     try {
-      const index = this.reports.findIndex(r => r.id === parseInt(id));
-      if (index !== -1) {
-        this.reports[index] = { ...this.reports[index], status, updatedAt: new Date().toISOString() };
-      }
-      return { success: true };
+      const response = await api.patch(`${this.baseURL}/${id}/status`, { status });
+      return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, message: error.message };
+      console.error('Erro ao atualizar status:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Erro ao atualizar status' 
+      };
     }
   }
 
@@ -112,34 +114,116 @@ class ReportarService {
    */
   static async delete(id) {
     try {
-      // TODO: Quando o backend estiver pronto:
-      // await api.delete(`${this.baseURL}/${id}`);
-      
-      this.reports = this.reports.filter(r => r.id !== parseInt(id));
+      await api.delete(`${this.baseURL}/${id}`);
       return { success: true };
     } catch (error) {
       console.error('Erro ao deletar denúncia:', error);
-      return { success: false, message: error.message };
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Erro ao excluir denúncia' 
+      };
+    }
+  }
+
+  /**
+   * Obtém estatísticas de denúncias
+   * @returns {Promise<Object>}
+   */
+  static async getEstatisticas() {
+    try {
+      const response = await api.get(`${this.baseURL}/estatisticas`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      // Fallback: calcular estatísticas a partir da lista
+      try {
+        const result = await this.getAll();
+        if (result.success && result.data) {
+          const denuncias = result.data;
+          const total = denuncias.length;
+          const pendentes = denuncias.filter(d => d.status === 'PENDING').length;
+          return { 
+            success: true, 
+            data: { TOTAL: total, PENDING: pendentes } 
+          };
+        }
+      } catch (e) {
+        // Ignora
+      }
+      return { success: false, data: { TOTAL: 0, PENDING: 0 } };
     }
   }
 
   /**
    * Verifica se usuário já denunciou um alvo
    * @param {string} tipo
-   * @param {string|number} targetId
+   * @param {number|string} targetId
    * @returns {Promise<boolean>}
    */
   static async hasUserReported(tipo, targetId) {
     try {
-      // TODO: Implementar verificação no backend
-      // const response = await api.get(`${this.baseURL}/check`, { params: { tipo, targetId } });
-      // return response.data.reported;
-      
-      // Mock: Verificar se já existe denúncia do tipo
-      const existing = this.reports.find(r => r.tipo === tipo && r.targetId === targetId);
-      return !!existing;
+      const response = await api.get(`${this.baseURL}/check`, { 
+        params: { tipo, targetId } 
+      });
+      return response.data?.reported === true;
     } catch (error) {
+      console.error('Erro ao verificar denúncia:', error);
       return false;
+    }
+  }
+
+  /**
+   * Busca denúncias por target
+   * @param {string} tipo
+   * @param {number|string} targetId
+   * @returns {Promise<Object>}
+   */
+  static async getByTarget(tipo, targetId) {
+    try {
+      const response = await api.get(`${this.baseURL}/target`, { 
+        params: { tipo, targetId } 
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Erro ao buscar denúncias por target:', error);
+      return { success: false, data: [] };
+    }
+  }
+
+  /**
+   * Atualiza status em massa
+   * @param {Array<number>} ids
+   * @param {string} status
+   * @returns {Promise<Object>}
+   */
+  static async updateStatusMass(ids, status) {
+    try {
+      const response = await api.patch(`${this.baseURL}/status/massa`, { ids, status });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Erro ao atualizar status em massa:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Erro ao atualizar status' 
+      };
+    }
+  }
+
+  /**
+   * Exclui denúncias em massa
+   * @param {Array<number>} ids
+   * @returns {Promise<Object>}
+   */
+  static async deleteMass(ids) {
+    try {
+      await api.delete(`${this.baseURL}/massa`, { data: { ids } });
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao excluir denúncias em massa:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Erro ao excluir denúncias' 
+      };
     }
   }
 }

@@ -14,6 +14,7 @@ import theme from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 import { colunasUsuarios, colunasLocais } from '../../config/admin/colunasConfig';
 import { filtrosUsuarios, filtrosLocais } from '../../config/admin/filtrosConfig';
+import Denuncias from '../denuncia/Denuncias';
 
 export default function Admin() {
   const { usuario } = useAuth();
@@ -68,6 +69,7 @@ export default function Admin() {
     () => [
       { key: 'usuarios', label: 'Usuários' },
       { key: 'locais', label: 'Locais' },
+      { key: 'denuncias', label: 'Denúncias' },  // ← ADICIONADO
       { key: 'relatorios', label: 'Relatórios' },
     ],
     []
@@ -279,6 +281,10 @@ export default function Admin() {
       carregarLocais();
       return;
     }
+    if (abaAtiva === 'denuncias') {
+      // Não precisa carregar nada aqui, o componente Denuncias cuida disso
+      return;
+    }
     carregarRelatorios();
   }, [abaAtiva, paginaUsuarios, paginaLocais, sortField, sortDirection, filtroDataInicioAplicado, filtroDataFimAplicado]);
 
@@ -487,6 +493,11 @@ export default function Admin() {
 
     if (abaAtiva === 'locais') {
       carregarLocais();
+      return;
+    }
+
+    if (abaAtiva === 'denuncias') {
+      // O componente Denuncias tem seu próprio recarregamento
       return;
     }
 
@@ -867,13 +878,13 @@ export default function Admin() {
 
         <Spacer size="md" />
 
-        {carregando ? (
+        {carregando && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
             <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</ThemedText>
           </Card>
         ) : null}
 
-        {erro ? (
+        {erro && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
             <ThemedText color="error" size="sm" altoContraste={isHighContrast}>{erro}</ThemedText>
             <Spacer size="sm" />
@@ -888,9 +899,10 @@ export default function Admin() {
           </Card>
         ) : null}
 
-        {!carregando && !erro && abaAtiva === 'usuarios' ? renderUsuarios() : null}
-        {!carregando && !erro && abaAtiva === 'locais' ? renderLocais() : null}
-        {!carregando && !erro && abaAtiva === 'relatorios' ? renderRelatorios() : null}
+        {!carregando && !erro && abaAtiva === 'usuarios' && renderUsuarios()}
+        {!carregando && !erro && abaAtiva === 'locais' && renderLocais()}
+        {!carregando && !erro && abaAtiva === 'denuncias' && <Denuncias />}
+        {!carregando && !erro && abaAtiva === 'relatorios' && renderRelatorios()}
       </View>
 
       <EditarUsuarioModal

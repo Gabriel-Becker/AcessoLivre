@@ -3,7 +3,7 @@ import { Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
-import { statusOptions } from './filtrosDenuncias';
+import { statusOptions } from '../../components/denuncia/filtrosDenuncias';
 
 export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConfirm, carregando, isHighContrast, theme }) {
   const [selectedStatus, setSelectedStatus] = useState(denuncia?.status || 'PENDING');
