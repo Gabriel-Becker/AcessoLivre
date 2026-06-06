@@ -10,7 +10,7 @@ export default function VoiceToggleButton() {
   const [pulseAnim] = useState(new Animated.Value(1));
   const [isTesting, setIsTesting] = useState(false);
 
-  // Animação de pulsação quando está ouvindo
+
   useEffect(() => {
     if (isListening) {
       Animated.loop(
