@@ -1,3 +1,4 @@
+// src/screens/Configuracoes.js (atualizado)
 import React from 'react';
 import { View, StyleSheet, Switch, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +7,7 @@ import { CabecalhoPagina, CardSecao } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { breakpoints } from '../../config/theme';
+import VoiceToggleButton from '../../components/acessibilidade/VoiceToggleButton'; 
 
 const OPCOES_FONTE = [
   { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
@@ -37,6 +39,11 @@ export default function Configuracoes({ onNavigate }) {
       />
 
       <View style={styles.conteudo}>
+        {/* NOVO: Seção do Assistente por Voz */}
+        <CardSecao titulo="Assistente por Voz" icone="mic-outline" altoContraste={isHighContrast}>
+          <VoiceToggleButton />
+        </CardSecao>
+
         <CardSecao titulo="Acessibilidade" icone="accessibility-outline" altoContraste={isHighContrast}>
           <View style={styles.linha}>
             <ThemedText weight="medium">Alto contraste</ThemedText>
@@ -115,7 +122,6 @@ export default function Configuracoes({ onNavigate }) {
             </View>
           ) : null}
         </CardSecao>
-
       </View>
     </Container>
   );
