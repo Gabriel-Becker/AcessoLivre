@@ -1,90 +1,155 @@
 // src/services/ReportarService.js
 
 import api from '../api/axios';
+import { Platform } from 'react-native';
 
 class ReportarService {
   static baseURL = '/denuncias';
 
   /**
-   * Cria uma nova denúncia
+   * Obtém o token do storage
+   */
+  static async getToken() {
+    try {
+      if (Platform.OS === 'web') {
+        return localStorage.getItem('token') || sessionStorage.getItem('token');
+      } else {
+        const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+        return await AsyncStorage.getItem('token');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao obter token:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Cria uma nova denúncia - Usa o endpoint POST real
    * @param {Object} data - Dados da denúncia
    * @returns {Promise<Object>}
    */
   static async create(data) {
     try {
-      const response = await api.post(this.baseURL, data);
+      console.log('📝 [ReportarService] Criando denúncia...');
+      console.log('📦 Dados recebidos:', data);
+      
+      // 🔍 DEBUG: Verificar token antes de enviar
+      const token = await this.getToken();
+      console.log('🔑 TOKEN encontrado:', token ? '✅ SIM' : '❌ NÃO');
+      console.log('📝 TOKEN:', token);
+      
+      // 🔍 DEBUG: Verificar headers padrão do axios
+      console.log('📋 Headers padrão do axios:', api.defaults.headers.common);
+      
+      // Payload no formato esperado pelo backend
+      const payload = {
+        tipo: data.tipo,
+        targetId: data.targetId,
+        targetName: data.targetName,
+        motivo: data.motivo,
+        motivoLabel: data.motivoLabel,
+        descricao: data.descricao,
+      };
+      
+      console.log('📤 Payload:', payload);
+      
+      // ✅ CORREÇÃO: Enviar token explicitamente no header
+      const response = await api.post(
+        this.baseURL, 
+        payload,
+        {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      console.log('✅ Denúncia criada com sucesso:', response.data);
+      
       return { 
         success: true, 
         data: response.data,
         message: 'Denúncia enviada com sucesso!'
       };
     } catch (error) {
-      console.error('Erro ao criar denúncia:', error);
+      console.error('❌ Erro ao criar denúncia:', error);
+      console.error('📊 Status:', error.response?.status);
+      console.error('📝 Detalhes:', error.response?.data);
+      console.error('🔍 Request headers:', error.config?.headers);
+      
+      if (error.response?.status === 401) {
+        return { 
+          success: false, 
+          message: 'Sua sessão expirou. Faça login novamente.' 
+        };
+      }
+      
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Erro ao enviar denúncia' 
+        message: error.response?.data?.message || error.response?.data?.mensagem || 'Erro ao enviar denúncia' 
       };
     }
   }
 
   /**
-   * Lista todas as denúncias (Admin)
+   * Lista todas as denúncias com paginação e filtros (Admin)
    * @param {Object} filters - Filtros opcionais
    * @returns {Promise<Object>}
    */
   static async getAll(filters = {}) {
     try {
+      const token = await this.getToken();
+      console.log('🔑 [GET] Token presente:', token ? '✅ SIM' : '❌ NÃO');
+      
       const params = {};
+      if (filters.status && filters.status !== 'todos') params.status = filters.status;
+      if (filters.tipo && filters.tipo !== 'todos') params.tipo = filters.tipo;
+      if (filters.search) params.search = filters.search;
       
-      if (filters.status && filters.status !== 'todos') {
-        params.status = filters.status;
-      }
-      if (filters.tipo && filters.tipo !== 'todos') {
-        params.tipo = filters.tipo;
-      }
-      if (filters.search) {
-        params.search = filters.search;
-      }
+      console.log('📤 GET /denuncias', params);
       
-      const response = await api.get(this.baseURL, { params });
+      const response = await api.get(this.baseURL, { 
+        params,
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
+      });
       
-      // A resposta pode vir em diferentes formatos
       let denuncias = [];
       if (response.data?.content) {
         denuncias = response.data.content;
       } else if (Array.isArray(response.data)) {
         denuncias = response.data;
-      } else if (response.data?.data) {
-        denuncias = response.data.data;
       }
+      
+      console.log(`✅ ${denuncias.length} denúncias carregadas`);
       
       return { success: true, data: denuncias };
     } catch (error) {
-      console.error('Erro ao listar denúncias:', error);
-      return { 
-        success: false, 
-        data: [], 
-        message: error.response?.data?.message || 'Erro ao carregar denúncias' 
-      };
+      console.error('❌ Erro ao listar denúncias:', error);
+      return { success: false, data: [], message: error.response?.data?.message };
     }
   }
 
   /**
-   * Busca denúncia por ID
-   * @param {number|string} id
+   * Obtém estatísticas de denúncias
    * @returns {Promise<Object>}
    */
-  static async getById(id) {
+  static async getEstatisticas() {
     try {
-      const response = await api.get(`${this.baseURL}/${id}`);
+      const token = await this.getToken();
+      
+      const response = await api.get(`${this.baseURL}/estatisticas`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+        }
+      });
+      
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('Erro ao buscar denúncia:', error);
-      return { 
-        success: false, 
-        data: null, 
-        message: error.response?.data?.message || 'Denúncia não encontrada' 
-      };
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      return { success: false, data: { TOTAL: 0, PENDING: 0 } };
     }
   }
 
@@ -96,14 +161,21 @@ class ReportarService {
    */
   static async updateStatus(id, status) {
     try {
-      const response = await api.patch(`${this.baseURL}/${id}/status`, { status });
+      const token = await this.getToken();
+      
+      const response = await api.patch(`${this.baseURL}/${id}/status`, 
+        { status },
+        {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined,
+          }
+        }
+      );
+      
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Erro ao atualizar status' 
-      };
+      console.error('❌ Erro ao atualizar status:', error);
+      return { success: false, message: error.response?.data?.message };
     }
   }
 
@@ -114,118 +186,21 @@ class ReportarService {
    */
   static async delete(id) {
     try {
-      await api.delete(`${this.baseURL}/${id}`);
-      return { success: true };
-    } catch (error) {
-      console.error('Erro ao deletar denúncia:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Erro ao excluir denúncia' 
-      };
-    }
-  }
-
-  /**
-   * Obtém estatísticas de denúncias
-   * @returns {Promise<Object>}
-   */
-  static async getEstatisticas() {
-    try {
-      const response = await api.get(`${this.baseURL}/estatisticas`);
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
-      // Fallback: calcular estatísticas a partir da lista
-      try {
-        const result = await this.getAll();
-        if (result.success && result.data) {
-          const denuncias = result.data;
-          const total = denuncias.length;
-          const pendentes = denuncias.filter(d => d.status === 'PENDING').length;
-          return { 
-            success: true, 
-            data: { TOTAL: total, PENDING: pendentes } 
-          };
+      const token = await this.getToken();
+      
+      await api.delete(`${this.baseURL}/${id}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
         }
-      } catch (e) {
-        // Ignora
-      }
-      return { success: false, data: { TOTAL: 0, PENDING: 0 } };
-    }
-  }
-
-  /**
-   * Verifica se usuário já denunciou um alvo
-   * @param {string} tipo
-   * @param {number|string} targetId
-   * @returns {Promise<boolean>}
-   */
-  static async hasUserReported(tipo, targetId) {
-    try {
-      const response = await api.get(`${this.baseURL}/check`, { 
-        params: { tipo, targetId } 
       });
-      return response.data?.reported === true;
-    } catch (error) {
-      console.error('Erro ao verificar denúncia:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Busca denúncias por target
-   * @param {string} tipo
-   * @param {number|string} targetId
-   * @returns {Promise<Object>}
-   */
-  static async getByTarget(tipo, targetId) {
-    try {
-      const response = await api.get(`${this.baseURL}/target`, { 
-        params: { tipo, targetId } 
-      });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Erro ao buscar denúncias por target:', error);
-      return { success: false, data: [] };
-    }
-  }
-
-  /**
-   * Atualiza status em massa
-   * @param {Array<number>} ids
-   * @param {string} status
-   * @returns {Promise<Object>}
-   */
-  static async updateStatusMass(ids, status) {
-    try {
-      const response = await api.patch(`${this.baseURL}/status/massa`, { ids, status });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error('Erro ao atualizar status em massa:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Erro ao atualizar status' 
-      };
-    }
-  }
-
-  /**
-   * Exclui denúncias em massa
-   * @param {Array<number>} ids
-   * @returns {Promise<Object>}
-   */
-  static async deleteMass(ids) {
-    try {
-      await api.delete(`${this.baseURL}/massa`, { data: { ids } });
+      
       return { success: true };
     } catch (error) {
-      console.error('Erro ao excluir denúncias em massa:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Erro ao excluir denúncias' 
-      };
+      console.error('❌ Erro ao deletar denúncia:', error);
+      return { success: false, message: error.response?.data?.message };
     }
   }
+  
 }
 
 export default ReportarService;

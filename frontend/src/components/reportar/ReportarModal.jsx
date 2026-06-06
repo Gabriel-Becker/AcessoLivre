@@ -1,3 +1,5 @@
+// src/components/reportar/ReportarModal.jsx
+
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
@@ -56,17 +58,35 @@ const ReportarModal = ({
   }, [success]);
 
   const handleSubmit = async () => {
+    // Validação: motivo é obrigatório
     if (!selectedMotivo) {
       // TODO: Mostrar toast de erro
+      console.warn('Nenhum motivo selecionado');
       return;
     }
 
-    await createReport({
+    // Validação: para motivo OUTRO, descrição é obrigatória
+    if (selectedMotivo.id === 'OUTRO' && (!descricao || !descricao.trim())) {
+      // TODO: Mostrar toast de erro
+      console.warn('Descrição obrigatória para motivo OUTRO');
+      return;
+    }
+
+    console.log('📝 Enviando denúncia:', {
       tipo,
       targetId,
       targetName,
       motivo: selectedMotivo.id,
       motivoLabel: selectedMotivo.label,
+      descricao: descricao.trim() || null,
+    });
+
+    await createReport({
+      tipo,                         // 'LOCAL' ou 'COMENTARIO' ou 'AVALIACAO'
+      targetId,                     // ID do local, comentário ou avaliação
+      targetName,                   // Nome para exibição
+      motivo: selectedMotivo.id,    // Código do motivo (ex: 'INFORMACAO_INCORRETA')
+      motivoLabel: selectedMotivo.label, // Label para exibição
       descricao: descricao.trim() || null,
     });
   };
@@ -112,7 +132,7 @@ const ReportarModal = ({
                       color={t.colors.error} 
                     />
                     <ThemedText variant="h3" weight="bold" style={styles.headerTitle}>
-                      Reportar {tipo === 'LOCAL' ? 'local' : 'conteúdo'}
+                      Reportar {tipo === 'LOCAL' ? 'local' : tipo === 'COMENTARIO' ? 'comentário' : 'conteúdo'}
                     </ThemedText>
                   </View>
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>

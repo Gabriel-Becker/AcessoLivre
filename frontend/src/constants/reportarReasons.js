@@ -32,16 +32,6 @@ export const REPORTAR_MOTIVOS = {
   ],
 };
 
-export const REPORTAR_MOTIVOS_LIST = [
-  { id: 'PRECONCEITO', label: 'Preconceito', icon: 'hand-left-outline' },
-  { id: 'DISCURSO_ODIO', label: 'Discurso de ódio', icon: 'megaphone-outline' },
-  { id: 'CONTEUDO_OFENSIVO', label: 'Conteúdo ofensivo', icon: 'alert-circle-outline' },
-  { id: 'ASSEDIO', label: 'Assédio', icon: 'warning-outline' },
-  { id: 'SPAM', label: 'Spam', icon: 'mail-outline' },
-  { id: 'INFORMACAO_FALSA', label: 'Informação falsa', icon: 'information-circle-outline' },
-  { id: 'OUTRO', label: 'Outro', icon: 'ellipsis-horizontal-outline' },
-];
-
 export const getMotivosByTipo = (tipo) => {
   switch (tipo) {
     case REPORTAR_TIPOS.LOCAL:
@@ -51,6 +41,6 @@ export const getMotivosByTipo = (tipo) => {
     case REPORTAR_TIPOS.AVALIACAO:
       return REPORTAR_MOTIVOS.AVALIACAO;
     default:
-      return REPORTAR_MOTIVOS_LIST;
+      return REPORTAR_MOTIVOS.LOCAL;
   }
 };

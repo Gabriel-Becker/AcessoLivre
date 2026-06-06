@@ -19,6 +19,7 @@ const useReportar = () => {
     setSuccess(false);
 
     try {
+      // Chamada real para a API
       const response = await ReportarService.create(data);
       
       if (response.success) {

@@ -35,27 +35,36 @@ export default function Denuncias() {
   const normalizarTexto = (texto) =>
     String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 
+  // Carregar estatísticas
+  const carregarEstatisticas = useCallback(async () => {
+    try {
+      const result = await ReportarService.getEstatisticas();
+      if (result.success && result.data) {
+        setEstatisticas({
+          total: result.data.TOTAL || 0,
+          pendentes: result.data.PENDING || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+    }
+  }, []);
+
   // Carregar denúncias
   const carregarDenuncias = useCallback(async () => {
     setCarregando(true);
     try {
-      const params = {};
-      if (filtroStatusDenuncias !== 'todos') params.status = filtroStatusDenuncias;
-      if (filtroTipoDenuncias !== 'todos') params.tipo = filtroTipoDenuncias;
-      if (buscaDenuncias) params.search = buscaDenuncias;
+      const filters = {};
+      if (filtroStatusDenuncias !== 'todos') filters.status = filtroStatusDenuncias;
+      if (filtroTipoDenuncias !== 'todos') filters.tipo = filtroTipoDenuncias;
+      if (buscaDenuncias) filters.search = buscaDenuncias;
 
-      const result = await ReportarService.getAll(params);
+      const result = await ReportarService.getAll(filters);
+      
       if (result.success) {
         setDenuncias(result.data || []);
-      }
-
-      // Carregar estatísticas
-      const statsResult = await ReportarService.getEstatisticas();
-      if (statsResult.success) {
-        setEstatisticas({
-          total: statsResult.data?.TOTAL || result.data?.length || 0,
-          pendentes: statsResult.data?.PENDING || 0,
-        });
+      } else {
+        toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
     } catch (error) {
       console.error('Erro ao carregar denúncias:', error);
@@ -65,11 +74,18 @@ export default function Denuncias() {
     }
   }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
 
+  // Carregar dados iniciais
   useEffect(() => {
     carregarDenuncias();
-  }, [carregarDenuncias]);
+    carregarEstatisticas();
+  }, [carregarDenuncias, carregarEstatisticas]);
 
-  // Filtro local dos dados
+  // Recarregar quando filtros mudarem
+  useEffect(() => {
+    carregarDenuncias();
+  }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
+
+  // Filtro local dos dados (já que o backend já filtra, isso é redundante mas mantido para segurança)
   const denunciasFiltradas = useMemo(() => {
     const termo = normalizarTexto(buscaDenuncias);
     if (!termo) return denuncias;
@@ -93,6 +109,7 @@ export default function Denuncias() {
       if (result.success) {
         toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
         await carregarDenuncias();
+        await carregarEstatisticas();
         setModalStatusVisivel(false);
       } else {
         toastHelper.showError(result.message || 'Erro ao atualizar status');
@@ -117,6 +134,7 @@ export default function Denuncias() {
       if (result.success) {
         toastHelper.showSuccess('Denúncia excluída com sucesso');
         await carregarDenuncias();
+        await carregarEstatisticas();
         setModalExcluirVisivel(false);
       } else {
         toastHelper.showError(result.message || 'Erro ao excluir denúncia');
