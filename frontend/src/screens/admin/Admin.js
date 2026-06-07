@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, Modal, TextInput, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, Modal, TextInput, useWindowDimensions, Platform } from 'react-native';
 import { Container } from '../../components/layout';
 import { Button, Card } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
@@ -45,6 +45,8 @@ export default function Admin() {
   const [filtroDataFimInput, setFiltroDataFimInput] = useState('');
   const [filtroDataInicioAplicado, setFiltroDataInicioAplicado] = useState('');
   const [filtroDataFimAplicado, setFiltroDataFimAplicado] = useState('');
+  const [tipoRelatorioExportacao, setTipoRelatorioExportacao] = useState('usuarios');
+  const [exportandoRelatorio, setExportandoRelatorio] = useState(false);
 
   const [estatisticas, setEstatisticas] = useState(null);
   const [relatorioUsuarios, setRelatorioUsuarios] = useState(null);
@@ -89,6 +91,98 @@ export default function Admin() {
       .replace(/[\u0300-\u036f]/g, '')
       .trim()
       .toLowerCase();
+
+  const mapaCategorias = {
+    COMERCIAL: 'Comercial',
+    PUBLICO: 'Público',
+    SAUDE: 'Saúde',
+    EDUCACAO: 'Educação',
+    LAZER: 'Lazer',
+    TRANSPORTE: 'Transporte',
+    ALIMENTACAO: 'Alimentação',
+    HOSPEDAGEM: 'Hospedagem',
+    SERVICOS: 'Serviços',
+    SEM_CATEGORIA: 'Não informado',
+  };
+
+  const mapaStatusLocal = {
+    ATIVO: 'Ativo',
+    INATIVO: 'Inativo',
+    EM_ANALISE: 'Em análise',
+    REPORTADO: 'Reportado',
+    SEM_STATUS: 'Não informado',
+  };
+
+  const mapaTiposAcessibilidade = {
+    RAMPA: 'Rampa de acesso',
+    ELEVADOR: 'Elevador acessível',
+    BANHEIRO_ADAPTADO: 'Banheiro adaptado',
+    PISO_TATIL: 'Piso tátil',
+    SINALIZACAO_BRAILLE: 'Sinalização em braille',
+    ESTACIONAMENTO: 'Estacionamento acessível',
+    ESPACO_AMPLO: 'Espaço amplo',
+    RECURSOS_AUDIOVISUAIS: 'Recursos audiovisuais',
+    ATENDIMENTO_ESPECIALIZADO: 'Atendimento especializado',
+    MOBILIARIO_ADAPTADO: 'Mobiliário adaptado',
+    SEM_TIPO: 'Não informado',
+  };
+
+  const mapaPerfis = {
+    ADMIN: 'Administrador',
+    USUARIO: 'Usuário',
+    USUÁRIO: 'Usuário',
+    ROLE_ADMIN: 'Administrador',
+    ROLE_USER: 'Usuário',
+  };
+
+  const formatarLabelPadrao = (valor) => String(valor || '')
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letra) => letra.toUpperCase());
+
+  const formatarLabelRelatorio = (valor, tipo) => {
+    const chave = String(valor || '').trim();
+    const chaveUpper = chave.toUpperCase();
+
+    if (tipo === 'categoria') return mapaCategorias[chaveUpper] || formatarLabelPadrao(chave);
+    if (tipo === 'status') return mapaStatusLocal[chaveUpper] || formatarLabelPadrao(chave);
+    if (tipo === 'acessibilidade') return mapaTiposAcessibilidade[chaveUpper] || formatarLabelPadrao(chave);
+    if (tipo === 'perfil') return mapaPerfis[chaveUpper] || formatarLabelPadrao(chave);
+
+    return formatarLabelPadrao(chave);
+  };
+
+  const formatarDataHoraRelatorio = (valor) => {
+    if (!valor) return 'Não disponível';
+    const data = new Date(valor);
+    if (Number.isNaN(data.getTime())) return String(valor);
+    return data.toLocaleString('pt-BR');
+  };
+
+  const formatarPeriodoAplicado = () => {
+    const inicio = retornoPeriodoBackend?.dataInicio;
+    const fim = retornoPeriodoBackend?.dataFim;
+    if (!inicio && !fim) return 'Período completo (sem filtro)';
+    if (inicio && fim) return `${inicio} até ${fim}`;
+    if (inicio) return `A partir de ${inicio}`;
+    return `Até ${fim}`;
+  };
+
+  const isMesAnoValido = (valor) => /^(0[1-9]|1[0-2])\/\d{4}$/.test(String(valor || '').trim());
+
+  const converterMesAnoParaDataApi = (valor, tipo) => {
+    const limpo = String(valor || '').trim();
+    if (!limpo || !isMesAnoValido(limpo)) return '';
+
+    const [mes, ano] = limpo.split('/');
+
+    if (tipo === 'fim') {
+      const ultimoDia = new Date(Number(ano), Number(mes), 0).getDate();
+      return `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
+    }
+
+    return `${ano}-${mes}-01`;
+  };
 
   const limparFiltrosUsuarios = () => {
     setBuscaUsuarios('');
@@ -148,15 +242,18 @@ export default function Admin() {
     setCarregando(true);
     setErro('');
     try {
+      const dataInicioApi = converterMesAnoParaDataApi(filtroDataInicioAplicado, 'inicio');
+      const dataFimApi = converterMesAnoParaDataApi(filtroDataFimAplicado, 'fim');
+
       const [dadosGerais, dadosUsuarios, dadosLocais] = await Promise.all([
         AdminService.obterEstatisticasGerais(),
         AdminService.obterRelatorioUsuarios({
-          dataInicio: filtroDataInicioAplicado || undefined,
-          dataFim: filtroDataFimAplicado || undefined,
+          dataInicio: dataInicioApi || undefined,
+          dataFim: dataFimApi || undefined,
         }),
         AdminService.obterRelatorioLocais({
-          dataInicio: filtroDataInicioAplicado || undefined,
-          dataFim: filtroDataFimAplicado || undefined,
+          dataInicio: dataInicioApi || undefined,
+          dataFim: dataFimApi || undefined,
         }),
       ]);
 
@@ -185,23 +282,26 @@ export default function Admin() {
     carregarRelatorios();
   }, [abaAtiva, paginaUsuarios, paginaLocais, sortField, sortDirection, filtroDataInicioAplicado, filtroDataFimAplicado]);
 
-  const isDataValida = (valor) => /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '').trim());
-
   const aplicarFiltrosRelatorio = () => {
     const inicio = String(filtroDataInicioInput || '').trim();
     const fim = String(filtroDataFimInput || '').trim();
 
-    if (inicio && !isDataValida(inicio)) {
-      toastHelper.showError('Data inicial inválida. Use o formato YYYY-MM-DD.', 'Filtro inválido');
+    if (inicio && !isMesAnoValido(inicio)) {
+      toastHelper.showError('Data inicial inválida. Use o formato MM/AAAA.', 'Filtro inválido');
       return;
     }
 
-    if (fim && !isDataValida(fim)) {
-      toastHelper.showError('Data final inválida. Use o formato YYYY-MM-DD.', 'Filtro inválido');
+    if (fim && !isMesAnoValido(fim)) {
+      toastHelper.showError('Data final inválida. Use o formato MM/AAAA.', 'Filtro inválido');
       return;
     }
 
-    if (inicio && fim && inicio > fim) {
+    const [mesInicio, anoInicio] = inicio ? inicio.split('/') : [];
+    const [mesFim, anoFim] = fim ? fim.split('/') : [];
+    const chaveInicio = inicio ? Number(`${anoInicio}${mesInicio}`) : null;
+    const chaveFim = fim ? Number(`${anoFim}${mesFim}`) : null;
+
+    if (chaveInicio && chaveFim && chaveInicio > chaveFim) {
       toastHelper.showError('A data inicial deve ser menor ou igual à data final.', 'Filtro inválido');
       return;
     }
@@ -215,6 +315,70 @@ export default function Admin() {
     setFiltroDataFimInput('');
     setFiltroDataInicioAplicado('');
     setFiltroDataFimAplicado('');
+  };
+
+  const payloadRelatorio = useMemo(() => ({
+    dataInicio: converterMesAnoParaDataApi(filtroDataInicioAplicado, 'inicio') || null,
+    dataFim: converterMesAnoParaDataApi(filtroDataFimAplicado, 'fim') || null,
+  }), [filtroDataInicioAplicado, filtroDataFimAplicado]);
+
+  const retornoPeriodoBackend = useMemo(() => ({
+    dataInicio: relatorioUsuarios?.filtroDataInicio || relatorioLocais?.filtroDataInicio || null,
+    dataFim: relatorioUsuarios?.filtroDataFim || relatorioLocais?.filtroDataFim || null,
+    geradoEm: relatorioUsuarios?.geradoEm || relatorioLocais?.geradoEm || null,
+  }), [relatorioUsuarios, relatorioLocais]);
+
+  const baixarArquivoRelatorio = async (blob, nomeArquivo) => {
+    if (Platform.OS !== 'web') {
+      toastHelper.showInfo('No momento, o download de relatório está disponível no painel web.', 'Download indisponível no app');
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nomeArquivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const extrairNomeArquivo = (headers, fallback) => {
+    const contentDisposition = headers?.['content-disposition'] || headers?.['Content-Disposition'] || '';
+    const match = String(contentDisposition).match(/filename=([^;]+)/i);
+    if (!match?.[1]) return fallback;
+    return match[1].replace(/"/g, '').trim() || fallback;
+  };
+
+  const exportarRelatorio = async (formato) => {
+    setExportandoRelatorio(true);
+    try {
+      const params = {
+        dataInicio: payloadRelatorio.dataInicio || undefined,
+        dataFim: payloadRelatorio.dataFim || undefined,
+      };
+
+      let resposta;
+      if (tipoRelatorioExportacao === 'usuarios' && formato === 'csv') {
+        resposta = await AdminService.exportarRelatorioUsuariosCsv(params);
+      } else if (tipoRelatorioExportacao === 'usuarios' && formato === 'pdf') {
+        resposta = await AdminService.exportarRelatorioUsuariosPdf(params);
+      } else if (tipoRelatorioExportacao === 'locais' && formato === 'csv') {
+        resposta = await AdminService.exportarRelatorioLocaisCsv(params);
+      } else {
+        resposta = await AdminService.exportarRelatorioLocaisPdf(params);
+      }
+
+      const fallback = `relatorio-${tipoRelatorioExportacao}.${formato}`;
+      const nomeArquivo = extrairNomeArquivo(resposta?.headers, fallback);
+      await baixarArquivoRelatorio(resposta?.data, nomeArquivo);
+      toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'Relatório exportado');
+    } catch (e) {
+      toastHelper.showError('Não foi possível exportar o relatório.', 'Erro na exportação');
+    } finally {
+      setExportandoRelatorio(false);
+    }
   };
 
   const handleSortChange = (novaChave) => {
@@ -357,6 +521,25 @@ export default function Admin() {
     </View>
   );
 
+  const formatarNumero = (valor) => new Intl.NumberFormat('pt-BR').format(Number(valor) || 0);
+
+  const renderLinhaMetrica = (label, valor) => (
+    <View key={label} style={styles.itemMetricaLinha}>
+      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</ThemedText>
+      <View style={[styles.badgeValorMetrica, { backgroundColor: t.colors.surfaceSecondary, borderColor: t.colors.border }]}>
+        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+      </View>
+    </View>
+  );
+
+  const renderKpi = (titulo, valor) => (
+    <View key={titulo} style={[styles.kpiCard, { backgroundColor: t.colors.surfaceSecondary, borderColor: t.colors.border }]}> 
+      <ThemedText size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</ThemedText>
+      <Spacer size="xs" />
+      <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+    </View>
+  );
+
   const renderUsuarios = () => {
     const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario, isHighContrast);
     const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios);
@@ -451,12 +634,12 @@ export default function Admin() {
       <Card style={styles.cardUsuario}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatório</ThemedText>
         <Spacer size="sm" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato YYYY-MM-DD.</ThemedText>
+        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatório busca todos os dados.</ThemedText>
         <Spacer size="sm" />
         <View style={styles.filtrosDataContainer}>
           <TextInput
             style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: t.colors.surfaceSecondary }]}
-            placeholder="Data inicial (YYYY-MM-DD)"
+            placeholder="Data inicial (MM/AAAA)"
             placeholderTextColor={t.colors.textSecondary}
             value={filtroDataInicioInput}
             onChangeText={setFiltroDataInicioInput}
@@ -465,7 +648,7 @@ export default function Admin() {
           />
           <TextInput
             style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: t.colors.surfaceSecondary }]}
-            placeholder="Data final (YYYY-MM-DD)"
+            placeholder="Data final (MM/AAAA)"
             placeholderTextColor={t.colors.textSecondary}
             value={filtroDataFimInput}
             onChangeText={setFiltroDataFimInput}
@@ -478,105 +661,181 @@ export default function Admin() {
           <Button variant="primary" size="small" onPress={aplicarFiltrosRelatorio}>Aplicar filtros</Button>
           <Button variant="outline" size="small" onPress={limparFiltrosRelatorio}>Limpar</Button>
         </View>
+
+        <Spacer size="sm" />
+        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Exportar relatório (um por vez)</ThemedText>
+        <Spacer size="xs" />
+        <View style={styles.filtrosDataAcoes}>
+          <Button
+            variant={tipoRelatorioExportacao === 'usuarios' ? 'primary' : 'outline'}
+            size="small"
+            onPress={() => setTipoRelatorioExportacao('usuarios')}
+            disabled={exportandoRelatorio}
+          >
+            Usuários
+          </Button>
+          <Button
+            variant={tipoRelatorioExportacao === 'locais' ? 'primary' : 'outline'}
+            size="small"
+            onPress={() => setTipoRelatorioExportacao('locais')}
+            disabled={exportandoRelatorio}
+          >
+            Locais
+          </Button>
+        </View>
+        <Spacer size="xs" />
+        <View style={styles.filtrosDataAcoes}>
+          <Button
+            variant="outline"
+            size="small"
+            onPress={() => exportarRelatorio('csv')}
+            loading={exportandoRelatorio}
+            disabled={exportandoRelatorio}
+          >
+            Exportar CSV
+          </Button>
+          <Button
+            variant="primary"
+            size="small"
+            onPress={() => exportarRelatorio('pdf')}
+            loading={exportandoRelatorio}
+            disabled={exportandoRelatorio}
+          >
+            Exportar PDF
+          </Button>
+        </View>
+
+        <Spacer size="sm" />
+        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+          Período aplicado: {formatarPeriodoAplicado()}
+        </ThemedText>
+        <Spacer size="xs" />
+        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+          Última atualização: {formatarDataHoraRelatorio(retornoPeriodoBackend.geradoEm)}
+        </ThemedText>
       </Card>
 
       <Card style={styles.cardUsuario}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
         <Spacer size="md" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de usuários: {Number(estatisticas?.totalUsuarios) || 0}</ThemedText>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de locais: {Number(estatisticas?.totalLocais) || 0}</ThemedText>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de avaliações: {Number(estatisticas?.totalAvaliacoes) || 0}</ThemedText>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Avaliações pendentes: {Number(estatisticas?.avaliacoesPendentes) || 0}</ThemedText>
+        <View style={styles.gridKpis}>
+          {renderKpi('Total de usuários', formatarNumero(estatisticas?.totalUsuarios))}
+          {renderKpi('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderKpi('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderKpi('Total de locais', formatarNumero(estatisticas?.totalLocais))}
+          {renderKpi('Total de avaliações', formatarNumero(estatisticas?.totalAvaliacoes))}
+          {renderKpi('Avaliações pendentes', formatarNumero(estatisticas?.avaliacoesPendentes))}
+        </View>
       </Card>
 
       <Card style={styles.cardUsuario}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Usuários</ThemedText>
         <Spacer size="md" />
-        <View style={styles.linhaRelatorios}>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Ativos: {Number(relatorioUsuarios?.totalAtivos) || 0}</ThemedText>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Inativos: {Number(relatorioUsuarios?.totalInativos) || 0}</ThemedText>
+        <View style={styles.listaMetricasContainer}>
+          {renderLinhaMetrica('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderLinhaMetrica('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderLinhaMetrica('Administradores', formatarNumero(relatorioUsuarios?.totalAdmins))}
+          {renderLinhaMetrica('Usuários comuns', formatarNumero(relatorioUsuarios?.totalUsuariosComuns))}
+          {renderLinhaMetrica('Cadastros nos últimos 30 dias', formatarNumero(relatorioUsuarios?.cadastrosUltimos30Dias))}
         </View>
-        <Spacer size="xs" />
-        <View style={styles.linhaRelatorios}>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Administradores: {Number(relatorioUsuarios?.totalAdmins) || 0}</ThemedText>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Usuários: {Number(relatorioUsuarios?.totalUsuariosComuns) || 0}</ThemedText>
-        </View>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>E-mails verificados: {Number(relatorioUsuarios?.totalEmailVerificado) || 0}</ThemedText>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Cadastros nos últimos 30 dias: {Number(relatorioUsuarios?.cadastrosUltimos30Dias) || 0}</ThemedText>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por perfil</ThemedText>
         <Spacer size="xs" />
-        {Object.entries(relatorioUsuarios?.distribuicaoPorPerfil || {}).map(([perfil, total]) => (
-          <ThemedText key={perfil} size="sm" altoContraste={isHighContrast} color={corSecundaria}>{perfil}: {Number(total) || 0}</ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioUsuarios?.distribuicaoPorPerfil || {}).map(([perfil, total]) => (
+            renderLinhaMetrica(formatarLabelRelatorio(perfil, 'perfil'), formatarNumero(total))
+          ))}
+        </View>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Cadastros (últimos 6 meses)</ThemedText>
         <Spacer size="xs" />
-        {Object.entries(relatorioUsuarios?.cadastrosUltimosSeisMeses || {}).map(([mes, total]) => (
-          <ThemedText key={mes} size="sm" altoContraste={isHighContrast} color={corSecundaria}>{mes}: {Number(total) || 0}</ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioUsuarios?.cadastrosUltimosSeisMeses || {}).map(([mes, total]) => (
+            renderLinhaMetrica(mes, formatarNumero(total))
+          ))}
+        </View>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Últimos usuários cadastrados</ThemedText>
         <Spacer size="xs" />
-        {(relatorioUsuarios?.ultimosUsuarios || []).map((item) => (
-          <ThemedText key={String(item?.idUsuario)} size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-            {item?.nome || 'Sem nome'} - {item?.email || 'Sem e-mail'}
-          </ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {(relatorioUsuarios?.ultimosUsuarios || []).map((item) => (
+            <View key={String(item?.idUsuario)} style={styles.itemListaTexto}>
+              <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+                {item?.nome || 'Sem nome'}
+              </ThemedText>
+              <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
+                {item?.email || 'Sem e-mail'}
+              </ThemedText>
+            </View>
+          ))}
+        </View>
       </Card>
 
       <Card style={styles.cardUsuario}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Locais</ThemedText>
         <Spacer size="md" />
-        <View style={styles.linhaRelatorios}>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de locais: {Number(relatorioLocais?.totalLocais) || 0}</ThemedText>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Com avaliação: {Number(relatorioLocais?.locaisComAvaliacao) || 0}</ThemedText>
+        <View style={styles.listaMetricasContainer}>
+          {renderLinhaMetrica('Total de locais', formatarNumero(relatorioLocais?.totalLocais))}
+          {renderLinhaMetrica('Locais com avaliação', formatarNumero(relatorioLocais?.locaisComAvaliacao))}
+          {renderLinhaMetrica('Locais sem avaliação', formatarNumero(relatorioLocais?.locaisSemAvaliacao))}
+          {renderLinhaMetrica('Média geral', Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2))}
+          {renderLinhaMetrica('Total de avaliações registradas', formatarNumero(relatorioLocais?.totalAvaliacoes))}
         </View>
+
+        <Spacer size="md" />
+        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Status dos locais</ThemedText>
         <Spacer size="xs" />
-        <View style={styles.linhaRelatorios}>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Sem avaliação: {Number(relatorioLocais?.locaisSemAvaliacao) || 0}</ThemedText>
-          <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Média geral: {Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2)}</ThemedText>
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioLocais?.distribuicaoPorStatus || {}).map(([status, total]) => (
+            renderLinhaMetrica(formatarLabelRelatorio(status, 'status'), formatarNumero(total))
+          ))}
         </View>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Total de avaliações registradas: {Number(relatorioLocais?.totalAvaliacoes) || 0}</ThemedText>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por categoria</ThemedText>
         <Spacer size="xs" />
-        {Object.entries(relatorioLocais?.distribuicaoPorCategoria || {}).map(([categoria, total]) => (
-          <ThemedText key={categoria} size="sm" altoContraste={isHighContrast} color={corSecundaria}>{categoria}: {Number(total) || 0}</ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioLocais?.distribuicaoPorCategoria || {}).map(([categoria, total]) => (
+            renderLinhaMetrica(formatarLabelRelatorio(categoria, 'categoria'), formatarNumero(total))
+          ))}
+        </View>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por estado</ThemedText>
         <Spacer size="xs" />
-        {Object.entries(relatorioLocais?.distribuicaoPorEstado || {}).map(([estado, total]) => (
-          <ThemedText key={estado} size="sm" altoContraste={isHighContrast} color={corSecundaria}>{estado}: {Number(total) || 0}</ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioLocais?.distribuicaoPorEstado || {}).map(([estado, total]) => (
+            renderLinhaMetrica(estado, formatarNumero(total))
+          ))}
+        </View>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Recursos de acessibilidade mais usados</ThemedText>
         <Spacer size="xs" />
-        {Object.entries(relatorioLocais?.distribuicaoPorTipoAcessibilidade || {}).map(([tipo, total]) => (
-          <ThemedText key={tipo} size="sm" altoContraste={isHighContrast} color={corSecundaria}>{tipo}: {Number(total) || 0}</ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {Object.entries(relatorioLocais?.distribuicaoPorTipoAcessibilidade || {}).map(([tipo, total]) => (
+            renderLinhaMetrica(formatarLabelRelatorio(tipo, 'acessibilidade'), formatarNumero(total))
+          ))}
+        </View>
 
         <Spacer size="md" />
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Locais mais bem avaliados</ThemedText>
         <Spacer size="xs" />
-        {(relatorioLocais?.locaisMaisBemAvaliados || []).map((item) => (
-          <ThemedText key={String(item?.idLocal)} size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-            {item?.nome || 'Sem nome'} ({item?.cidade || '-'} / {item?.estado || '-'}) - nota {Number(item?.avaliacaoMedia || 0).toFixed(2)}
-          </ThemedText>
-        ))}
+        <View style={styles.listaMetricasContainer}>
+          {(relatorioLocais?.locaisMaisBemAvaliados || []).map((item) => (
+            <View key={String(item?.idLocal)} style={styles.itemListaTexto}>
+              <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+                {item?.nome || 'Sem nome'} ({item?.cidade || '-'} / {item?.estado || '-'})
+              </ThemedText>
+              <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
+                Nota {Number(item?.avaliacaoMedia || 0).toFixed(2)}
+              </ThemedText>
+            </View>
+          ))}
+        </View>
       </Card>
     </View>
   );
@@ -837,8 +1096,45 @@ const styles = StyleSheet.create({
   relatoriosContainer: {
     gap: theme.spacing.md,
   },
+  gridKpis: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  kpiCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: theme.spacing.sm,
+    minWidth: 180,
+    flexGrow: 1,
+  },
   linhaRelatorios: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  listaMetricasContainer: {
+    gap: theme.spacing.xs,
+  },
+  itemMetricaLinha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  badgeValorMetrica: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    minWidth: 72,
+    alignItems: 'center',
+  },
+  itemListaTexto: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
     flexWrap: 'wrap',
