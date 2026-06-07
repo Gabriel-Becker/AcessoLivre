@@ -1,6 +1,5 @@
 package com.acessolivre.security;
 
-import com.acessolivre.exception.DenunciaException;
 import com.acessolivre.exception.AuthenticationException;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
@@ -9,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,60 +18,84 @@ public class AuthenticationFacade {
     
     private final UsuarioRepository usuarioRepository;
     
-    /**
-     * Obtém o usuário autenticado atual
-     */
     public Usuario getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated()) {
-            log.error("Nenhum usuário autenticado encontrado no contexto de segurança");
-            throw new DenunciaException("Usuário não autenticado");
+            log.error("❌ Nenhum usuário autenticado encontrado");
+            throw new AuthenticationException("Usuário não autenticado");
         }
         
-        Object principal = authentication.getPrincipal();
+        log.info("✅ Authentication encontrado - Type: {}", authentication.getClass().getSimpleName());
+        log.info("   isAuthenticated: {}", authentication.isAuthenticated());
+        log.info("   Principal type: {}", authentication.getPrincipal().getClass().getName());
         
-        if (principal instanceof UserDetails) {
-            String username = ((UserDetails) principal).getUsername();
-            log.debug("Buscando usuário autenticado: {}", username);
-            
-            return usuarioRepository.findByEmail(username)
-                    .orElseThrow(() -> new DenunciaException("Usuário autenticado não encontrado no banco de dados: " + username));
-        }
+        String email = extractEmailFromAuthentication(authentication);
+        log.info("📧 Email extraído: {}", email);
         
-        log.error("Principal não é uma instância de UserDetails: {}", principal.getClass());
-        throw new DenunciaException("Usuário autenticado inválido");
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("❌ Usuário não encontrado no banco: {}", email);
+                    return new AuthenticationException("Usuário não encontrado: " + email);
+                });
+        
+        log.info("✅ Usuário encontrado: ID={}, Nome={}, Role={}", 
+                 usuario.getIdUsuario(), usuario.getNome(), usuario.getRole());
+        
+        return usuario;
     }
     
-    /**
-     * Obtém o ID do usuário autenticado
-     */
+    private String extractEmailFromAuthentication(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        
+        // Caso 1: UserDetails (do nosso JwtAuthenticationFilter)
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails) principal).getUsername();
+            log.debug("Email extraído de UserDetails: {}", username);
+            return username;
+        }
+        
+        // Caso 2: JWT (Resource Server)
+        if (principal instanceof Jwt) {
+            Jwt jwt = (Jwt) principal;
+            String sub = jwt.getClaim("sub");
+            String email = jwt.getClaim("email");
+            String username = sub != null ? sub : email;
+            log.debug("Email extraído de JWT: {}", username);
+            return username;
+        }
+        
+        // Caso 3: String direta
+        if (principal instanceof String) {
+            String username = (String) principal;
+            log.debug("Email extraído de String: {}", username);
+            return username;
+        }
+        
+        // Caso 4: Tentar via getName()
+        try {
+            String name = authentication.getName();
+            if (name != null && !name.equals("anonymousUser")) {
+                log.debug("Email extraído via getName(): {}", name);
+                return name;
+            }
+        } catch (Exception e) {
+            log.warn("Não foi possível extrair nome via getName(): {}", e.getMessage());
+        }
+        
+        log.error("❌ Não foi possível extrair email do principal type: {}", principal.getClass().getName());
+        throw new AuthenticationException("Não foi possível extrair email do usuário autenticado");
+    }
+    
     public Long getAuthenticatedUserId() {
         return getAuthenticatedUser().getIdUsuario();
     }
     
-    /**
-     * Obtém o email do usuário autenticado
-     */
     public String getAuthenticatedUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new DenunciaException("Usuário não autenticado");
-        }
-        
-        Object principal = authentication.getPrincipal();
-        
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        }
-        
-        return principal.toString();
+        return extractEmailFromAuthentication(authentication);
     }
     
-    /**
-     * Verifica se o usuário atual tem permissão para acessar um recurso
-     */
     public boolean hasPermission(String requiredRole) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && 
