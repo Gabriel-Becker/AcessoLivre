@@ -5,11 +5,13 @@ import com.acessolivre.dto.request.StatusUpdateRequestDTO;
 import com.acessolivre.dto.response.DenunciaResponseDTO;
 import com.acessolivre.enums.StatusDenuncia;
 import com.acessolivre.enums.TipoDenuncia;
+import com.acessolivre.security.AuthenticationFacade;
 import com.acessolivre.service.DenunciaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/denuncias")
 @RequiredArgsConstructor
@@ -32,14 +35,16 @@ import java.util.Map;
 public class DenunciaController {
 
     private final DenunciaService denunciaService;
+    private final AuthenticationFacade authenticationFacade;
 
     @PostMapping
     @Operation(summary = "Criar uma nova denúncia")
-    public ResponseEntity<DenunciaResponseDTO> criarDenuncia(
-            @Valid @RequestBody DenunciaRequestDTO request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<DenunciaResponseDTO> criarDenuncia(@Valid @RequestBody DenunciaRequestDTO request) {
+        log.info("Requisição para criar denúncia - Tipo: {}, TargetId: {}", request.getTipo(), request.getTargetId());
         
-        Long usuarioId = extractUsuarioId(userDetails);
+        // ✅ PROFISSIONAL: Extrai o ID do usuário diretamente do token JWT através do SecurityContext
+        Long usuarioId = authenticationFacade.getAuthenticatedUserId();
+        
         DenunciaResponseDTO response = denunciaService.criarDenuncia(request, usuarioId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -82,7 +87,9 @@ public class DenunciaController {
             @Valid @RequestBody StatusUpdateRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        String resolvidoPor = userDetails != null ? userDetails.getUsername() : "Sistema";
+        // ✅ PROFISSIONAL: Usa o email do usuário autenticado ou fallback para o sistema
+        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        
         DenunciaResponseDTO response = denunciaService.atualizarStatus(
                 id, request.getStatus(), resolvidoPor, request.getObservacoes());
         return ResponseEntity.ok(response);
@@ -90,14 +97,13 @@ public class DenunciaController {
 
     @PatchMapping("/status/massa")
     @Operation(summary = "Atualizar status em massa")
-    public ResponseEntity<Void> atualizarStatusEmMassa(
-            @RequestBody Map<String, Object> request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
+    public ResponseEntity<Void> atualizarStatusEmMassa(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
         List<Long> ids = (List<Long>) request.get("ids");
         StatusDenuncia status = StatusDenuncia.valueOf((String) request.get("status"));
-        String resolvidoPor = userDetails != null ? userDetails.getUsername() : "Sistema";
+        
+        // ✅ PROFISSIONAL: Usa o email do usuário autenticado
+        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
         
         ids.forEach(id -> denunciaService.atualizarStatus(id, status, resolvidoPor, null));
         return ResponseEntity.noContent().build();
@@ -121,10 +127,11 @@ public class DenunciaController {
     @Operation(summary = "Verificar se usuário já denunciou um target")
     public ResponseEntity<Map<String, Boolean>> verificarDenuncia(
             @RequestParam TipoDenuncia tipo,
-            @RequestParam Long targetId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestParam Long targetId) {
         
-        Long usuarioId = extractUsuarioId(userDetails);
+        // ✅ PROFISSIONAL: Obtém o ID do usuário autenticado
+        Long usuarioId = authenticationFacade.getAuthenticatedUserId();
+        
         boolean jaDenunciou = denunciaService.usuarioJaDenunciou(usuarioId, tipo, targetId);
         return ResponseEntity.ok(Map.of("reported", jaDenunciou));
     }
@@ -144,15 +151,5 @@ public class DenunciaController {
                 "REJECTED", rejeitadas,
                 "TOTAL", pendentes + emAnalise + resolvidas + rejeitadas
         ));
-    }
-
-    private Long extractUsuarioId(UserDetails userDetails) {
-        // Implementar extração do ID do usuário a partir do UserDetails
-        // Pode ser via Authentication ou buscar no banco por email
-        if (userDetails == null) {
-            throw new RuntimeException("Usuário não autenticado");
-        }
-        // Retornar ID do usuário logado
-        return 1L; // Placeholder - implementar corretamente
     }
 }
