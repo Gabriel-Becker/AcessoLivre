@@ -29,9 +29,11 @@ export default function Select({
   style,
   containerStyle,
 }) {
-  const { isHighContrast } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier, theme: ctxTheme } = useThemeContext();
   const contraste = altoContraste ?? isHighContrast;
-  const t = getTheme(contraste);
+  const t = typeof altoContraste === 'boolean'
+    ? getTheme(contraste, fontSizeMultiplier)
+    : ctxTheme || getTheme(contraste, fontSizeMultiplier);
   const [aberto, setAberto] = useState(false);
   const [ancora, setAncora] = useState(null);
   const inputRef = useRef(null);

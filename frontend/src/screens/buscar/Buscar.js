@@ -32,14 +32,14 @@ import toastHelper from '../../utils/toastHelper';
 
 const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
-  PUBLICO: 'P├║blico',
-  SAUDE: 'Sa├║de',
-  EDUCACAO: 'Educa├º├úo',
+  PUBLICO: 'Público',
+  SAUDE: 'Saúde',
+  EDUCACAO: 'Educação',
   LAZER: 'Lazer',
   TRANSPORTE: 'Transporte',
-  ALIMENTACAO: 'Alimenta├º├úo',
+  ALIMENTACAO: 'Alimentação',
   HOSPEDAGEM: 'Hospedagem',
-  SERVICOS: 'Servi├ºos',
+  SERVICOS: 'Serviços',
 };
 
 const RECURSOS_ACESSIBILIDADE = [
@@ -47,12 +47,12 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'ELEVADOR', label: 'Elevador', icon: 'arrow-up-outline' },
   { id: 'BANHEIRO_ADAPTADO', label: 'Banheiro adaptado', icon: 'body-outline' },
   { id: 'ESTACIONAMENTO', label: 'Estacionamento', icon: 'car-outline' },
-  { id: 'PISO_TATIL', label: 'Piso t├ítil', icon: 'eye-outline' },
+  { id: 'PISO_TATIL', label: 'Piso tátil', icon: 'eye-outline' },
   { id: 'ATENDIMENTO_ESPECIALIZADO', label: 'Atendimento especializado', icon: 'hand-left-outline' },
   { id: 'RECURSOS_AUDIOVISUAIS', label: 'Recursos audiovisuais', icon: 'mic-outline' },
-  { id: 'SINALIZACAO_BRAILLE', label: 'Sinaliza├º├úo em Braile', icon: 'braille-outline' },
-  { id: 'ESPACO_AMPLO', label: 'Espa├ºo amplo', icon: 'resize-outline' },
-  { id: 'MOBILIARIO_ADAPTADO', label: 'Mobili├írio adaptado', icon: 'grid-outline' },
+  { id: 'SINALIZACAO_BRAILLE', label: 'Sinalização em Braile', icon: 'braille-outline' },
+  { id: 'ESPACO_AMPLO', label: 'Espaço amplo', icon: 'resize-outline' },
+  { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
 ];
 
 const BREAKPOINTS = {
@@ -80,7 +80,7 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
 
   const anunciarPlaceholder = useCallback(() => {
     if (voiceEnabled) {
-      VoiceService.speak('Campo de busca. Digite nome, endere├ºo ou categoria do local.');
+      VoiceService.speak('Campo de busca. Digite nome, endereço ou categoria do local.');
     }
   }, [voiceEnabled]);
 
@@ -90,7 +90,7 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
       <TextInput
         ref={inputRef}
         style={[styles.searchInput, { color: theme.colors.textPrimary }]}
-        placeholder="Buscar por nome, endere├ºo ou categoria..."
+        placeholder="Buscar por nome, endereço ou categoria..."
         placeholderTextColor={theme.colors.textTertiary}
         value={text}
         onChangeText={handleChange}
@@ -99,7 +99,7 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
         autoCorrect={false}
         blurOnSubmit={false}
         accessibilityLabel="Campo de busca"
-        accessibilityHint="Digite o nome, endere├ºo ou categoria do local que deseja encontrar"
+        accessibilityHint="Digite o nome, endereço ou categoria do local que deseja encontrar"
         onFocus={anunciarPlaceholder}
       />
       {text !== '' && (
@@ -136,7 +136,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
       `Filtro de categoria. ${categoriasSelecionadas.length > 0 
         ? `Categorias selecionadas: ${selecionadas}. ` 
         : 'Nenhuma categoria selecionada. '}
-      Voc├¬ tem as seguintes op├º├Áes: ${CATEGORIAS.map(c => CATEGORIAS_LABELS[c] || c).join(', ')}.`
+      Você tem as seguintes opções: ${CATEGORIAS.map(c => CATEGORIAS_LABELS[c] || c).join(', ')}.`
     );
   }, [voiceEnabled, categoriasSelecionadas]);
 
@@ -177,7 +177,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
                 style={styles.filtroItem} 
                 onPress={() => onToggleCategoria(categoria)} 
                 activeOpacity={0.7}
-                accessibilityLabel={`${CATEGORIAS_LABELS[categoria] || categoria} ${selecionada ? 'selecionada' : 'n├úo selecionada'}`}
+                accessibilityLabel={`${CATEGORIAS_LABELS[categoria] || categoria} ${selecionada ? 'selecionada' : 'não selecionada'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionada }}
               >
@@ -220,7 +220,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
       `Filtro de recursos de acessibilidade. ${recursosSelecionados.length > 0 
         ? `Recursos selecionados: ${selecionados}. ` 
         : 'Nenhum recurso selecionado. '}
-      Voc├¬ pode selecionar: rampa, elevador, banheiro adaptado, estacionamento, piso t├ítil, atendimento especializado, recursos audiovisuais, sinaliza├º├úo em braile, espa├ºo amplo, ou mobili├írio adaptado.`
+      Você pode selecionar: rampa, elevador, banheiro adaptado, estacionamento, piso tátil, atendimento especializado, recursos audiovisuais, sinalização em braile, espaço amplo, ou mobiliário adaptado.`
     );
   }, [voiceEnabled, recursosSelecionados]);
 
@@ -260,7 +260,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
                 style={styles.filtroItem} 
                 onPress={() => onToggleRecurso(recurso.id)} 
                 activeOpacity={0.7}
-                accessibilityLabel={`${recurso.label} ${selecionado ? 'selecionado' : 'n├úo selecionado'}`}
+                accessibilityLabel={`${recurso.label} ${selecionado ? 'selecionado' : 'não selecionado'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionado }}
               >
@@ -300,8 +300,8 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
   const anunciarNota = useCallback(() => {
     if (!voiceEnabled) return;
     VoiceService.speak(
-      `Filtro por nota m├¡nima. ${notaMinima === 0 ? 'Qualquer nota' : `${notaMinima} estrelas ou mais`}. ` +
-      `Op├º├Áes dispon├¡veis: qualquer, uma, duas, tr├¬s, quatro, quatro e meia estrelas.`
+      `Filtro por nota mínima. ${notaMinima === 0 ? 'Qualquer nota' : `${notaMinima} estrelas ou mais`}. ` +
+      `Opções disponíveis: qualquer, uma, duas, três, quatro, quatro e meia estrelas.`
     );
   }, [voiceEnabled, notaMinima]);
 
@@ -318,11 +318,11 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
         style={styles.filtroHeader} 
         onPress={anunciarNota}
         activeOpacity={0.7}
-        accessibilityLabel="Filtro por nota m├¡nima"
+        accessibilityLabel="Filtro por nota mínima"
         accessibilityRole="button"
       >
         <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota M├¡nima</ThemedText>
+        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota Mínima</ThemedText>
         {voiceEnabled && (
           <Ionicons name="volume-medium-outline" size={16} color={theme.colors.primary} style={styles.voiceIcon} />
         )}
@@ -378,8 +378,8 @@ const FiltrosCard = React.memo(({
   const anunciarFiltros = useCallback(() => {
     if (!voiceEnabled) return;
     VoiceService.speak(
-      `Painel de filtros. ${temFiltrosAtivos ? 'Voc├¬ tem filtros ativos.' : 'Nenhum filtro ativo.'} ` +
-      `Toque em cada se├º├úo para expandir e selecionar op├º├Áes. Use o bot├úo limpar para remover todos os filtros.`
+      `Painel de filtros. ${temFiltrosAtivos ? 'Você tem filtros ativos.' : 'Nenhum filtro ativo.'} ` +
+      `Toque em cada seção para expandir e selecionar opções. Use o botão limpar para remover todos os filtros.`
     );
   }, [voiceEnabled, temFiltrosAtivos]);
 
@@ -560,7 +560,7 @@ export default function Buscar({ onNavigate }) {
   }, [onNavigate, voiceEnabled]);
 
   const handleVoltar = useCallback(() => {
-    if (voiceEnabled) VoiceService.speak('Voltando para p├ígina inicial');
+    if (voiceEnabled) VoiceService.speak('Voltando para página inicial');
     onNavigate?.('Inicio');
   }, [onNavigate, voiceEnabled]);
 
@@ -595,7 +595,7 @@ export default function Buscar({ onNavigate }) {
       `Tela de busca de locais. ${totalResultados > 0 
         ? `Encontramos ${totalResultados} ${totalResultados === 1 ? 'local' : 'locais'}. ` 
         : 'Nenhum local encontrado. '}
-      Utilize os filtros para refinar sua busca. Diga ajuda para ouvir os comandos dispon├¡veis.`
+      Utilize os filtros para refinar sua busca. Diga ajuda para ouvir os comandos disponíveis.`
     );
   }, [voiceEnabled, totalResultados]);
 
@@ -622,7 +622,7 @@ export default function Buscar({ onNavigate }) {
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
   const numColumns = useMemo(() => {
-    if (isDesktop) return 3;
+    if (isDesktop) return 2;
     if (isTablet) return 2;
     return 1;
   }, [isDesktop, isTablet]);
@@ -715,7 +715,14 @@ export default function Buscar({ onNavigate }) {
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.cardWrapper}>
+    <View
+      style={[
+        styles.cardWrapper,
+        numColumns === 1 && styles.cardWrapperUmaColuna,
+        numColumns === 2 && styles.cardWrapperDuasColunas,
+        numColumns === 3 && styles.cardWrapperTresColunas,
+      ]}
+    >
       <LocalCard 
         local={item} 
         onPress={() => handleLocalPress(item)} 
@@ -739,7 +746,7 @@ export default function Buscar({ onNavigate }) {
     <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <CabecalhoPagina
         titulo="Buscar Locais"
-        subtitulo="Encontre e avalie locais acess├¡veis"
+        subtitulo="Encontre e avalie locais acessíveis"
         onVoltar={handleVoltar}
         textoVoltar="Voltar"
         altoContraste={isHighContrast}
@@ -1018,10 +1025,20 @@ const styles = StyleSheet.create({
   },
   
   cardWrapper: {
-    flex: 1,
-    minWidth: 260,
     paddingHorizontal: 6,
     paddingVertical: 8,
+  },
+  cardWrapperUmaColuna: {
+    width: '100%',
+    maxWidth: '100%',
+  },
+  cardWrapperDuasColunas: {
+    width: '50%',
+    maxWidth: '50%',
+  },
+  cardWrapperTresColunas: {
+    width: '33.33%',
+    maxWidth: '33.33%',
   },
   
   loadingContainer: {

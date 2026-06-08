@@ -29,8 +29,10 @@ export default function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const { isHighContrast, theme: ctxTheme } = useThemeContext();
-  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
+  const { isHighContrast, theme: ctxTheme, fontSizeMultiplier } = useThemeContext();
+  const t = typeof altoContraste === 'boolean'
+    ? getTheme(altoContraste, fontSizeMultiplier)
+    : ctxTheme || theme;
   const hasError = !!error;
   const isPassword = secureTextEntry;
   
