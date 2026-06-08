@@ -1,11 +1,10 @@
 // src/screens/denuncia/Denuncias.js
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { Spacer, ThemedText } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import ReportarService from '../../services/ReportarService';
+import DenunciaService from '../../services/DenunciaService';
 import toastHelper from '../../utils/toastHelper';
 import { 
   colunasDenuncias, 
@@ -38,7 +37,7 @@ export default function Denuncias() {
   // Carregar estatísticas
   const carregarEstatisticas = useCallback(async () => {
     try {
-      const result = await ReportarService.getEstatisticas();
+      const result = await DenunciaService.getEstatisticas();
       if (result.success && result.data) {
         setEstatisticas({
           total: result.data.TOTAL || 0,
@@ -59,7 +58,7 @@ export default function Denuncias() {
       if (filtroTipoDenuncias !== 'todos') filters.tipo = filtroTipoDenuncias;
       if (buscaDenuncias) filters.search = buscaDenuncias;
 
-      const result = await ReportarService.getAll(filters);
+      const result = await DenunciaService.getAll(filters);
       
       if (result.success) {
         setDenuncias(result.data || []);
@@ -74,16 +73,11 @@ export default function Denuncias() {
     }
   }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
 
-  // Carregar dados iniciais
+  // Carregar dados iniciais - apenas uma vez
   useEffect(() => {
     carregarDenuncias();
     carregarEstatisticas();
   }, [carregarDenuncias, carregarEstatisticas]);
-
-  // Recarregar quando filtros mudarem
-  useEffect(() => {
-    carregarDenuncias();
-  }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
 
   // Filtro local dos dados (já que o backend já filtra, isso é redundante mas mantido para segurança)
   const denunciasFiltradas = useMemo(() => {
@@ -102,10 +96,10 @@ export default function Denuncias() {
     setModalStatusVisivel(true);
   };
 
-  const handleConfirmarStatus = async (novoStatus) => {
+  const handleConfirmarStatus = async (novoStatus, isResolveAction = false) => {
     setCarregandoAcao(true);
     try {
-      const result = await ReportarService.updateStatus(denunciaSelecionada.id, novoStatus);
+      const result = await DenunciaService.updateStatus(denunciaSelecionada.id, novoStatus);
       if (result.success) {
         toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
         await carregarDenuncias();
@@ -122,6 +116,26 @@ export default function Denuncias() {
     }
   };
 
+  const handleResolverDenuncia = async (denuncia) => {
+    setCarregandoAcao(true);
+    try {
+      const result = await DenunciaService.resolver(denuncia.id);
+      if (result.success) {
+        toastHelper.showSuccess(result.message || 'Denúncia resolvida com sucesso');
+        await carregarDenuncias();
+        await carregarEstatisticas();
+        setModalStatusVisivel(false);
+      } else {
+        toastHelper.showError(result.message || 'Erro ao resolver denúncia');
+      }
+    } catch (error) {
+      toastHelper.showError('Erro ao resolver denúncia');
+    } finally {
+      setCarregandoAcao(false);
+      setDenunciaSelecionada(null);
+    }
+  };
+
   const handleExcluirDenuncia = (denuncia) => {
     setDenunciaParaExcluir(denuncia);
     setModalExcluirVisivel(true);
@@ -130,7 +144,8 @@ export default function Denuncias() {
   const handleConfirmarExcluir = async () => {
     setCarregandoAcao(true);
     try {
-      const result = await ReportarService.delete(denunciaParaExcluir.id);
+      // Nota: Este método apenas exclui a denúncia, não o conteúdo
+      const result = await DenunciaService.delete(denunciaParaExcluir.id);
       if (result.success) {
         toastHelper.showSuccess('Denúncia excluída com sucesso');
         await carregarDenuncias();
@@ -212,6 +227,7 @@ export default function Denuncias() {
         }}
         denuncia={denunciaSelecionada}
         onConfirm={handleConfirmarStatus}
+        onResolve={handleResolverDenuncia}
         carregando={carregandoAcao}
         isHighContrast={isHighContrast}
         theme={t}

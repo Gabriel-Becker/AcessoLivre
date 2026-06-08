@@ -1,8 +1,10 @@
+// controller/DenunciaController.java (atualizado)
 package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.DenunciaRequestDTO;
 import com.acessolivre.dto.request.StatusUpdateRequestDTO;
 import com.acessolivre.dto.response.DenunciaResponseDTO;
+import com.acessolivre.dto.response.ResolucaoDenunciaResponseDTO;
 import com.acessolivre.enums.StatusDenuncia;
 import com.acessolivre.enums.TipoDenuncia;
 import com.acessolivre.security.AuthenticationFacade;
@@ -42,7 +44,6 @@ public class DenunciaController {
     public ResponseEntity<DenunciaResponseDTO> criarDenuncia(@Valid @RequestBody DenunciaRequestDTO request) {
         log.info("Requisição para criar denúncia - Tipo: {}, TargetId: {}", request.getTipo(), request.getTargetId());
         
-        // ✅ PROFISSIONAL: Extrai o ID do usuário diretamente do token JWT através do SecurityContext
         Long usuarioId = authenticationFacade.getAuthenticatedUserId();
         
         DenunciaResponseDTO response = denunciaService.criarDenuncia(request, usuarioId);
@@ -87,11 +88,44 @@ public class DenunciaController {
             @Valid @RequestBody StatusUpdateRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        // ✅ PROFISSIONAL: Usa o email do usuário autenticado ou fallback para o sistema
         String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
         
         DenunciaResponseDTO response = denunciaService.atualizarStatus(
                 id, request.getStatus(), resolvidoPor, request.getObservacoes());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * NOVO ENDPOINT: Resolve uma denúncia e remove o conteúdo denunciado automaticamente
+     * - Se for LOCAL → remove o local
+     * - Se for AVALIACAO → remove a avaliação
+     * - Marca a denúncia como RESOLVED
+     */
+    @PostMapping("/{id}/resolver")
+    @Operation(summary = "Resolver denúncia e remover conteúdo denunciado")
+    public ResponseEntity<ResolucaoDenunciaResponseDTO> resolverDenuncia(@PathVariable Long id) {
+        log.info("Requisição para resolver denúncia - ID: {}", id);
+        
+        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        
+        ResolucaoDenunciaResponseDTO response = denunciaService.resolverDenuncia(id, resolvidoPor);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * NOVO ENDPOINT: Rejeita uma denúncia (marca como rejeitada sem remover conteúdo)
+     */
+    @PostMapping("/{id}/rejeitar")
+    @Operation(summary = "Rejeitar denúncia (marca como rejeitada sem remover conteúdo)")
+    public ResponseEntity<ResolucaoDenunciaResponseDTO> rejeitarDenuncia(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> request) {
+        log.info("Requisição para rejeitar denúncia - ID: {}", id);
+        
+        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        String observacoes = request != null ? request.get("observacoes") : null;
+        
+        ResolucaoDenunciaResponseDTO response = denunciaService.rejeitarDenuncia(id, resolvidoPor, observacoes);
         return ResponseEntity.ok(response);
     }
 
@@ -102,7 +136,6 @@ public class DenunciaController {
         List<Long> ids = (List<Long>) request.get("ids");
         StatusDenuncia status = StatusDenuncia.valueOf((String) request.get("status"));
         
-        // ✅ PROFISSIONAL: Usa o email do usuário autenticado
         String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
         
         ids.forEach(id -> denunciaService.atualizarStatus(id, status, resolvidoPor, null));
@@ -110,7 +143,7 @@ public class DenunciaController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Excluir denúncia")
+    @Operation(summary = "Excluir denúncia (apenas o registro, não o conteúdo)")
     public ResponseEntity<Void> excluirDenuncia(@PathVariable Long id) {
         denunciaService.excluirDenuncia(id);
         return ResponseEntity.noContent().build();
@@ -129,7 +162,6 @@ public class DenunciaController {
             @RequestParam TipoDenuncia tipo,
             @RequestParam Long targetId) {
         
-        // ✅ PROFISSIONAL: Obtém o ID do usuário autenticado
         Long usuarioId = authenticationFacade.getAuthenticatedUserId();
         
         boolean jaDenunciou = denunciaService.usuarioJaDenunciou(usuarioId, tipo, targetId);

@@ -28,7 +28,7 @@ public class LocalRequestDTO {
     @NotBlank(message = "Descrição é obrigatória")
     @Size(max = 350, message = "Descrição deve ter no máximo 350 caracteres")
     private String descricao;
-    
+
     @Size(max = 120, message = "Nome da imagem deve ter no máximo 120 caracteres")
     private String imagem;
 
@@ -43,15 +43,10 @@ public class LocalRequestDTO {
     private Long idUsuario;
 
     private Long idEndereco;
-    
-    // NOVO CAMPO DECLARATIVO (substitui idLocalPrincipal)
+
     @Size(max = 200, message = "Nome do local principal deve ter no máximo 200 caracteres")
     private String nomeLocalPrincipal;
-    
-    // Campo mantido para compatibilidade (pode ser removido depois)
-    @Deprecated
-    private Long idLocalPrincipal;
-    
+
     private StatusLocal status;
 
     @Valid
