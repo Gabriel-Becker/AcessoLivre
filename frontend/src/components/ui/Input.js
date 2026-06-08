@@ -22,6 +22,7 @@ export default function Input({
   style,
   containerStyle,
   altoContraste = false,
+  permitirEscalaFonte = true,
   onFocus,
   onBlur,
   ...props
@@ -29,7 +30,7 @@ export default function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const { isHighContrast, theme: ctxTheme, fontSizeMultiplier } = useThemeContext();
+  const { theme: ctxTheme, fontSizeMultiplier } = useThemeContext();
   const t = typeof altoContraste === 'boolean'
     ? getTheme(altoContraste, fontSizeMultiplier)
     : ctxTheme || theme;
@@ -72,7 +73,14 @@ export default function Input({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={[styles.label, { color: t.colors.textPrimary }, labelStyle]}>{label}</Text>}
+      {label && (
+        <Text
+          allowFontScaling={permitirEscalaFonte}
+          style={[styles.label, { color: t.colors.textPrimary }, labelStyle]}
+        >
+          {label}
+        </Text>
+      )}
       
       <View
         style={[
@@ -94,6 +102,7 @@ export default function Input({
         )}
         
         <TextInput
+          allowFontScaling={permitirEscalaFonte}
           style={[
             styles.input,
             leftIcon && styles.inputWithLeftIcon,
@@ -154,7 +163,12 @@ export default function Input({
       {hasError && (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={14} color={t.colors.error} />
-          <Text style={[styles.errorText, { color: t.colors.error }]}>{error}</Text>
+          <Text
+            allowFontScaling={permitirEscalaFonte}
+            style={[styles.errorText, { color: t.colors.error }]}
+          >
+            {error}
+          </Text>
         </View>
       )}
     </View>

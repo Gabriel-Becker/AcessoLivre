@@ -15,6 +15,7 @@ export default function CardSecao({
   children,
   altoContraste,
   style,
+  permitirEscalaFonte = true,
 }) {
   const { isHighContrast } = useThemeContext();
   const t = getTheme(altoContraste ?? isHighContrast);
@@ -31,7 +32,7 @@ export default function CardSecao({
         >
           <Ionicons name={icone} size={20} color={corIcone || t.colors.primary} />
         </View>
-        <ThemedText variant="h3" weight="bold">
+        <ThemedText variant="h3" weight="bold" permitirEscalaFonte={permitirEscalaFonte}>
           {titulo}
         </ThemedText>
       </View>
@@ -39,7 +40,7 @@ export default function CardSecao({
       {descricao ? (
         <>
           <Spacer size="xs" />
-          <ThemedText color="textSecondary">{descricao}</ThemedText>
+          <ThemedText color="textSecondary" permitirEscalaFonte={permitirEscalaFonte}>{descricao}</ThemedText>
         </>
       ) : null}
 

@@ -13,6 +13,7 @@ export default function CabecalhoPagina({
   acaoDireita,
   altoContraste,
   style,
+  permitirEscalaFonte = true,
 }) {
   const { isHighContrast } = useThemeContext();
   const contrasteAtivo = altoContraste ?? isHighContrast;
@@ -34,7 +35,13 @@ export default function CabecalhoPagina({
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
-          <ThemedText style={estilos.textoVoltar} weight="medium" altoContraste={contrasteAtivo} color={corPrincipal}>
+          <ThemedText
+            style={estilos.textoVoltar}
+            weight="medium"
+            altoContraste={contrasteAtivo}
+            color={corPrincipal}
+            permitirEscalaFonte={permitirEscalaFonte}
+          >
             {textoVoltar}
           </ThemedText>
         </Pressable>
@@ -50,8 +57,9 @@ export default function CabecalhoPagina({
           color={corPrincipal}
           numberOfLines={1}
           ellipsizeMode="tail"
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
+          adjustsFontSizeToFit={permitirEscalaFonte}
+          minimumFontScale={permitirEscalaFonte ? 0.85 : undefined}
+          permitirEscalaFonte={permitirEscalaFonte}
           style={estilos.titulo}
         >
           {titulo}
@@ -59,7 +67,13 @@ export default function CabecalhoPagina({
         {subtitulo ? (
           <>
             <Spacer size="xs" />
-            <ThemedText altoContraste={contrasteAtivo} color={corSecundaria}>{subtitulo}</ThemedText>
+            <ThemedText
+              altoContraste={contrasteAtivo}
+              color={corSecundaria}
+              permitirEscalaFonte={permitirEscalaFonte}
+            >
+              {subtitulo}
+            </ThemedText>
           </>
         ) : null}
       </View>

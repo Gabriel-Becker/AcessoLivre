@@ -28,6 +28,7 @@ export default function Select({
   maxHeight = 280,
   style,
   containerStyle,
+  permitirEscalaFonte = true,
 }) {
   const { isHighContrast, fontSizeMultiplier, theme: ctxTheme } = useThemeContext();
   const contraste = altoContraste ?? isHighContrast;
@@ -74,7 +75,12 @@ export default function Select({
   return (
     <View style={[estilos.container, containerStyle]}>
       {label ? (
-        <ThemedText variant="caption" style={[estilos.label, labelStyle]} color="textPrimary">
+        <ThemedText
+          variant="caption"
+          style={[estilos.label, labelStyle]}
+          color="textPrimary"
+          permitirEscalaFonte={permitirEscalaFonte}
+        >
           {label}
         </ThemedText>
       ) : null}
@@ -94,6 +100,7 @@ export default function Select({
           color={selecionado ? 'textPrimary' : 'textTertiary'}
           style={estilos.texto}
           altoContraste={contraste}
+          permitirEscalaFonte={permitirEscalaFonte}
         >
           {selecionado?.label || placeholder}
         </ThemedText>
@@ -132,7 +139,11 @@ export default function Select({
                       style={[estilos.item, ativo && estilos.itemAtivo]}
                       onPress={() => handleSelect(item)}
                     >
-                      <ThemedText color={ativo ? 'primary' : 'textPrimary'} altoContraste={contraste}>
+                      <ThemedText
+                        color={ativo ? 'primary' : 'textPrimary'}
+                        altoContraste={contraste}
+                        permitirEscalaFonte={permitirEscalaFonte}
+                      >
                         {item.label}
                       </ThemedText>
                     </TouchableOpacity>
@@ -148,7 +159,12 @@ export default function Select({
       {hasError ? (
         <View style={estilos.errorContainer}>
           <Ionicons name="alert-circle" size={14} color={t.colors.error} />
-          <ThemedText color="error" variant="caption" style={estilos.errorText}>
+          <ThemedText
+            color="error"
+            variant="caption"
+            style={estilos.errorText}
+            permitirEscalaFonte={permitirEscalaFonte}
+          >
             {error}
           </ThemedText>
         </View>

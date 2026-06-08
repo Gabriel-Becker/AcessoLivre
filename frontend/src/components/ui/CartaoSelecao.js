@@ -14,6 +14,7 @@ export default function CartaoSelecao({
   onPress,
   altoContraste,
   style,
+  permitirEscalaFonte = true,
 }) {
   const { isHighContrast } = useThemeContext();
   const t = getTheme(altoContraste ?? isHighContrast);
@@ -40,11 +41,11 @@ export default function CartaoSelecao({
       <View style={estilos.conteudo}>
         <View style={estilos.tituloLinha}>
           <Ionicons name={icone} size={18} color={corDestaque} />
-          <ThemedText weight="semibold" style={estilos.titulo}>
+          <ThemedText weight="semibold" style={estilos.titulo} permitirEscalaFonte={permitirEscalaFonte}>
             {titulo}
           </ThemedText>
         </View>
-        <ThemedText color="textSecondary" variant="caption">
+        <ThemedText color="textSecondary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
           {descricao}
         </ThemedText>
       </View>

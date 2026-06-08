@@ -10,6 +10,7 @@ export default function ThemedText({
   align = 'left',
   weight = 'regular',
   altoContraste,
+  permitirEscalaFonte = true,
   style,
   ...props
 }) {
@@ -55,6 +56,7 @@ export default function ThemedText({
 
   return (
     <Text
+      allowFontScaling={permitirEscalaFonte}
       style={[
         styles.base,
         variantStyles[variant],

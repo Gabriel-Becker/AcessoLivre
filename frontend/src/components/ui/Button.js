@@ -21,6 +21,7 @@ export default function Button({
   iconColor,
   align = 'center',
   altoContraste,
+  permitirEscalaFonte = true,
   ...props
 }) {
   const { theme: temaContexto, isHighContrast, fontSizeMultiplier } = useThemeContext();
@@ -137,7 +138,10 @@ export default function Button({
               style={styles.iconLeft}
             />
           )}
-          <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
+          <Text
+            allowFontScaling={permitirEscalaFonte}
+            style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}
+          >
             {children}
           </Text>
           {iconRight && (
