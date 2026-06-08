@@ -281,9 +281,12 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
 FiltroAcessibilidade.displayName = 'FiltroAcessibilidade';
 
 const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voiceEnabled }) => {
+  const { fontSizeMultiplier } = useThemeContext();
+
   const renderStars = useCallback((nota) => {
     const stars = [];
-    const starSize = isDesktop ? 16 : 20;
+    const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
+    const starSize = Math.round((isDesktop ? 16 : 20) * escalaZoom);
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons 
@@ -295,7 +298,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
       );
     }
     return stars;
-  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop]);
+  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop, fontSizeMultiplier]);
 
   const anunciarNota = useCallback(() => {
     if (!voiceEnabled) return;

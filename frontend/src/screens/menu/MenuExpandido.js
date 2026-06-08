@@ -44,17 +44,7 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
   return (
     <View style={[styles.container, { backgroundColor: t.colors.background }]}> 
       <View style={[styles.cabecalho, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }]}> 
-        <TouchableOpacity
-          style={[styles.botaoVoltar, { borderColor: t.colors.borderLight, backgroundColor: t.colors.backgroundSecondary }]}
-          onPress={onFechar}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar para a tela anterior"
-        >
-          <Ionicons name="arrow-back-outline" size={20} color={t.colors.primary} />
-          <ThemedText weight="semibold" color="primary" altoContraste={contrasteAtivo}>
-            Voltar
-          </ThemedText>
-        </TouchableOpacity>
+        <View style={styles.cabecalhoEspaco} />
 
         <ThemedText variant="h3" weight="bold" altoContraste={contrasteAtivo}>
           Menu
@@ -155,15 +145,6 @@ function criarEstilos(t) {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: t.spacing.md,
-    },
-    botaoVoltar: {
-      minHeight: 48,
-      paddingHorizontal: t.spacing.md,
-      borderRadius: t.borderRadius.xl,
-      borderWidth: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: t.spacing.sm,
     },
     cabecalhoEspaco: {
       width: 88,

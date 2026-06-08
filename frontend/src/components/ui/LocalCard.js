@@ -15,6 +15,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
+  const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
   
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
@@ -36,9 +37,12 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const imagemUrl = local?.imagemUrl || local?.imagens?.[0]?.urlCompleta || local?.imagens?.[0]?.url || null;
 
   const imageHeight = useMemo(() => {
-    if (compact) return isDesktop ? 120 : isTablet ? 140 : 160;
-    return isDesktop ? 150 : isTablet ? 180 : 200;
-  }, [isDesktop, isTablet, compact]);
+    const alturaBase = compact
+      ? (isDesktop ? 120 : isTablet ? 140 : 160)
+      : (isDesktop ? 150 : isTablet ? 180 : 200);
+
+    return Math.round(alturaBase * escalaZoom);
+  }, [isDesktop, isTablet, compact, escalaZoom]);
 
   const imageHeightBadge = useMemo(() => {
     if (compact) return 80;
@@ -46,23 +50,23 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   }, [imageHeight, compact]);
 
   const fontSize = useMemo(() => ({
-    nome: isDesktop ? 15 : 16,
-    categoria: isDesktop ? 10 : 11,
-    badgeNovo: isDesktop ? 10 : 11,
-    badgeImagem: isDesktop ? 10 : 12,
-    endereco: isDesktop ? 10 : 12,
-    rating: isDesktop ? 13 : 14,
-    recursos: isDesktop ? 11 : 12,
-    recursosNumero: isDesktop ? 12 : 13,
-    recomendado: isDesktop ? 11 : 12,
-  }), [isDesktop]);
+    nome: (isDesktop ? 15 : 16) * escalaZoom,
+    categoria: (isDesktop ? 10 : 11) * escalaZoom,
+    badgeNovo: (isDesktop ? 10 : 11) * escalaZoom,
+    badgeImagem: (isDesktop ? 10 : 12) * escalaZoom,
+    endereco: (isDesktop ? 10 : 12) * escalaZoom,
+    rating: (isDesktop ? 13 : 14) * escalaZoom,
+    recursos: (isDesktop ? 11 : 12) * escalaZoom,
+    recursosNumero: (isDesktop ? 12 : 13) * escalaZoom,
+    recomendado: (isDesktop ? 11 : 12) * escalaZoom,
+  }), [isDesktop, escalaZoom]);
 
   const spacing = useMemo(() => ({
-    padding: isDesktop ? 10 : 14,
-    gap: isDesktop ? 4 : 6,
-    marginBottom: isDesktop ? 6 : 8,
+    padding: (isDesktop ? 10 : 14) * escalaZoom,
+    gap: (isDesktop ? 4 : 6) * escalaZoom,
+    marginBottom: (isDesktop ? 6 : 8) * escalaZoom,
     borderRadius: isDesktop ? 16 : 20,
-  }), [isDesktop]);
+  }), [isDesktop, escalaZoom]);
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
@@ -77,9 +81,9 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
     const stars = [];
     const fullStars = Math.floor(rating || 0);
     const hasHalfStar = (rating || 0) % 1 >= 0.5;
+    const starSize = Math.round((isDesktop ? 12 : 16) * escalaZoom);
 
     for (let i = 0; i < 5; i++) {
-      const starSize = isDesktop ? 12 : 16;
       if (i < fullStars) {
         stars.push(<Ionicons key={i} name="star" size={starSize} color="#FFD700" />);
       } else if (i === fullStars && hasHalfStar) {
@@ -254,8 +258,6 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       marginBottom: 16,
       borderWidth: contrasteAtivo ? 2 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
-      maxWidth: isDesktop ? (compact ? 350 : 450) : '100%',
-      alignSelf: 'center',
       width: '100%',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },

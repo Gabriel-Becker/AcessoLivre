@@ -72,10 +72,16 @@ function MainApp({ navigation, route }) {
       setScreenAnterior(currentScreen);
     }
 
+    const paramsFinais = { ...params };
+
+    if (screen === 'LocalDetalhes' && !paramsFinais.previousScreen) {
+      paramsFinais.previousScreen = currentScreen;
+    }
+
     navigation?.setParams({
       ...route?.params,
       screen,
-      ...params,
+      ...paramsFinais,
     });
     
     setCurrentScreen(screen);

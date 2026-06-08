@@ -43,13 +43,22 @@ export default function Home({ onNavigate, routeParams }) {
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
   const gridConfig = useMemo(() => {
-    // Para fontes muito grandes, manter 1 coluna
+    // Para fontes muito grandes, manter mais de 1 coluna quando houver espaço
     if (fontSizeMultiplier >= 1.5) {
+      if (width >= BREAKPOINTS.DESKTOP) {
+        return {
+          numColumns: 2,
+          contentContainerStyle: styles.listContent,
+          columnWrapperStyle: styles.columnWrapper,
+          cardWrapperStyle: styles.cardWrapperTablet,
+        };
+      }
+
       return {
         numColumns: 1,
-        contentContainerStyle: styles.listContentCentralizado,
+        contentContainerStyle: styles.listContentSingleColumn,
         columnWrapperStyle: null,
-        cardMarginHorizontal: 0,
+        cardWrapperStyle: styles.cardWrapperSingle,
       };
     }
 
@@ -58,8 +67,8 @@ export default function Home({ onNavigate, routeParams }) {
       return {
         numColumns: 3,
         contentContainerStyle: styles.listContent,
-        columnWrapperStyle: styles.columnWrapperDesktop,
-        cardMarginHorizontal: 8,
+        columnWrapperStyle: styles.columnWrapper,
+        cardWrapperStyle: styles.cardWrapperDesktop,
       };
     }
 
@@ -68,26 +77,26 @@ export default function Home({ onNavigate, routeParams }) {
       return {
         numColumns: 2,
         contentContainerStyle: styles.listContent,
-        columnWrapperStyle: styles.columnWrapperTablet,
-        cardMarginHorizontal: 6,
+        columnWrapperStyle: styles.columnWrapper,
+        cardWrapperStyle: styles.cardWrapperTablet,
       };
     }
 
     // Mobile: 1 coluna
     return {
       numColumns: 1,
-      contentContainerStyle: styles.listContentCentralizado,
+      contentContainerStyle: styles.listContentSingleColumn,
       columnWrapperStyle: null,
-      cardMarginHorizontal: 0,
+      cardWrapperStyle: styles.cardWrapperSingle,
     };
   }, [width, fontSizeMultiplier]);
 
   const cardLayout = useMemo(() => {
     if (width >= BREAKPOINTS.DESKTOP) {
-      return { compact: true };
+      return { compact: fontSizeMultiplier <= 1 };
     }
     return { compact: false };
-  }, [width]);
+  }, [width, fontSizeMultiplier]);
 
   const anunciarHome = useCallback(() => {
     if (!voiceEnabled) return;
@@ -202,21 +211,9 @@ export default function Home({ onNavigate, routeParams }) {
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
-  const renderItem = ({ item, index }) => {
-    const marginLeft = (gridConfig.cardMarginHorizontal && index % gridConfig.numColumns === 0) 
-      ? { marginLeft: 0 } 
-      : {};
-    const marginRight = (gridConfig.cardMarginHorizontal && (index + 1) % gridConfig.numColumns === 0)
-      ? { marginRight: 0 }
-      : {};
-
+  const renderItem = ({ item }) => {
     return (
-      <View style={[
-        styles.cardWrapper,
-        marginLeft,
-        marginRight,
-        gridConfig.cardMarginHorizontal ? { marginHorizontal: gridConfig.cardMarginHorizontal / 2 } : {}
-      ]}>
+      <View style={[styles.cardWrapper, gridConfig.cardWrapperStyle]}>
         <LocalCard
           local={item}
           onPress={() => handleLocalPress(item)}
@@ -306,17 +303,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  listContentCentralizado: {
+  listContentSingleColumn: {
     paddingHorizontal: 16,
     paddingBottom: 20,
-    alignItems: 'center',
   },
-  columnWrapperDesktop: {
-    justifyContent: 'flex-start',
-    gap: 12,
-    marginBottom: 8,
-  },
-  columnWrapperTablet: {
+  columnWrapper: {
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 8,
@@ -330,9 +321,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardWrapper: {
-    flex: 1,
     marginBottom: 12,
     minWidth: 0,
+  },
+  cardWrapperDesktop: {
+    width: '32%',
+  },
+  cardWrapperTablet: {
+    width: '48.5%',
+  },
+  cardWrapperSingle: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   emptyContainer: {
     flex: 1,

@@ -164,7 +164,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
-  const { id } = route?.params || {};
+  const { id, previousScreen } = route?.params || {};
   const now = useCurrentTime();
 
   const isDesktop = width >= breakpoints.desktop;
@@ -280,6 +280,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }, [carregar]);
 
   const handleRefresh = () => carregar(true);
+
+  const handleVoltar = useCallback(() => {
+    onNavigate?.(previousScreen || 'Inicio');
+  }, [onNavigate, previousScreen]);
 
   const handleAvaliar = () => {
     if (!isAuthenticated) {
@@ -506,7 +510,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
           Tentar novamente
         </Button>
         <Spacer size="sm" />
-        <Button variant="outline" onPress={() => onNavigate?.('Inicio')}>
+        <Button variant="outline" onPress={handleVoltar}>
           Voltar
         </Button>
       </View>
@@ -517,23 +521,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={estilosZoom.container}>
       <View style={estilosZoom.cabecalho}>
         <TouchableOpacity
-          onPress={() => onNavigate?.('Inicio')}
+          onPress={handleVoltar}
           style={[styles.botaoVoltarTopo, { borderColor: t.colors.borderLight, backgroundColor: t.colors.surface }]}
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={20} color={t.colors.textPrimary} />
           <ThemedText weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</ThemedText>
         </TouchableOpacity>
-
-        <Spacer size="sm" />
-
-        <ThemedText variant="h1" weight="bold" style={estilosZoom.tituloPagina}>
-          Detalhes do Local
-        </ThemedText>
-        <Spacer size="xs" />
-        <ThemedText color="textSecondary" style={estilosZoom.subtituloPagina}>
-          Encontre e avalie locais acessíveis
-        </ThemedText>
       </View>
 
       <ScrollView 
