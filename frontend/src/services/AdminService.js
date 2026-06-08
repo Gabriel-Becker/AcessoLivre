@@ -20,6 +20,68 @@ const AdminService = {
     return response.data;
   },
 
+  async obterRelatorioUsuarios({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    const response = await api.get('/admin/relatorios/usuarios', { params });
+    return response.data;
+  },
+
+  async obterRelatorioLocais({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    const response = await api.get('/admin/relatorios/locais', { params });
+    return response.data;
+  },
+
+  async exportarRelatorioUsuariosCsv({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    return api.get('/admin/relatorios/exportar/usuarios/csv', {
+      params,
+      responseType: 'blob',
+    });
+  },
+
+  async exportarRelatorioUsuariosPdf({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    return api.get('/admin/relatorios/exportar/usuarios/pdf', {
+      params,
+      responseType: 'blob',
+    });
+  },
+
+  async exportarRelatorioLocaisCsv({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    return api.get('/admin/relatorios/exportar/locais/csv', {
+      params,
+      responseType: 'blob',
+    });
+  },
+
+  async exportarRelatorioLocaisPdf({ dataInicio, dataFim } = {}) {
+    const params = {};
+    if (dataInicio) params.dataInicio = dataInicio;
+    if (dataFim) params.dataFim = dataFim;
+
+    return api.get('/admin/relatorios/exportar/locais/pdf', {
+      params,
+      responseType: 'blob',
+    });
+  },
+
   async alterarRoleUsuario(idUsuario, novaRole) {
     const response = await api.put(`/admin/usuarios/${idUsuario}/role`, {
       novaRole,
