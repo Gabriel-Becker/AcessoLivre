@@ -14,5 +14,6 @@ public class UsuarioAdminResponseDTO {
     private String nome;
     private String email;
     private String role;
+    private Boolean ativo;
     private String dataCadastro;
 }

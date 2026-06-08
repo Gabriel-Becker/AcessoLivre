@@ -32,6 +32,7 @@ public class UsuarioMapper {
         .role(entity.getRole() != null ? entity.getRole().name() : null)
                 .dataCadastro(entity.getDataCadastro())
                 .imagemPerfil(entity.getImagemPerfil())
+        .ativo(entity.getAtivo())
                 .build();
     }
 

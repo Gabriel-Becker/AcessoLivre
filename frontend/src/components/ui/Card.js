@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function Card({
   variant = 'default',
@@ -12,7 +13,9 @@ export default function Card({
   altoContraste = false,
   ...props
 }) {
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast, theme: ctxTheme } = useThemeContext();
+  const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : ctxTheme || theme;
+  const cardPadding = t.layout?.mobile?.cardPadding ?? t.spacing.md;
 
   // Estilos baseados na variante
   const getVariantStyles = () => {
@@ -42,9 +45,13 @@ export default function Card({
   };
 
   const variantStyles = getVariantStyles();
+  const contentStyles = {
+    borderRadius: t.borderRadius.xl,
+    padding: cardPadding,
+  };
 
   const cardContent = (
-    <View style={[styles.card, variantStyles, style]} {...props}>
+    <View style={[styles.card, contentStyles, variantStyles, style]} {...props}>
       {children}
     </View>
   );
@@ -62,8 +69,6 @@ export default function Card({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
 });

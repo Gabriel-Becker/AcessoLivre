@@ -1,3 +1,4 @@
+// repository/ImagemRepository.java
 package com.acessolivre.repository;
 
 import com.acessolivre.model.Imagem;
@@ -8,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface ImagemRepository extends JpaRepository<Imagem, Long> {
-    List<Imagem> findByLocalIdLocal(Long idLocal);
+    List<Imagem> findByIdLocalOrderByIdImagemDesc(Long idLocal);
 }

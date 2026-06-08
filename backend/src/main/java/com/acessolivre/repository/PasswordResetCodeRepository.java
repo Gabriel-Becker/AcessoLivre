@@ -1,14 +1,17 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.model.PasswordResetCode;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.acessolivre.model.PasswordResetCode;
 
 @Repository
 public interface PasswordResetCodeRepository extends JpaRepository<PasswordResetCode, Long> {
@@ -34,6 +37,19 @@ public interface PasswordResetCodeRepository extends JpaRepository<PasswordReset
      * @return Lista de códigos válidos do usuário
      */
     List<PasswordResetCode> findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(Long idUsuario, LocalDateTime now);
+
+    Optional<PasswordResetCode> findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(
+        String code,
+        Long idUsuario,
+        LocalDateTime now
+    );
+
+    long countByUsuario_IdUsuarioAndCreatedAtAfter(Long idUsuario, LocalDateTime createdAt);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE PasswordResetCode p SET p.used = true WHERE p.usuario.idUsuario = :idUsuario AND p.used = false")
+    int markAllAsUsedByUsuarioId(@Param("idUsuario") Long idUsuario);
 
     /**
      * Verifica se um código específico existe e está válido

@@ -1,37 +1,44 @@
 package com.acessolivre.mapper;
 
-import com.acessolivre.dto.request.ImagemRequestDTO;
 import com.acessolivre.dto.response.ImagemResponseDTO;
 import com.acessolivre.model.Imagem;
-import com.acessolivre.model.Local;
-import lombok.RequiredArgsConstructor;
+import com.acessolivre.service.StorageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class ImagemMapper {
-
-    public static Imagem toEntity(ImagemRequestDTO dto, Local local) {
-        return Imagem.builder()
-                .imagemBase64(dto.getImagemBase64())
-                .local(local)
-                .build();
+    
+    private static StorageService storageService;
+    
+    @Autowired
+    public void setStorageService(StorageService service) {
+        storageService = service;
+        System.out.println("✅ ImagemMapper inicializado com StorageService");
     }
-
+    
     public static ImagemResponseDTO toResponse(Imagem entity) {
         if (entity == null) {
             return null;
         }
-
+        
+        String urlCompleta = null;
+        if (storageService != null && entity.getCaminhoRelativo() != null) {
+            urlCompleta = storageService.construirUrlCompleta(entity.getCaminhoRelativo());
+            System.out.println("🔍 Construindo URL: " + entity.getCaminhoRelativo() + " -> " + urlCompleta);
+        } else {
+            System.out.println("⚠️ StorageService é null ou caminho vazio");
+        }
+        
         return ImagemResponseDTO.builder()
                 .idImagem(entity.getIdImagem())
-                .imagemBase64(entity.getImagemBase64())
-                .idLocal(entity.getLocal().getIdLocal())
+                .urlCompleta(urlCompleta)
+                .caminhoRelativo(entity.getCaminhoRelativo())
+                .nomeOriginal(entity.getNomeOriginal())
+                .idLocal(entity.getIdLocal())
+                .tamanhoBytes(entity.getTamanhoBytes())
+                .contentType(entity.getContentType())
+                .ordem(entity.getOrdem())
                 .build();
-    }
-
-    public static void updateEntity(Imagem entity, ImagemRequestDTO dto, Local local) {
-        entity.setImagemBase64(dto.getImagemBase64());
-        entity.setLocal(local);
     }
 }

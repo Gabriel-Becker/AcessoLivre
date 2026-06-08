@@ -39,4 +39,4 @@ build/
 .env.dev
 .env.prod
 # Manter apenas .env.example no repositório
-backend/uploads/
+uploads/ 

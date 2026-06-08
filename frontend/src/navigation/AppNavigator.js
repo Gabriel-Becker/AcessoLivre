@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { Container, DesktopLayout } from '../components/layout';
+import { Container, DesktopLayout, MobileLayout } from '../components/layout';
 import { ThemedText, Spacer } from '../components/commons';
-import { Login, Register, ForgotPassword } from '../screens/auth';
+import { Login, Register, ForgotPassword, ResetPassword } from '../screens/auth';
 import Home from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
+import LocalDetalhes from '../screens/locais/LocalDetalhes';
 import Sobre from '../screens/sobre/Sobre';
 import Perfil from '../screens/perfil/Perfil';
-import theme from '../config/theme';
+import Admin from '../screens/admin/Admin';
+import Configuracoes from '../screens/config/Configuracoes';
+import theme, { breakpoints } from '../config/theme';
+import { useThemeContext } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,55 +28,148 @@ function LoadingScreen() {
   );
 }
 
-function MainApp() {
-  const [currentScreen, setCurrentScreen] = useState('Inicio');
+function MainApp({ navigation, route }) {
+  const { usuario, isAuthenticated } = useAuth();
+  const { fontSizeMultiplier } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const screenInicial = route?.params?.screen || 'Inicio';
+  const [currentScreen, setCurrentScreen] = useState(screenInicial);
+  const [screenAnterior, setScreenAnterior] = useState('Inicio');
+  const isDesktop = width >= breakpoints.desktop;
+  const roleUsuario = String(usuario?.role || '').toUpperCase();
+  const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
 
-  const handleNavigate = (screen) => {
+  const navegarInternamente = (screen, params = {}) => {
+    const telasPublicas = ['Inicio', 'Buscar', 'Sobre', 'SobreNos', 'SobreNosScreen'];
+
+    if (telasPublicas.includes(screen)) {
+      navigation?.setParams({
+        ...route?.params,
+        screen: screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen,
+        ...params,
+      });
+
+      setCurrentScreen(screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen);
+      return;
+    }
+
+    if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword' || screen === 'ResetPassword') {
+      navigation?.navigate?.(screen, params);
+      return;
+    }
+
+    if ((screen === 'Adicionar' || screen === 'Perfil') && !isAuthenticated) {
+      navigation?.navigate?.('Login');
+      return;
+    }
+
+    if (screen === 'Admin' && (!isAdmin || !isDesktop)) {
+      setCurrentScreen('Inicio');
+      return;
+    }
+
+    if (screen === 'MenuLateral') {
+      setScreenAnterior(currentScreen);
+    }
+
+    navigation?.setParams({
+      ...route?.params,
+      screen,
+      ...params,
+    });
+    
     setCurrentScreen(screen);
   };
+
+  useEffect(() => {
+    if (route?.params?.screen) {
+      navegarInternamente(route.params.screen, route.params);
+    }
+  }, [route?.params?.screen, isAuthenticated, isAdmin]);
+
+  const handleNavigate = (screen, params = {}) => {
+    navegarInternamente(screen, params);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated && ['Perfil', 'Adicionar', 'Admin'].includes(currentScreen)) {
+      setCurrentScreen('Inicio');
+    }
+  }, [isAuthenticated, currentScreen]);
+
+  useEffect(() => {
+    if ((!isAdmin || !isDesktop) && currentScreen === 'Admin') {
+      setCurrentScreen('Inicio');
+    }
+  }, [isAdmin, isDesktop, currentScreen]);
+
+  useEffect(() => {
+    if (currentScreen === 'MenuLateral' && fontSizeMultiplier < 1.5) {
+      setCurrentScreen(screenAnterior || 'Inicio');
+    }
+  }, [currentScreen, fontSizeMultiplier, screenAnterior]);
 
   const renderScreen = () => {
     switch (currentScreen) {
       case 'Inicio':
-        return <Home />;
+        return <Home onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'Buscar':
-        return <Buscar />;
+        return <Buscar onNavigate={handleNavigate} />;
       case 'Adicionar':
-        return <AdicionarLocal onNavigate={handleNavigate} />;
+        return <AdicionarLocal onNavigate={handleNavigate} routeParams={route?.params} />;
+      case 'LocalDetalhes':
+        return <LocalDetalhes onNavigate={handleNavigate} route={route} />;
       case 'Sobre':
-        return <Sobre />;
+        return <Sobre onNavigate={handleNavigate} />;
       case 'Perfil':
-        return <Perfil />;
+        return isAuthenticated ? <Perfil /> : <Home />;
+      case 'Configuracoes':
+        return <Configuracoes onNavigate={handleNavigate} />;
+      case 'MenuLateral':
+        return <View />;
+      case 'Admin':
+        return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
       default:
-        return <Home />;
+        return <Home onNavigate={handleNavigate} />;
     }
   };
 
+  if (isDesktop) {
+    return (
+      <DesktopLayout current={currentScreen} onNavigate={handleNavigate} screenAnterior={screenAnterior}>
+        {renderScreen()}
+      </DesktopLayout>
+    );
+  }
+
   return (
-    <DesktopLayout current={currentScreen} onNavigate={handleNavigate}>
+    <MobileLayout current={currentScreen} onNavigate={handleNavigate}>
       {renderScreen()}
-    </DesktopLayout>
+    </MobileLayout>
   );
 }
 
 export default function AppNavigator() {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
+  const [sessaoInicializada, setSessaoInicializada] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading) {
+      setSessaoInicializada(true);
+    }
+  }, [loading]);
+
+  if (!sessaoInicializada && loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
-        <>
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Register" component={Register} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        </>
-      ) : (
-        <Stack.Screen name="Main" component={MainApp} />
-      )}
+    <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Main" component={MainApp} />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
     </Stack.Navigator>
   );
 }

@@ -97,6 +97,17 @@ export const defaultTheme = {
     xxl: 40,
     xxxl: 48,
   },
+
+  layout: {
+    mobile: {
+      pageHorizontal: 16,
+      pageVertical: 16,
+      cardPadding: 16,
+      sectionGap: 24,
+      touchTargetMinHeight: 44,
+      bottomBarHeight: 72,
+    },
+  },
   
   // Raios de borda
   borderRadius: {
@@ -150,10 +161,10 @@ export const defaultTheme = {
 
 export const highContrastTheme = {
   colors: {
-    // Primária (azul mais escuro e saturado)
-    primary: '#0056B3',
-    primaryLight: '#1E6BB8',
-    primaryDark: '#003D82',
+    // Primária (ciano brilhante para alto contraste)
+    primary: '#00F7EF',
+    primaryLight: '#66FFF7',
+    primaryDark: '#00CFC0',
     
     // Secundária (verde mais escuro)
     secondary: '#1E7E34',
@@ -168,8 +179,8 @@ export const highContrastTheme = {
     
     // Backgrounds (preto com contraste extremo)
     background: '#000000',
-    backgroundSecondary: '#1A1A1A',
-    backgroundTertiary: '#2D2D2D',
+    backgroundSecondary: '#0A0A0A',
+    backgroundTertiary: '#141414',
     
     // Superfícies
     surface: '#1A1A1A',
@@ -182,10 +193,10 @@ export const highContrastTheme = {
     textOnPrimary: '#FFFFFF',
     textOnSecondary: '#FFFFFF',
     
-    // Bordas (contraste aumentado)
-    border: '#FFFFFF',
-    borderLight: '#E0E0E0',
-    borderDark: '#FFFFFF',
+    // Bordas (contraste aumentado) - usar acento ciano para elementos interativos
+    border: '#00F7EF',
+    borderLight: '#00F7EF',
+    borderDark: '#00CFC0',
     
     // Overlays
     overlay: 'rgba(0, 0, 0, 0.85)',
@@ -294,8 +305,25 @@ export const highContrastTheme = {
 
 export const theme = defaultTheme;
 
-export const getTheme = (isHighContrast = false) => {
-  return isHighContrast ? highContrastTheme : defaultTheme;
+function escalarFontSizes(fontSize = {}, multiplicador = 1) {
+  const fator = [1, 1.5, 2].includes(multiplicador) ? multiplicador : 1;
+
+  return Object.entries(fontSize).reduce((acumulado, [chave, valor]) => {
+    acumulado[chave] = typeof valor === 'number' ? Math.round(valor * fator) : valor;
+    return acumulado;
+  }, {});
+}
+
+export const getTheme = (isHighContrast = false, fontSizeMultiplier = 1) => {
+  const baseTheme = isHighContrast ? highContrastTheme : defaultTheme;
+
+  return {
+    ...baseTheme,
+    typography: {
+      ...baseTheme.typography,
+      fontSize: escalarFontSizes(baseTheme.typography?.fontSize, fontSizeMultiplier),
+    },
+  };
 };
 
 export const animations = {

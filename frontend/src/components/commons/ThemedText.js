@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function ThemedText({
   children,
@@ -8,11 +9,18 @@ export default function ThemedText({
   color = 'textPrimary',
   align = 'left',
   weight = 'regular',
-  altoContraste = false,
+  altoContraste,
   style,
   ...props
 }) {
-  const t = altoContraste ? getTheme(true) : theme;
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = getTheme(contrasteAtivo, fontSizeMultiplier) || theme;
+
+  let colorKey = color;
+  if (contrasteAtivo && (color === 'textSecondary' || color === 'textTertiary')) {
+    colorKey = 'textPrimary';
+  }
 
   const variantStyles = {
     display: {
@@ -51,7 +59,7 @@ export default function ThemedText({
         styles.base,
         variantStyles[variant],
         {
-          color: t.colors[color] || t.colors.textPrimary,
+          color: t.colors[colorKey] || t.colors.textPrimary,
           textAlign: align,
           fontWeight: t.typography.fontWeight[weight] || t.typography.fontWeight.regular,
         },

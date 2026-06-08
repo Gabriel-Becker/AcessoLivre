@@ -1,6 +1,5 @@
 package com.acessolivre.controller;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -20,7 +19,6 @@ import com.acessolivre.dto.request.AuthRequestDTO;
 import com.acessolivre.dto.request.ChangePasswordRequestDTO;
 import com.acessolivre.dto.request.RegisterRequestDTO;
 import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.TwoFactorVerifyRequestDTO;
 import com.acessolivre.dto.request.ValidateTokenRequestDTO;
 import com.acessolivre.dto.request.VerifyEmailRequestDTO;
 import com.acessolivre.dto.response.AuthResponseDTO;
@@ -33,6 +31,7 @@ import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.security.AuthenticationService;
 import com.acessolivre.security.JwtService;
+import com.acessolivre.security.LoginAttemptService;
 import com.acessolivre.service.RegistroPendenteService;
 import com.acessolivre.service.TwoFactorService;
 
@@ -51,7 +50,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RegistroPendenteService registroPendenteService;
-    private final com.acessolivre.security.LoginAttemptService loginAttemptService;
+    private final LoginAttemptService loginAttemptService;
     private final TwoFactorService twoFactorService;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
@@ -60,13 +59,12 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
-            String emailMascarado = registroPendenteService.iniciarRegistro(
+            UsuarioResponseDTO usuario = registroPendenteService.registrarUsuarioDireto(
                 request.getNome(),
                 request.getEmail(),
                 request.getSenha()
             );
-            return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(String.format("Código enviado para %s", emailMascarado));
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
         } catch (IllegalArgumentException e) {
             log.warn("Erro ao registrar usuário: {}", e.getMessage());
             return erro(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -112,18 +110,18 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
         try {
             String token = authenticationService.login(
-                request.getEmail(), 
-                request.getSenha(), 
+                request.getEmail(),
+                request.getSenha(),
                 request.getRememberMe(),
                 request.getTwoFactorCode()
             );
-            Optional<Usuario> u = usuarioRepository.findByEmail(request.getEmail());
-            
+            Optional<Usuario> u = usuarioRepository.findByEmailAndAtivoTrue(request.getEmail());
+
             if (u.isEmpty()) {
                 log.warn("Usuário não encontrado após autenticação: {}", request.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             Usuario usuario = u.get();
             UsuarioResponseDTO usuarioDTO = UsuarioMapper.toResponse(usuario);
             AuthResponseDTO response = AuthResponseDTO.builder()
@@ -131,17 +129,22 @@ public class AuthController {
                 .usuario(usuarioDTO)
                 .twoFactorRequired(false)
                 .build();
-            
+
             log.info("Usuário autenticado (email={}): id={}", request.getEmail(), usuario.getIdUsuario());
             return ResponseEntity.ok(response);
-        } catch (com.acessolivre.security.TwoFactorRequiredException e) {
+        } 
+        
+        catch (com.acessolivre.exception.UsuarioException.UsuarioInativoException e) {
+            log.warn("Tentativa de login com usuário inativo: {}", request.getEmail());
+            return erro(HttpStatus.FORBIDDEN, e.getMessage());
+        }
+        
+        catch (com.acessolivre.security.TwoFactorRequiredException e) {
             log.info("2FA requerido para email={}", request.getEmail());
-            String emailDestino = twoFactorService.mascararEmail(request.getEmail());
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                .twoFactorRequired(true)
-                .emailDestino(emailDestino)
-                .build();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthResponseDTO.builder()
+                    .twoFactorRequired(true)
+                    .build());
         } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
             log.warn("Código 2FA inválido para email={}", request.getEmail());
             return erro(HttpStatus.UNAUTHORIZED, "Código de autenticação de dois fatores inválido");
@@ -155,34 +158,16 @@ public class AuthController {
             }
 
             int tentativasRestantes = loginAttemptService.tentativasRestantes(request.getEmail());
-            String mensagem = tentativasRestantes > 0 
+            String mensagem = tentativasRestantes > 0
                 ? String.format("Credenciais inválidas. Tentativas restantes: %d", tentativasRestantes)
                 : "Conta bloqueada temporariamente";
-            
-            log.warn("Falha no login para email={}: {} (tentativas restantes: {})", 
+
+            log.warn("Falha no login para email={}: {} (tentativas restantes: {})",
                 request.getEmail(), e.getMessage(), tentativasRestantes);
             return erro(HttpStatus.UNAUTHORIZED, mensagem);
         } catch (Exception e) {
             log.error("Erro inesperado no login para email={}", request.getEmail(), e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar login");
-        }
-    }
-
-    @PostMapping("/2fa/verify-code")
-    public ResponseEntity<?> verifyTwoFactor(@Valid @RequestBody TwoFactorVerifyRequestDTO request) {
-        try {
-            String token = authenticationService.completarLoginComCodigo(request.getEmail(), request.getCodigo());
-            Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                .token(token)
-                .usuario(UsuarioMapper.toResponse(usuario))
-                .twoFactorRequired(false)
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.warn("Falha ao validar código 2FA para email={}", request.getEmail());
-            return erro(HttpStatus.UNAUTHORIZED, "Código inválido ou expirado");
         }
     }
 
@@ -194,11 +179,11 @@ public class AuthController {
                 log.warn("Tentativa de logout sem token");
                 return erro(HttpStatus.BAD_REQUEST, "Token não fornecido");
             }
-            
+
             String token = auth.substring(7);
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             authenticationService.logout(token, userId);
-            
+
             log.info("Logout realizado com sucesso para userId={}", userId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
@@ -221,11 +206,13 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            var desafio = twoFactorService.criarDesafioLogin(usuario.getEmail(), false);
-            return ResponseEntity.ok(desafio.emailMascarado());
+            return ResponseEntity.ok(twoFactorService.prepararConfiguracao(userId));
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao configurar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao configurar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao configurar 2FA");
@@ -246,12 +233,14 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
-            twoFactorService.habilitar(userId);
+            twoFactorService.habilitar(userId, body.getVerificationCode());
             return ResponseEntity.ok("2FA habilitado com sucesso");
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao habilitar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao habilitar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao habilitar 2FA");
@@ -272,12 +261,14 @@ public class AuthController {
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }
 
-            Usuario usuario = usuarioRepository.findById(userId)
+            usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            twoFactorService.validarCodigoLogin(usuario.getEmail(), String.valueOf(body.getVerificationCode()));
-            twoFactorService.desabilitar(userId);
+            twoFactorService.desabilitar(userId, body.getVerificationCode());
             return ResponseEntity.ok("2FA desabilitado com sucesso");
+        } catch (IllegalArgumentException e) {
+            log.warn("Erro ao desabilitar 2FA: {}", e.getMessage());
+            return erro(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Erro ao desabilitar 2FA", e);
             return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao desabilitar 2FA");
@@ -316,16 +307,16 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             String token = auth.substring(7);
-            
+
             if (authenticationService.isTokenRevoked(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             Long userId = jwtService.obterIdUsuarioDoToken(token);
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-            
+
             return usuarioRepository.findById(userId)
                     .map(u -> ResponseEntity.ok(UsuarioMapper.toResponse(u)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -339,14 +330,14 @@ public class AuthController {
     public ResponseEntity<ValidateTokenResponseDTO> validateToken(@Valid @RequestBody ValidateTokenRequestDTO request) {
         try {
             boolean isValid = authenticationService.validateToken(request.getToken());
-            
+
             if (!isValid) {
                 return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
                     .valid(false)
                     .reason("Token inválido ou revogado")
                     .build());
             }
-            
+
             return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
                 .valid(true)
                 .build());
@@ -360,26 +351,26 @@ public class AuthController {
     }
 
     @PostMapping("/reauth/{userId}")
-    public ResponseEntity<?> reautenticar(@PathVariable Long userId, HttpServletRequest request) {
+    public ResponseEntity<?> reautenticar(@PathVariable Long userId, @RequestParam(required = false) Boolean rememberMe, HttpServletRequest request) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
                 return erro(HttpStatus.UNAUTHORIZED, "Token não fornecido");
             }
-            
+
             String currentToken = auth.substring(7);
             Long tokenUserId = jwtService.obterIdUsuarioDoToken(currentToken);
-            
+
             if (!tokenUserId.equals(userId)) {
                 return erro(HttpStatus.FORBIDDEN, "Usuário não autorizado");
             }
-            
+
             if (authenticationService.isTokenRevoked(currentToken)) {
                 return erro(HttpStatus.UNAUTHORIZED, "Token revogado");
             }
-            
-            String newToken = authenticationService.reautenticar(userId);
-            
+
+            String newToken = authenticationService.reautenticar(userId, rememberMe != null && rememberMe);
+
             log.info("Token renovado para userId={}", userId);
             return ResponseEntity.ok(newToken);
         } catch (Exception e) {
@@ -420,7 +411,7 @@ public class AuthController {
             }
 
             usuarioAutenticar.setSenhaHash(passwordEncoder.encode(request.getNovaSenha()));
-            usuarioAutenticar.setDataExpiracao(LocalDateTime.now().plusYears(1));
+            usuarioAutenticar.setDataExpiracao(java.time.LocalDateTime.now().plusYears(1));
             usuarioAutenticarRepository.save(usuarioAutenticar);
 
             log.info("Senha alterada com sucesso para userId={}", userId);

@@ -1,15 +1,19 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.model.TwoFactorRecoveryCode;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.model.Usuario;
+
 @Repository
 public interface TwoFactorRecoveryCodeRepository extends JpaRepository<TwoFactorRecoveryCode, Long> {
+
+    void deleteByUsuario(Usuario usuario);
 
     /**
      * Busca códigos de recuperação por usuário

@@ -3,9 +3,55 @@ import AuthService from '../services/AuthService';
 import { triggerLogout } from '../utils/SessionManager';
 import { resetToAuth } from '../navigation/navigationRef';
 
+const normalizarCaminho = (url = '') => {
+  const bruto = String(url || '').split('?')[0];
+  if (!bruto) return '';
+
+  // Aceita URL absoluta (http://host/api/rota) e relativa (/rota).
+  let caminho = bruto;
+  try {
+    if (bruto.startsWith('http://') || bruto.startsWith('https://')) {
+      caminho = new URL(bruto).pathname;
+    }
+  } catch {
+    caminho = bruto;
+  }
+
+  if (!caminho.startsWith('/')) {
+    caminho = `/${caminho}`;
+  }
+
+  if (caminho.startsWith('/api/')) {
+    return caminho.replace(/^\/api/, '');
+  }
+
+  return caminho;
+};
+
+const ehRotaPublicaDeLeitura = (config = {}) => {
+  const metodo = String(config.method || 'get').toLowerCase();
+  const caminho = normalizarCaminho(config.url || '');
+
+  if (metodo !== 'get') {
+    return false;
+  }
+
+  return (
+    caminho === '/locais' ||
+    caminho.startsWith('/locais/') ||
+    caminho === '/avaliacoes' ||
+    caminho.startsWith('/avaliacoes/local/') ||
+    caminho.startsWith('/uploads/')
+  );
+};
+
 api.interceptors.request.use(
   async (config) => {
     try {
+      if (ehRotaPublicaDeLeitura(config)) {
+        return config;
+      }
+
       const tokenEmMemoria = AuthService.getTokenEmMemoria();
       const token = tokenEmMemoria || await AuthService.getToken();
       if (token) {
@@ -41,8 +87,71 @@ api.interceptors.response.use(
   },
   async (error) => {
     const status = error.response?.status;
-    if (status === 401) {
+    const requestUrl = error.config?.url || '';
+    const requestConfig = error.config || {};
+    const isLoginEndpoint = String(requestUrl).includes('/auth/login');
+    const isPublicReadEndpoint = ehRotaPublicaDeLeitura(requestConfig);
+
+    if (status === 401 && isLoginEndpoint) {
+      return Promise.reject(error);
+    }
+
+    if (status === 401 && isPublicReadEndpoint) {
       try {
+        await AuthService.removeToken();
+      } catch {
+      }
+      return Promise.reject(error);
+    }
+
+    // Retry-once mitigation: try silent reauth before forcing logout.
+    if (status === 401 && !isLoginEndpoint) {
+      try {
+        const originalRequest = requestConfig;
+
+        const tokenAtual = await AuthService.getToken();
+        const temTokenValido = typeof tokenAtual === 'string' && tokenAtual.trim().length > 0;
+
+        // Visitante (sem token) nao deve ser redirecionado para login.
+        if (!temTokenValido) {
+          return Promise.reject(error);
+        }
+
+        // avoid infinite retry loops
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const tokenData = AuthService.parseJwt(tokenAtual);
+            const userId = tokenData?.userId || tokenData?.user_id || tokenData?.sub || null;
+
+            if (!userId) {
+              await AuthService.removeToken();
+              await AuthService.setUserData(null);
+              return Promise.reject(error);
+            }
+
+            // attempt to reauthenticate once
+            const newToken = await AuthService.reautenticar(userId);
+            if (newToken) {
+              await AuthService.setToken(newToken);
+              // update header and retry original request
+              if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
+                originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
+              } else {
+                originalRequest.headers = {
+                  ...(originalRequest.headers || {}),
+                  Authorization: `Bearer ${newToken}`,
+                };
+              }
+              return api(originalRequest);
+            }
+          } catch (reauthErr) {
+            // fallthrough to logout below
+          }
+        }
+
+        // if reauth not possible or failed, proceed to logout
         await AuthService.removeToken();
         await AuthService.setUserData(null);
         await triggerLogout();

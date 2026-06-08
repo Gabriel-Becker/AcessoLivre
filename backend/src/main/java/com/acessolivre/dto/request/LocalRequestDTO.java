@@ -1,5 +1,9 @@
 package com.acessolivre.dto.request;
 
+import com.acessolivre.enums.Categoria;
+import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 @Data
 @Builder
@@ -20,19 +26,33 @@ public class LocalRequestDTO {
     private String nome;
 
     @NotBlank(message = "Descrição é obrigatória")
-    @Size(max = 300, message = "Descrição deve ter no máximo 300 caracteres")
+    @Size(max = 350, message = "Descrição deve ter no máximo 350 caracteres")
     private String descricao;
+    
+    @Size(max = 120, message = "Nome da imagem deve ter no máximo 120 caracteres")
+    private String imagem;
 
-    @NotNull(message = "ID da categoria é obrigatório")
-    private Long idCategoria;
+    @NotNull(message = "Categoria é obrigatória")
+    private Categoria categoria;
 
-    @NotNull(message = "ID do tipo de acessibilidade é obrigatório")
-    private Long idTipoAcessibilidade;
+    @NotNull(message = "Tipos de acessibilidade são obrigatórios")
+    @Size(min = 1, message = "Pelo menos um tipo de acessibilidade deve ser informado")
+    private Set<TipoAcessibilidade> tiposAcessibilidade;
 
     @NotNull(message = "ID do usuário é obrigatório")
     private Long idUsuario;
 
     private Long idEndereco;
+    
+    // NOVO CAMPO DECLARATIVO (substitui idLocalPrincipal)
+    @Size(max = 200, message = "Nome do local principal deve ter no máximo 200 caracteres")
+    private String nomeLocalPrincipal;
+    
+    // Campo mantido para compatibilidade (pode ser removido depois)
+    @Deprecated
+    private Long idLocalPrincipal;
+    
+    private StatusLocal status;
 
     @Valid
     private EnderecoRequestDTO endereco;

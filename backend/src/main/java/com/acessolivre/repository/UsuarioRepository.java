@@ -1,27 +1,35 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.enums.Role;
-import com.acessolivre.model.Usuario;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.acessolivre.enums.Role;
+import com.acessolivre.model.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    /**
-     * Busca um usuário pelo email
-     * @param email email do usuário
-     * @return Optional contendo o usuário se encontrado
-     */
     Optional<Usuario> findByEmail(String email);
 
+    Optional<Usuario> findByEmailAndAtivoTrue(String email);
+    
     /**
-     * Verifica se existe pelo menos um usuário com a role informada.
-     * A role deve ser armazenada preferencialmente já com prefixo (ex: ROLE_ADMIN).
-     * @param role valor da role a pesquisar
-     * @return true se existir ao menos um registro, false caso contrário
+     * Busca um usuário pelo nome
+     * @param nome nome do usuário
+     * @return Optional contendo o usuário se encontrado
      */
+    Optional<Usuario> findByNome(String nome);  // ← ADICIONAR ESTE MÉTODO
+
+    Optional<Usuario> findByIdUsuarioAndAtivoTrue(Long idUsuario);
+
+    java.util.List<Usuario> findAllByAtivoTrue();
+
+    Page<Usuario> findAllByAtivoTrue(Pageable pageable);
+
+    long countByAtivoTrue();
+
     boolean existsByRole(Role role);
 }

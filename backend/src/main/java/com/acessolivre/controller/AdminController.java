@@ -1,26 +1,38 @@
 package com.acessolivre.controller;
 
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import com.acessolivre.dto.request.AlterarRoleRequestDTO;
 import com.acessolivre.dto.response.AvaliacaoResponseDTO;
 import com.acessolivre.dto.response.UsuarioAdminResponseDTO;
 import com.acessolivre.mapper.AvaliacaoMapper;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.service.AdminService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -42,8 +54,11 @@ public class AdminController {
     public ResponseEntity<Page<UsuarioAdminResponseDTO>> listarUsuarios(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "dataCadastro") String sort) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sort));
+            @RequestParam(defaultValue = "dataCadastro") String sort,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        String dirStr = direction == null ? "DESC" : direction;
+        Sort.Direction dir = Sort.Direction.fromString(dirStr);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
         Page<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios(pageable)
                 .map(this::toUsuarioAdminResponse);
         return ResponseEntity.ok(usuarios);
@@ -62,6 +77,18 @@ public class AdminController {
             @PathVariable Long id,
             @Valid @RequestBody AlterarRoleRequestDTO dto) {
         boolean alterado = adminService.alterarRoleUsuario(id, dto.getNovaRole());
+        return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/usuarios/{id}/senha")
+    public ResponseEntity<Void> alterarSenhaUsuario(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String novaSenha = body != null ? body.get("novaSenha") : null;
+        if (novaSenha == null || novaSenha.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        boolean alterado = adminService.alterarSenhaUsuario(id, novaSenha);
         return alterado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
@@ -97,6 +124,68 @@ public class AdminController {
         return ResponseEntity.ok(adminService.obterEstatisticasGerais());
     }
 
+    @GetMapping("/relatorios/usuarios")
+    public ResponseEntity<Map<String, Object>> obterRelatorioUsuarios(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok(adminService.obterRelatorioUsuarios(dataInicio, dataFim));
+    }
+
+    @GetMapping("/relatorios/locais")
+    public ResponseEntity<Map<String, Object>> obterRelatorioLocais(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok(adminService.obterRelatorioLocais(dataInicio, dataFim));
+    }
+
+        @GetMapping("/relatorios/exportar/usuarios/csv")
+        public ResponseEntity<byte[]> exportarRelatorioUsuariosCsv(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        byte[] arquivo = adminService.exportarRelatorioUsuariosCsv(dataInicio, dataFim);
+        String nome = "relatorio-usuarios.csv";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + nome)
+            .body(arquivo);
+        }
+
+        @GetMapping("/relatorios/exportar/usuarios/pdf")
+        public ResponseEntity<byte[]> exportarRelatorioUsuariosPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        byte[] arquivo = adminService.exportarRelatorioUsuariosPdf(dataInicio, dataFim);
+        String nome = "relatorio-usuarios.pdf";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + nome)
+            .body(arquivo);
+        }
+
+        @GetMapping("/relatorios/exportar/locais/csv")
+        public ResponseEntity<byte[]> exportarRelatorioLocaisCsv(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        byte[] arquivo = adminService.exportarRelatorioLocaisCsv(dataInicio, dataFim);
+        String nome = "relatorio-locais.csv";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + nome)
+            .body(arquivo);
+        }
+
+        @GetMapping("/relatorios/exportar/locais/pdf")
+        public ResponseEntity<byte[]> exportarRelatorioLocaisPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        byte[] arquivo = adminService.exportarRelatorioLocaisPdf(dataInicio, dataFim);
+        String nome = "relatorio-locais.pdf";
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + nome)
+            .body(arquivo);
+        }
+
     @GetMapping("/relatorios/locais-por-estado")
     public ResponseEntity<Map<String, Long>> obterLocaisPorEstado() {
         return ResponseEntity.ok(adminService.obterEstatisticasPorEstado());
@@ -118,6 +207,7 @@ public class AdminController {
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
         .role(usuario.getRole() != null ? usuario.getRole().name() : null)
+            .ativo(usuario.getAtivo())
                 .dataCadastro(usuario.getDataCadastro() != null ? 
                         usuario.getDataCadastro().format(FORMATTER) : null)
                 .build();

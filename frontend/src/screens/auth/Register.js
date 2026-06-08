@@ -1,19 +1,49 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
-import { Container } from '../../components/layout';
+import { Container, DesktopLayout } from '../../components/layout';
 import { Card, Button, Input } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
+import TermsModal from '../../components/feedback/TermsModal';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
-import VerifyEmailModal from '../../components/feedback/VerifyEmailModal';
+import { formatarErroCadastro, formatarErroLogin } from '../../utils/authToastFormatter';
+import { breakpoints } from '../../config/theme';
+
+const REQUISITOS_SENHA = [
+  {
+    chave: 'minimoCaracteres',
+    texto: 'Pelo menos 8 caracteres',
+    validar: (senha) => senha.length >= 8,
+  },
+  {
+    chave: 'letraMaiuscula',
+    texto: 'Pelo menos 1 letra maiúscula',
+    validar: (senha) => /[A-Z]/.test(senha),
+  },
+  {
+    chave: 'letraMinuscula',
+    texto: 'Pelo menos 1 letra minúscula',
+    validar: (senha) => /[a-z]/.test(senha),
+  },
+  {
+    chave: 'numero',
+    texto: 'Pelo menos 1 número',
+    validar: (senha) => /[0-9]/.test(senha),
+  },
+  {
+    chave: 'caractereEspecial',
+    texto: 'Pelo menos 1 caractere especial',
+    validar: (senha) => /[!@#$%^&*(),.?":{}|<>]/.test(senha),
+  },
+];
 
 const schema = z
   .object({
@@ -23,7 +53,13 @@ const schema = z
       .min(2, authMessages.validation.nameTooShort)
       .max(120, authMessages.validation.maxLength),
     email: z.string().trim().email(authMessages.validation.invalidEmail),
-    password: z.string().min(8, authMessages.validation.passwordTooShort),
+    password: z
+      .string()
+      .min(8, 'Senha deve ter no mínimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
+      .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmPassword: z.string().min(8, authMessages.validation.passwordTooShort),
     terms: z.boolean().refine((val) => val === true, {
       message: authMessages.registerErrors.termsNotAccepted,
@@ -35,21 +71,22 @@ const schema = z
   });
 
 export default function Register({ navigation }) {
-  const { register: registerUser, confirmarCadastro } = useAuth();
+  const { register: registerUser, login } = useAuth();
   const { isHighContrast, theme: t } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= breakpoints.desktop;
   const [submitting, setSubmitting] = useState(false);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-  const [emailDestino, setEmailDestino] = useState('');
 
   const {
     control,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useForm({
     resolver: zodResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
     defaultValues: {
       nome: '',
       email: '',
@@ -60,6 +97,22 @@ export default function Register({ navigation }) {
   });
 
   const terms = watch('terms');
+  const senha = watch('password') || '';
+  const confirmarSenha = watch('confirmPassword') || '';
+  const senhaFoiDigitada = senha.length > 0;
+  const confirmouSenha = confirmarSenha.length > 0;
+
+  const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(senha));
+
+  const senhasCoincidem = senhaFoiDigitada && confirmouSenha && senha === confirmarSenha;
+  const confirmarSenhaInvalida = senhaFoiDigitada && confirmouSenha && !senhasCoincidem;
+  const erroConfirmacaoCampo =
+    errors.confirmPassword?.message === authMessages.validation.passwordMismatch
+      ? undefined
+      : errors.confirmPassword?.message;
+
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [modalType, setModalType] = useState('terms');
 
   const styles = useMemo(
     () =>
@@ -68,8 +121,9 @@ export default function Register({ navigation }) {
           flexGrow: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: t.spacing.lg,
-          paddingHorizontal: t.spacing.lg,
+          paddingVertical: t.spacing.xl,
+          paddingHorizontal: isDesktop ? t.spacing.xl : t.spacing.lg,
+          paddingBottom: t.spacing.xl,
         },
         cardWrapper: {
           width: '100%',
@@ -77,8 +131,8 @@ export default function Register({ navigation }) {
         },
         card: {
           width: '100%',
-          maxWidth: 520,
-          padding: t.spacing.xl,
+          maxWidth: isDesktop ? 760 : 560,
+          padding: isDesktop ? t.spacing.xl : t.spacing.lg,
           borderWidth: isHighContrast ? 2 : 1,
           borderColor: isHighContrast ? t.colors.border : t.colors.borderLight,
           borderRadius: t.borderRadius.lg,
@@ -87,13 +141,13 @@ export default function Register({ navigation }) {
         },
         checkboxRow: {
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           alignSelf: 'center',
           marginTop: t.spacing.xs,
         },
         checkbox: {
-          width: 22,
-          height: 22,
+          width: 28,
+          height: 28,
           borderRadius: t.borderRadius.sm,
           borderWidth: 2,
           borderColor: t.colors.primary,
@@ -107,6 +161,17 @@ export default function Register({ navigation }) {
         },
         checkboxLabel: {
           marginLeft: t.spacing.sm,
+          lineHeight: 28,
+          fontSize: 18,
+        },
+        checkboxTexto: {
+          fontSize: 18,
+          lineHeight: 28,
+        },
+        checkboxLink: {
+          fontSize: 18,
+          lineHeight: 28,
+          fontWeight: '600',
         },
         errorText: {
           marginTop: t.spacing.xs,
@@ -114,70 +179,106 @@ export default function Register({ navigation }) {
           alignSelf: 'center',
           width: '100%',
         },
+        passwordHintContainer: {
+          marginTop: t.spacing.xs,
+          marginBottom: t.spacing.sm,
+          paddingHorizontal: t.spacing.xs,
+        },
+        passwordHintRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 6,
+        },
+        passwordHintText: {
+          marginLeft: t.spacing.xs,
+          flexShrink: 1,
+          lineHeight: 22,
+          fontSize: 16,
+        },
       }),
-    [isHighContrast, t]
+    [isDesktop, isHighContrast, t]
   );
 
   const onSubmit = async (values) => {
     try {
       setSubmitting(true);
+      const nomeFormatado = String(values.nome || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .replace(/(^|\s)([a-zà-ÿ])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
+
       const resultado = await registerUser({
-        nome: values.nome.trim(),
+        nome: nomeFormatado,
         email: values.email.trim().toLowerCase(),
         senha: values.password,
       });
 
-      if (resultado?.requiresConfirmation) {
-        toastHelper.showSuccess('Cadastro iniciado! Confirme o código enviado.');
-        setRegisteredEmail(values.email.trim().toLowerCase());
-        setEmailDestino(resultado.emailDestino || values.email.trim().toLowerCase());
-        setShowVerifyModal(true);
+      if (resultado?.sucesso) {
+        const loginResult = await login({
+          email: values.email.trim().toLowerCase(),
+          senha: values.password,
+          rememberMe: false,
+        });
+        
+        if (loginResult?.sucesso) {
+          toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
+
+          if (typeof navigation?.replace === 'function') {
+            navigation.replace('Main');
+            return;
+          }
+
+          navigation?.navigate?.('Main');
+          return;
+        } else {
+          toastHelper.showInfo(
+            `Cadastro concluído. Faça login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
+            'Conta criada'
+          );
+          navigation?.navigate?.('Login');
+        }
         return;
       }
 
-      toastHelper.showSuccess('Conta criada com sucesso!');
-      navigation?.navigate?.('Login');
+      toastHelper.showError(formatarErroCadastro(resultado?.erro || authMessages.registerErrors.serverError), 'Não foi possível concluir o cadastro');
     } catch (erro) {
-      toastHelper.showError(erro?.message || authMessages.registerErrors.serverError);
+      const mensagemErro = erro?.message || authMessages.registerErrors.serverError;
+      const mensagemTratada =
+        mensagemErro === authMessages.loginErrors.serverError
+          ? formatarErroLogin(mensagemErro)
+          : formatarErroCadastro(mensagemErro);
+      toastHelper.showError(mensagemTratada, 'Não foi possível concluir o cadastro');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleConfirmCode = async (codigo) => {
-    const resultado = await confirmarCadastro({ email: registeredEmail, codigo });
-    return resultado?.sucesso
-      ? { sucesso: true }
-      : { sucesso: false, mensagem: resultado?.erro };
-  };
+  const handleNavigate = (screenName) => {
+    if (typeof navigation?.navigate !== 'function') return;
 
-  const handleResendCode = async () => {
-    try {
-      const AuthService = (await import('../../services/AuthService')).default;
-      const resultado = await AuthService.resendRegistrationCode(registeredEmail);
-      return resultado?.success
-        ? { sucesso: true, mensagem: resultado.message }
-        : { sucesso: false, mensagem: 'Erro ao reenviar código' };
-    } catch (erro) {
-      return { sucesso: false, mensagem: erro.response?.data || erro.message };
+    if (screenName === 'Login' || screenName === 'Register' || screenName === 'ForgotPassword' || screenName === 'ResetPassword') {
+      navigation.navigate(screenName);
+      return;
     }
+
+    navigation.navigate('Main', { screen: screenName });
   };
 
-  const handleVerificationSuccess = () => {
-    setShowVerifyModal(false);
-    toastHelper.showSuccess('Email verificado! Faça login para continuar.');
-    navigation?.navigate?.('Login');
-  };
-
-  return (
+  const conteudoCadastro = (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 56 : 0}
       >
-        <View style={styles.cardWrapper}>
-          <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.cardWrapper}>
+            <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <AuthHeader title="Criar Conta" subtitle="Acessibilidade para todos" altoContraste={isHighContrast} />
 
             <Spacer size="md" />
@@ -185,14 +286,15 @@ export default function Register({ navigation }) {
             <Controller
               control={control}
               name="nome"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Nome Completo"
                   placeholder="Seu nome completo"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="person-outline"
-                  error={errors.nome?.message}
+                  error={touchedFields.nome ? errors.nome?.message : undefined}
                   autoCapitalize="words"
                   altoContraste={isHighContrast}
                 />
@@ -202,14 +304,15 @@ export default function Register({ navigation }) {
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, value } }) => (
+              render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="E-mail"
                   placeholder="seu@email.com"
                   value={value}
                   onChangeText={onChange}
+                  onBlur={onBlur}
                   leftIcon="mail-outline"
-                  error={errors.email?.message}
+                  error={touchedFields.email ? errors.email?.message : undefined}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   altoContraste={isHighContrast}
@@ -228,11 +331,29 @@ export default function Register({ navigation }) {
                   onChangeText={onChange}
                   secureTextEntry
                   leftIcon="lock-closed-outline"
-                  error={errors.password?.message}
+                  error={errors.password ? 'Revise os requisitos abaixo.' : undefined}
                   altoContraste={isHighContrast}
                 />
               )}
             />
+
+            {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
+              <View style={styles.passwordHintContainer}>
+                {requisitosPendentesSenha.map((requisito) => (
+                  <View key={requisito.chave} style={styles.passwordHintRow}>
+                    <Ionicons name="close-circle" size={16} color={t.colors.error} />
+                    <ThemedText
+                      variant="caption"
+                      color="error"
+                      style={styles.passwordHintText}
+                      altoContraste={isHighContrast}
+                    >
+                      {requisito.texto}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             <Controller
               control={control}
@@ -245,38 +366,57 @@ export default function Register({ navigation }) {
                   onChangeText={onChange}
                   secureTextEntry
                   leftIcon="lock-closed-outline"
-                  error={errors.confirmPassword?.message}
+                  error={erroConfirmacaoCampo}
                   altoContraste={isHighContrast}
                 />
               )}
             />
 
+            {confirmouSenha && senhaFoiDigitada ? (
+              <View style={styles.passwordHintContainer}>
+                <View style={styles.passwordHintRow}>
+                  <Ionicons
+                    name={senhasCoincidem ? 'checkmark-circle' : 'close-circle'}
+                    size={16}
+                    color={senhasCoincidem ? t.colors.success : t.colors.error}
+                  />
+                  <ThemedText
+                    variant="caption"
+                    color={senhasCoincidem ? 'success' : 'error'}
+                    style={styles.passwordHintText}
+                    altoContraste={isHighContrast}
+                  >
+                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
+                  </ThemedText>
+                </View>
+              </View>
+            ) : null}
+
             <Controller
               control={control}
               name="terms"
               render={({ field: { value } }) => (
-                <Pressable
-                  style={styles.checkboxRow}
-                  onPress={() => setValue('terms', !value, { shouldValidate: true })}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: value }}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      value && styles.checkboxChecked,
-                    ]}
+                <View style={styles.checkboxRow}>
+                  <Pressable
+                    onPress={() => setValue('terms', !value, { shouldValidate: true })}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: value }}
+                    style={[styles.checkbox, value && styles.checkboxChecked]}
                   >
                     {value ? <Ionicons name="checkmark" size={14} color={t.colors.textOnPrimary} /> : null}
-                  </View>
-                  <ThemedText
-                    color="textSecondary"
-                    altoContraste={isHighContrast}
-                    style={styles.checkboxLabel}
-                  >
-                    Aceito os termos de uso e política de privacidade
+                  </Pressable>
+
+                  <ThemedText color="textSecondary" altoContraste={isHighContrast} style={[styles.checkboxLabel, styles.checkboxTexto, { flexShrink: 1 }]}> 
+                    Aceito os {' '}
+                    <Pressable onPress={() => { setModalType('terms'); setShowTermsModal(true); }} accessibilityRole="link">
+                      <ThemedText color="primary" weight="semibold" style={styles.checkboxLink}>termos de uso</ThemedText>
+                    </Pressable>
+                    {' '}e{' '}
+                    <Pressable onPress={() => { setModalType('privacy'); setShowTermsModal(true); }} accessibilityRole="link">
+                      <ThemedText color="primary" weight="semibold" style={styles.checkboxLink}>política de privacidade</ThemedText>
+                    </Pressable>
                   </ThemedText>
-                </Pressable>
+                </View>
               )}
             />
             {errors.terms?.message ? (
@@ -303,19 +443,24 @@ export default function Register({ navigation }) {
               text="Já possui conta?"
               actionLabel="Entrar"
               onPress={() => navigation?.navigate?.('Login')}
+              altoContraste={isHighContrast}
             />
-          </Card>
-        </View>
-      </ScrollView>
+              <TermsModal visible={showTermsModal} type={modalType} onClose={() => setShowTermsModal(false)} altoContraste={isHighContrast} />
+            </Card>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-      <VerifyEmailModal
-        visible={showVerifyModal}
-        email={emailDestino || registeredEmail}
-        onClose={() => setShowVerifyModal(false)}
-        onSuccess={handleVerificationSuccess}
-        onConfirm={handleConfirmCode}
-        onResend={handleResendCode}
-      />
-    </Container>
+      </Container>
+  );
+
+  if (!isDesktop) {
+    return conteudoCadastro;
+  }
+
+  return (
+    <DesktopLayout current="Register" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      {conteudoCadastro}
+    </DesktopLayout>
   );
 }

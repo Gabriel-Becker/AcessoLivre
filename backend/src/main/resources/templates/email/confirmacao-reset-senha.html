@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senha Redefinida - AcessoLivre</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .success-badge {
+            text-align: center;
+            padding: 20px;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .content p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        .info-box {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Senha Redefinida com Sucesso</h1>
+        </div>
+        
+        <div class="success-badge">
+            <div class="success-icon">✓</div>
+        </div>
+        
+        <div class="content">
+            <p>Olá <strong th:text="${nome}">Usuário</strong>,</p>
+            <p>Sua senha foi redefinida com sucesso! Você já pode fazer login com a sua nova senha.</p>
+            
+            <div class="info-box">
+                <strong>ℹ️ Informação:</strong> Se não foi você quem realizou esta alteração, entre em contato conosco imediatamente através do suporte.
+            </div>
+            
+            <p>Dicas de segurança:</p>
+            <ul style="color: #666; line-height: 1.8;">
+                <li>Use uma senha forte com números, letras maiúsculas e caracteres especiais</li>
+                <li>Não compartilhe sua senha com ninguém</li>
+                <li>Faça logout em dispositivos desconhecidos</li>
+                <li>Ative autenticação de dois fatores para maior segurança</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 AcessoLivre. Todos os direitos reservados.</p>
+            <p>Este é um email automático. Por favor, não responda.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -3,8 +3,10 @@ import api from '../api/axios';
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
+const REMEMBER_ME_KEY = 'rememberMe';
 let tokenEmMemoria = null;
 let tokenInicializado = false;
+let devePersistirToken = false;
 
 const normalizarToken = (token) => {
   if (!token || typeof token !== 'string') return null;
@@ -37,41 +39,135 @@ const aplicarTokenNoHeader = (token) => {
   delete api.defaults.headers.common.Authorization;
 };
 
+const extrairMensagemErro = (error, fallback) => {
+  const data = error?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data?.mensagem) return data.mensagem;
+  if (data?.message) return data.message;
+  if (data?.erro) return data.erro;
+  if (data?.error) return data.error;
+  if (error?.message) return error.message;
+  return fallback;
+};
+
+const valorEhVerdadeiro = (valor) => {
+  if (valor === true || valor === 1) return true;
+  if (typeof valor === 'string') {
+    const normalizado = valor.trim().toLowerCase();
+    return normalizado === 'true' || normalizado === '1' || normalizado === 'sim';
+  }
+  return false;
+};
+const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) => {
+  const payload = responseData && typeof responseData === 'object' ? responseData : {};
+
+  const flagExplicita =
+    valorEhVerdadeiro(payload?.twoFactorRequired) ||
+    valorEhVerdadeiro(payload?.requiresTwoFactor) ||
+    valorEhVerdadeiro(payload?.requires2FA) ||
+    valorEhVerdadeiro(payload?.two_factor_required);
+
+  const mensagemNormalizada = String(mensagem || '').toLowerCase();
+  const mensagemIndicaTwoFactor =
+    mensagemNormalizada.includes('dois fatores') ||
+    mensagemNormalizada.includes('2fa') ||
+    mensagemNormalizada.includes('autenticação obrigatório') ||
+    mensagemNormalizada.includes('autenticacao obrigatorio') ||
+    mensagemNormalizada.includes('autenticação obrigatória') ||
+    mensagemNormalizada.includes('autenticacao obrigatoria') ||
+    mensagemNormalizada.includes('código de autenticação obrigatório') ||
+    mensagemNormalizada.includes('codigo de autenticacao obrigatorio');
+
+  const possuiIndicadorEmailDestino = Boolean(payload?.emailDestino);
+  const semMensagemUtil = !mensagemNormalizada;
+
+  return (
+    flagExplicita ||
+    mensagemIndicaTwoFactor ||
+    (!twoFactorCodeInformado && possuiIndicadorEmailDestino) ||
+    (!twoFactorCodeInformado && semMensagemUtil && Object.keys(payload).length > 0)
+  );
+};
+
+const mensagemIndicaCredenciaisInvalidasOuBloqueio = (mensagem) => {
+  const texto = String(mensagem || '').toLowerCase();
+  if (!texto) return false;
+
+  return (
+    texto.includes('credenciais inválidas') ||
+    texto.includes('credenciais invalidas') ||
+    texto.includes('tentativas restantes') ||
+    texto.includes('conta bloqueada') ||
+    texto.includes('email não verificado') ||
+    texto.includes('email nao verificado') ||
+    texto.includes('senha inválida') ||
+    texto.includes('senha invalida')
+  );
+};
+
+const montarRespostaTwoFactor = async (responseData, email, mensagemPadrao) => {
+  let rememberMe = false;
+  try {
+    const stored = await AsyncStorage.getItem(REMEMBER_ME_KEY);
+    rememberMe = stored === 'true';
+  } catch (e) {
+    // ignore and default to false
+  }
+
+  return {
+    success: false,
+    requiresTwoFactor: true,
+    twoFactorRequired: true,
+    emailDestino: responseData?.emailDestino || email,
+    rememberMe,
+    message: responseData?.mensagem || responseData?.message || mensagemPadrao,
+  };
+};
+
+const aguardar = (milissegundos) => new Promise((resolve) => setTimeout(resolve, milissegundos));
+
+const erroEhTransitorioDeConexao = (erro) => {
+  const codigo = String(erro?.code || '').toUpperCase();
+  const mensagem = String(erro?.message || '').toLowerCase();
+
+  return (
+    codigo === 'ECONNABORTED' ||
+    codigo === 'ECONNRESET' ||
+    codigo === 'ECONNREFUSED' ||
+    codigo === 'ETIMEDOUT' ||
+    codigo === 'ERR_NETWORK' ||
+    codigo === 'ERR_EMPTY_RESPONSE' ||
+    mensagem.includes('network error') ||
+    mensagem.includes('empty response') ||
+    mensagem.includes('socket hang up') ||
+    mensagem.includes('timeout') ||
+    mensagem.includes('connection')
+  );
+};
+
 const AuthService = {
   async getToken() {
     try {
-      if (tokenEmMemoria) {
-        return tokenEmMemoria;
-      }
-
-      if (tokenInicializado) {
-        return null;
-      }
-
       const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
-      if (tokenFromStorage) {
-        const tokenNormalizado = normalizarToken(tokenFromStorage);
-        if (tokenNormalizado) {
-          tokenEmMemoria = tokenNormalizado;
-          tokenInicializado = true;
-          aplicarTokenNoHeader(tokenNormalizado);
-        }
-        return tokenNormalizado;
-      }
-
       const tokenFromCookie = obterCookie(TOKEN_KEY);
-      if (tokenFromCookie) {
-        const tokenNormalizado = normalizarToken(tokenFromCookie);
-        if (tokenNormalizado) {
-          tokenEmMemoria = tokenNormalizado;
-          tokenInicializado = true;
-          aplicarTokenNoHeader(tokenNormalizado);
-        }
-        return tokenNormalizado;
+      const tokenPersistido = normalizarToken(tokenFromStorage || tokenFromCookie);
+      const tokenAtual = normalizarToken(tokenEmMemoria);
+
+      if (tokenPersistido) {
+        tokenEmMemoria = tokenPersistido;
+        tokenInicializado = true;
+        aplicarTokenNoHeader(tokenPersistido);
+        return tokenPersistido;
       }
 
+      if (tokenAtual) {
+        return tokenAtual;
+      }
+
+      tokenEmMemoria = null;
       tokenInicializado = true;
-      
+      aplicarTokenNoHeader(null);
+
       return null;
     } catch (e) {
       console.error('[AuthService] Erro ao recuperar token:', e);
@@ -79,20 +175,31 @@ const AuthService = {
     }
   },
 
-  async setToken(token) {
+  async setToken(token, { persistir = devePersistirToken } = {}) {
     const tokenNormalizado = normalizarToken(token);
     if (!tokenNormalizado) return;
 
     tokenEmMemoria = tokenNormalizado;
     tokenInicializado = true;
+    devePersistirToken = Boolean(persistir);
     
     try {
-      await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
+      await this.setRememberMePreference(devePersistirToken);
 
-      if (typeof document !== 'undefined') {
-        const expirationDate = new Date();
-        expirationDate.setDate(expirationDate.getDate() + 30);
-        document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      if (devePersistirToken) {
+        await AsyncStorage.setItem(TOKEN_KEY, tokenNormalizado);
+
+        if (typeof document !== 'undefined') {
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          document.cookie = `${TOKEN_KEY}=${tokenNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+        }
+      } else {
+        await AsyncStorage.removeItem(TOKEN_KEY);
+
+        if (typeof document !== 'undefined') {
+          document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
+        }
       }
 
       aplicarTokenNoHeader(tokenNormalizado);
@@ -106,11 +213,12 @@ const AuthService = {
     try {
       tokenEmMemoria = null;
       tokenInicializado = true;
+      devePersistirToken = false;
 
       await AsyncStorage.removeItem(TOKEN_KEY);
 
       if (typeof document !== 'undefined') {
-        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict`;
       }
 
       aplicarTokenNoHeader(null);
@@ -122,6 +230,65 @@ const AuthService = {
 
   getTokenEmMemoria() {
     return tokenEmMemoria;
+  },
+
+  shouldPersistToken() {
+    return devePersistirToken;
+  },
+
+  async getRememberMePreference() {
+    try {
+      const valorArmazenado = await AsyncStorage.getItem(REMEMBER_ME_KEY);
+      if (valorArmazenado !== null) {
+        return valorArmazenado === 'true';
+      }
+
+      const valorCookie = obterCookie(REMEMBER_ME_KEY);
+      if (valorCookie !== null) {
+        return valorCookie === 'true';
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[AuthService] Erro ao recuperar preferência remember me:', error);
+      return false;
+    }
+  },
+
+  async setRememberMePreference(rememberMe) {
+    const valorNormalizado = rememberMe ? 'true' : 'false';
+
+    try {
+      await AsyncStorage.setItem(REMEMBER_ME_KEY, valorNormalizado);
+
+      if (typeof document !== 'undefined') {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 365);
+        document.cookie = `${REMEMBER_ME_KEY}=${valorNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
+      }
+    } catch (error) {
+      console.error('[AuthService] Erro ao salvar preferência remember me:', error);
+      throw error;
+    }
+  },
+
+  async getPersistedToken() {
+    try {
+      const tokenFromStorage = await AsyncStorage.getItem(TOKEN_KEY);
+      if (tokenFromStorage) {
+        return normalizarToken(tokenFromStorage);
+      }
+
+      const tokenFromCookie = obterCookie(TOKEN_KEY);
+      if (tokenFromCookie) {
+        return normalizarToken(tokenFromCookie);
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[AuthService] Erro ao recuperar token persistido:', error);
+      return null;
+    }
   },
 
   async setUserData(usuario) {
@@ -150,10 +317,37 @@ const AuthService = {
         console.error('[AuthService] Token inválido: payload vazio');
         return null;
       }
-      
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+      // Cross-environment base64 decode: try atob, then Buffer (Node/polyfilled), else error gracefully
+      const b64Decode = (input) => {
+        try {
+          if (typeof atob === 'function') return atob(input);
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if (typeof Buffer !== 'undefined') return Buffer.from(input, 'base64').toString('binary');
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if (typeof globalThis !== 'undefined' && typeof globalThis.atob === 'function') return globalThis.atob(input);
+        } catch (e) {
+          // ignore
+        }
+
+        console.error('[AuthService] Nenhuma função de base64 (atob/Buffer) disponível para decodificar token');
+        return null;
+      };
+
+      const decoded = b64Decode(base64);
+      if (decoded === null) return null;
+
       const jsonPayload = decodeURIComponent(
-        atob(base64)
+        decoded
           .split('')
           .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
@@ -216,11 +410,19 @@ const AuthService = {
     }
   },
 
-  async login({ email, senha, rememberMe = false }) {
+  async login({ email, senha, rememberMe = false, twoFactorCode }) {
+    let twoFactorCodeInformado = false;
     try {
-      await this.logout();
+      await this.setRememberMePreference(rememberMe);
+      await this.removeToken();
+      await this.setUserData(null);
       
       const loginData = { email, senha, rememberMe };
+      twoFactorCodeInformado =
+        twoFactorCode !== undefined && twoFactorCode !== null && String(twoFactorCode).trim() !== '';
+      if (twoFactorCodeInformado) {
+        loginData.twoFactorCode = String(twoFactorCode).trim();
+      }
       const response = await api.post('/auth/login', loginData);
       const responseData = response.data;
 
@@ -235,7 +437,7 @@ const AuthService = {
         throw new Error('Token inválido retornado pelo servidor');
       }
       
-      await this.setToken(token);
+      await this.setToken(token, { persistir: rememberMe });
       const storedToken = await this.getToken();
       if (!storedToken) {
         throw new Error('Falha ao armazenar token de autenticação');
@@ -252,23 +454,36 @@ const AuthService = {
         message: responseData.message || 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('[AuthService] Erro no login:', error);
-      
       if (error.response && error.response.status === 401) {
         const responseData = error.response.data;
-        if (responseData?.twoFactorRequired) {
-          return {
-            success: false,
-            requiresTwoFactor: true,
-            emailDestino: responseData.emailDestino || email
-          };
+        const mensagem401 = String(
+          responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || ''
+        );
+        const ehFluxoTwoFactor = detectarFluxoTwoFactor(responseData, mensagem401, twoFactorCodeInformado);
+        const ehCredencialInvalidaOuBloqueio = mensagemIndicaCredenciaisInvalidasOuBloqueio(mensagem401);
+
+        if (!twoFactorCodeInformado && !ehFluxoTwoFactor && !ehCredencialInvalidaOuBloqueio) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Digite o código de verificação para continuar o login.'
+          );
         }
-        throw new Error(responseData?.error || responseData?.message || 'Credenciais inválidas');
+
+        if (ehFluxoTwoFactor) {
+          return montarRespostaTwoFactor(
+            responseData,
+            email,
+            'Confirme o código de autenticação de dois fatores para continuar.'
+          );
+        }
+
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais inválidas');
       }
       
       if (error.response && error.response.data) {
         const responseData = error.response.data;
-        throw new Error(responseData?.error || responseData?.message || 'Erro no login');
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Erro no login');
       }
       
       if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR' || 
@@ -282,37 +497,53 @@ const AuthService = {
     }
   },
 
-  async verifyTwoFactorCode({ email, codigo }) {
-    const response = await api.post('/auth/2fa/verify-code', { email, codigo });
-    const { token, usuario } = response.data;
+  async register({ nome, email, senha }) {
+    const dadosCadastro = { nome, email, senha };
+    const tentativasMaximas = 2;
 
-    if (!token) {
-      throw new Error('Token não retornado pelo servidor');
+    for (let tentativa = 1; tentativa <= tentativasMaximas; tentativa += 1) {
+      try {
+        const response = await api.post('/auth/register', dadosCadastro);
+        return {
+          success: true,
+          message: response.data?.message || 'Conta criada com sucesso',
+          usuario: response.data,
+        };
+      } catch (erro) {
+        const ultimaTentativa = tentativa === tentativasMaximas;
+
+        if (!ultimaTentativa && erroEhTransitorioDeConexao(erro)) {
+          await aguardar(1200);
+          continue;
+        }
+
+        throw erro;
+      }
     }
 
-    await this.setToken(token);
-    await this.setUserData(usuario);
-
-    return { success: true, token, usuario };
+    throw new Error('Erro ao realizar cadastro');
   },
 
-  async register({ nome, email, senha }) {
-    const response = await api.post('/auth/register', { nome, email, senha });
-    return {
-      success: false,
-      requiresConfirmation: true,
-      emailDestino: response.data,
-    };
+  async forgotPassword(email) {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extrairMensagemErro(error, 'Erro ao enviar solicitação de recuperação de senha')
+      );
+    }
   },
 
-  async confirmRegistration({ email, codigo }) {
-    const response = await api.post('/auth/register/confirm', { email, codigo });
-    return { success: true, usuario: response.data };
-  },
-
-  async resendRegistrationCode(email) {
-    const response = await api.post(`/auth/register/resend-code?email=${encodeURIComponent(email)}`);
-    return { success: true, message: response.data };
+  async resetPassword({ email, code, novaSenha }) {
+    try {
+      const response = await api.post('/auth/reset-password', { email, code, novaSenha });
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extrairMensagemErro(error, 'Erro ao redefinir senha')
+      );
+    }
   },
 
   async logout() {
@@ -363,7 +594,7 @@ const AuthService = {
       const newToken = response.data;
       
       if (newToken && typeof newToken === 'string') {
-        await this.setToken(newToken);
+        await this.setToken(newToken, { persistir: devePersistirToken });
         return newToken;
       }
       
@@ -385,14 +616,14 @@ const AuthService = {
       console.error('[AuthService] Erro ao configurar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao configurar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao configurar 2FA')
       };
     }
   },
 
   async enable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/enable', { verificationCode });
+      const response = await api.post('/auth/2fa/enable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
@@ -401,14 +632,14 @@ const AuthService = {
       console.error('[AuthService] Erro ao habilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao habilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao habilitar 2FA')
       };
     }
   },
 
   async disable2FA(verificationCode) {
     try {
-      const response = await api.post('/auth/2fa/disable', { verificationCode });
+      const response = await api.post('/auth/2fa/disable', { verificationCode: String(verificationCode) });
       return {
         sucesso: true,
         mensagem: response.data
@@ -417,7 +648,7 @@ const AuthService = {
       console.error('[AuthService] Erro ao desabilitar 2FA:', error);
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao desabilitar 2FA'
+        mensagem: extrairMensagemErro(error, 'Erro ao desabilitar 2FA')
       };
     }
   },
@@ -461,9 +692,19 @@ const AuthService = {
       };
     } catch (error) {
       console.error('[AuthService] Erro ao trocar senha:', error);
+      const mensagemErro = extrairMensagemErro(error, 'Erro ao trocar senha. Verifique sua senha atual.');
+      const mensagemNormalizada = String(mensagemErro || '').toLowerCase();
+
+      if (mensagemNormalizada.includes('senha atual incorreta')) {
+        return {
+          sucesso: false,
+          mensagem: 'A senha atual informada está incorreta.',
+        };
+      }
+
       return {
         sucesso: false,
-        mensagem: error.response?.data || 'Erro ao trocar senha. Verifique sua senha atual.',
+        mensagem: mensagemErro,
       };
     }
   },
@@ -475,15 +716,15 @@ export const {
   login, 
   logout, 
   register, 
+  forgotPassword,
+  resetPassword,
   isAuthenticated, 
   carregarSessao, 
   validateToken, 
   reautenticar,
-  resendRegistrationCode,
   setup2FA,
   enable2FA,
   disable2FA,
   get2FAStatus,
-  verifyTwoFactorCode,
   trocarSenha
 } = AuthService;

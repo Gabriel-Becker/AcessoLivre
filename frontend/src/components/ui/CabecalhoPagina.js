@@ -15,9 +15,15 @@ export default function CabecalhoPagina({
   style,
 }) {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(altoContraste ?? isHighContrast);
+  const contrasteAtivo = altoContraste ?? isHighContrast;
+  const t = getTheme(contrasteAtivo);
+  const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   const estilos = useMemo(() => criarEstilos(t), [t]);
+
+  const showBack = Boolean(onVoltar);
+  const hasRight = Boolean(acaoDireita);
 
   return (
     <View style={[estilos.container, style]}>
@@ -28,7 +34,7 @@ export default function CabecalhoPagina({
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
-          <ThemedText style={estilos.textoVoltar} weight="medium">
+          <ThemedText style={estilos.textoVoltar} weight="medium" altoContraste={contrasteAtivo} color={corPrincipal}>
             {textoVoltar}
           </ThemedText>
         </Pressable>
@@ -36,14 +42,24 @@ export default function CabecalhoPagina({
         <View style={estilos.espacoVoltar} />
       )}
 
-      <View style={estilos.textos}>
-        <ThemedText variant="h1" weight="bold">
+      <View style={[estilos.textos, !showBack && !hasRight ? estilos.textosCenter : null]}>
+        <ThemedText
+          variant="h1"
+          weight="bold"
+          altoContraste={contrasteAtivo}
+          color={corPrincipal}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+          style={estilos.titulo}
+        >
           {titulo}
         </ThemedText>
         {subtitulo ? (
           <>
             <Spacer size="xs" />
-            <ThemedText color="textSecondary">{subtitulo}</ThemedText>
+            <ThemedText altoContraste={contrasteAtivo} color={corSecundaria}>{subtitulo}</ThemedText>
           </>
         ) : null}
       </View>
@@ -80,10 +96,17 @@ function criarEstilos(t) {
     },
     textos: {
       flex: 1,
+      minWidth: 0,
+    },
+    titulo: {
+      flexShrink: 1,
     },
     acaoDireita: {
       minWidth: 40,
       alignItems: 'flex-end',
+    },
+    textosCenter: {
+      alignItems: 'center',
     },
   });
 }

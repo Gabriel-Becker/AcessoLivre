@@ -2,23 +2,27 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacer, ThemedText } from '../../../components/commons';
-import theme from '../../../config/theme';
+import theme, { getTheme } from '../../../config/theme';
 
-export default function AuthHeader({ title, subtitle }) {
+export default function AuthHeader({ title, subtitle, altoContraste = false }) {
+  const t = getTheme(altoContraste);
+  const corPrincipal = altoContraste ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = altoContraste ? 'textOnPrimary' : 'textSecondary';
+
   return (
     <View style={styles.wrapper}>
       <Ionicons name="accessibility-outline" size={48} color={theme.colors.primary} />
       <Spacer size="sm" />
-      <ThemedText variant="h2" align="center" weight="bold">
+      <ThemedText variant="h2" align="center" weight="bold" altoContraste={altoContraste} color={corPrincipal} style={styles.tituloPrincipal}>
         AcessoLivre
       </ThemedText>
-      <ThemedText color="textSecondary" align="center">
+      <ThemedText color={corSecundaria} align="center" altoContraste={altoContraste} style={styles.subtitulo}>
         {subtitle || 'Acessibilidade para todos'}
       </ThemedText>
       {title ? (
         <>
           <Spacer size="lg" />
-          <ThemedText variant="h2" weight="bold" align="center">
+          <ThemedText variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal} style={styles.tituloPagina}>
             {title}
           </ThemedText>
         </>
@@ -30,5 +34,22 @@ export default function AuthHeader({ title, subtitle }) {
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
+  },
+  tituloPrincipal: {
+    fontSize: 28,
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+  subtitulo: {
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: 'center',
+    maxWidth: 760,
+  },
+  tituloPagina: {
+    fontSize: 30,
+    lineHeight: 36,
+    textAlign: 'center',
+    maxWidth: 760,
   },
 });
