@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
-  KeyboardAvoidingView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -350,7 +349,7 @@ const localStyles = StyleSheet.create({
 // COMPONENTE PRINCIPAL
 // ============================================
 export default function AdicionarLocal({ onNavigate, navigation, routeParams }) {
-  const permitirEscalaFonte = false;
+  const permitirEscalaFonte = true;
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const t = useMemo(() => getTheme(isHighContrast, fontSizeMultiplier), [isHighContrast, fontSizeMultiplier]);
   const { usuario } = useAuth();
@@ -394,10 +393,11 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     }))
   ), []);
 
-  const estilos = useMemo(() => criarEstilos(t, usarDuasColunas, mostrarCardsLaterais), [
+  const estilos = useMemo(() => criarEstilos(t, usarDuasColunas, mostrarCardsLaterais, fontSizeMultiplier), [
     t,
     usarDuasColunas,
     mostrarCardsLaterais,
+    fontSizeMultiplier,
   ]);
 
   const contadorDescricao = `${formulario.descricao.length}/${LIMITES_CAMPOS_LOCAL.descricao}`;
@@ -1133,25 +1133,32 @@ function formatarNumero(valor) {
   return String(numero);
 }
 
-function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais) {
+function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais, fontSizeMultiplier = 1) {
+  const fonteGrande = Number(fontSizeMultiplier) >= 1.5;
+  const fonteMuitoGrande = Number(fontSizeMultiplier) >= 2;
+  const alturaCampo = fonteMuitoGrande ? 72 : fonteGrande ? 64 : 56;
+  const alturaCampoMultiline = fonteMuitoGrande ? 220 : fonteGrande ? 180 : 140;
+  const paddingHorizontalPagina = fonteMuitoGrande ? t.spacing.md : t.spacing.lg;
+  const gapConteudo = fonteMuitoGrande ? t.spacing.xl : t.spacing.xxl;
+
   return StyleSheet.create({
     scroll: {
       width: '100%',
       alignSelf: 'center',
-      maxWidth: 1320,
-      paddingBottom: t.spacing.xxxl,
-      paddingHorizontal: t.spacing.lg,
+      maxWidth: fonteMuitoGrande ? 1260 : 1320,
+      paddingBottom: fonteGrande ? t.spacing.xxxl + t.spacing.sm : t.spacing.xxxl,
+      paddingHorizontal: paddingHorizontalPagina,
     },
     header: {
       alignItems: 'flex-start',
-      marginBottom: t.spacing.xl,
+      marginBottom: fonteGrande ? t.spacing.lg : t.spacing.xl,
     },
     conteudo: {
       flexDirection: mostrarCardsLaterais ? 'row' : 'column',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
       width: '100%',
-      gap: t.spacing.xxl,
+      gap: gapConteudo,
     },
     colunaPrincipal: {
       width: mostrarCardsLaterais ? '68%' : '100%',
@@ -1159,17 +1166,17 @@ function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais) {
       minWidth: 0,
     },
     colunaLateral: {
-      width: '30%',
-      maxWidth: 340,
-      minWidth: 280,
-      gap: t.spacing.lg,
+      width: fonteMuitoGrande ? '32%' : '30%',
+      maxWidth: fonteMuitoGrande ? 360 : 340,
+      minWidth: fonteMuitoGrande ? 300 : 280,
+      gap: fonteGrande ? t.spacing.md : t.spacing.lg,
       alignSelf: 'flex-start',
     },
     linhaCampos: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-      rowGap: t.spacing.lg,
+      rowGap: fonteGrande ? t.spacing.md : t.spacing.lg,
     },
     colunaCampo: {
       width: usarDuasColunas ? '49%' : '100%',
@@ -1179,37 +1186,40 @@ function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais) {
       maxWidth: usarDuasColunas ? '49%' : '100%',
     },
     campoContainer: {
-      marginBottom: t.spacing.md,
+      marginBottom: fonteGrande ? t.spacing.sm : t.spacing.md,
     },
     campoLabel: {
-      fontSize: 15,
-      lineHeight: 20,
+      fontSize: fonteMuitoGrande
+        ? t.typography.fontSize.lg
+        : fonteGrande
+          ? t.typography.fontSize.md
+          : t.typography.fontSize.sm,
+      lineHeight: fonteMuitoGrande ? 30 : fonteGrande ? 26 : 22,
     },
     campoTexto: {
-      fontSize: 14,
-      lineHeight: 21,
-      paddingVertical: t.spacing.sm,
+      lineHeight: fonteMuitoGrande ? 28 : fonteGrande ? 24 : 21,
+      paddingVertical: fonteGrande ? t.spacing.xs : t.spacing.sm,
     },
     campoTextoMultiline: {
-      minHeight: 140,
+      minHeight: alturaCampoMultiline,
     },
     campoSelect: {
-      minHeight: 50,
-      height: 50,
-      paddingHorizontal: t.spacing.md,
+      minHeight: alturaCampo,
+      height: alturaCampo,
+      paddingHorizontal: fonteGrande ? t.spacing.sm : t.spacing.md,
     },
     campoDescricaoHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: t.spacing.sm,
+      marginBottom: fonteGrande ? t.spacing.xs : t.spacing.sm,
     },
     recursosGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
       width: '100%',
-      rowGap: t.spacing.lg,
+      rowGap: fonteGrande ? t.spacing.md : t.spacing.lg,
     },
     recursoItem: {
       width: usarDuasColunas ? '49%' : '100%',
@@ -1219,10 +1229,10 @@ function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais) {
     botaoContainer: {
       alignItems: 'stretch',
       width: '100%',
-      marginTop: t.spacing.lg,
+      marginTop: fonteGrande ? t.spacing.md : t.spacing.lg,
     },
     botaoPrincipal: {
-      minHeight: 56,
+      minHeight: alturaCampo,
       width: '100%',
       alignSelf: 'stretch',
     },

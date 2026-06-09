@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,9 @@ import {
   TextInput,
   FlatList,
   ScrollView,
-  Platform
+  Platform,
+  LayoutAnimation,
+  UIManager
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -26,7 +28,7 @@ import { AccessibilityContext } from '../../context/AccessibilityContext';
 import AssistantEngine from '../../services/acessibilidade/AssistantEngine';
 import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
-import { breakpoints, getTheme } from '../../config/theme';
+import { getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
 import toastHelper from '../../utils/toastHelper';
 
@@ -61,10 +63,12 @@ const BREAKPOINTS = {
   DESKTOP: 1400,
 };
 
-const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
+const SearchInput = React.memo(({ onSearch, theme, voiceEnabled, escalaFiltro = 1 }) => {
   const [text, setText] = useState('');
   const inputRef = useRef(null);
   const debounceTimer = useRef(null);
+  const tamanhoIcone = Math.round(20 * escalaFiltro);
+  const tamanhoFonte = Math.round(16 * escalaFiltro);
 
   const handleChange = useCallback((value) => {
     setText(value);
@@ -85,11 +89,22 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
   }, [voiceEnabled]);
 
   return (
-    <View style={[styles.searchContainer, { backgroundColor: theme.colors.surfaceSecondary }]}>
-      <Ionicons name="search-outline" size={20} color={theme.colors.textSecondary} />
+    <View
+      style={[
+        styles.searchContainer,
+        {
+          backgroundColor: theme.colors.surfaceSecondary,
+          borderRadius: Math.round(12 * escalaFiltro),
+          paddingHorizontal: Math.round(14 * escalaFiltro),
+          paddingVertical: Math.round(12 * escalaFiltro),
+          gap: Math.max(8, Math.round(8 * escalaFiltro)),
+        },
+      ]}
+    >
+      <Ionicons name="search-outline" size={tamanhoIcone} color={theme.colors.textSecondary} />
       <TextInput
         ref={inputRef}
-        style={[styles.searchInput, { color: theme.colors.textPrimary }]}
+        style={[styles.searchInput, { color: theme.colors.textPrimary, fontSize: tamanhoFonte }]}
         placeholder="Buscar por nome, endereço ou categoria..."
         placeholderTextColor={theme.colors.textTertiary}
         value={text}
@@ -108,7 +123,7 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
           accessibilityLabel="Limpar busca"
           accessibilityRole="button"
         >
-          <Ionicons name="close-circle" size={18} color={theme.colors.textSecondary} />
+          <Ionicons name="close-circle" size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         </TouchableOpacity>
       )}
     </View>
@@ -117,7 +132,7 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled }) => {
 
 SearchInput.displayName = 'SearchInput';
 
-const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria, theme, isDesktop, voiceEnabled }) => {
+const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria, theme, isDesktop, voiceEnabled, escalaFiltro = 1 }) => {
   const [expanded, setExpanded] = useState(true);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
@@ -150,42 +165,48 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
   return (
     <View style={styles.filtroGrupo}>
       <TouchableOpacity 
-        style={styles.filtroHeader} 
+        style={[styles.filtroHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(8 * escalaFiltro) }]} 
         onPress={toggleExpand} 
         activeOpacity={0.7}
         accessibilityLabel="Filtro por categoria"
         accessibilityRole="button"
         accessibilityHint={expanded ? 'Recolher categorias' : 'Expandir categorias'}
       >
-        <Ionicons name="grid-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Categoria</ThemedText>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textSecondary} />
+        <Ionicons name="grid-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
+        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Categoria</ThemedText>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         {voiceEnabled && (
           <TouchableOpacity onPress={anunciarCategorias} style={styles.voiceIcon}>
-            <Ionicons name="volume-medium-outline" size={16} color={theme.colors.primary} />
+            <Ionicons name="volume-medium-outline" size={Math.round(16 * escalaFiltro)} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
       
       {expanded && (
-        <View style={styles.filtroContent}>
+        <View style={[styles.filtroContent, { paddingLeft: Math.round(30 * escalaFiltro), paddingTop: Math.round(8 * escalaFiltro), gap: Math.max(8, Math.round(8 * escalaFiltro)) }]}>
           {CATEGORIAS.map(categoria => {
             const selecionada = categoriasSelecionadas.includes(categoria);
             return (
               <TouchableOpacity 
                 key={categoria} 
-                style={styles.filtroItem} 
+                style={[styles.filtroItem, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(6 * escalaFiltro) }]} 
                 onPress={() => onToggleCategoria(categoria)} 
                 activeOpacity={0.7}
                 accessibilityLabel={`${CATEGORIAS_LABELS[categoria] || categoria} ${selecionada ? 'selecionada' : 'não selecionada'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionada }}
               >
-                <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: selecionada ? theme.colors.primary : 'transparent' }]}>
-                  {selecionada && <Ionicons name="checkmark" size={12} color="#FFF" />}
+                <View style={[styles.checkbox, {
+                  borderColor: theme.colors.primary,
+                  backgroundColor: selecionada ? theme.colors.primary : 'transparent',
+                  width: Math.round(20 * escalaFiltro),
+                  height: Math.round(20 * escalaFiltro),
+                  borderRadius: Math.round(6 * escalaFiltro)
+                }]}>
+                  {selecionada && <Ionicons name="checkmark" size={Math.round(12 * escalaFiltro)} color="#FFF" />}
                 </View>
-                <Ionicons name="apps-outline" size={isDesktop ? 14 : 16} color={theme.colors.primary} style={styles.filtroIcon} />
-                <ThemedText style={[styles.filtroItemLabel, { fontSize: isDesktop ? 13 : 14 }]}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
+                <Ionicons name="apps-outline" size={Math.round((isDesktop ? 14 : 16) * escalaFiltro)} color={theme.colors.primary} style={styles.filtroIcon} />
+                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
               </TouchableOpacity>
             );
           })}
@@ -197,7 +218,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
 
 FiltroCategoria.displayName = 'FiltroCategoria';
 
-const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso, theme, isDesktop, voiceEnabled }) => {
+const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso, theme, isDesktop, voiceEnabled, escalaFiltro = 1 }) => {
   const [expanded, setExpanded] = useState(true);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
@@ -234,41 +255,47 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
   return (
     <View style={styles.filtroGrupo}>
       <TouchableOpacity 
-        style={styles.filtroHeader} 
+        style={[styles.filtroHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(8 * escalaFiltro) }]} 
         onPress={toggleExpand} 
         activeOpacity={0.7}
         accessibilityLabel="Filtro por recursos de acessibilidade"
         accessibilityRole="button"
       >
-        <Ionicons name="accessibility-outline" size={20} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Acessibilidade</ThemedText>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textSecondary} />
+        <Ionicons name="accessibility-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
+        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Acessibilidade</ThemedText>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         {voiceEnabled && (
           <TouchableOpacity onPress={anunciarRecursos} style={styles.voiceIcon}>
-            <Ionicons name="volume-medium-outline" size={16} color={theme.colors.primary} />
+            <Ionicons name="volume-medium-outline" size={Math.round(16 * escalaFiltro)} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
       
       {expanded && (
-        <View style={styles.filtroContent}>
+        <View style={[styles.filtroContent, { paddingLeft: Math.round(30 * escalaFiltro), paddingTop: Math.round(8 * escalaFiltro), gap: Math.max(8, Math.round(8 * escalaFiltro)) }]}>
           {RECURSOS_ACESSIBILIDADE.map(recurso => {
             const selecionado = recursosSelecionados.includes(recurso.id);
             return (
               <TouchableOpacity 
                 key={recurso.id} 
-                style={styles.filtroItem} 
+                style={[styles.filtroItem, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(6 * escalaFiltro) }]} 
                 onPress={() => onToggleRecurso(recurso.id)} 
                 activeOpacity={0.7}
                 accessibilityLabel={`${recurso.label} ${selecionado ? 'selecionado' : 'não selecionado'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionado }}
               >
-                <View style={[styles.checkbox, { borderColor: theme.colors.primary, backgroundColor: selecionado ? theme.colors.primary : 'transparent' }]}>
-                  {selecionado && <Ionicons name="checkmark" size={12} color="#FFF" />}
+                <View style={[styles.checkbox, {
+                  borderColor: theme.colors.primary,
+                  backgroundColor: selecionado ? theme.colors.primary : 'transparent',
+                  width: Math.round(20 * escalaFiltro),
+                  height: Math.round(20 * escalaFiltro),
+                  borderRadius: Math.round(6 * escalaFiltro)
+                }]}>
+                  {selecionado && <Ionicons name="checkmark" size={Math.round(12 * escalaFiltro)} color="#FFF" />}
                 </View>
-                <Ionicons name={recurso.icon} size={isDesktop ? 14 : 16} color={theme.colors.primary} style={styles.filtroIcon} />
-                <ThemedText style={[styles.filtroItemLabel, { fontSize: isDesktop ? 13 : 14 }]}>{recurso.label}</ThemedText>
+                <Ionicons name={recurso.icon} size={Math.round((isDesktop ? 14 : 16) * escalaFiltro)} color={theme.colors.primary} style={styles.filtroIcon} />
+                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>{recurso.label}</ThemedText>
               </TouchableOpacity>
             );
           })}
@@ -280,13 +307,10 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
 
 FiltroAcessibilidade.displayName = 'FiltroAcessibilidade';
 
-const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voiceEnabled }) => {
-  const { fontSizeMultiplier } = useThemeContext();
-
+const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voiceEnabled, escalaFiltro = 1 }) => {
   const renderStars = useCallback((nota) => {
     const stars = [];
-    const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
-    const starSize = Math.round((isDesktop ? 16 : 20) * escalaZoom);
+    const starSize = Math.round((isDesktop ? 16 : 20) * escalaFiltro);
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons 
@@ -298,7 +322,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
       );
     }
     return stars;
-  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop, fontSizeMultiplier]);
+  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop, escalaFiltro]);
 
   const anunciarNota = useCallback(() => {
     if (!voiceEnabled) return;
@@ -318,38 +342,38 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
   return (
     <View style={styles.filtroGrupo}>
       <TouchableOpacity 
-        style={styles.filtroHeader} 
+        style={[styles.filtroHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(8 * escalaFiltro) }]} 
         onPress={anunciarNota}
         activeOpacity={0.7}
         accessibilityLabel="Filtro por nota mínima"
         accessibilityRole="button"
       >
-        <Ionicons name="star-outline" size={20} color={theme.colors.warning} />
-        <ThemedText weight="semibold" style={styles.filtroTitulo}>Nota Mínima</ThemedText>
+        <Ionicons name="star-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.warning} />
+        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Nota Mínima</ThemedText>
         {voiceEnabled && (
-          <Ionicons name="volume-medium-outline" size={16} color={theme.colors.primary} style={styles.voiceIcon} />
+          <Ionicons name="volume-medium-outline" size={Math.round(16 * escalaFiltro)} color={theme.colors.primary} style={styles.voiceIcon} />
         )}
       </TouchableOpacity>
       
-      <View style={styles.filtroContent}>
-        <View style={styles.notaContainer}>
+      <View style={[styles.filtroContent, { paddingLeft: Math.round(30 * escalaFiltro), paddingTop: Math.round(8 * escalaFiltro), gap: Math.max(8, Math.round(8 * escalaFiltro)) }]}>
+        <View style={[styles.notaContainer, { gap: Math.max(8, Math.round(8 * escalaFiltro)), marginBottom: Math.round(12 * escalaFiltro) }]}>
           <View style={styles.notaStars}>{renderStars(notaMinima)}</View>
-          <ThemedText weight="bold" style={[styles.notaValor, { fontSize: isDesktop ? 13 : 14 }]}>
+          <ThemedText weight="bold" style={[styles.notaValor, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
             {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
           </ThemedText>
         </View>
         
-        <View style={styles.notaSliderContainer}>
+        <View style={[styles.notaSliderContainer, { gap: Math.max(8, Math.round(8 * escalaFiltro)) }]}>
           {[0, 1, 2, 3, 4, 4.5].map(nota => (
             <TouchableOpacity 
               key={nota} 
-              style={[styles.notaBotao, notaMinima === nota && styles.notaBotaoAtivo, { borderColor: theme.colors.primary }]} 
+              style={[styles.notaBotao, notaMinima === nota && styles.notaBotaoAtivo, { borderColor: theme.colors.primary, paddingHorizontal: Math.round(12 * escalaFiltro), paddingVertical: Math.round(6 * escalaFiltro), borderRadius: Math.round(20 * escalaFiltro) }]} 
               onPress={() => handleNotaChange(nota)}
               accessibilityLabel={`${nota === 0 ? 'Qualquer nota' : `${nota} estrelas ou mais`}`}
               accessibilityRole="radio"
               accessibilityState={{ selected: notaMinima === nota }}
             >
-              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }, { fontSize: isDesktop ? 11 : 12 }]}>
+              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }, { fontSize: Math.round((isDesktop ? 11 : 12) * escalaFiltro) }]}>
                 {nota === 0 ? 'Qualquer' : `${nota}+`}
               </ThemedText>
             </TouchableOpacity>
@@ -376,8 +400,17 @@ const FiltrosCard = React.memo(({
   isDesktop,
   theme,
   isHighContrast,
-  voiceEnabled
+  voiceEnabled,
+  fontSizeMultiplier,
+  filtrosVisiveis,
+  onToggleFiltros,
+  ocuparLarguraTotal = false
 }) => {
+  const escalaFiltro = Math.max(1, Number(fontSizeMultiplier) || 1);
+  const tamanhoIconeHeader = Math.round(22 * escalaFiltro);
+  const tamanhoFonteTitulo = Math.round(18 * escalaFiltro);
+  const espacamentoBloco = Math.round(12 * escalaFiltro);
+
   const anunciarFiltros = useCallback(() => {
     if (!voiceEnabled) return;
     VoiceService.speak(
@@ -387,75 +420,115 @@ const FiltrosCard = React.memo(({
   }, [voiceEnabled, temFiltrosAtivos]);
 
   return (
-    <Card variant="outlined" style={styles.filtrosCard} altoContraste={isHighContrast}>
-      <View style={styles.filtrosHeader}>
-        <Ionicons name="options-outline" size={22} color={theme.colors.primary} />
-        <ThemedText variant="h3" weight="bold" style={styles.filtrosTitulo}>Filtros</ThemedText>
+    <Card
+      variant="outlined"
+      style={[
+        styles.filtrosCard,
+        {
+          padding: Math.round(16 * escalaFiltro),
+          borderRadius: Math.round(14 * escalaFiltro),
+          marginTop: Math.round(8 * escalaFiltro),
+          marginHorizontal: ocuparLarguraTotal ? 0 : 12,
+        },
+      ]}
+      altoContraste={isHighContrast}
+    >
+      <TouchableOpacity
+        onPress={onToggleFiltros}
+        activeOpacity={0.75}
+        style={[styles.filtrosHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), minHeight: Math.round(44 * escalaFiltro) }]}
+        accessibilityRole="button"
+        accessibilityLabel={filtrosVisiveis ? 'Recolher painel de filtros' : 'Expandir painel de filtros'}
+      >
+        <Ionicons name="options-outline" size={tamanhoIconeHeader} color={theme.colors.primary} />
+        <ThemedText variant="h3" weight="bold" style={[styles.filtrosTitulo, { fontSize: tamanhoFonteTitulo }]}>Filtros</ThemedText>
+        <Ionicons
+          name={filtrosVisiveis ? 'chevron-up' : 'chevron-down'}
+          size={Math.round(20 * escalaFiltro)}
+          color={theme.colors.textSecondary}
+        />
         {voiceEnabled && (
-          <TouchableOpacity onPress={anunciarFiltros} style={styles.voiceIcon}>
-            <Ionicons name="volume-medium-outline" size={18} color={theme.colors.primary} />
+          <TouchableOpacity
+            onPress={(event) => {
+              event?.stopPropagation?.();
+              anunciarFiltros();
+            }}
+            style={styles.voiceIcon}
+          >
+            <Ionicons name="volume-medium-outline" size={Math.round(18 * escalaFiltro)} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
         {temFiltrosAtivos && (
           <TouchableOpacity 
-            onPress={onLimparFiltros} 
+            onPress={(event) => {
+              event?.stopPropagation?.();
+              onLimparFiltros();
+            }} 
             style={styles.limparButton}
             accessibilityLabel="Limpar todos os filtros"
             accessibilityRole="button"
           >
-            <Ionicons name="close-circle-outline" size={18} color={theme.colors.error} />
-            <ThemedText color="error" variant="caption">Limpar</ThemedText>
+            <Ionicons name="close-circle-outline" size={Math.round(18 * escalaFiltro)} color={theme.colors.error} />
+            <ThemedText color="error" variant="caption" style={{ fontSize: Math.round(12 * escalaFiltro) }}>Limpar</ThemedText>
           </TouchableOpacity>
         )}
-      </View>
+      </TouchableOpacity>
 
-      <Spacer size="md" />
+      {filtrosVisiveis && (
+        <View style={styles.filtrosConteudo}>
+          <View style={{ height: espacamentoBloco }} />
 
-      <SearchInput 
-        onSearch={onSearchChange}
-        theme={theme}
-        voiceEnabled={voiceEnabled}
-      />
+          <SearchInput 
+            onSearch={onSearchChange}
+            theme={theme}
+            voiceEnabled={voiceEnabled}
+            escalaFiltro={escalaFiltro}
+          />
 
-      <Spacer size="md" />
-      <FiltroCategoria 
-        categoriasSelecionadas={categoriasSelecionadas} 
-        onToggleCategoria={onToggleCategoria} 
-        theme={theme} 
-        isDesktop={isDesktop} 
-        voiceEnabled={voiceEnabled}
-      />
-      <Spacer size="md" />
-      <FiltroAcessibilidade 
-        recursosSelecionados={recursosSelecionados} 
-        onToggleRecurso={onToggleRecurso} 
-        theme={theme} 
-        isDesktop={isDesktop} 
-        voiceEnabled={voiceEnabled}
-      />
-      <Spacer size="md" />
-      <FiltroNota 
-        notaMinima={notaMinima} 
-        onNotaChange={onNotaChange} 
-        theme={theme} 
-        isDesktop={isDesktop} 
-        voiceEnabled={voiceEnabled}
-      />
+          <View style={{ height: espacamentoBloco }} />
+          <FiltroCategoria 
+            categoriasSelecionadas={categoriasSelecionadas} 
+            onToggleCategoria={onToggleCategoria} 
+            theme={theme} 
+            isDesktop={isDesktop} 
+            voiceEnabled={voiceEnabled}
+            escalaFiltro={escalaFiltro}
+          />
+          <View style={{ height: espacamentoBloco }} />
+          <FiltroAcessibilidade 
+            recursosSelecionados={recursosSelecionados} 
+            onToggleRecurso={onToggleRecurso} 
+            theme={theme} 
+            isDesktop={isDesktop} 
+            voiceEnabled={voiceEnabled}
+            escalaFiltro={escalaFiltro}
+          />
+          <View style={{ height: espacamentoBloco }} />
+          <FiltroNota 
+            notaMinima={notaMinima} 
+            onNotaChange={onNotaChange} 
+            theme={theme} 
+            isDesktop={isDesktop} 
+            voiceEnabled={voiceEnabled}
+            escalaFiltro={escalaFiltro}
+          />
 
-      {!isDesktop && (
-        <>
-          <Spacer size="md" />
-          <Button 
-            variant="primary" 
-            onPress={onAplicarFiltros} 
-            fullWidth 
-            altoContraste={isHighContrast}
-            accessibilityLabel="Aplicar filtros selecionados"
-            accessibilityHint="Aplica os filtros escolhidos na busca"
-          >
-            Aplicar Filtros
-          </Button>
-        </>
+          {!isDesktop && (
+            <>
+              <View style={{ height: espacamentoBloco }} />
+              <Button 
+                variant="primary" 
+                onPress={onAplicarFiltros} 
+                fullWidth 
+                altoContraste={isHighContrast}
+                accessibilityLabel="Aplicar filtros selecionados"
+                accessibilityHint="Aplica os filtros escolhidos na busca"
+              >
+                Aplicar Filtros
+              </Button>
+            </>
+          )}
+        </View>
       )}
     </Card>
   );
@@ -464,15 +537,24 @@ const FiltrosCard = React.memo(({
 FiltrosCard.displayName = 'FiltrosCard';
 
 export default function Buscar({ onNavigate }) {
-  const { isHighContrast } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
-  const theme = getTheme(isHighContrast);
-  
-  const isDesktop = width >= BREAKPOINTS.TABLET;
-  const isTablet = width >= BREAKPOINTS.MOBILE && width < BREAKPOINTS.TABLET;
-  const isMobile = width < BREAKPOINTS.MOBILE;
+  const escalaZoom = useMemo(() => Math.max(1, Number(fontSizeMultiplier) || 1), [fontSizeMultiplier]);
 
+  const larguraViewport = useMemo(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return Math.round(window.visualViewport?.width || window.innerWidth || width);
+    }
+    return width;
+  }, [width]);
+
+  const theme = getTheme(isHighContrast, fontSizeMultiplier);
+  const zoomAplicado = escalaZoom >= 1.5;
+  
+  const isDesktop = larguraViewport >= BREAKPOINTS.TABLET;
+  const isTablet = larguraViewport >= BREAKPOINTS.MOBILE && larguraViewport < BREAKPOINTS.TABLET;
+  const usarLayoutEmpilhado = isDesktop && zoomAplicado;
   const [searchText, setSearchText] = useState('');
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
   const [recursosSelecionados, setRecursosSelecionados] = useState([]);
@@ -483,6 +565,13 @@ export default function Buscar({ onNavigate }) {
   const [totalResultados, setTotalResultados] = useState(0);
   const [carregandoInicial, setCarregandoInicial] = useState(true);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
+  const [filtrosVisiveis, setFiltrosVisiveis] = useState(true);
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
 
   const realizarBusca = useCallback(async () => {
     try {
@@ -562,11 +651,6 @@ export default function Buscar({ onNavigate }) {
     }
   }, [onNavigate, voiceEnabled]);
 
-  const handleVoltar = useCallback(() => {
-    if (voiceEnabled) VoiceService.speak('Voltando para página inicial');
-    onNavigate?.('Inicio');
-  }, [onNavigate, voiceEnabled]);
-
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     if (voiceEnabled) VoiceService.speak('Atualizando busca');
@@ -575,6 +659,23 @@ export default function Buscar({ onNavigate }) {
       realizarBusca();
     });
   }, [realizarBusca, voiceEnabled]);
+
+  const alternarVisibilidadeFiltros = useCallback(() => {
+    LayoutAnimation.configureNext({
+      duration: 240,
+      update: { type: LayoutAnimation.Types.easeInEaseOut },
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+
+    setFiltrosVisiveis((anterior) => {
+      const proximo = !anterior;
+      if (voiceEnabled) {
+        VoiceService.speak(proximo ? 'Painel de filtros expandido' : 'Painel de filtros recolhido');
+      }
+      return proximo;
+    });
+  }, [voiceEnabled]);
 
   // CARREGAR DADOS INICIAIS
   const carregarDadosIniciais = useCallback(async () => {
@@ -625,12 +726,19 @@ export default function Buscar({ onNavigate }) {
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
   const numColumns = useMemo(() => {
+    if (zoomAplicado) return 1;
     if (isDesktop) return 2;
     if (isTablet) return 2;
     return 1;
-  }, [isDesktop, isTablet]);
+  }, [zoomAplicado, isDesktop, isTablet]);
 
-  const cardCompact = useMemo(() => isDesktop, [isDesktop]);
+  const cardCompact = useMemo(() => isDesktop && !zoomAplicado, [isDesktop, zoomAplicado]);
+
+  const larguraColunaFiltros = useMemo(() => {
+    const larguraBase = 320;
+    const incrementoZoom = (escalaZoom - 1) * 120;
+    return Math.min(460, Math.max(320, Math.round(larguraBase + incrementoZoom)));
+  }, [escalaZoom]);
 
   useEffect(() => {
     if (voiceEnabled) {
@@ -745,21 +853,22 @@ export default function Buscar({ onNavigate }) {
     );
   }
 
+  const cabecalhoLista = (
+    <CabecalhoPagina
+      titulo="Buscar Locais"
+      subtitulo={zoomAplicado ? undefined : 'Encontre e avalie locais acessíveis'}
+      altoContraste={isHighContrast}
+      style={styles.cabecalhoBuscar}
+    />
+  );
+
   return (
     <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
-      <CabecalhoPagina
-        titulo="Buscar Locais"
-        subtitulo="Encontre e avalie locais acessíveis"
-        onVoltar={handleVoltar}
-        textoVoltar="Voltar"
-        altoContraste={isHighContrast}
-      />
-
-      {isDesktop ? (
+      {isDesktop && !usarLayoutEmpilhado ? (
         // Layout Desktop
         <View style={styles.conteudoDesktop}>
           {/* Coluna de Filtros */}
-          <View style={styles.colunaFiltrosDesktop}>
+          <View style={[styles.colunaFiltrosDesktop, { width: larguraColunaFiltros }]}> 
             <ScrollView 
               style={styles.filtrosScrollView}
               showsVerticalScrollIndicator={true}
@@ -781,30 +890,37 @@ export default function Buscar({ onNavigate }) {
                 theme={theme}
                 isHighContrast={isHighContrast}
                 voiceEnabled={voiceEnabled}
+                fontSizeMultiplier={fontSizeMultiplier}
+                filtrosVisiveis={filtrosVisiveis}
+                onToggleFiltros={alternarVisibilidadeFiltros}
               />
             </ScrollView>
           </View>
 
           <View style={styles.colunaResultadosDesktop}>
-            <View style={styles.resultadosHeader}>
-              <ThemedText variant="h3" weight="bold">
-                {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
-              </ThemedText>
-              {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
-              {voiceEnabled && !loading && totalResultados > 0 && (
-                <TouchableOpacity onPress={anunciarResultados} style={styles.voiceResultButton}>
-                  <Ionicons name="volume-medium-outline" size={18} color={theme.colors.primary} />
-                </TouchableOpacity>
-              )}
-            </View>
-            <Spacer size="md" />
-            
             <FlatList
               data={resultados}
               key={numColumns}
               numColumns={numColumns}
               keyExtractor={(item, index) => String(item.id || item.idLocal || index)}
               renderItem={renderItem}
+              ListHeaderComponent={
+                <>
+                  {cabecalhoLista}
+                  <View style={styles.resultadosHeader}>
+                    <ThemedText variant="h3" weight="bold">
+                      {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
+                    </ThemedText>
+                    {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
+                    {voiceEnabled && !loading && totalResultados > 0 && (
+                      <TouchableOpacity onPress={anunciarResultados} style={styles.voiceResultButton}>
+                        <Ionicons name="volume-medium-outline" size={18} color={theme.colors.primary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Spacer size="md" />
+                </>
+              }
               ListEmptyComponent={!loading && renderEmptyState}
               contentContainerStyle={styles.resultadosListContent}
               showsVerticalScrollIndicator={false}
@@ -818,7 +934,7 @@ export default function Buscar({ onNavigate }) {
           </View>
         </View>
       ) : (
-        // Layout Mobile
+        // Layout Mobile/Zoom
         <FlatList
           data={resultados}
           key={numColumns}
@@ -827,6 +943,7 @@ export default function Buscar({ onNavigate }) {
           renderItem={renderItem}
           ListHeaderComponent={
             <>
+              {cabecalhoLista}
               <FiltrosCard 
                 onSearchChange={handleSearchChange}
                 categoriasSelecionadas={categoriasSelecionadas}
@@ -842,23 +959,31 @@ export default function Buscar({ onNavigate }) {
                 theme={theme}
                 isHighContrast={isHighContrast}
                 voiceEnabled={voiceEnabled}
+                fontSizeMultiplier={fontSizeMultiplier}
+                filtrosVisiveis={filtrosVisiveis}
+                onToggleFiltros={alternarVisibilidadeFiltros}
+                ocuparLarguraTotal={zoomAplicado}
               />
-              <View style={styles.resultadosHeaderMobile}>
-                <ThemedText variant="h3" weight="bold">
-                  {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
-                </ThemedText>
-                {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
-                {voiceEnabled && !loading && totalResultados > 0 && (
-                  <TouchableOpacity onPress={anunciarResultados}>
-                    <Ionicons name="volume-medium-outline" size={20} color={theme.colors.primary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <Spacer size="md" />
+              {!zoomAplicado && (
+                <>
+                  <View style={styles.resultadosHeaderMobile}>
+                    <ThemedText variant="h3" weight="bold">
+                      {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
+                    </ThemedText>
+                    {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
+                    {voiceEnabled && !loading && totalResultados > 0 && (
+                      <TouchableOpacity onPress={anunciarResultados}>
+                        <Ionicons name="volume-medium-outline" size={20} color={theme.colors.primary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Spacer size="md" />
+                </>
+              )}
             </>
           }
           ListEmptyComponent={!loading && renderEmptyState}
-          contentContainerStyle={styles.listContentMobile}
+          contentContainerStyle={zoomAplicado ? styles.listContentZoom : styles.listContentMobile}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
@@ -880,6 +1005,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 24,
   },
+  cabecalhoBuscar: {
+    marginTop: -10,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
   colunaFiltrosDesktop: {
     width: 320,
     flexShrink: 0,
@@ -899,6 +1029,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 32,
   },
+  listContentZoom: {
+    paddingHorizontal: 0,
+    paddingBottom: 32,
+  },
   
   filtrosCard: {
     padding: 16,
@@ -911,6 +1045,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  filtrosConteudo: {
+    overflow: 'hidden',
   },
   filtrosTitulo: {
     flex: 1,

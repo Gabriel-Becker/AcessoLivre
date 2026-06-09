@@ -21,6 +21,7 @@ export default function Configuracoes({ onNavigate }) {
   const isMobile = width < (breakpoints.tablet || 768);
   const isWeb = Platform.OS === 'web';
   const exibirControleFonte = isWeb && !isMobile;
+  const escala = Math.max(1, Number(fontSizeMultiplier) || 1);
   const corBordaOpcao = isHighContrast ? theme.colors.border : theme.colors.borderLight;
   const corFundoOpcao = isHighContrast ? theme.colors.surfaceSecondary : theme.colors.surface;
   const corFundoOpcaoSelecionada = isHighContrast ? 'rgba(0, 247, 239, 0.12)' : 'rgba(74, 144, 226, 0.10)';
@@ -45,10 +46,18 @@ export default function Configuracoes({ onNavigate }) {
         </CardSecao>
 
         <CardSecao titulo="Acessibilidade" icone="accessibility-outline" altoContraste={isHighContrast}>
-          <View style={styles.linha}>
-            <ThemedText weight="medium">Alto contraste</ThemedText>
-            <Switch value={isHighContrast} onValueChange={toggleTheme} />
+          <View style={[styles.linha, { paddingVertical: Math.round(8 * escala) }]}>
+            <ThemedText weight="medium" style={{ fontSize: Math.round(14 * escala) }}>Alto contraste</ThemedText>
+            <Switch
+              value={isHighContrast}
+              onValueChange={toggleTheme}
+              style={{ transform: [{ scale: escala }], marginRight: Math.round((escala - 1) * 20) }}
+            />
           </View>
+
+          {exibirControleFonte ? (
+            <View style={[styles.separador, { borderTopColor: theme.colors.borderLight }]} />
+          ) : null}
 
           {exibirControleFonte ? (
             <View style={styles.blocoFonte}>
@@ -137,6 +146,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 8,
+  },
+  separador: {
+    borderTopWidth: 1,
+    marginVertical: 8,
   },
   blocoFonte: {
     marginTop: 8,
