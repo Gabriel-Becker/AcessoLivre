@@ -307,7 +307,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
 
 FiltroAcessibilidade.displayName = 'FiltroAcessibilidade';
 
-const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voiceEnabled, escalaFiltro = 1 }) => {
+const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voiceEnabled, escalaFiltro = 1, isHighContrast = false }) => {
   const renderStars = useCallback((nota) => {
     const stars = [];
     const starSize = Math.round((isDesktop ? 16 : 20) * escalaFiltro);
@@ -367,13 +367,32 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
           {[0, 1, 2, 3, 4, 4.5].map(nota => (
             <TouchableOpacity 
               key={nota} 
-              style={[styles.notaBotao, notaMinima === nota && styles.notaBotaoAtivo, { borderColor: theme.colors.primary, paddingHorizontal: Math.round(12 * escalaFiltro), paddingVertical: Math.round(6 * escalaFiltro), borderRadius: Math.round(20 * escalaFiltro) }]} 
+              style={[
+                styles.notaBotao,
+                notaMinima === nota && {
+                  backgroundColor: isHighContrast ? theme.colors.primary : '#E8F0FF',
+                  borderColor: theme.colors.primary,
+                },
+                {
+                  borderColor: theme.colors.primary,
+                  paddingHorizontal: Math.round(12 * escalaFiltro),
+                  paddingVertical: Math.round(6 * escalaFiltro),
+                  borderRadius: Math.round(20 * escalaFiltro),
+                }
+              ]} 
               onPress={() => handleNotaChange(nota)}
               accessibilityLabel={`${nota === 0 ? 'Qualquer nota' : `${nota} estrelas ou mais`}`}
               accessibilityRole="radio"
               accessibilityState={{ selected: notaMinima === nota }}
             >
-              <ThemedText style={[styles.notaBotaoTexto, notaMinima === nota && { color: theme.colors.primary, fontWeight: 'bold' }, { fontSize: Math.round((isDesktop ? 11 : 12) * escalaFiltro) }]}>
+              <ThemedText style={[
+                styles.notaBotaoTexto,
+                notaMinima === nota && {
+                  color: isHighContrast ? (theme.colors.textOnPrimary || '#FFFFFF') : theme.colors.primary,
+                  fontWeight: 'bold'
+                },
+                { fontSize: Math.round((isDesktop ? 11 : 12) * escalaFiltro) }
+              ]}>
                 {nota === 0 ? 'Qualquer' : `${nota}+`}
               </ThemedText>
             </TouchableOpacity>
@@ -511,6 +530,7 @@ const FiltrosCard = React.memo(({
             isDesktop={isDesktop} 
             voiceEnabled={voiceEnabled}
             escalaFiltro={escalaFiltro}
+            isHighContrast={isHighContrast}
           />
 
           {!isDesktop && (

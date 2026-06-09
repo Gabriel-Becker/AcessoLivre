@@ -20,7 +20,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
 
-  const isMobile = width < BREAKPOINTS.MOBILE;
   const isTablet = width >= BREAKPOINTS.MOBILE && width < BREAKPOINTS.TABLET;
   const isDesktop = width >= BREAKPOINTS.TABLET;
 
@@ -43,11 +42,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
     return Math.round(alturaBase * escalaZoom);
   }, [isDesktop, isTablet, compact, escalaZoom]);
-
-  const imageHeightBadge = useMemo(() => {
-    if (compact) return 80;
-    return imageHeight;
-  }, [imageHeight, compact]);
 
   const fontSize = useMemo(() => ({
     nome: (isDesktop ? 15 : 16) * escalaZoom,
@@ -85,11 +79,11 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={starSize} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star" size={starSize} color={paleta.estrelaAtiva} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={starSize} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star-half" size={starSize} color={paleta.estrelaAtiva} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color="#CCCCCC" />);
+        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color={paleta.estrelaInativa} />);
       }
     }
     return stars;
@@ -124,8 +118,17 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const totalRecursos = tiposAcessibilidade.length;
   const isRecomendado = avaliacaoMedia > 4;
 
-  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop, isTablet, isMobile, compact), 
-    [t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop, isTablet, isMobile, compact]);
+  const paleta = useMemo(() => ({
+    estrelaAtiva: t.colors.warning,
+    estrelaInativa: t.colors.textTertiary,
+    textoSecundario: t.colors.textSecondary,
+    textoPrimario: t.colors.textPrimary,
+    sucesso: t.colors.success || '#34C759',
+    badgeTexto: t.colors.textOnPrimary || '#FFFFFF',
+  }), [t]);
+
+  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop), 
+    [t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop]);
 
   return (
     <TouchableOpacity
@@ -150,7 +153,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         
         {isNew && !compact && (
           <View style={estilos.newBadge}>
-            <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color="#FFF" />
+            <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color={paleta.badgeTexto} />
             <ThemedText weight="bold" style={estilos.newBadgeText}>Novo</ThemedText>
           </View>
         )}
@@ -196,7 +199,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
         {endereco && (enderecoLinha1 || enderecoLinha2) && !compact && (
           <View style={estilos.enderecoContainer}>
-            <Ionicons name="location-outline" size={isDesktop ? 12 : 14} color="#888888" style={estilos.enderecoIcon} />
+            <Ionicons name="location-outline" size={isDesktop ? 12 : 14} color={paleta.textoSecundario} style={estilos.enderecoIcon} />
             <View style={estilos.enderecoTextos}>
               {enderecoLinha1 ? (
                 <ThemedText style={estilos.enderecoLinha1} numberOfLines={1}>
@@ -215,7 +218,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         <View style={estilos.recomendadoRecursosRow}>
           {isRecomendado && !compact && (
             <View style={estilos.recomendadoContainer}>
-              <Ionicons name="checkmark-circle" size={isDesktop ? 14 : 16} color="#4CAF50" />
+              <Ionicons name="checkmark-circle" size={isDesktop ? 14 : 16} color={paleta.sucesso} />
               <ThemedText weight="semibold" style={estilos.recomendadoTexto}>
                 Recomendado
               </ThemedText>
@@ -249,27 +252,27 @@ const styles = StyleSheet.create({
   },
 });
 
-function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop, isTablet, isMobile, compact) {
+function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop) {
   return StyleSheet.create({
     container: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: t.colors.surface,
       borderRadius: spacing.borderRadius,
       overflow: 'hidden',
       marginBottom: 16,
       borderWidth: contrasteAtivo ? 2 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
       width: '100%',
-      shadowColor: '#000',
+      shadowColor: t.colors.shadow,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
+      shadowOpacity: contrasteAtivo ? 0 : 0.08,
       shadowRadius: 12,
-      elevation: 4,
+      elevation: contrasteAtivo ? 0 : 4,
     },
     imageContainer: {
       width: '100%',
       height: imageHeight,
       position: 'relative',
-      backgroundColor: '#F5F5F5',
+      backgroundColor: t.colors.surfaceSecondary,
     },
     image: {
       width: '100%',
@@ -279,20 +282,20 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#F5F5F5',
+      backgroundColor: t.colors.surfaceSecondary,
     },
     newBadge: {
       position: 'absolute',
       top: 12,
       left: 12,
-      backgroundColor: '#2563EB',
+      backgroundColor: t.colors.primary,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
       paddingHorizontal: isDesktop ? 8 : 10,
       paddingVertical: isDesktop ? 4 : 5,
       borderRadius: 20,
-      shadowColor: '#000',
+      shadowColor: t.colors.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -301,25 +304,25 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     },
     newBadgeText: {
       fontSize: fontSize.badgeNovo,
-      color: '#FFFFFF',
+      color: t.colors.textOnPrimary || '#FFFFFF',
       letterSpacing: 0.5,
     },
     imagemBadge: {
       position: 'absolute',
       bottom: 12,
       right: 12,
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: contrasteAtivo ? t.colors.surface : 'rgba(0,0,0,0.7)',
       paddingHorizontal: isDesktop ? 8 : 10,
       paddingVertical: isDesktop ? 4 : 5,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.3)',
+      borderColor: contrasteAtivo ? t.colors.border : 'rgba(255,255,255,0.3)',
       zIndex: 10,
       elevation: 5,
     },
     imagemBadgeTexto: {
       fontSize: fontSize.badgeImagem,
-      color: '#FFFFFF',
+      color: contrasteAtivo ? t.colors.textPrimary : '#FFFFFF',
       fontWeight: 'bold',
     },
     contentContainer: {
@@ -328,24 +331,26 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     nomeLocal: {
       fontSize: fontSize.nome,
       fontWeight: 'bold',
-      color: '#1A1A1A',
+      color: t.colors.textPrimary,
       marginBottom: 2,
     },
     nomeLocalPrincipal: {
       fontSize: fontSize.endereco,
-      color: '#888888',
+      color: t.colors.textSecondary,
       marginTop: 2,
     },
     categoriaBadge: {
-      backgroundColor: '#EAF3FF',
+      backgroundColor: contrasteAtivo ? t.colors.surfaceSecondary : '#EAF3FF',
       paddingHorizontal: isDesktop ? 8 : 12,
       paddingVertical: isDesktop ? 3 : 4,
       borderRadius: 16,
       alignSelf: 'flex-start',
+      borderWidth: contrasteAtivo ? 1 : 0,
+      borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
     categoriaTexto: {
       fontSize: fontSize.categoria,
-      color: '#2563EB',
+      color: t.colors.primary,
       fontWeight: '600',
     },
     ratingContainer: {
@@ -361,11 +366,11 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     ratingNumber: {
       fontSize: fontSize.rating,
       fontWeight: 'bold',
-      color: '#1A1A1A',
+      color: t.colors.textPrimary,
     },
     ratingCount: {
       fontSize: fontSize.endereco,
-      color: '#666666',
+      color: t.colors.textSecondary,
     },
     enderecoContainer: {
       flexDirection: 'row',
@@ -380,12 +385,12 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     },
     enderecoLinha1: {
       fontSize: fontSize.endereco,
-      color: '#666666',
+      color: t.colors.textSecondary,
       lineHeight: 16,
     },
     enderecoLinha2: {
       fontSize: fontSize.endereco,
-      color: '#666666',
+      color: t.colors.textSecondary,
       lineHeight: 16,
     },
     recomendadoRecursosRow: {
@@ -395,7 +400,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       width: '100%',
       paddingTop: spacing.padding - 4,
       borderTopWidth: 1,
-      borderTopColor: '#F0F0F0',
+      borderTopColor: t.colors.borderLight,
     },
     recomendadoContainer: {
       flexDirection: 'row',
@@ -405,7 +410,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     recomendadoTexto: {
       fontSize: fontSize.recomendado,
       fontWeight: '600',
-      color: '#1A1A1A',
+      color: t.colors.textPrimary,
     },
     recursosContainer: {
       flexDirection: 'row',
@@ -420,11 +425,11 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     recursosNumero: {
       fontSize: fontSize.recursosNumero,
       fontWeight: 'bold',
-      color: '#2563EB',
+      color: t.colors.primary,
     },
     recursosLabel: {
       fontSize: fontSize.recursos,
-      color: '#666666',
+      color: t.colors.textSecondary,
     },
   });
 }

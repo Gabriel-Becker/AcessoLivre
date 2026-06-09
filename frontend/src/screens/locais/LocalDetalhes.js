@@ -233,7 +233,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         throw new Error('Local não encontrado');
       }
       
-      const imagensList = dados.imagensCompletas || [];
+      const imagensList = HomeService.extrairTodasImagens(dados);
       
       let avaliacoes = [];
       try {
@@ -605,7 +605,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
             )}
           </View>
           <Spacer size="sm" />
-          <LocalGallery imagens={local.imagens?.map(img => img.url) || []} />
+          <LocalGallery imagens={local.imagens || []} />
         </Card>
 
         <Spacer size="lg" />

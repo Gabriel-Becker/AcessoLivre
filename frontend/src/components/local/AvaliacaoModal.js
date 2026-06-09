@@ -18,9 +18,30 @@ import { getTheme } from '../../config/theme';
 
 export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
-  const { getUsuarioId, isAuthenticated, getUsuarioNome } = useAuth();
+  const { getUsuarioId, isAuthenticated } = useAuth();
   const theme = getTheme(isHighContrast);
   const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
+  const estilosDinamicos = {
+    criterioContainer: {
+      backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F9F9F9',
+      borderWidth: isHighContrast ? 2 : 0,
+      borderColor: theme.colors.border,
+    },
+    criterioTitulo: {
+      color: theme.colors.textPrimary,
+    },
+    notaDescricao: {
+      color: theme.colors.textSecondary,
+    },
+    mediaContainer: {
+      backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : `${theme.colors.primary}10`,
+      borderWidth: isHighContrast ? 2 : 0,
+      borderColor: theme.colors.border,
+    },
+    mediaTexto: {
+      color: theme.colors.textPrimary,
+    },
+  };
   const tamanhoEstrela = Math.round(32 * escalaZoom);
   const estilosZoom = {
     titulo: {
@@ -213,12 +234,12 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 <Spacer size="lg" />
 
                 {/* Critério 1: Acessibilidade Visual */}
-                <View style={styles.criterioContainer}>
+                <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                   <View style={styles.criterioHeader}>
                     <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                       <Ionicons name="eye-outline" size={24} color={theme.colors.primary} />
                     </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                    <ThemedText weight="bold" style={[styles.criterioTitulo, estilosDinamicos.criterioTitulo]}>
                       Acessibilidade Visual
                     </ThemedText>
                   </View>
@@ -227,7 +248,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     {renderStars(notaVisual, setNotaVisual, hoverVisual, setHoverVisual, 'Visual', loading)}
                   </View>
                   
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                  <ThemedText variant="caption" color="textSecondary" style={[styles.notaDescricao, estilosDinamicos.notaDescricao]}>
                     {getNotaDescricao(notaVisual)}
                   </ThemedText>
                 </View>
@@ -235,12 +256,12 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 <Spacer size="lg" />
 
                 {/* Critério 2: Acessibilidade Motora */}
-                <View style={styles.criterioContainer}>
+                <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                   <View style={styles.criterioHeader}>
                     <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                       <Ionicons name="body-outline" size={24} color={theme.colors.primary} />
                     </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                    <ThemedText weight="bold" style={[styles.criterioTitulo, estilosDinamicos.criterioTitulo]}>
                       Acessibilidade Motora
                     </ThemedText>
                   </View>
@@ -249,7 +270,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     {renderStars(notaMotora, setNotaMotora, hoverMotora, setHoverMotora, 'Motora', loading)}
                   </View>
                   
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                  <ThemedText variant="caption" color="textSecondary" style={[styles.notaDescricao, estilosDinamicos.notaDescricao]}>
                     {getNotaDescricao(notaMotora)}
                   </ThemedText>
                 </View>
@@ -257,12 +278,12 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                 <Spacer size="lg" />
 
                 {/* Critério 3: Acessibilidade Auditiva */}
-                <View style={styles.criterioContainer}>
+                <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                   <View style={styles.criterioHeader}>
                     <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                       <Ionicons name="ear-outline" size={24} color={theme.colors.primary} />
                     </View>
-                    <ThemedText weight="bold" style={styles.criterioTitulo}>
+                    <ThemedText weight="bold" style={[styles.criterioTitulo, estilosDinamicos.criterioTitulo]}>
                       Acessibilidade Auditiva
                     </ThemedText>
                   </View>
@@ -271,7 +292,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     {renderStars(notaAuditiva, setNotaAuditiva, hoverAuditiva, setHoverAuditiva, 'Auditiva', loading)}
                   </View>
                   
-                  <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                  <ThemedText variant="caption" color="textSecondary" style={[styles.notaDescricao, estilosDinamicos.notaDescricao]}>
                     {getNotaDescricao(notaAuditiva)}
                   </ThemedText>
                 </View>
@@ -280,12 +301,12 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 {/* Média atual */}
                 {todasNotasSelecionadas && (
-                  <View style={[styles.mediaContainer, { backgroundColor: theme.colors.primary + '10' }]}>
-                    <ThemedText weight="bold">Média Geral:</ThemedText>
+                  <View style={[styles.mediaContainer, estilosDinamicos.mediaContainer]}>
+                    <ThemedText weight="bold" style={estilosDinamicos.mediaTexto}>Média Geral:</ThemedText>
                     <View style={styles.mediaStars}>
                       {renderStars(parseFloat(calcularMedia()), null, null, null, 'Média', true)}
                     </View>
-                    <ThemedText weight="bold" style={styles.mediaValor}>
+                    <ThemedText weight="bold" style={[styles.mediaValor, estilosDinamicos.mediaTexto]}>
                       {calcularMedia()}
                     </ThemedText>
                   </View>
