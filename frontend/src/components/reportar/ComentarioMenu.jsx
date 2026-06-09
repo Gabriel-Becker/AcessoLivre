@@ -101,7 +101,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
       <ReportarModal
         visible={showReportarModal}
         onClose={handleModalClose}
-        tipo="COMENTARIO"
+        tipo="AVALIACAO"
         targetId={getComentarioId()}
         targetName={`Comentário de ${autorNome || 'usuário'}`}
       />

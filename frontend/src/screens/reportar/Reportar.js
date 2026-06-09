@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -266,35 +266,50 @@ export default function Reportar({ onNavigate }) {
 
   const isDesktop = width >= breakpoints.desktop;
   const zoomAtivo = fontSizeMultiplier >= 1.5;
+  
+  // ✅ Proteção contra desmontagem
+  const mountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState({ tipo: null, status: null });
 
-  // Verificar se é admin (simplificado - ajustar conforme necessidade)
+  // Verificar se é admin
   const isAdmin = user?.role === 'ADMIN' || user?.admin === true;
 
-  const carregarDenuncias = useCallback(async (refresh = false) => {
-    if (refresh) setRefreshing(true);
+  // ✅ PROBLEMA 5 CORRIGIDO: carregarDenuncias estável
+  const carregarDenuncias = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
       const result = await ReportarService.getAll(filters);
-      if (result.success) {
+      if (result.success && mountedRef.current) {
         setReports(result.data || []);
-      } else {
+      } else if (!result.success && mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
     } catch (error) {
       console.error('Erro ao carregar denúncias:', error);
-      toastHelper.showError('Erro ao carregar denúncias');
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao carregar denúncias');
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [filters]);
 
+  // ✅ useEffect único para carregamento inicial e quando filtros mudam
   useEffect(() => {
     if (!isAuthenticated) {
       toastHelper.showInfo('Faça login para acessar esta página');
@@ -318,13 +333,6 @@ export default function Reportar({ onNavigate }) {
   const handleFilterChange = useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
-
-  // Efeito para aplicar filtros
-  useEffect(() => {
-    if (!loading && !refreshing) {
-      carregarDenuncias();
-    }
-  }, [filters]);
 
   const totalReports = reports.length;
   const pendingCount = reports.filter(r => r.status === 'PENDING').length;

@@ -4,7 +4,7 @@ import LocalMapper from './LocalMapper';
 class BuscarService {
   static cache = null;
   static cacheTimestamp = null;
-  static CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+  static CACHE_DURATION = 5 * 60 * 1000; 
 
   static async carregarTodosLocais(forceRefresh = false) {
     try {

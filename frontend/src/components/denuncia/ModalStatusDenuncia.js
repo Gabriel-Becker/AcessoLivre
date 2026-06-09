@@ -1,15 +1,21 @@
-// components/denuncia/ModalStatusDenuncia.js
 import React, { useState, useEffect } from 'react';
 import { Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
 import { statusOptions } from '../../components/denuncia/filtrosDenuncias';
-import DenunciaService from '../../services/DenunciaService';
 
-export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConfirm, onResolve, carregando, isHighContrast, theme }) {
+export default function ModalStatusDenuncia({ 
+  visible, 
+  onClose, 
+  denuncia, 
+  onConfirm, 
+  onResolve, 
+  carregando, 
+  isHighContrast, 
+  theme 
+}) {
   const [selectedStatus, setSelectedStatus] = useState(denuncia?.status || 'PENDING');
-  const [resolvendo, setResolvendo] = useState(false);
 
   useEffect(() => {
     if (denuncia) setSelectedStatus(denuncia.status || 'PENDING');
@@ -20,17 +26,12 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
     return option?.color || '#95A5A6';
   };
 
-  const getStatusLabel = (status) => {
-    const option = statusOptions.find(opt => opt.value === status);
-    return option?.label || status;
-  };
-
   const getTipoLabel = (tipo) => {
     switch (tipo) {
       case 'LOCAL':
-        return '🏢 Local';
+        return 'Local';
       case 'AVALIACAO':
-        return '⭐ Avaliação';
+        return 'Avaliação';
       default:
         return tipo || 'Desconhecido';
     }
@@ -47,40 +48,33 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
     }
   };
 
-  const handleResolver = async () => {
-    setResolvendo(true);
-    try {
-      const result = await DenunciaService.resolver(denuncia?.id);
-      if (result.success) {
-        if (onResolve) {
-          onResolve(denuncia);
-        }
-        onClose();
-      } else {
-        // Toast error será mostrado pelo componente pai
-        if (onConfirm) {
-          onConfirm('RESOLVED', true);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao resolver denúncia:', error);
-    } finally {
-      setResolvendo(false);
+  const handleResolver = () => {
+    if (!denuncia) return;
+    if (onResolve) {
+      onResolve(denuncia);
     }
   };
+
+  const handleStatusUpdate = () => {
+    if (!denuncia) return;
+    if (onConfirm) {
+      onConfirm(selectedStatus);
+    }
+  };
+
+  const statusOptionsSemResolvido = statusOptions.filter(opt => opt.value !== 'RESOLVED');
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
           <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
-            Atualizar Status
+            Gerenciar Denúncia
           </ThemedText>
 
           <Spacer size="md" />
 
-          {/* Informações da Denúncia */}
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: theme.colors.background + '80' }]}>
             <View style={styles.infoHeader}>
               <Ionicons 
                 name={getTipoIcon(denuncia?.tipo)} 
@@ -95,24 +89,24 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
             <Spacer size="xs" />
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Denúncia #</ThemedText>
-              <ThemedText weight="medium">{denuncia?.id}</ThemedText>
+              <ThemedText variant="caption" color="textSecondary">Denúncia</ThemedText>
+              <ThemedText weight="medium">#{denuncia?.id}</ThemedText>
             </View>
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Alvo:</ThemedText>
-              <ThemedText weight="medium">{denuncia?.targetName || 'Não informado'}</ThemedText>
+              <ThemedText variant="caption" color="textSecondary">Alvo</ThemedText>
+              <ThemedText weight="medium" numberOfLines={2}>{denuncia?.targetName || 'Não informado'}</ThemedText>
             </View>
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Motivo:</ThemedText>
+              <ThemedText variant="caption" color="textSecondary">Motivo</ThemedText>
               <ThemedText weight="medium">{denuncia?.motivoLabel || denuncia?.motivo}</ThemedText>
             </View>
             
             {denuncia?.descricao && (
               <View style={styles.infoRow}>
-                <ThemedText variant="caption" color="textSecondary">Descrição:</ThemedText>
-                <ThemedText size="sm">{denuncia.descricao}</ThemedText>
+                <ThemedText variant="caption" color="textSecondary">Descrição</ThemedText>
+                <ThemedText size="sm" numberOfLines={3}>{denuncia.descricao}</ThemedText>
               </View>
             )}
           </View>
@@ -120,13 +114,13 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
           <Spacer size="lg" />
 
           <ThemedText weight="bold" altoContraste={isHighContrast}>
-            Alterar status manualmente:
+            Alterar status manualmente
           </ThemedText>
 
           <Spacer size="sm" />
 
           <View style={styles.statusOptionsContainer}>
-            {statusOptions.map((option) => (
+            {statusOptionsSemResolvido.map((option) => (
               <TouchableOpacity
                 key={option.value}
                 style={[
@@ -152,29 +146,15 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
           <Spacer size="xl" />
 
           <View style={styles.modalBotoes}>
-            {/* Botão Resolver e remover conteúdo */}
             <Button
               variant="danger"
               size="medium"
               fullWidth
               onPress={handleResolver}
-              loading={resolvendo || carregando}
-              disabled={resolvendo || carregando}
+              loading={carregando}
+              disabled={carregando || !denuncia}
             >
-              🗑️ Resolver e remover conteúdo
-            </Button>
-
-            <Spacer size="xs" />
-
-            <Button
-              variant="primary"
-              size="medium"
-              fullWidth
-              onPress={() => onConfirm(selectedStatus)}
-              loading={carregando && !resolvendo}
-              disabled={carregando || resolvendo}
-            >
-              Atualizar Status
+              Resolver e Remover Conteúdo
             </Button>
 
             <Spacer size="xs" />
@@ -183,8 +163,21 @@ export default function ModalStatusDenuncia({ visible, onClose, denuncia, onConf
               variant="outline"
               size="medium"
               fullWidth
+              onPress={handleStatusUpdate}
+              loading={carregando}
+              disabled={carregando || !denuncia}
+            >
+              Atualizar Status
+            </Button>
+
+            <Spacer size="xs" />
+
+            <Button
+              variant="ghost"
+              size="medium"
+              fullWidth
               onPress={onClose}
-              disabled={carregando || resolvendo}
+              disabled={carregando}
             >
               Cancelar
             </Button>
@@ -215,7 +208,6 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
   },
   infoCard: {
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 12,
     padding: 16,
     gap: 8,

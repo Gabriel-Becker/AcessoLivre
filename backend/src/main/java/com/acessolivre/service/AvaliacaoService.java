@@ -40,27 +40,48 @@ public class AvaliacaoService {
         return avaliacaoRepository.findById(id);
     }
 
+    /**
+     * Busca avaliações por local - APENAS PÚBLICAS (moderado = true)
+     * @param idLocal ID do local
+     * @return Lista de avaliações públicas
+     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorLocal(Long idLocal) {
-        log.info("Buscando avaliações por local ID: {}", idLocal);
-        return avaliacaoRepository.findByLocalIdLocal(idLocal);
+        log.info("🔍 Buscando avaliações públicas por local ID: {}", idLocal);
+        // ✅ CORREÇÃO: Filtrar apenas avaliações moderadas (públicas)
+        return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);
     }
 
+    /**
+     * Busca avaliações por usuário - APENAS PÚBLICAS (moderado = true)
+     * @param idUsuario ID do usuário
+     * @return Lista de avaliações públicas do usuário
+     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorUsuario(Long idUsuario) {
-        log.info("Buscando avaliações por usuário ID: {}", idUsuario);
-        return avaliacaoRepository.findByUsuarioIdUsuario(idUsuario);
+        log.info("🔍 Buscando avaliações públicas por usuário ID: {}", idUsuario);
+        // ✅ CORREÇÃO: Filtrar apenas avaliações moderadas (públicas)
+        return avaliacaoRepository.findByUsuarioIdUsuarioAndModerado(idUsuario, true);
     }
 
+    /**
+     * Lista todas as avaliações públicas (moderado = true)
+     * @return Lista de avaliações públicas
+     */
     @Transactional(readOnly = true)
     public List<Avaliacao> listarPublicas() {
-        log.info("Listando avaliações públicas (moderadas)");
+        log.info("📋 Listando todas as avaliações públicas (moderadas)");
         return avaliacaoRepository.findByModerado(true);
     }
 
+    /**
+     * Busca avaliações públicas por local (método específico)
+     * @param idLocal ID do local
+     * @return Lista de avaliações públicas
+     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPublicasPorLocal(Long idLocal) {
-        log.info("Buscando avaliações públicas por local ID: {}", idLocal);
+        log.info("🔍 Buscando avaliações públicas por local ID: {}", idLocal);
         return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);
     }
 
@@ -136,10 +157,10 @@ public class AvaliacaoService {
             // Recalcula a média do local (agora sem esta avaliação)
             localService.recalcularMediaAvaliacoes(idLocal);
             
-            log.info(" [MODERAÇÃO] Avaliação marcada como oculta (soft delete) - ID: {}, Local ID: {}", id, idLocal);
+            log.info("✅ [MODERAÇÃO] Avaliação marcada como oculta (soft delete) - ID: {}, Local ID: {}", id, idLocal);
             
         } catch (Exception e) {
-            log.error(" [MODERAÇÃO] Erro ao remover avaliação ID {}: {}", id, e.getMessage(), e);
+            log.error("❌ [MODERAÇÃO] Erro ao remover avaliação ID {}: {}", id, e.getMessage(), e);
             throw new RuntimeException("Falha ao remover avaliação: " + e.getMessage(), e);
         }
     }

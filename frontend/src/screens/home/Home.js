@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,7 +17,6 @@ import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
 import toastHelper from '../../utils/toastHelper';
 
-// Breakpoints para grid responsivo
 const BREAKPOINTS = {
   MOBILE: 768,
   TABLET: 1200,
@@ -28,6 +27,15 @@ export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
+  
+  
+  const mountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const refreshKey = routeParams?.refreshKey;
   const forceRefresh = routeParams?.forceRefresh;
@@ -145,31 +153,39 @@ export default function Home({ onNavigate, routeParams }) {
       }
       
       const stats = await BuscarService.obterEstatisticas();
-      setEstatisticas({
-        totalLocais: stats.totalLocais || 0,
-        totalAvaliacoes: stats.totalAvaliacoes || 0,
-        mediaGeral: stats.mediaGeral || 0
-      });
+      if (mountedRef.current) {
+        setEstatisticas({
+          totalLocais: stats.totalLocais || 0,
+          totalAvaliacoes: stats.totalAvaliacoes || 0,
+          mediaGeral: stats.mediaGeral || 0
+        });
+      }
 
       const locais = await BuscarService.obterLocaisEmDestaque(12);
-      setLocaisDestaque(locais);
+
+      if (mountedRef.current) {
+        setLocaisDestaque(locais);
+      }
       
       console.log('📊 Home carregada:', {
         locais: stats.totalLocais,
         avaliacoes: stats.totalAvaliacoes,
         destaques: locais.length,
         forcarRecarga,
-        gridColumns: gridConfig.numColumns
       });
       
     } catch (e) {
       console.error('Erro ao carregar Home:', e);
-      toastHelper.showError('Erro ao carregar dados da home');
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao carregar dados da home');
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [gridConfig.numColumns]);
+  }, []); 
 
   useEffect(() => {
     carregarDados(false, false);
@@ -182,7 +198,6 @@ export default function Home({ onNavigate, routeParams }) {
     }
   }, [refreshKey, forceRefresh, carregarDados]);
 
-  // Anunciar quando os dados carregarem e o voice estiver ativo
   useEffect(() => {
     if (!loading && voiceEnabled && !voiceFeedbackGiven && locaisDestaque.length > 0) {
       anunciarHome();
@@ -190,7 +205,7 @@ export default function Home({ onNavigate, routeParams }) {
     }
   }, [loading, voiceEnabled, locaisDestaque.length, anunciarHome, voiceFeedbackGiven]);
 
-  // Resetar feedback quando o voice for reativado
+  
   useEffect(() => {
     if (!voiceEnabled) {
       setVoiceFeedbackGiven(false);
@@ -211,7 +226,7 @@ export default function Home({ onNavigate, routeParams }) {
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     return (
       <View style={[styles.cardWrapper, gridConfig.cardWrapperStyle]}>
         <LocalCard

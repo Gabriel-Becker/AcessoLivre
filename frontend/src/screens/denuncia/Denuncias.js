@@ -1,5 +1,4 @@
-// src/screens/denuncia/Denuncias.js
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { Spacer, ThemedText } from '../../components/commons';
@@ -15,30 +14,30 @@ import {
 
 export default function Denuncias() {
   const { isHighContrast, theme: t } = useThemeContext();
+  const mountedRef = useRef(true);
+  
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-  // Estados
   const [denuncias, setDenuncias] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [buscaDenuncias, setBuscaDenuncias] = useState('');
-  const [filtroStatusDenuncias, setFiltroStatusDenuncias] = useState('todos');
+  const [filtroStatusDenuncias, setFiltroStatusDenuncias] = useState('PENDING');
   const [filtroTipoDenuncias, setFiltroTipoDenuncias] = useState('todos');
   const [estatisticas, setEstatisticas] = useState({ total: 0, pendentes: 0 });
-
-  // Estados para modais
   const [modalStatusVisivel, setModalStatusVisivel] = useState(false);
   const [denunciaSelecionada, setDenunciaSelecionada] = useState(null);
   const [modalExcluirVisivel, setModalExcluirVisivel] = useState(false);
   const [denunciaParaExcluir, setDenunciaParaExcluir] = useState(null);
 
-  const normalizarTexto = (texto) =>
-    String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-
-  // Carregar estatísticas
   const carregarEstatisticas = useCallback(async () => {
     try {
       const result = await DenunciaService.getEstatisticas();
-      if (result.success && result.data) {
+      if (result.success && result.data && mountedRef.current) {
         setEstatisticas({
           total: result.data.TOTAL || 0,
           pendentes: result.data.PENDING || 0,
@@ -49,8 +48,8 @@ export default function Denuncias() {
     }
   }, []);
 
-  // Carregar denúncias
   const carregarDenuncias = useCallback(async () => {
+    if (!mountedRef.current) return;
     setCarregando(true);
     try {
       const filters = {};
@@ -60,109 +59,164 @@ export default function Denuncias() {
 
       const result = await DenunciaService.getAll(filters);
       
-      if (result.success) {
+      if (result.success && mountedRef.current) {
         setDenuncias(result.data || []);
-      } else {
+      } else if (!result.success && mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
     } catch (error) {
       console.error('Erro ao carregar denúncias:', error);
-      toastHelper.showError('Erro ao carregar denúncias');
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao carregar denúncias');
+      }
     } finally {
-      setCarregando(false);
+      if (mountedRef.current) setCarregando(false);
     }
   }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
 
-  // Carregar dados iniciais - apenas uma vez
   useEffect(() => {
     carregarDenuncias();
+  }, [carregarDenuncias]);
+
+  useEffect(() => {
     carregarEstatisticas();
-  }, [carregarDenuncias, carregarEstatisticas]);
+  }, [carregarEstatisticas]);
 
-  // Filtro local dos dados (já que o backend já filtra, isso é redundante mas mantido para segurança)
-  const denunciasFiltradas = useMemo(() => {
-    const termo = normalizarTexto(buscaDenuncias);
-    if (!termo) return denuncias;
-    return denuncias.filter((item) => {
-      const motivo = normalizarTexto(item?.motivoLabel || item?.motivo || '');
-      const targetName = normalizarTexto(item?.targetName || '');
-      return motivo.includes(termo) || targetName.includes(termo);
-    });
-  }, [denuncias, buscaDenuncias]);
+  const atualizarEstatisticasLocalmente = (statusAntigo, statusNovo) => {
+    const eraPendente = statusAntigo === 'PENDING';
+    const ehPendente = statusNovo === 'PENDING';
+    
+    if (eraPendente && !ehPendente) {
+      setEstatisticas(prev => ({
+        total: prev.total,
+        pendentes: Math.max(0, prev.pendentes - 1)
+      }));
+    } else if (!eraPendente && ehPendente) {
+      setEstatisticas(prev => ({
+        total: prev.total,
+        pendentes: prev.pendentes + 1
+      }));
+    }
+  };
 
-  // Handlers
   const handleAtualizarStatus = (denuncia) => {
     setDenunciaSelecionada(denuncia);
     setModalStatusVisivel(true);
   };
 
-  const handleConfirmarStatus = async (novoStatus, isResolveAction = false) => {
+  const handleConfirmarStatus = async (novoStatus) => {
+    if (!denunciaSelecionada) return;
+    
     setCarregandoAcao(true);
+    const statusAntigo = denunciaSelecionada.status;
+    
     try {
       const result = await DenunciaService.updateStatus(denunciaSelecionada.id, novoStatus);
-      if (result.success) {
+      if (result.success && mountedRef.current) {
         toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
-        await carregarDenuncias();
-        await carregarEstatisticas();
+        
+        setDenuncias(prev => prev.map(item =>
+          item.id === denunciaSelecionada.id
+            ? { ...item, status: novoStatus }
+            : item
+        ));
+        
+        atualizarEstatisticasLocalmente(statusAntigo, novoStatus);
         setModalStatusVisivel(false);
-      } else {
+        await carregarEstatisticas();
+      } else if (mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao atualizar status');
       }
     } catch (error) {
-      toastHelper.showError('Erro ao atualizar status');
+      console.error('Erro ao atualizar status:', error);
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao atualizar status');
+      }
     } finally {
-      setCarregandoAcao(false);
+      if (mountedRef.current) setCarregandoAcao(false);
       setDenunciaSelecionada(null);
     }
   };
 
   const handleResolverDenuncia = async (denuncia) => {
+    if (!denuncia) return;
+    
     setCarregandoAcao(true);
+    const statusAntigo = denuncia.status;
+    
     try {
       const result = await DenunciaService.resolver(denuncia.id);
-      if (result.success) {
-        toastHelper.showSuccess(result.message || 'Denúncia resolvida com sucesso');
+      
+      if (result.success && mountedRef.current) {
+        toastHelper.showSuccess('Conteúdo removido e denúncia resolvida com sucesso');
+        
+        setDenuncias(prev => prev.map(item =>
+          item.id === denuncia.id
+            ? { ...item, status: 'RESOLVED' }
+            : item
+        ));
+        
+        atualizarEstatisticasLocalmente(statusAntigo, 'RESOLVED');
+        setModalStatusVisivel(false);
+        setDenunciaSelecionada(null);
+        
+        if (filtroStatusDenuncias === 'PENDING') {
+          await carregarDenuncias();
+        }
+        await carregarEstatisticas();
+        
+      } else if (result.alreadyResolved && mountedRef.current) {
+        toastHelper.showInfo('Esta denúncia já foi processada anteriormente');
         await carregarDenuncias();
         await carregarEstatisticas();
         setModalStatusVisivel(false);
-      } else {
+      } else if (mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao resolver denúncia');
       }
     } catch (error) {
-      toastHelper.showError('Erro ao resolver denúncia');
+      console.error('Erro ao resolver denúncia:', error);
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao resolver denúncia. Tente novamente.');
+      }
     } finally {
-      setCarregandoAcao(false);
-      setDenunciaSelecionada(null);
+      if (mountedRef.current) {
+        setCarregandoAcao(false);
+        setDenunciaSelecionada(null);
+      }
     }
   };
 
   const handleExcluirDenuncia = (denuncia) => {
+    if (!denuncia) return;
     setDenunciaParaExcluir(denuncia);
     setModalExcluirVisivel(true);
   };
 
   const handleConfirmarExcluir = async () => {
+    if (!denunciaParaExcluir) return;
+    
     setCarregandoAcao(true);
     try {
-      // Nota: Este método apenas exclui a denúncia, não o conteúdo
       const result = await DenunciaService.delete(denunciaParaExcluir.id);
-      if (result.success) {
+      if (result.success && mountedRef.current) {
         toastHelper.showSuccess('Denúncia excluída com sucesso');
-        await carregarDenuncias();
+        setDenuncias(prev => prev.filter(item => item.id !== denunciaParaExcluir.id));
         await carregarEstatisticas();
         setModalExcluirVisivel(false);
-      } else {
+      } else if (mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao excluir denúncia');
       }
     } catch (error) {
-      toastHelper.showError('Erro ao excluir denúncia');
+      console.error('Erro ao excluir denúncia:', error);
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao excluir denúncia');
+      }
     } finally {
-      setCarregandoAcao(false);
+      if (mountedRef.current) setCarregandoAcao(false);
       setDenunciaParaExcluir(null);
     }
   };
 
-  // Handlers para a tabela
   const tableHandlers = {
     onAtualizarStatus: handleAtualizarStatus,
     onExcluir: handleExcluirDenuncia,
@@ -177,27 +231,25 @@ export default function Denuncias() {
 
   return (
     <>
-      {/* Stats Banner */}
       <View style={styles.statsBanner}>
-        <View style={[styles.statCard, { backgroundColor: t.colors.primary + '10' }]}>
-          <ThemedText variant="h2" weight="bold" style={{ color: t.colors.primary }}>
-            {estatisticas.total}
-          </ThemedText>
-          <ThemedText variant="caption" color="textSecondary">Total de denúncias</ThemedText>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: t.colors.warning + '10' }]}>
+        <View style={[styles.statCard, { backgroundColor: t.colors.warning + '20' }]}>
           <ThemedText variant="h2" weight="bold" style={{ color: t.colors.warning }}>
             {estatisticas.pendentes}
           </ThemedText>
           <ThemedText variant="caption" color="textSecondary">Pendentes</ThemedText>
         </View>
+        <View style={[styles.statCard, { backgroundColor: t.colors.primary + '10' }]}>
+          <ThemedText variant="h2" weight="bold" style={{ color: t.colors.primary }}>
+            {estatisticas.total}
+          </ThemedText>
+          <ThemedText variant="caption" color="textSecondary">Total</ThemedText>
+        </View>
       </View>
 
       <Spacer size="md" />
 
-      {/* Barra de Filtros */}
       <BarraFiltroAdmin
-        titulo="Planilha de denúncias"
+        titulo="Denúncias"
         pesquisa={buscaDenuncias}
         onChangePesquisa={setBuscaDenuncias}
         pesquisaPlaceholder="Pesquisar por motivo ou alvo"
@@ -207,18 +259,24 @@ export default function Denuncias() {
 
       <Spacer size="sm" />
 
-      {/* Tabela */}
       <TabelaPlanilhaAdmin
         colunas={colunas}
-        dados={denunciasFiltradas}
+        dados={denuncias}
         chaveExtractor={(item) => String(item.id)}
-        renderVazio={<ThemedText size="sm" color="textSecondary">Nenhuma denúncia encontrada.</ThemedText>}
+        renderVazio={
+          <View style={styles.emptyContainer}>
+            <ThemedText size="sm" color="textSecondary" align="center">
+              {filtroStatusDenuncias === 'PENDING' 
+                ? 'Nenhuma denúncia pendente' 
+                : 'Nenhuma denúncia encontrada'}
+            </ThemedText>
+          </View>
+        }
         carregando={carregando}
         larguraMinima={1300}
         altoContraste={isHighContrast}
       />
 
-      {/* Modais */}
       <ModalStatusDenuncia
         visible={modalStatusVisivel}
         onClose={() => {
@@ -259,6 +317,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     borderRadius: 16,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    padding: 32,
     alignItems: 'center',
   },
 });
