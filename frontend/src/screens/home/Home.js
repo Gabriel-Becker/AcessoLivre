@@ -27,10 +27,9 @@ export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
-  
-  
   const mountedRef = useRef(true);
-  
+  const processedRefreshKey = useRef(null);
+
   useEffect(() => {
     return () => {
       mountedRef.current = false;
@@ -51,7 +50,6 @@ export default function Home({ onNavigate, routeParams }) {
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
   const gridConfig = useMemo(() => {
-    // Para fontes muito grandes, manter mais de 1 coluna quando houver espaço
     if (fontSizeMultiplier >= 1.5) {
       if (width >= BREAKPOINTS.DESKTOP) {
         return {
@@ -70,7 +68,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Desktop: 3 colunas
     if (width >= BREAKPOINTS.DESKTOP) {
       return {
         numColumns: 3,
@@ -80,7 +77,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Tablet: 2 colunas
     if (width >= BREAKPOINTS.TABLET) {
       return {
         numColumns: 2,
@@ -90,7 +86,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Mobile: 1 coluna
     return {
       numColumns: 1,
       contentContainerStyle: styles.listContentSingleColumn,
@@ -143,13 +138,14 @@ export default function Home({ onNavigate, routeParams }) {
   }, [locaisDestaque, onNavigate]);
 
   const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
+    if (!mountedRef.current) return;
+    
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
       if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
         BuscarService.invalidateCache();
-        console.log('🔄 Cache invalidado por força');
       }
       
       const stats = await BuscarService.obterEstatisticas();
@@ -167,15 +163,7 @@ export default function Home({ onNavigate, routeParams }) {
         setLocaisDestaque(locais);
       }
       
-      console.log('📊 Home carregada:', {
-        locais: stats.totalLocais,
-        avaliacoes: stats.totalAvaliacoes,
-        destaques: locais.length,
-        forcarRecarga,
-      });
-      
     } catch (e) {
-      console.error('Erro ao carregar Home:', e);
       if (mountedRef.current) {
         toastHelper.showError('Erro ao carregar dados da home');
       }
@@ -185,17 +173,19 @@ export default function Home({ onNavigate, routeParams }) {
         setRefreshing(false);
       }
     }
-  }, []); 
+  }); 
 
   useEffect(() => {
-    carregarDados(false, false);
-  }, [carregarDados]);
+    const precisaForcar = forceRefresh === true;
+    
+    if (refreshKey && processedRefreshKey.current === refreshKey) {
+      return;
 
-  useEffect(() => {
-    if (refreshKey || forceRefresh) {
-      console.log('🔄 Recarregando Home devido a parâmetros:', { refreshKey, forceRefresh });
-      carregarDados(false, forceRefresh === true);
     }
+    
+    processedRefreshKey.current = refreshKey || null;
+    
+    carregarDados(false, precisaForcar);
   }, [refreshKey, forceRefresh, carregarDados]);
 
   useEffect(() => {

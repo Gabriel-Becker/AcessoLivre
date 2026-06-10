@@ -9,16 +9,16 @@ class DenunciaService {
       if (filters.status && filters.status !== 'todos') params.status = filters.status;
       if (filters.tipo && filters.tipo !== 'todos') params.tipo = filters.tipo;
       if (filters.search) params.search = filters.search;
-      
+
       const response = await api.get(this.baseURL, { params });
-      
+
       let denuncias = [];
       if (response.data?.content) {
         denuncias = response.data.content;
       } else if (Array.isArray(response.data)) {
         denuncias = response.data;
       }
-      
+
       return { success: true, data: denuncias };
     } catch (error) {
       console.error('Erro ao listar denúncias:', error);

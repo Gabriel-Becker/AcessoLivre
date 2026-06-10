@@ -26,7 +26,7 @@ export default function Denuncias() {
   const [carregando, setCarregando] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [buscaDenuncias, setBuscaDenuncias] = useState('');
-  const [filtroStatusDenuncias, setFiltroStatusDenuncias] = useState('PENDING');
+  const [filtroStatusDenuncias, setFiltroStatusDenuncias] = useState('todos');
   const [filtroTipoDenuncias, setFiltroTipoDenuncias] = useState('todos');
   const [estatisticas, setEstatisticas] = useState({ total: 0, pendentes: 0 });
   const [modalStatusVisivel, setModalStatusVisivel] = useState(false);
