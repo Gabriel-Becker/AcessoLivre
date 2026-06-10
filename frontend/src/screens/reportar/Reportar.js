@@ -19,7 +19,6 @@ import ReportarService from '../../services/ReportarService';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
-// Componente de card de denúncia
 const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContrast }) => {
   const [deleting, setDeleting] = useState(false);
 
@@ -184,7 +183,6 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
   );
 };
 
-// Filtros da tela
 const ReportFilters = ({ filters, onFilterChange, theme, isDesktop, isHighContrast }) => {
   const tipos = [
     { id: 'ALL', label: 'Todos' },
@@ -266,8 +264,7 @@ export default function Reportar({ onNavigate }) {
 
   const isDesktop = width >= breakpoints.desktop;
   const zoomAtivo = fontSizeMultiplier >= 1.5;
-  
-  // ✅ Proteção contra desmontagem
+ 
   const mountedRef = useRef(true);
   
   useEffect(() => {
@@ -281,10 +278,8 @@ export default function Reportar({ onNavigate }) {
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState({ tipo: null, status: null });
 
-  // Verificar se é admin
   const isAdmin = user?.role === 'ADMIN' || user?.admin === true;
 
-  // ✅ PROBLEMA 5 CORRIGIDO: carregarDenuncias estável
   const carregarDenuncias = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
@@ -309,7 +304,6 @@ export default function Reportar({ onNavigate }) {
     }
   }, [filters]);
 
-  // ✅ useEffect único para carregamento inicial e quando filtros mudam
   useEffect(() => {
     if (!isAuthenticated) {
       toastHelper.showInfo('Faça login para acessar esta página');

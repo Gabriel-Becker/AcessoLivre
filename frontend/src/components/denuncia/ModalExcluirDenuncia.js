@@ -15,7 +15,7 @@ export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onCon
           <Spacer size="lg" />
 
           <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-            Tem certeza que deseja excluir a denúncia #{denuncia?.id}?
+            Tem certeza que deseja excluir está denúncia #{denuncia?.id} da tabela?
             Esta ação não pode ser desfeita.
           </ThemedText>
 

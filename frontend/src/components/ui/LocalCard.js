@@ -11,6 +11,38 @@ const BREAKPOINTS = {
   DESKTOP: 1400,
 };
 
+const staticStyles = StyleSheet.create({
+  nomeCategoriaRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  imageContainer: {
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#F5F5F5',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  enderecoTextos: {
+    flex: 1,
+  },
+});
+
 export default function LocalCard({ local, onPress, altoContraste = false, compact = false }) {
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
@@ -26,7 +58,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const nome = local?.nome || 'Local sem nome';
   const categoria = local?.categoria || 'Sem categoria';
   const endereco = local?.endereco;
-  const avaliacaoMedia = local?.avaliacaoMedia || 0;
+  const avaliacaoMedia = Number(local?.avaliacaoMedia || 0);
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
   const tiposAcessibilidade = local?.tiposAcessibilidade || [];
   const nomeLocalPrincipal = local?.nomeLocalPrincipal || null;
@@ -36,31 +68,35 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const imagemUrl = local?.imagemUrl || local?.imagens?.[0]?.urlCompleta || local?.imagens?.[0]?.url || null;
 
   const imageHeight = useMemo(() => {
-    const alturaBase = compact
+    return compact
       ? (isDesktop ? 120 : isTablet ? 140 : 160)
       : (isDesktop ? 150 : isTablet ? 180 : 200);
-
-    return Math.round(alturaBase * escalaZoom);
-  }, [isDesktop, isTablet, compact, escalaZoom]);
+  }, [isDesktop, isTablet, compact]);
 
   const fontSize = useMemo(() => ({
-    nome: (isDesktop ? 15 : 16) * escalaZoom,
-    categoria: (isDesktop ? 10 : 11) * escalaZoom,
-    badgeNovo: (isDesktop ? 10 : 11) * escalaZoom,
-    badgeImagem: (isDesktop ? 10 : 12) * escalaZoom,
-    endereco: (isDesktop ? 10 : 12) * escalaZoom,
-    rating: (isDesktop ? 13 : 14) * escalaZoom,
-    recursos: (isDesktop ? 11 : 12) * escalaZoom,
-    recursosNumero: (isDesktop ? 12 : 13) * escalaZoom,
-    recomendado: (isDesktop ? 11 : 12) * escalaZoom,
-  }), [isDesktop, escalaZoom]);
+    nome: isDesktop ? 15 : 16,
+    categoria: isDesktop ? 10 : 11,
+    badgeNovo: isDesktop ? 10 : 11,
+    badgeImagem: isDesktop ? 10 : 12,
+    endereco: isDesktop ? 10 : 12,
+    rating: isDesktop ? 13 : 14,
+    recursosNumero: isDesktop ? 12 : 13,
+    recursos: isDesktop ? 11 : 12,
+  }), [isDesktop]);
 
   const spacing = useMemo(() => ({
-    padding: (isDesktop ? 10 : 14) * escalaZoom,
-    gap: (isDesktop ? 4 : 6) * escalaZoom,
-    marginBottom: (isDesktop ? 6 : 8) * escalaZoom,
+    padding: isDesktop ? 10 : 14,
+    gap: isDesktop ? 4 : 6,
+    marginBottom: isDesktop ? 6 : 8,
     borderRadius: isDesktop ? 16 : 20,
-  }), [isDesktop, escalaZoom]);
+  }), [isDesktop]);
+
+  const cardWidth = useMemo(() => {
+    if (isDesktop) {
+      return compact ? 320 : 380;
+    }
+    return '100%';
+  }, [isDesktop, compact]);
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
@@ -73,17 +109,17 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 >= 0.5;
-    const starSize = Math.round((isDesktop ? 12 : 16) * escalaZoom);
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const starSize = isDesktop ? 12 : 16;
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={starSize} color={paleta.estrelaAtiva} />);
+        stars.push(<Ionicons key={i} name="star" size={starSize} color={t.colors.warning} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={starSize} color={paleta.estrelaAtiva} />);
+        stars.push(<Ionicons key={i} name="star-half" size={starSize} color={t.colors.warning} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color={paleta.estrelaInativa} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color={t.colors.textTertiary} />);
       }
     }
     return stars;
@@ -118,15 +154,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const totalRecursos = tiposAcessibilidade.length;
   const isRecomendado = avaliacaoMedia > 4;
 
-  const paleta = useMemo(() => ({
-    estrelaAtiva: t.colors.warning,
-    estrelaInativa: t.colors.textTertiary,
-    textoSecundario: t.colors.textSecondary,
-    textoPrimario: t.colors.textPrimary,
-    sucesso: t.colors.success || '#34C759',
-    badgeTexto: t.colors.textOnPrimary || '#FFFFFF',
-  }), [t]);
-
   const estilos = useMemo(() => criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop), 
     [t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop]);
 
@@ -136,7 +163,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
       onPress={onPress}
       activeOpacity={0.9}
     >
-
       <View style={estilos.imageContainer}>
         {imagemParaExibir ? (
           <Image
@@ -153,7 +179,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         
         {isNew && !compact && (
           <View style={estilos.newBadge}>
-            <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color={paleta.badgeTexto} />
+            <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color="#FFF" />
             <ThemedText weight="bold" style={estilos.newBadgeText}>Novo</ThemedText>
           </View>
         )}
@@ -168,8 +194,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
       </View>
 
       <View style={estilos.contentContainer}>
-        {/* Área do nome + vínculo e categoria */}
-        <View style={styles.nomeCategoriaRow}>
+        <View style={staticStyles.nomeCategoriaRow}>
           <View style={{ flex: 1 }}>
             <ThemedText weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
               {nome}
@@ -188,7 +213,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         </View>
 
         <View style={estilos.ratingContainer}>
-          <View style={estilos.starsContainer}>{renderStars(avaliacaoMedia)}</View>
+          <View style={staticStyles.starsContainer}>{renderStars(avaliacaoMedia)}</View>
           <ThemedText weight="bold" style={estilos.ratingNumber}>
             {avaliacaoMedia.toFixed(1)}
           </ThemedText>
@@ -199,8 +224,8 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
         {endereco && (enderecoLinha1 || enderecoLinha2) && !compact && (
           <View style={estilos.enderecoContainer}>
-            <Ionicons name="location-outline" size={isDesktop ? 12 : 14} color={paleta.textoSecundario} style={estilos.enderecoIcon} />
-            <View style={estilos.enderecoTextos}>
+            <Ionicons name="location-outline" size={isDesktop ? 12 : 14} color={t.colors.textSecondary} style={estilos.enderecoIcon} />
+            <View style={staticStyles.enderecoTextos}>
               {enderecoLinha1 ? (
                 <ThemedText style={estilos.enderecoLinha1} numberOfLines={1}>
                   {enderecoLinha1}
@@ -218,7 +243,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         <View style={estilos.recomendadoRecursosRow}>
           {isRecomendado && !compact && (
             <View style={estilos.recomendadoContainer}>
-              <Ionicons name="checkmark-circle" size={isDesktop ? 14 : 16} color={paleta.sucesso} />
+              <Ionicons name="checkmark-circle" size={isDesktop ? 14 : 16} color="#4CAF50" />
               <ThemedText weight="semibold" style={estilos.recomendadoTexto}>
                 Recomendado
               </ThemedText>
@@ -262,14 +287,13 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       borderWidth: contrasteAtivo ? 2 : 0,
       borderColor: contrasteAtivo ? t.colors.border : 'transparent',
       width: '100%',
-      shadowColor: t.colors.shadow,
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: contrasteAtivo ? 0 : 0.08,
       shadowRadius: 12,
       elevation: contrasteAtivo ? 0 : 4,
     },
     imageContainer: {
-      width: '100%',
       height: imageHeight,
       position: 'relative',
       backgroundColor: t.colors.surfaceSecondary,
@@ -295,7 +319,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       paddingHorizontal: isDesktop ? 8 : 10,
       paddingVertical: isDesktop ? 4 : 5,
       borderRadius: 20,
-      shadowColor: t.colors.shadow,
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
@@ -304,7 +328,8 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     },
     newBadgeText: {
       fontSize: fontSize.badgeNovo,
-      color: t.colors.textOnPrimary || '#FFFFFF',
+      color: '#FFFFFF',
+      fontWeight: 'bold',
       letterSpacing: 0.5,
     },
     imagemBadge: {
@@ -318,7 +343,6 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       borderWidth: 1,
       borderColor: contrasteAtivo ? t.colors.border : 'rgba(255,255,255,0.3)',
       zIndex: 10,
-      elevation: 5,
     },
     imagemBadgeTexto: {
       fontSize: fontSize.badgeImagem,
@@ -346,7 +370,6 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       borderRadius: 16,
       alignSelf: 'flex-start',
       borderWidth: contrasteAtivo ? 1 : 0,
-      borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
     categoriaTexto: {
       fontSize: fontSize.categoria,
@@ -358,10 +381,6 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       alignItems: 'center',
       gap: spacing.gap,
       marginBottom: spacing.marginBottom,
-    },
-    starsContainer: {
-      flexDirection: 'row',
-      gap: 2,
     },
     ratingNumber: {
       fontSize: fontSize.rating,
@@ -380,9 +399,6 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     enderecoIcon: {
       marginTop: 2,
     },
-    enderecoTextos: {
-      flex: 1,
-    },
     enderecoLinha1: {
       fontSize: fontSize.endereco,
       color: t.colors.textSecondary,
@@ -397,8 +413,10 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      flexWrap: 'wrap',
       width: '100%',
       paddingTop: spacing.padding - 4,
+      gap: 8,
       borderTopWidth: 1,
       borderTopColor: t.colors.borderLight,
     },
@@ -408,19 +426,18 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       gap: spacing.gap,
     },
     recomendadoTexto: {
-      fontSize: fontSize.recomendado,
+      fontSize: fontSize.endereco,
       fontWeight: '600',
       color: t.colors.textPrimary,
     },
     recursosContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.gap,
-    },
-    recursosBadge: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      gap: 2,
+      gap: 4,
+      backgroundColor: '#EAF3FF',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 16,
     },
     recursosNumero: {
       fontSize: fontSize.recursosNumero,

@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Helper para obter label do tipo
 export const getTipoLabel = (tipo) => {
   const labels = {
     LOCAL: 'Local',
@@ -45,7 +44,6 @@ export const getTipoLabel = (tipo) => {
   return labels[tipo] || tipo;
 };
 
-// Helper para obter cor do tipo
 export const getTipoColor = (tipo) => {
   switch (tipo) {
     case 'LOCAL': return '#FF6B6B';
@@ -55,7 +53,6 @@ export const getTipoColor = (tipo) => {
   }
 };
 
-// Helper para obter label do status
 export const getStatusLabel = (status) => {
   const labels = {
     PENDING: 'Pendente',
@@ -66,7 +63,6 @@ export const getStatusLabel = (status) => {
   return labels[status] || status;
 };
 
-// Helper para obter cor do status
 export const getStatusColor = (status) => {
   switch (status) {
     case 'PENDING': return '#FFA500';
@@ -77,7 +73,7 @@ export const getStatusColor = (status) => {
   }
 };
 
-// Formatação de data
+
 export const formatarData = (data) => {
   if (!data) return '—';
   try {
@@ -88,7 +84,6 @@ export const formatarData = (data) => {
   }
 };
 
-// Colunas da tabela de denúncias
 export const colunasDenuncias = (handlers, isHighContrast, theme) => {
   const { onAtualizarStatus, onExcluir, carregandoAcao } = handlers;
 

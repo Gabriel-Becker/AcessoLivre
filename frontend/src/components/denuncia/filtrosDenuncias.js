@@ -17,7 +17,8 @@ export const filtrosDenuncias = (filtroStatus, setFiltroStatus, filtroTipo, setF
     label: 'Tipo',
     opcoes: [
       { valor: 'todos', label: 'Todos' },
-      { valor: 'LOCAL', label: 'Locais' }, 
+      { valor: 'LOCAL', label: 'Locais' },
+      { valor: 'COMENTARIO', label: 'Comentários' },
       { valor: 'AVALIACAO', label: 'Avaliações' },
     ],
     valor: filtroTipo,
