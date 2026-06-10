@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+
 import {
   View,
   StyleSheet,
@@ -15,9 +16,9 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
+import SobreService from '../../services/SobreService';
 import toastHelper from '../../utils/toastHelper';
 
-// Breakpoints para grid responsivo
 const BREAKPOINTS = {
   MOBILE: 768,
   TABLET: 1200,
@@ -28,6 +29,14 @@ export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
+  const mountedRef = useRef(true);
+  const processedRefreshKey = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const refreshKey = routeParams?.refreshKey;
   const forceRefresh = routeParams?.forceRefresh;
@@ -36,14 +45,12 @@ export default function Home({ onNavigate, routeParams }) {
   const [refreshing, setRefreshing] = useState(false);
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
-    totalAvaliacoes: 0,
-    mediaGeral: 0
+    totalAvaliacoes: 0
   });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
   const gridConfig = useMemo(() => {
-    // Para fontes muito grandes, manter mais de 1 coluna quando houver espaço
     if (fontSizeMultiplier >= 1.5) {
       if (width >= BREAKPOINTS.DESKTOP) {
         return {
@@ -62,7 +69,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Desktop: 3 colunas
     if (width >= BREAKPOINTS.DESKTOP) {
       return {
         numColumns: 3,
@@ -72,7 +78,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Tablet: 2 colunas
     if (width >= BREAKPOINTS.TABLET) {
       return {
         numColumns: 2,
@@ -82,7 +87,6 @@ export default function Home({ onNavigate, routeParams }) {
       };
     }
 
-    // Mobile: 1 coluna
     return {
       numColumns: 1,
       contentContainerStyle: styles.listContentSingleColumn,
@@ -134,55 +138,68 @@ export default function Home({ onNavigate, routeParams }) {
     return false;
   }, [locaisDestaque, onNavigate]);
 
+  const carregarEstatisticas = useCallback(async () => {
+    try {
+      const metricas = await SobreService.obterMetricasImpacto();
+      if (mountedRef.current) {
+        setEstatisticas({
+          totalLocais: metricas.totalLocais || 0,
+          totalAvaliacoes: metricas.totalAvaliacoes || 0
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      if (mountedRef.current) {
+        setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0 });
+      }
+    }
+  }, []);
+
   const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
+    if (!mountedRef.current) return;
+    
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
       if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
         BuscarService.invalidateCache();
-        console.log('🔄 Cache invalidado por força');
       }
       
-      const stats = await BuscarService.obterEstatisticas();
-      setEstatisticas({
-        totalLocais: stats.totalLocais || 0,
-        totalAvaliacoes: stats.totalAvaliacoes || 0,
-        mediaGeral: stats.mediaGeral || 0
-      });
+      await carregarEstatisticas();
 
       const locais = await BuscarService.obterLocaisEmDestaque(12);
-      setLocaisDestaque(locais);
-      
-      console.log('📊 Home carregada:', {
-        locais: stats.totalLocais,
-        avaliacoes: stats.totalAvaliacoes,
-        destaques: locais.length,
-        forcarRecarga,
-        gridColumns: gridConfig.numColumns
-      });
+
+      if (mountedRef.current) {
+        setLocaisDestaque(locais);
+      }
       
     } catch (e) {
-      console.error('Erro ao carregar Home:', e);
-      toastHelper.showError('Erro ao carregar dados da home');
+      if (mountedRef.current) {
+        toastHelper.showError('Erro ao carregar dados da home');
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [gridConfig.numColumns]);
 
+  }, 
+  [carregarEstatisticas]);
   useEffect(() => {
-    carregarDados(false, false);
-  }, [carregarDados]);
+    const precisaForcar = forceRefresh === true;
+    
+    if (refreshKey && processedRefreshKey.current === refreshKey) {
+      return;
 
-  useEffect(() => {
-    if (refreshKey || forceRefresh) {
-      console.log('🔄 Recarregando Home devido a parâmetros:', { refreshKey, forceRefresh });
-      carregarDados(false, forceRefresh === true);
     }
+    
+    processedRefreshKey.current = refreshKey || null;
+    
+    carregarDados(false, precisaForcar);
   }, [refreshKey, forceRefresh, carregarDados]);
 
-  // Anunciar quando os dados carregarem e o voice estiver ativo
   useEffect(() => {
     if (!loading && voiceEnabled && !voiceFeedbackGiven && locaisDestaque.length > 0) {
       anunciarHome();
@@ -190,7 +207,7 @@ export default function Home({ onNavigate, routeParams }) {
     }
   }, [loading, voiceEnabled, locaisDestaque.length, anunciarHome, voiceFeedbackGiven]);
 
-  // Resetar feedback quando o voice for reativado
+  
   useEffect(() => {
     if (!voiceEnabled) {
       setVoiceFeedbackGiven(false);
@@ -211,7 +228,7 @@ export default function Home({ onNavigate, routeParams }) {
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     return (
       <View style={[styles.cardWrapper, gridConfig.cardWrapperStyle]}>
         <LocalCard

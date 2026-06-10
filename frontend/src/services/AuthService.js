@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/axios';
+import { jwtDecode } from 'jwt-decode';
 
 const TOKEN_KEY = 'jwtToken';
 const USER_KEY = 'userData';
@@ -58,6 +59,7 @@ const valorEhVerdadeiro = (valor) => {
   }
   return false;
 };
+
 const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) => {
   const payload = responseData && typeof responseData === 'object' ? responseData : {};
 
@@ -299,6 +301,11 @@ const AuthService = {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(usuario));
   },
 
+  /**
+   * Decodifica o token JWT usando a biblioteca profissional jwt-decode
+   * Elimina toda a implementação manual de Base64 que causava problemas
+   * entre Web, Android e iOS
+   */
   parseJwt(token) {
     try {
       if (!token || typeof token !== 'string') {
@@ -312,55 +319,15 @@ const AuthService = {
         return null;
       }
       
-      const base64Url = parts[1];
-      if (!base64Url) {
-        console.error('[AuthService] Token inválido: payload vazio');
-        return null;
-      }
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-
-      // Cross-environment base64 decode: try atob, then Buffer (Node/polyfilled), else error gracefully
-      const b64Decode = (input) => {
-        try {
-          if (typeof atob === 'function') return atob(input);
-        } catch (e) {
-          // ignore
-        }
-
-        try {
-          if (typeof Buffer !== 'undefined') return Buffer.from(input, 'base64').toString('binary');
-        } catch (e) {
-          // ignore
-        }
-
-        try {
-          if (typeof globalThis !== 'undefined' && typeof globalThis.atob === 'function') return globalThis.atob(input);
-        } catch (e) {
-          // ignore
-        }
-
-        console.error('[AuthService] Nenhuma função de base64 (atob/Buffer) disponível para decodificar token');
-        return null;
-      };
-
-      const decoded = b64Decode(base64);
-      if (decoded === null) return null;
-
-      const jsonPayload = decodeURIComponent(
-        decoded
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
+      // Usando a biblioteca profissional jwt-decode
+      const decoded = jwtDecode(token);
       
-      const parsedPayload = JSON.parse(jsonPayload);
-      
-      if (!parsedPayload || typeof parsedPayload !== 'object') {
+      if (!decoded || typeof decoded !== 'object') {
         console.error('[AuthService] Token inválido: payload não é um objeto válido');
         return null;
       }
       
-      return parsedPayload;
+      return decoded;
     } catch (error) {
       console.error('[AuthService] Erro ao decodificar token:', error);
       return null;
@@ -391,11 +358,13 @@ const AuthService = {
         return false;
       }
       
-      if (!tokenData.exp || tokenData.exp * 1000 <= Date.now()) {
+      // Verifica se o token expirou baseado no campo 'exp' (timestamp em segundos)
+      if (tokenData.exp && tokenData.exp * 1000 <= Date.now()) {
         await this.logout();
         return false;
       }
       
+      // Valida o token no servidor para garantir que não foi revogado
       const validation = await this.validateToken(token);
       if (!validation.valid) {
         await this.logout();
@@ -553,6 +522,7 @@ const AuthService = {
         try {
           await api.post('/auth/logout');
         } catch (e) {
+          // Ignora erro no logout do backend
         }
       }
     } catch (e) {

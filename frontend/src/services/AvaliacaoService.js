@@ -1,4 +1,3 @@
-// services/AvaliacaoService.js
 import api from '../api/axios';
 
 const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
@@ -10,19 +9,12 @@ const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
 };
 
 class AvaliacaoService {
-  /**
-   * Busca avaliações de um local
-   * @param {number} idLocal - ID do local
-   * @returns {Promise<Object>}
-   */
   static async buscarAvaliacoesPorLocal(idLocal) {
     try {
       const response = await api.get(`/avaliacoes/local/${idLocal}`);
 
       if (response.data && Array.isArray(response.data)) {
-        // Mapear os dados do backend para o formato esperado pelo frontend
         const avaliacoesFormatadas = response.data.map(avaliacao => {
-          // Extrair dados do usuário
           const usuario = avaliacao.usuario || {};
 
           return {
@@ -37,7 +29,6 @@ class AvaliacaoService {
             usuarioNome: usuario.nome || avaliacao.nomeUsuario || 'Usuário',
             usuarioId: usuario.idUsuario || avaliacao.idUsuario,
             usuarioEmail: usuario.email || '',
-            // PRESERVAR A DATA ORIGINAL SEM CONVERSÃO
             dataAvaliacao: avaliacao.dataAvaliacao,
             data: avaliacao.dataAvaliacao,
             moderado: avaliacao.moderado !== false
@@ -59,8 +50,7 @@ class AvaliacaoService {
       
     } catch (error) {
       if (!eh401EmLeituraPublicaDeAvaliacoes(error)) {
-        console.error('❌ Erro ao buscar avaliações:', error);
-        console.error('Detalhes:', error.response?.data);
+        console.error('Erro ao buscar avaliações:', error);
       }
       
       return {
@@ -72,11 +62,6 @@ class AvaliacaoService {
     }
   }
 
-  /**
-   * Busca avaliações de um usuário
-   * @param {number} idUsuario - ID do usuário
-   * @returns {Promise<Object>}
-   */
   static async buscarAvaliacoesPorUsuario(idUsuario) {
     try {
       const response = await api.get(`/avaliacoes/usuario/${idUsuario}`);
@@ -99,9 +84,16 @@ class AvaliacaoService {
     }
   }
 
-  /**
-   * Envia uma avaliação para o backend
-   */
+  static async getTotalAvaliacoes(localId) {
+    try {
+      const response = await api.get(`/avaliacoes/local/${localId}/count`);
+      return response.data?.count || 0;
+    } catch (error) {
+      console.error('Erro ao buscar total de avaliações:', error);
+      return 0;
+    }
+  }
+
   static async criarAvaliacao(dados) {
     try {
       if (!dados.idLocal || !dados.idUsuario) {
@@ -130,7 +122,7 @@ class AvaliacaoService {
       return { success: false, message: 'Resposta inválida do servidor' };
 
     } catch (error) {
-      console.error('❌ Erro ao criar avaliação:', error);
+      console.error('Erro ao criar avaliação:', error);
       
       let errorMessage = 'Erro ao enviar avaliação';
       
@@ -153,9 +145,16 @@ class AvaliacaoService {
     }
   }
 
-  /**
-   * Formata uma avaliação para exibição
-   */
+  static async deletarAvaliacao(id) {
+    try {
+      await api.delete(`/avaliacoes/${id}`);
+      return { success: true, message: 'Avaliação excluída com sucesso' };
+    } catch (error) {
+      console.error('Erro ao deletar avaliação:', error);
+      return { success: false, message: error.response?.data?.message || 'Erro ao excluir avaliação' };
+    }
+  }
+
   static formatarAvaliacao(avaliacao) {
     if (!avaliacao) return null;
     
@@ -179,9 +178,6 @@ class AvaliacaoService {
     };
   }
 
-  /**
-   * Formata lista de avaliações
-   */
   static formatarAvaliacoes(avaliacoes) {
     if (!avaliacoes || !Array.isArray(avaliacoes)) return [];
     return avaliacoes.map(a => this.formatarAvaliacao(a)).filter(a => a);

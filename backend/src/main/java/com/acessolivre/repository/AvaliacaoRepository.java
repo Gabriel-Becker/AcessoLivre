@@ -12,13 +12,10 @@ import java.util.List;
 public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
 
     boolean existsByUsuarioIdUsuarioAndLocalIdLocal(Long idUsuario, Long idLocal);
-
     List<Avaliacao> findByLocalIdLocal(Long idLocal);
-
     List<Avaliacao> findByLocalIdLocalAndModerado(Long idLocal, Boolean moderado);
-
     List<Avaliacao> findByUsuarioIdUsuario(Long idUsuario);
-
+    List<Avaliacao> findByUsuarioIdUsuarioAndModerado(Long idUsuario, Boolean moderado);
     List<Avaliacao> findByModerado(Boolean moderado);
 
     @Query("SELECT AVG(a.notaGeral) FROM Avaliacao a WHERE a.local.idLocal = :idLocal")

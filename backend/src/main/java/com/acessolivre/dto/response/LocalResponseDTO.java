@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +23,6 @@ public class LocalResponseDTO {
     private String nome;
     private String descricao;
     
-    // ✅ Campo padronizado para URL da primeira imagem
     private String imagemUrl;  
     
     private Double avaliacaoMedia;

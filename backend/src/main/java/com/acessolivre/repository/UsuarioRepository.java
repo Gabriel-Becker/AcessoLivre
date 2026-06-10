@@ -16,12 +16,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmailAndAtivoTrue(String email);
     
-    /**
-     * Busca um usuário pelo nome
-     * @param nome nome do usuário
-     * @return Optional contendo o usuário se encontrado
-     */
-    Optional<Usuario> findByNome(String nome);  // ← ADICIONAR ESTE MÉTODO
+    Optional<Usuario> findByNome(String nome);  
 
     Optional<Usuario> findByIdUsuarioAndAtivoTrue(Long idUsuario);
 
@@ -32,4 +27,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     long countByAtivoTrue();
 
     boolean existsByRole(Role role);
+    
 }

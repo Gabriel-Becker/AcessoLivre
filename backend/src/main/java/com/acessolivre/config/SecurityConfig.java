@@ -75,6 +75,21 @@ public class SecurityConfig {
                     "/api/avaliacoes/*",
                     "/api/avaliacoes/local/**"
                 ).permitAll()
+                  // Usuários autenticados
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/denuncias"
+                ).authenticated()
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/denuncias/check"
+                ).authenticated()
+
+                // Administração
+                .requestMatchers(
+                    "/api/denuncias/**"
+                ).hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
