@@ -69,7 +69,7 @@ export default function Admin() {
     () => [
       { key: 'usuarios', label: 'Usuários' },
       { key: 'locais', label: 'Locais' },
-      { key: 'denuncias', label: 'Denúncias' },  // ← ADICIONADO
+      { key: 'denuncias', label: 'Denúncias' },  
       { key: 'relatorios', label: 'Relatórios' },
     ],
     []
@@ -282,7 +282,7 @@ export default function Admin() {
       return;
     }
     if (abaAtiva === 'denuncias') {
-      // Não precisa carregar nada aqui, o componente Denuncias cuida disso
+      
       return;
     }
     carregarRelatorios();
@@ -497,7 +497,7 @@ export default function Admin() {
     }
 
     if (abaAtiva === 'denuncias') {
-      // O componente Denuncias tem seu próprio recarregamento
+  
       return;
     }
 

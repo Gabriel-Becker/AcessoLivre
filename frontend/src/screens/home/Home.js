@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+
 import {
   View,
   StyleSheet,
@@ -15,6 +16,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
+import SobreService from '../../services/SobreService';
 import toastHelper from '../../utils/toastHelper';
 
 const BREAKPOINTS = {
@@ -43,8 +45,7 @@ export default function Home({ onNavigate, routeParams }) {
   const [refreshing, setRefreshing] = useState(false);
   const [estatisticas, setEstatisticas] = useState({
     totalLocais: 0,
-    totalAvaliacoes: 0,
-    mediaGeral: 0
+    totalAvaliacoes: 0
   });
   const [locaisDestaque, setLocaisDestaque] = useState([]);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
@@ -137,6 +138,23 @@ export default function Home({ onNavigate, routeParams }) {
     return false;
   }, [locaisDestaque, onNavigate]);
 
+  const carregarEstatisticas = useCallback(async () => {
+    try {
+      const metricas = await SobreService.obterMetricasImpacto();
+      if (mountedRef.current) {
+        setEstatisticas({
+          totalLocais: metricas.totalLocais || 0,
+          totalAvaliacoes: metricas.totalAvaliacoes || 0
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      if (mountedRef.current) {
+        setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0 });
+      }
+    }
+  }, []);
+
   const carregarDados = useCallback(async (isRefresh = false, forcarRecarga = false) => {
     if (!mountedRef.current) return;
     
@@ -148,14 +166,7 @@ export default function Home({ onNavigate, routeParams }) {
         BuscarService.invalidateCache();
       }
       
-      const stats = await BuscarService.obterEstatisticas();
-      if (mountedRef.current) {
-        setEstatisticas({
-          totalLocais: stats.totalLocais || 0,
-          totalAvaliacoes: stats.totalAvaliacoes || 0,
-          mediaGeral: stats.mediaGeral || 0
-        });
-      }
+      await carregarEstatisticas();
 
       const locais = await BuscarService.obterLocaisEmDestaque(12);
 
@@ -173,8 +184,9 @@ export default function Home({ onNavigate, routeParams }) {
         setRefreshing(false);
       }
     }
-  }); 
 
+  }, 
+  [carregarEstatisticas]);
   useEffect(() => {
     const precisaForcar = forceRefresh === true;
     
