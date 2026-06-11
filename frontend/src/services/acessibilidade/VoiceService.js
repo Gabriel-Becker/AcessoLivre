@@ -1,5 +1,22 @@
 import * as Speech from 'expo-speech';
-import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+
+let moduloReconhecimentoCache;
+
+function obterModuloReconhecimento() {
+  if (moduloReconhecimentoCache !== undefined) {
+    return moduloReconhecimentoCache;
+  }
+
+  try {
+    const modulo = require('expo-speech-recognition');
+    moduloReconhecimentoCache = modulo?.ExpoSpeechRecognitionModule ?? null;
+  } catch (error) {
+    console.warn('Reconhecimento de voz indisponivel neste runtime:', error?.message ?? error);
+    moduloReconhecimentoCache = null;
+  }
+
+  return moduloReconhecimentoCache;
+}
 
 class VoiceService {
   static isListening = false;
@@ -10,6 +27,9 @@ class VoiceService {
   static init() {
     // O expo-speech não tem setDefaultLanguage
     // O idioma é definido em cada chamada de speak()
+    if (!obterModuloReconhecimento()) {
+      console.warn('Reconhecimento de voz requer development build ou app nativo compilado.');
+    }
     console.log('VoiceService inicializado');
   }
 
@@ -36,8 +56,19 @@ class VoiceService {
   // 🎤 Fala para Texto (escuta o usuário)
   static async listen(onResult, onError) {
     try {
+      const moduloReconhecimento = obterModuloReconhecimento();
+
+      if (!moduloReconhecimento) {
+        const erro = {
+          message: 'Reconhecimento de voz indisponivel neste app. Gere um development build para usar este recurso.',
+        };
+        console.warn(erro.message);
+        if (onError) onError(erro);
+        return;
+      }
+
       // Verificar permissões primeiro
-      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      const permission = await moduloReconhecimento.requestPermissionsAsync();
       
       if (!permission.granted) {
         this.speak("Preciso de permissão para usar o microfone");
@@ -51,7 +82,7 @@ class VoiceService {
       }
 
       // Registrar evento de resultado
-      this.recognitionSubscription = ExpoSpeechRecognitionModule.addListener('result', (event) => {
+      this.recognitionSubscription = moduloReconhecimento.addListener('result', (event) => {
         const text = event.results[0]?.transcript?.toLowerCase();
         if (text && this.isListening) {
           this.stop(); // Para de escutar após receber comando
@@ -60,21 +91,21 @@ class VoiceService {
       });
 
       // Registrar evento de erro
-      const errorSubscription = ExpoSpeechRecognitionModule.addListener('error', (event) => {
+      const errorSubscription = moduloReconhecimento.addListener('error', (event) => {
         console.error('Erro no reconhecimento:', event);
         this.stop();
         if (onError) onError(event);
       });
 
       // Registrar fim da escuta
-      const endSubscription = ExpoSpeechRecognitionModule.addListener('end', () => {
+      const endSubscription = moduloReconhecimento.addListener('end', () => {
         console.log('Reconhecimento finalizado');
         this.isListening = false;
       });
 
       // Iniciar escuta
       this.isListening = true;
-      await ExpoSpeechRecognitionModule.start({
+      await moduloReconhecimento.start({
         lang: 'pt-BR',
         interimResults: true,  // Resultados parciais (enquanto fala)
         continuous: false,     // Para após uma pausa
@@ -96,7 +127,11 @@ class VoiceService {
   static stop() {
     if (this.isListening) {
       try {
-        ExpoSpeechRecognitionModule.stop();
+        const moduloReconhecimento = obterModuloReconhecimento();
+
+        if (moduloReconhecimento) {
+          moduloReconhecimento.stop();
+        }
       } catch (error) {
         console.error('Erro ao parar reconhecimento:', error);
       }

@@ -3,6 +3,8 @@ import AuthService from '../services/AuthService';
 import { triggerLogout } from '../utils/SessionManager';
 import { resetToAuth } from '../navigation/navigationRef';
 
+let reautenticacaoEmAndamento = null;
+
 const normalizarCaminho = (url = '') => {
   const bruto = String(url || '').split('?')[0];
   if (!bruto) return '';
@@ -43,6 +45,16 @@ const ehRotaPublicaDeLeitura = (config = {}) => {
     caminho.startsWith('/avaliacoes/local/') ||
     caminho.startsWith('/uploads/')
   );
+};
+
+const ehEndpointAuth = (url = '') => {
+  const caminho = normalizarCaminho(url);
+  return caminho.startsWith('/auth/');
+};
+
+const ehEndpointReauth = (url = '') => {
+  const caminho = normalizarCaminho(url);
+  return caminho.startsWith('/auth/reauth/');
 };
 
 api.interceptors.request.use(
@@ -90,9 +102,26 @@ api.interceptors.response.use(
     const requestUrl = error.config?.url || '';
     const requestConfig = error.config || {};
     const isLoginEndpoint = String(requestUrl).includes('/auth/login');
+    const isAuthEndpoint = ehEndpointAuth(requestUrl);
+    const isReauthEndpoint = ehEndpointReauth(requestUrl);
     const isPublicReadEndpoint = ehRotaPublicaDeLeitura(requestConfig);
 
     if (status === 401 && isLoginEndpoint) {
+      return Promise.reject(error);
+    }
+
+    // Nunca tentar reautenticar quando a propria reautenticacao falhou.
+    if (status === 401 && isReauthEndpoint) {
+      try {
+        await AuthService.removeToken();
+        await AuthService.setUserData(null);
+      } catch {
+      }
+      return Promise.reject(error);
+    }
+
+    // Para outros endpoints de auth (exceto /auth/me), evitar ciclo de renovacao.
+    if (status === 401 && isAuthEndpoint && !String(requestUrl).includes('/auth/me')) {
       return Promise.reject(error);
     }
 
@@ -131,8 +160,14 @@ api.interceptors.response.use(
               return Promise.reject(error);
             }
 
-            // attempt to reauthenticate once
-            const newToken = await AuthService.reautenticar(userId);
+            // attempt to reauthenticate once (single-flight para evitar tempestade de requests)
+            if (!reautenticacaoEmAndamento) {
+              reautenticacaoEmAndamento = AuthService.reautenticar(userId).finally(() => {
+                reautenticacaoEmAndamento = null;
+              });
+            }
+
+            const newToken = await reautenticacaoEmAndamento;
             if (newToken) {
               await AuthService.setToken(newToken);
               // update header and retry original request
