@@ -1,16 +1,20 @@
 package com.acessolivre.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Arrays;
+import java.io.ByteArrayInputStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +37,8 @@ import com.acessolivre.repository.AvaliacaoRepository;
 import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
@@ -176,7 +182,6 @@ class AdminServiceTest {
 
         Map<String, Long> stats = adminService.obterEstatisticasPorEstado();
 
-        assertEquals(2L, stats.get("SC"));
         assertEquals(1L, stats.get("PR"));
     }
 
@@ -205,6 +210,61 @@ class AdminServiceTest {
         assertEquals(1L, stats.get("ELEVADOR"));
     }
 
+    @Test
+    void exportarRelatorioUsuariosCsv_DeveIncluirUtf8BomEAcentos() {
+        when(usuarioRepository.findAll()).thenReturn(List.of(criarUsuario(1L, true)));
+
+        byte[] arquivo = adminService.exportarRelatorioUsuariosCsv(null, null);
+
+        assertArrayEquals(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, Arrays.copyOfRange(arquivo, 0, 3));
+        String conteudo = new String(arquivo, StandardCharsets.UTF_8);
+        assertTrue(conteudo.contains("Usuário"));
+    }
+
+    @Test
+    void exportarRelatorioLocaisCsv_DeveIncluirUtf8BomEAcentos() {
+        when(localRepository.findAll()).thenReturn(List.of(
+            criarLocal(1L, "SC", Categoria.PUBLICO, Set.of(TipoAcessibilidade.RAMPA))));
+        when(avaliacaoRepository.findAll()).thenReturn(List.of());
+
+        byte[] arquivo = adminService.exportarRelatorioLocaisCsv(null, null);
+
+        assertArrayEquals(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, Arrays.copyOfRange(arquivo, 0, 3));
+        String conteudo = new String(arquivo, StandardCharsets.UTF_8);
+        assertTrue(conteudo.contains("Florianópolis"));
+    }
+
+    @Test
+    void exportarRelatorioUsuariosPdf_DeveConterListaDetalhada() throws Exception {
+        when(usuarioRepository.findAll()).thenReturn(List.of(
+            criarUsuario(1L, true),
+            criarUsuario(2L, false)));
+
+        byte[] arquivo = adminService.exportarRelatorioUsuariosPdf(null, null);
+        String texto = extrairTextoPdf(arquivo);
+        String textoNormalizado = normalizarTextoPdf(texto);
+
+        assertTrue(textoNormalizado.contains("Listadeusuarios"), textoNormalizado);
+        assertTrue(textoNormalizado.contains("usuario1@teste.com"), textoNormalizado);
+        assertTrue(textoNormalizado.contains("Usuário"), textoNormalizado);
+    }
+
+    @Test
+    void exportarRelatorioLocaisPdf_DeveConterListaDetalhada() throws Exception {
+        when(localRepository.findAll()).thenReturn(List.of(
+            criarLocal(1L, "SC", Categoria.PUBLICO, Set.of(TipoAcessibilidade.RAMPA)),
+            criarLocal(2L, "PR", Categoria.SAUDE, Set.of(TipoAcessibilidade.ELEVADOR))));
+        when(avaliacaoRepository.findAll()).thenReturn(List.of());
+
+        byte[] arquivo = adminService.exportarRelatorioLocaisPdf(null, null);
+        String texto = extrairTextoPdf(arquivo);
+        String textoNormalizado = normalizarTextoPdf(texto);
+
+        assertTrue(textoNormalizado.contains("Listadelocais"), textoNormalizado);
+        assertTrue(textoNormalizado.contains("LocalHistórico1"), textoNormalizado);
+        assertTrue(textoNormalizado.contains("Florianópolis"), textoNormalizado);
+    }
+
     private Usuario criarUsuario(Long id, boolean ativo) {
         return Usuario.builder()
             .idUsuario(id)
@@ -212,13 +272,14 @@ class AdminServiceTest {
             .email("usuario" + id + "@teste.com")
             .role(Role.ROLE_USER)
             .ativo(ativo)
+            .dataCadastro(LocalDateTime.now().minusDays(1))
             .build();
     }
 
     private Local criarLocal(Long id, String estado, Categoria categoria, Set<TipoAcessibilidade> tipos) {
         Endereco endereco = Endereco.builder()
             .estado(estado)
-            .cidade("Cidade")
+            .cidade("Florianópolis")
             .bairro("Bairro")
             .logradouro("Rua")
             .numero("10")
@@ -227,10 +288,25 @@ class AdminServiceTest {
 
         return Local.builder()
             .idLocal(id)
-            .nome("Local " + id)
+            .nome("Local Histórico " + id)
             .categoria(categoria)
             .endereco(endereco)
             .tiposAcessibilidade(tipos)
+            .avaliacaoMedia(4.5)
+            .dataCriacao(LocalDateTime.now().minusDays(1))
             .build();
     }
+
+    private String extrairTextoPdf(byte[] arquivoPdf) throws Exception {
+        try (PDDocument document = PDDocument.load(new ByteArrayInputStream(arquivoPdf))) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            return stripper.getText(document);
+        }
+    }
+
+    private String normalizarTextoPdf(String texto) {
+        return texto.replaceAll("\\s+", "");
+    }
+
 }

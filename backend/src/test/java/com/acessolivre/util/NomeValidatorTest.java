@@ -2,7 +2,6 @@ package com.acessolivre.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-
 import org.junit.jupiter.api.Test;
 
 class NomeValidatorTest {

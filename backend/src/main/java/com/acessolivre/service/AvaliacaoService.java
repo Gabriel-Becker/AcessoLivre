@@ -1,5 +1,13 @@
 package com.acessolivre.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.acessolivre.dto.request.AvaliacaoRequestDTO;
 import com.acessolivre.mapper.AvaliacaoMapper;
 import com.acessolivre.model.Avaliacao;
@@ -8,15 +16,9 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.AvaliacaoRepository;
 import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -40,48 +42,27 @@ public class AvaliacaoService {
         return avaliacaoRepository.findById(id);
     }
 
-    /**
-     * Busca avaliações por local - APENAS PÚBLICAS (moderado = true)
-     * @param idLocal ID do local
-     * @return Lista de avaliações públicas
-     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorLocal(Long idLocal) {
-        log.info("🔍 Buscando avaliações públicas por local ID: {}", idLocal);
-        // ✅ CORREÇÃO: Filtrar apenas avaliações moderadas (públicas)
-        return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);
+        log.info("Buscando avaliações por local ID: {}", idLocal);
+        return avaliacaoRepository.findByLocalIdLocal(idLocal);
     }
 
-    /**
-     * Busca avaliações por usuário - APENAS PÚBLICAS (moderado = true)
-     * @param idUsuario ID do usuário
-     * @return Lista de avaliações públicas do usuário
-     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPorUsuario(Long idUsuario) {
-        log.info("🔍 Buscando avaliações públicas por usuário ID: {}", idUsuario);
-        // ✅ CORREÇÃO: Filtrar apenas avaliações moderadas (públicas)
-        return avaliacaoRepository.findByUsuarioIdUsuarioAndModerado(idUsuario, true);
+        log.info("Buscando avaliações por usuário ID: {}", idUsuario);
+        return avaliacaoRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
-    /**
-     * Lista todas as avaliações públicas (moderado = true)
-     * @return Lista de avaliações públicas
-     */
     @Transactional(readOnly = true)
     public List<Avaliacao> listarPublicas() {
-        log.info("📋 Listando todas as avaliações públicas (moderadas)");
+        log.info("Listando avaliações públicas (moderadas)");
         return avaliacaoRepository.findByModerado(true);
     }
 
-    /**
-     * Busca avaliações públicas por local (método específico)
-     * @param idLocal ID do local
-     * @return Lista de avaliações públicas
-     */
     @Transactional(readOnly = true)
     public List<Avaliacao> buscarPublicasPorLocal(Long idLocal) {
-        log.info("🔍 Buscando avaliações públicas por local ID: {}", idLocal);
+        log.info("Buscando avaliações públicas por local ID: {}", idLocal);
         return avaliacaoRepository.findByLocalIdLocalAndModerado(idLocal, true);
     }
 
@@ -136,32 +117,12 @@ public class AvaliacaoService {
         return true;
     }
 
-    /**
-     * Remove uma avaliação logicamente (soft delete) - usado pelo sistema de moderação
-     * Marca como não moderada (oculta), não remove fisicamente do banco
-     */
     @Transactional
     public void removerAvaliacao(Long id) {
-        log.info("🔨 [MODERAÇÃO] Removendo avaliação logicamente (soft delete) - ID: {}", id);
-        
-        Avaliacao avaliacao = avaliacaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Avaliação não encontrada com ID: " + id));
-        
-        try {
-            Long idLocal = avaliacao.getLocal().getIdLocal();
-            
-            // Soft delete: marca como não moderada (oculta)
-            avaliacao.setModerado(false);
-            avaliacaoRepository.save(avaliacao);
-            
-            // Recalcula a média do local (agora sem esta avaliação)
-            localService.recalcularMediaAvaliacoes(idLocal);
-            
-            log.info("✅ [MODERAÇÃO] Avaliação marcada como oculta (soft delete) - ID: {}, Local ID: {}", id, idLocal);
-            
-        } catch (Exception e) {
-            log.error("❌ [MODERAÇÃO] Erro ao remover avaliação ID {}: {}", id, e.getMessage(), e);
-            throw new RuntimeException("Falha ao remover avaliação: " + e.getMessage(), e);
+        log.info("Removendo avaliação via moderação: id={}", id);
+        boolean removida = deletar(id);
+        if (!removida) {
+            throw new IllegalArgumentException("Avaliação não encontrada com ID: " + id);
         }
     }
 }

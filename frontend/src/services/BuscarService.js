@@ -15,11 +15,9 @@ class BuscarService {
                           (agora - this.cacheTimestamp) < this.CACHE_DURATION;
 
       if (cacheValido) {
-        console.log('📦 Usando cache de locais:', this.cache.length);
         return this.cache;
       }
 
-      console.log(' Buscando todos os locais do backend...');
       const response = await api.get('/locais/todos', {
         params: { page: 0, size: 1000, sort: 'nome', direction: 'asc' }
       });
@@ -30,8 +28,7 @@ class BuscarService {
       
       this.cache = locais;
       this.cacheTimestamp = agora;
-      
-      console.log(' Cache atualizado com', this.cache.length, 'locais');
+
       return this.cache;
       
     } catch (error) {
@@ -41,13 +38,11 @@ class BuscarService {
   }
 
   static invalidateCache() {
-    console.log(' Invalidando cache de locais');
     this.cache = null;
     this.cacheTimestamp = null;
   }
 
   static async recarregarTodosLocais() {
-    console.log('🌐 Recarregando todos os locais do backend...');
     return this.carregarTodosLocais(true);
   }
 

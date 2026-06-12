@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,6 +30,7 @@ import com.acessolivre.repository.AvaliacaoRepository;
 import com.acessolivre.repository.EnderecoRepository;
 import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioRepository;
+import com.acessolivre.util.NomeValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +45,8 @@ public class LocalService {
     private final UsuarioRepository usuarioRepository;
     private final EnderecoRepository enderecoRepository;
     private final EnderecoService enderecoService;
-    private final AvaliacaoRepository avaliacaoRepository;  
+    private final AvaliacaoRepository avaliacaoRepository;
+    private final ImagemService imagemService;  
 
     private static final int MAX_PROFUNDIDADE_HIERARQUIA = 5;
     
@@ -204,31 +205,14 @@ public class LocalService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Local> buscarPorNomePaginado(String nome, Pageable pageable) {
-        log.info("Buscando locais por nome com paginação: {}", nome);
-        
-        if (nome == null || nome.trim().isEmpty()) {
-            log.info("Nome vazio, retornando locais raiz");
-            return listarLocaisRaizComImagens(pageable);
+    public Page<Local> buscarPorNomePaginado(String searchText, Pageable pageable) {
+        log.info("Buscando locais por nome com paginação: {}", searchText);
+
+        if (searchText == null || searchText.isBlank()) {
+            return filtrarLocaisNaoInativos(localRepository.findAll(pageable), pageable);
         }
-        
-        Page<Local> pagina = localRepository.findByNomeContainingIgnoreCase(nome.trim(), pageable);
-        
-        List<Local> locaisFiltrados = pagina.getContent().stream()
-                .filter(local -> local.getStatus() != StatusLocal.INATIVO)
-                .collect(Collectors.toList());
-        
-        for (Local local : locaisFiltrados) {
-            if (local.getImagens() != null) {
-                local.getImagens().size(); 
-            }
-            if (local.getEndereco() != null) {
-                local.getEndereco().getCep(); 
-            }
-        }
-        
-        log.info("Encontrados {} locais para o nome '{}'", locaisFiltrados.size(), nome);
-        return new PageImpl<>(locaisFiltrados, pageable, pagina.getTotalElements());
+
+        return filtrarLocaisNaoInativos(localRepository.findByNomeContainingIgnoreCase(searchText.trim(), pageable), pageable);
     }
 
     private Page<Local> filtrarLocaisNaoInativos(Page<Local> pagina, Pageable pageable) {
@@ -240,6 +224,7 @@ public class LocalService {
 
     @Transactional
     public Local salvar(LocalRequestDTO dto) {
+        dto.setNome(NomeValidator.normalize(dto.getNome()));
         log.info("Salvando novo local: nome={}", dto.getNome());
 
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
@@ -256,47 +241,26 @@ public class LocalService {
 
         Usuario usuario = validarUsuario(dto.getIdUsuario());
         Endereco endereco = resolverEndereco(dto);
-        
-        Local localPrincipal = null;
-        if (dto.getNomeLocalPrincipal() != null && !dto.getNomeLocalPrincipal().trim().isEmpty()) {
-            String nomePrincipal = dto.getNomeLocalPrincipal().trim();
-            log.info(" Vinculando ao local principal: {}", nomePrincipal);
-            
-            Optional<Local> principalExistente = localRepository.findByNomeIgnoreCase(nomePrincipal);
-            
-            if (principalExistente.isPresent()) {
-                localPrincipal = principalExistente.get();
-                validarHierarquia(localPrincipal, null);
-                log.info(" Local principal encontrado! ID: {}", localPrincipal.getIdLocal());
-            } else {
-                log.info(" Local principal '{}' não encontrado no sistema. Será armazenado apenas o nome para vínculo futuro.", nomePrincipal);
-            }
-        }
+        Local localPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), null);
+        validarHierarquia(localPrincipal, null);
         
         Local local = LocalMapper.toEntity(dto, usuario, endereco);
-        local.setLocalPrincipal(localPrincipal);
-        local.setNomeLocalPrincipal(dto.getNomeLocalPrincipal());
-        
-        if (localPrincipal != null) {
-            local.setNivelHierarquia(localPrincipal.getNivelHierarquia() + 1);
-            log.info("Nível hierarquia definido: {}", local.getNivelHierarquia());
-        }
+        local.setLocalPrincipal(localPrincipal); 
         
         Local salvo = localRepository.save(local);
         
         if (localPrincipal != null) {
             localPrincipal.adicionarSubLocal(salvo);
             localRepository.save(localPrincipal);
-            log.info("Sub-local adicionado ao pai ID: {}", localPrincipal.getIdLocal());
         }
         
-        log.info(" Local salvo com sucesso. ID: {}, Nível hierarquia: {}", 
-                salvo.getIdLocal(), salvo.getNivelHierarquia());
+        log.info("Local salvo com sucesso. ID: {}", salvo.getIdLocal());
         return salvo;
     }
-        
+    
     @Transactional
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
+        dto.setNome(NomeValidator.normalize(dto.getNome()));
         log.info("Atualizando local: id={}", id);
 
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
@@ -312,19 +276,8 @@ public class LocalService {
             }
             Usuario usuario = validarUsuario(dto.getIdUsuario());
             Endereco endereco = resolverEndereco(dto);
-            Local novoLocalPrincipal = null;
-            if (dto.getNomeLocalPrincipal() != null &&
-                !dto.getNomeLocalPrincipal().trim().isEmpty()) {
-
-                String nomePrincipal = dto.getNomeLocalPrincipal().trim();
-
-                novoLocalPrincipal = localRepository
-                        .findByNomeIgnoreCase(nomePrincipal)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Local principal não encontrado: " + nomePrincipal));
-
-                validarHierarquia(novoLocalPrincipal, id);
-            }
+            Local novoLocalPrincipal = validarLocalPrincipal(dto.getIdLocalPrincipal(), id);
+            validarHierarquia(novoLocalPrincipal, id);
             
             if (local.getLocalPrincipal() != null) {
                 local.getLocalPrincipal().getSubLocais().remove(local);
@@ -366,7 +319,7 @@ public class LocalService {
 
     @Transactional
     public boolean deletar(Long id) {
-        log.info("Deletando local (exclusão lógica): id={}", id);
+        log.info("Deletando local: id={}", id);
         
         Local local = localRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + id));
@@ -391,35 +344,23 @@ public class LocalService {
             local.getLocalPrincipal().getSubLocais().remove(local);
             localRepository.save(local.getLocalPrincipal());
         }
-       
+        
+        // Exclusão lógica: marcar status como INATIVO
         local.setStatus(StatusLocal.INATIVO);
         localRepository.save(local);
         log.info("Local marcado como INATIVO (exclusão lógica). ID: {}", id);
         return true;
     }
-    
-    /**
-     * Remove um local logicamente (soft delete) - usado pelo sistema de moderação
-     * Apenas marca como INATIVO, não remove fisicamente do banco
-     */
+
     @Transactional
     public void removerLocal(Long id) {
-        log.info("🔨 [MODERAÇÃO] Removendo local logicamente (soft delete) - ID: {}", id);
-        
+        log.info("Removendo local via moderação (exclusão lógica): id={}", id);
         Local local = localRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Local não encontrado com ID: " + id));
-        
-        try {
-            // Marca o local como INATIVO (soft delete)
-            local.setStatus(StatusLocal.INATIVO);
-            localRepository.save(local);
-            
-            log.info("✅ [MODERAÇÃO] Local marcado como INATIVO - ID: {}, Nome: {}", id, local.getNome());
-            
-        } catch (Exception e) {
-            log.error("❌ [MODERAÇÃO] Erro ao remover local ID {}: {}", id, e.getMessage(), e);
-            throw new RuntimeException("Falha ao remover local: " + e.getMessage(), e);
-        }
+                .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + id));
+
+        local.setStatus(StatusLocal.INATIVO);
+        localRepository.save(local);
+        log.info("Local removido via moderação: id={}", id);
     }
     
     @Transactional
@@ -504,9 +445,22 @@ public class LocalService {
         return stats;
     }
     
+    // Métodos privados de validação
     private Usuario validarUsuario(Long idUsuario) {
         return usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + idUsuario));
+    }
+    
+    private Local validarLocalPrincipal(Long idLocalPrincipal, Long idLocalAtual) {
+        if (idLocalPrincipal == null) {
+            return null;
+        }
+        Local localPrincipal = localRepository.findById(idLocalPrincipal)
+                .orElseThrow(() -> new IllegalArgumentException("Local principal não encontrado com ID: " + idLocalPrincipal));
+        if (idLocalAtual != null && localPrincipal.getIdLocal().equals(idLocalAtual)) {
+            throw new IllegalArgumentException("Um local não pode ser principal de si mesmo");
+        }
+        return localPrincipal;
     }
     
     private void validarHierarquia(Local localPrincipal, Long idLocalAtual) {
@@ -587,6 +541,7 @@ public class LocalService {
         }
     }
 
+    // Métodos públicos auxiliares para uso em controladores
     public Long obterIdUsuarioAutenticadoPublic() {
         return obterIdUsuarioAutenticado();
     }
@@ -604,7 +559,7 @@ public class LocalService {
     @Transactional(readOnly = true)
     public Page<Local> buscarComFiltros(BuscaFiltrosRequestDTO filtros, Pageable pageable) {
         log.info("Buscando locais com filtros: {}", filtros);
-     
+        
         String searchTerm = filtros.getSearchText();
         if (searchTerm != null && searchTerm.isBlank()) {
             searchTerm = null;
@@ -612,12 +567,12 @@ public class LocalService {
         
         Set<Categoria> categorias = filtros.getCategorias();
         if (categorias != null && categorias.isEmpty()) {
-            categorias = null;
+            categorias = null;  
         }
         
         Set<TipoAcessibilidade> recursos = filtros.getRecursos();
         if (recursos != null && recursos.isEmpty()) {
-            recursos = null;
+            recursos = null;  
         }
         
         Double notaMinima = filtros.getNotaMinima();

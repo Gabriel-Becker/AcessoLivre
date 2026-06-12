@@ -44,6 +44,8 @@ public class LocalRequestDTO {
 
     private Long idEndereco;
 
+    private Long idLocalPrincipal;
+
     @Size(max = 200, message = "Nome do local principal deve ter no máximo 200 caracteres")
     private String nomeLocalPrincipal;
 

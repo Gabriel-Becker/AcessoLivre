@@ -11,13 +11,17 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.text.DecimalFormat;
 
 import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
 import com.lowagie.text.Font;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 import com.acessolivre.enums.Role;
@@ -43,6 +47,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class AdminService {
+
+    private static final String UTF8_BOM = "\uFEFF";
+    private static final DateTimeFormatter FMT_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
@@ -357,9 +365,9 @@ public class AdminService {
         csv.append("Total Admins;").append(relatorio.get("totalAdmins")).append("\n");
         csv.append("Total Usuarios Comuns;").append(relatorio.get("totalUsuariosComuns")).append("\n");
         csv.append("Cadastros Ultimos 30 Dias;").append(relatorio.get("cadastrosUltimos30Dias")).append("\n");
-        csv.append("Filtro Data Inicio;").append(relatorio.get("filtroDataInicio")).append("\n");
-        csv.append("Filtro Data Fim;").append(relatorio.get("filtroDataFim")).append("\n");
-        csv.append("Gerado Em;").append(relatorio.get("geradoEm")).append("\n\n");
+        csv.append("Filtro Data Inicio;").append(formatarData(relatorio.get("filtroDataInicio"))).append("\n");
+        csv.append("Filtro Data Fim;").append(formatarData(relatorio.get("filtroDataFim"))).append("\n");
+        csv.append("Gerado Em;").append(formatarData(relatorio.get("geradoEm"))).append("\n\n");
 
         csv.append("Perfil;Total\n");
         Object distribuicaoPorPerfilObj = relatorio.get("distribuicaoPorPerfil");
@@ -388,11 +396,11 @@ public class AdminService {
                         .append(sanitizarCsv(String.valueOf(item.get("role")))).append(';')
                         .append(String.valueOf(item.get("ativo"))).append(';')
                         .append(String.valueOf(item.get("twoFactorEnabled"))).append(';')
-                        .append(String.valueOf(item.get("dataCadastro"))).append("\n");
+                        .append(formatarData(item.get("dataCadastro"))).append("\n");
             }
         }
 
-        return csv.toString().getBytes(StandardCharsets.UTF_8);
+        return exportarCsvComUtf8Bom(csv);
     }
 
     @Transactional(readOnly = true)
@@ -406,9 +414,9 @@ public class AdminService {
         csv.append("Locais Sem Avaliacao;").append(relatorio.get("locaisSemAvaliacao")).append("\n");
         csv.append("Media Avaliacao Geral;").append(df.format((Double) relatorio.getOrDefault("mediaAvaliacaoGeral", 0.0))).append("\n");
         csv.append("Total Avaliacoes;").append(relatorio.get("totalAvaliacoes")).append("\n");
-        csv.append("Filtro Data Inicio;").append(relatorio.get("filtroDataInicio")).append("\n");
-        csv.append("Filtro Data Fim;").append(relatorio.get("filtroDataFim")).append("\n");
-        csv.append("Gerado Em;").append(relatorio.get("geradoEm")).append("\n\n");
+        csv.append("Filtro Data Inicio;").append(formatarData(relatorio.get("filtroDataInicio"))).append("\n");
+        csv.append("Filtro Data Fim;").append(formatarData(relatorio.get("filtroDataFim"))).append("\n");
+        csv.append("Gerado Em;").append(formatarData(relatorio.get("geradoEm"))).append("\n\n");
 
         csv.append("Categoria;Total\n");
         Object distribuicaoPorCategoriaObj = relatorio.get("distribuicaoPorCategoria");
@@ -445,11 +453,11 @@ public class AdminService {
                         .append(String.valueOf(item.get("avaliacaoMedia"))).append(';')
                         .append(sanitizarCsv(String.valueOf(item.get("cidade")))).append(';')
                         .append(sanitizarCsv(String.valueOf(item.get("estado")))).append(';')
-                        .append(String.valueOf(item.get("dataCriacao"))).append("\n");
+                        .append(formatarData(item.get("dataCriacao"))).append("\n");
             }
         }
 
-        return csv.toString().getBytes(StandardCharsets.UTF_8);
+        return exportarCsvComUtf8Bom(csv);
     }
 
     @Transactional(readOnly = true)
@@ -458,7 +466,8 @@ public class AdminService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, baos);
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            writer.setCompressionLevel(0);
             document.open();
             Font titulo = new Font(Font.HELVETICA, 16, Font.BOLD);
             Font secao = new Font(Font.HELVETICA, 12, Font.BOLD);
@@ -466,8 +475,8 @@ public class AdminService {
 
             document.add(new Paragraph("Relatorio de Usuarios - AcessoLivre", titulo));
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Periodo: " + relatorio.get("filtroDataInicio") + " ate " + relatorio.get("filtroDataFim"), texto));
-            document.add(new Paragraph("Gerado em: " + relatorio.get("geradoEm"), texto));
+            document.add(new Paragraph("Periodo: " + formatarData(relatorio.get("filtroDataInicio")) + " ate " + formatarData(relatorio.get("filtroDataFim")), texto));
+            document.add(new Paragraph("Gerado em: " + formatarData(relatorio.get("geradoEm")), texto));
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Resumo", secao));
             document.add(new Paragraph("Total usuarios: " + relatorio.get("totalUsuarios"), texto));
@@ -476,6 +485,49 @@ public class AdminService {
             document.add(new Paragraph("Total admins: " + relatorio.get("totalAdmins"), texto));
             document.add(new Paragraph("Total usuarios comuns: " + relatorio.get("totalUsuariosComuns"), texto));
             document.add(new Paragraph("Cadastros ultimos 30 dias: " + relatorio.get("cadastrosUltimos30Dias"), texto));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Distribuicao por perfil", secao));
+            document.add(criarTabelaSimples(
+                List.of("Perfil", "Total"),
+                ((Map<?, ?>) relatorio.get("distribuicaoPorPerfil")).entrySet().stream()
+                    .map(entrada -> List.of(String.valueOf(entrada.getKey()), String.valueOf(entrada.getValue())))
+                    .toList()));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Cadastros ultimos 6 meses", secao));
+            document.add(criarTabelaSimples(
+                List.of("Mes", "Total"),
+                ((Map<?, ?>) relatorio.get("cadastrosUltimosSeisMeses")).entrySet().stream()
+                    .map(entrada -> List.of(String.valueOf(entrada.getKey()), String.valueOf(entrada.getValue())))
+                    .toList()));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Lista de usuarios", secao));
+            PdfPTable tabelaUsuarios = new PdfPTable(7);
+            tabelaUsuarios.setWidthPercentage(100);
+            try {
+                tabelaUsuarios.setWidths(new float[] {0.9f, 2.5f, 3.5f, 1.3f, 0.9f, 0.9f, 2.1f});
+            } catch (DocumentException e) {
+                throw new IllegalStateException("Falha ao configurar tabela de usuarios", e);
+            }
+            adicionarCabecalhos(tabelaUsuarios, List.of("ID", "Nome", "Email", "Role", "Ativo", "2FA", "Data cadastro"));
+            Object ultimosUsuariosObj = relatorio.get("ultimosUsuarios");
+            if (ultimosUsuariosObj instanceof List<?> ultimosUsuarios) {
+                for (Object itemObj : ultimosUsuarios) {
+                    if (!(itemObj instanceof Map<?, ?> item)) {
+                        continue;
+                    }
+                    tabelaUsuarios.addCell(textoSeguro(item.get("idUsuario")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("nome")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("email")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("role")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("ativo")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("twoFactorEnabled")));
+                    tabelaUsuarios.addCell(textoSeguro(item.get("dataCadastro")));
+                }
+            }
+            document.add(tabelaUsuarios);
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao gerar PDF de usuarios", e);
         } finally {
@@ -490,7 +542,8 @@ public class AdminService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, baos);
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            writer.setCompressionLevel(0);
             document.open();
             Font titulo = new Font(Font.HELVETICA, 16, Font.BOLD);
             Font texto = new Font(Font.HELVETICA, 10);
@@ -498,14 +551,66 @@ public class AdminService {
 
             document.add(new Paragraph("Relatorio de Locais - AcessoLivre", titulo));
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Periodo: " + relatorio.get("filtroDataInicio") + " ate " + relatorio.get("filtroDataFim"), texto));
-            document.add(new Paragraph("Gerado em: " + relatorio.get("geradoEm"), texto));
+            document.add(new Paragraph("Periodo: " + formatarData(relatorio.get("filtroDataInicio")) + " ate " + formatarData(relatorio.get("filtroDataFim")), texto));
+            document.add(new Paragraph("Gerado em: " + formatarData(relatorio.get("geradoEm")), texto));
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Total locais: " + relatorio.get("totalLocais"), texto));
             document.add(new Paragraph("Locais com avaliacao: " + relatorio.get("locaisComAvaliacao"), texto));
             document.add(new Paragraph("Locais sem avaliacao: " + relatorio.get("locaisSemAvaliacao"), texto));
             document.add(new Paragraph("Media avaliacao geral: " + df.format((Double) relatorio.getOrDefault("mediaAvaliacaoGeral", 0.0)), texto));
             document.add(new Paragraph("Total avaliacoes: " + relatorio.get("totalAvaliacoes"), texto));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Distribuicao por categoria", secaoTexto()));
+            document.add(criarTabelaSimples(
+                List.of("Categoria", "Total"),
+                ((Map<?, ?>) relatorio.get("distribuicaoPorCategoria")).entrySet().stream()
+                    .map(entrada -> List.of(String.valueOf(entrada.getKey()), String.valueOf(entrada.getValue())))
+                    .toList()));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Distribuicao por estado", secaoTexto()));
+            document.add(criarTabelaSimples(
+                List.of("Estado", "Total"),
+                ((Map<?, ?>) relatorio.get("distribuicaoPorEstado")).entrySet().stream()
+                    .map(entrada -> List.of(String.valueOf(entrada.getKey()), String.valueOf(entrada.getValue())))
+                    .toList()));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Distribuicao por recurso", secaoTexto()));
+            document.add(criarTabelaSimples(
+                List.of("Recurso", "Total"),
+                ((Map<?, ?>) relatorio.get("distribuicaoPorTipoAcessibilidade")).entrySet().stream()
+                    .map(entrada -> List.of(String.valueOf(entrada.getKey()), String.valueOf(entrada.getValue())))
+                    .toList()));
+
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("Lista de locais", secaoTexto()));
+            PdfPTable tabelaLocais = new PdfPTable(8);
+            tabelaLocais.setWidthPercentage(100);
+            try {
+                tabelaLocais.setWidths(new float[] {0.8f, 2.6f, 1.5f, 1.5f, 0.9f, 2.0f, 1.0f, 2.1f});
+            } catch (DocumentException e) {
+                throw new IllegalStateException("Falha ao configurar tabela de locais", e);
+            }
+            adicionarCabecalhos(tabelaLocais, List.of("ID", "Nome", "Categoria", "Status", "Media", "Cidade", "Estado", "Data criacao"));
+            Object locaisMaisBemAvaliadosObj = relatorio.get("locaisMaisBemAvaliados");
+            if (locaisMaisBemAvaliadosObj instanceof List<?> locaisMaisBemAvaliados) {
+                for (Object itemObj : locaisMaisBemAvaliados) {
+                    if (!(itemObj instanceof Map<?, ?> item)) {
+                        continue;
+                    }
+                    tabelaLocais.addCell(textoSeguro(item.get("idLocal")));
+                    tabelaLocais.addCell(textoSeguro(item.get("nome")));
+                    tabelaLocais.addCell(textoSeguro(item.get("categoria")));
+                    tabelaLocais.addCell(textoSeguro(item.get("status")));
+                    tabelaLocais.addCell(textoSeguro(item.get("avaliacaoMedia")));
+                    tabelaLocais.addCell(textoSeguro(item.get("cidade")));
+                    tabelaLocais.addCell(textoSeguro(item.get("estado")));
+                    tabelaLocais.addCell(textoSeguro(item.get("dataCriacao")));
+                }
+            }
+            document.add(tabelaLocais);
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao gerar PDF de locais", e);
         } finally {
@@ -516,6 +621,41 @@ public class AdminService {
 
     private String sanitizarCsv(String valor) {
         return String.valueOf(valor == null ? "" : valor).replace(';', ',').replace('\n', ' ').replace('\r', ' ');
+    }
+
+    private byte[] exportarCsvComUtf8Bom(StringBuilder csv) {
+        return (UTF8_BOM + csv).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private void adicionarCabecalhos(PdfPTable tabela, List<String> cabecalhos) {
+        cabecalhos.forEach(cabecalho -> tabela.addCell(new Phrase(cabecalho)));
+    }
+
+    private PdfPTable criarTabelaSimples(List<String> cabecalhos, List<List<String>> linhas) {
+        PdfPTable tabela = new PdfPTable(cabecalhos.size());
+        tabela.setWidthPercentage(100);
+        adicionarCabecalhos(tabela, cabecalhos);
+        for (List<String> linha : linhas) {
+            for (String valor : linha) {
+                tabela.addCell(textoSeguro(valor));
+            }
+        }
+        return tabela;
+    }
+
+    private Font secaoTexto() {
+        return new Font(Font.HELVETICA, 12, Font.BOLD);
+    }
+
+    private String textoSeguro(Object valor) {
+        return formatarData(valor);
+    }
+
+    private String formatarData(Object valor) {
+        if (valor == null) return "";
+        if (valor instanceof LocalDateTime dt) return dt.format(FMT_DATA_HORA);
+        if (valor instanceof java.time.LocalDate d) return d.format(FMT_DATA);
+        return String.valueOf(valor);
     }
 
     private boolean estaNoPeriodo(LocalDateTime dataReferencia, LocalDate dataInicio, LocalDate dataFim) {

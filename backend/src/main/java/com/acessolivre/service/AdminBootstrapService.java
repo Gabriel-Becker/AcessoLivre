@@ -1,5 +1,13 @@
 package com.acessolivre.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.acessolivre.dto.request.AdminBootstrapRequestDTO;
 import com.acessolivre.dto.response.UsuarioAdminResponseDTO;
 import com.acessolivre.enums.Role;
@@ -8,15 +16,9 @@ import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.util.NomeValidator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
