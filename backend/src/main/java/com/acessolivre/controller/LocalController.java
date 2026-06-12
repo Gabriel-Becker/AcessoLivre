@@ -9,6 +9,7 @@ import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
+import com.acessolivre.util.NomeValidator;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -295,7 +296,7 @@ public class LocalController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
-        requestDTO.setNome(capitalizarPrimeiraLetra(requestDTO.getNome()));
+        requestDTO.setNome(NomeValidator.normalize(requestDTO.getNome()));
         log.info("POST /api/locais - Salvando local: {}", requestDTO.getNome());
         
         if (requestDTO.getTiposAcessibilidade() == null || requestDTO.getTiposAcessibilidade().isEmpty()) {
@@ -323,7 +324,7 @@ public class LocalController {
             return ResponseEntity.badRequest().build();
         }
         
-        requestDTO.setNome(capitalizarPrimeiraLetra(requestDTO.getNome()));
+        requestDTO.setNome(NomeValidator.normalize(requestDTO.getNome()));
 
         return localService.atualizar(id, requestDTO)
                 .map(LocalMapper::toResponse)
@@ -373,13 +374,6 @@ public class LocalController {
             log.warn("Direção de ordenação inválida: {}, usando DESC", direction);
             return Sort.Direction.DESC;
         }
-    }
-
-    private String capitalizarPrimeiraLetra(String nome) {
-        if (nome == null) return null;
-        String texto = nome.trim();
-        if (texto.isEmpty()) return texto;
-        return texto.substring(0, 1).toUpperCase() + texto.substring(1);
     }
 
     @PostMapping("/buscar")

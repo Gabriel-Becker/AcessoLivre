@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
+import com.acessolivre.util.NomeValidator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class UsuarioService {
      */
     @Transactional
     public Usuario salvar(Usuario usuario) {
+        usuario.setNome(NomeValidator.normalize(usuario.getNome()));
         log.info("Salvando novo usuário: {}", usuario.getEmail());
         
         // Verifica se email já existe
@@ -67,6 +69,7 @@ public class UsuarioService {
      */
     @Transactional
     public Usuario atualizar(Usuario usuario) {
+        usuario.setNome(NomeValidator.normalize(usuario.getNome()));
         log.info("Atualizando usuário ID: {}", usuario.getIdUsuario());
         
         // Verifica se o usuário existe

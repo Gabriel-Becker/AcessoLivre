@@ -452,24 +452,27 @@ const FiltrosCard = React.memo(({
       ]}
       altoContraste={isHighContrast}
     >
-      <TouchableOpacity
-        onPress={onToggleFiltros}
-        activeOpacity={0.75}
+      <View
         style={[styles.filtrosHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), minHeight: Math.round(44 * escalaFiltro) }]}
-        accessibilityRole="button"
-        accessibilityLabel={filtrosVisiveis ? 'Recolher painel de filtros' : 'Expandir painel de filtros'}
       >
-        <Ionicons name="options-outline" size={tamanhoIconeHeader} color={theme.colors.primary} />
-        <ThemedText variant="h3" weight="bold" style={[styles.filtrosTitulo, { fontSize: tamanhoFonteTitulo }]}>Filtros</ThemedText>
-        <Ionicons
-          name={filtrosVisiveis ? 'chevron-up' : 'chevron-down'}
-          size={Math.round(20 * escalaFiltro)}
-          color={theme.colors.textSecondary}
-        />
+        <TouchableOpacity
+          onPress={onToggleFiltros}
+          activeOpacity={0.75}
+          style={styles.filtrosHeaderToggle}
+          accessibilityRole="button"
+          accessibilityLabel={filtrosVisiveis ? 'Recolher painel de filtros' : 'Expandir painel de filtros'}
+        >
+          <Ionicons name="options-outline" size={tamanhoIconeHeader} color={theme.colors.primary} />
+          <ThemedText variant="h3" weight="bold" style={[styles.filtrosTitulo, { fontSize: tamanhoFonteTitulo }]}>Filtros</ThemedText>
+          <Ionicons
+            name={filtrosVisiveis ? 'chevron-up' : 'chevron-down'}
+            size={Math.round(20 * escalaFiltro)}
+            color={theme.colors.textSecondary}
+          />
+        </TouchableOpacity>
         {voiceEnabled && (
           <TouchableOpacity
             onPress={(event) => {
-              event?.stopPropagation?.();
               anunciarFiltros();
             }}
             style={styles.voiceIcon}
@@ -480,7 +483,6 @@ const FiltrosCard = React.memo(({
         {temFiltrosAtivos && (
           <TouchableOpacity 
             onPress={(event) => {
-              event?.stopPropagation?.();
               onLimparFiltros();
             }} 
             style={styles.limparButton}
@@ -491,7 +493,7 @@ const FiltrosCard = React.memo(({
             <ThemedText color="error" variant="caption" style={{ fontSize: Math.round(12 * escalaFiltro) }}>Limpar</ThemedText>
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
 
       {filtrosVisiveis && (
         <View style={styles.filtrosConteudo}>
@@ -1062,6 +1064,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   filtrosHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  filtrosHeaderToggle: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

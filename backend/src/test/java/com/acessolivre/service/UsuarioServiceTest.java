@@ -84,6 +84,21 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void salvar_DeveNormalizarNomeAntesDePersistir() {
+        Usuario usuario = criarUsuario(null, "  maria   da silva  ", "maria@teste.com");
+
+        when(usuarioRepository.findByEmail("maria@teste.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Usuario resultado = usuarioService.salvar(usuario);
+
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepository).save(captor.capture());
+        assertEquals("Maria Da Silva", captor.getValue().getNome());
+        assertEquals("Maria Da Silva", resultado.getNome());
+    }
+
+    @Test
     void atualizar_DeveLancarExcecaoQuandoUsuarioNaoExiste() {
         Usuario usuario = criarUsuario(40L, "Eva", "eva@teste.com");
         when(usuarioRepository.findByIdUsuarioAndAtivoTrue(40L)).thenReturn(Optional.empty());
@@ -106,6 +121,21 @@ class UsuarioServiceTest {
 
         assertEquals("Fábio Atualizado", resultado.getNome());
         verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void atualizar_DeveNormalizarNomeAntesDePersistir() {
+        Usuario usuario = criarUsuario(5L, "  joao   pedro ", "joao@teste.com");
+
+        when(usuarioRepository.findByIdUsuarioAndAtivoTrue(5L)).thenReturn(Optional.of(criarUsuario(5L, "Joao", "joao@teste.com")));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Usuario resultado = usuarioService.atualizar(usuario);
+
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepository).save(captor.capture());
+        assertEquals("Joao Pedro", captor.getValue().getNome());
+        assertEquals("Joao Pedro", resultado.getNome());
     }
 
     @Test

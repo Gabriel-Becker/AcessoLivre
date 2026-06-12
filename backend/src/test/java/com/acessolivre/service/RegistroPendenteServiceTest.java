@@ -100,7 +100,7 @@ class RegistroPendenteServiceTest {
 
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioPersistido);
 
-        UsuarioResponseDTO resposta = registroPendenteService.registrarUsuarioDireto("João", "joao@teste.com", "Senha@123");
+        UsuarioResponseDTO resposta = registroPendenteService.registrarUsuarioDireto("  joão   da   silva  ", "joao@teste.com", "Senha@123");
 
         assertEquals(15L, resposta.getIdUsuario());
         assertEquals("ROLE_USER", resposta.getRole());
@@ -109,6 +109,7 @@ class RegistroPendenteServiceTest {
         verify(usuarioRepository).save(usuarioCaptor.capture());
 
         Usuario usuarioSalvo = usuarioCaptor.getValue();
+        assertEquals("João Da Silva", usuarioSalvo.getNome());
         assertEquals(Role.ROLE_USER, usuarioSalvo.getRole());
         assertTrue(Boolean.TRUE.equals(usuarioSalvo.getEmailVerified()));
         assertTrue(Boolean.FALSE.equals(usuarioSalvo.getTwoFactorEnabled()));

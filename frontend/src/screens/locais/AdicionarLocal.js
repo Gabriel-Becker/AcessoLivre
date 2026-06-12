@@ -28,6 +28,7 @@ import { ThemedText } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import LocalService from '../../services/LocalService';
+import BuscarService from '../../services/BuscarService';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
@@ -725,14 +726,18 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       setImagens([]);
       setProgressoImagens({ atual: 0, total: 0 });
 
+      if (typeof BuscarService.invalidateCache === 'function') {
+        BuscarService.invalidateCache();
+      }
+
       if (onNavigate) {
-        onNavigate('Inicio', { refreshKey: Date.now() });
+        onNavigate('Inicio', { refreshKey: Date.now(), forceRefresh: true });
       } else if (navigation && typeof navigation.goBack === 'function') {
         try {
           navigation.goBack();
         } catch (_erroNavegacao) {
           try {
-            navigation.navigate?.('Main', { screen: 'Inicio', refreshKey: Date.now() });
+            navigation.navigate?.('Main', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
           } catch (_erroFallback) {
             console.error('[AdicionarLocal] Falha na navegação de retorno:', _erroFallback);
           }

@@ -198,7 +198,7 @@ class LocalControllerTest {
     @Test
     void salvar_DeveCapitalizarNomeERetornarCreated() {
         LocalRequestDTO request = criarRequestLocal("novo local", Set.of(TipoAcessibilidade.RAMPA));
-        Local salvo = criarLocal(50L, "Novo local", StatusLocal.EM_ANALISE);
+        Local salvo = criarLocal(50L, "Novo Local", StatusLocal.EM_ANALISE);
         ArgumentCaptor<LocalRequestDTO> dtoCaptor = ArgumentCaptor.forClass(LocalRequestDTO.class);
 
         when(localService.salvar(any(LocalRequestDTO.class))).thenReturn(salvo);
@@ -207,7 +207,7 @@ class LocalControllerTest {
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         verify(localService).salvar(dtoCaptor.capture());
-        assertEquals("Novo local", dtoCaptor.getValue().getNome());
+        assertEquals("Novo Local", dtoCaptor.getValue().getNome());
     }
 
     @Test
