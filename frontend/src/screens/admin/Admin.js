@@ -158,7 +158,19 @@ export default function Admin() {
     if (!valor) return 'Não disponível';
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return String(valor);
-    return data.toLocaleString('pt-BR');
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      dateStyle: 'short',
+      timeStyle: 'medium',
+      hour12: false,
+    }).format(data);
+  };
+
+  const formatarMesAnoMascara = (valor) => {
+    const digitos = String(valor || '').replace(/\D/g, '').slice(0, 6);
+    if (!digitos) return '';
+    if (digitos.length <= 2) return digitos;
+    return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
   };
 
   const formatarPeriodoAplicado = () => {
@@ -171,6 +183,31 @@ export default function Admin() {
   };
 
   const isMesAnoValido = (valor) => /^(0[1-9]|1[0-2])\/\d{4}$/.test(String(valor || '').trim());
+
+  const isPeriodoRelatorioValido = useMemo(() => {
+    const inicio = String(filtroDataInicioInput || '').trim();
+    const fim = String(filtroDataFimInput || '').trim();
+
+    if (inicio && !isMesAnoValido(inicio)) return false;
+    if (fim && !isMesAnoValido(fim)) return false;
+
+    if (inicio && fim) {
+      const [mesInicio, anoInicio] = inicio.split('/');
+      const [mesFim, anoFim] = fim.split('/');
+      return Number(`${anoInicio}${mesInicio}`) <= Number(`${anoFim}${mesFim}`);
+    }
+
+    return true;
+  }, [filtroDataInicioInput, filtroDataFimInput]);
+
+  const atualizarFiltroRelatorio = (valor, tipo) => {
+    const formatado = formatarMesAnoMascara(valor);
+    if (tipo === 'inicio') {
+      setFiltroDataInicioInput(formatado);
+      return;
+    }
+    setFiltroDataFimInput(formatado);
+  };
 
   const converterMesAnoParaDataApi = (valor, tipo) => {
     const limpo = String(valor || '').trim();
@@ -534,17 +571,20 @@ export default function Admin() {
 
   const formatarNumero = (valor) => new Intl.NumberFormat('pt-BR').format(Number(valor) || 0);
 
+  const cardRelatorioVariant = isHighContrast ? 'outlined' : 'default';
+  const corFundoDestaque = isHighContrast ? t.colors.backgroundTertiary : t.colors.surfaceSecondary;
+
   const renderLinhaMetrica = (label, valor) => (
     <View key={label} style={styles.itemMetricaLinha}>
       <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</ThemedText>
-      <View style={[styles.badgeValorMetrica, { backgroundColor: t.colors.surfaceSecondary, borderColor: t.colors.border }]}>
+      <View style={[styles.badgeValorMetrica, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}>
         <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
       </View>
     </View>
   );
 
   const renderKpi = (titulo, valor) => (
-    <View key={titulo} style={[styles.kpiCard, { backgroundColor: t.colors.surfaceSecondary, borderColor: t.colors.border }]}> 
+    <View key={titulo} style={[styles.kpiCard, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}> 
       <ThemedText size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</ThemedText>
       <Spacer size="xs" />
       <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
@@ -642,35 +682,39 @@ export default function Admin() {
 
   const renderRelatorios = () => (
     <View style={styles.relatoriosContainer}>
-      <Card style={styles.cardUsuario}>
+      <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatório</ThemedText>
         <Spacer size="sm" />
         <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatório busca todos os dados.</ThemedText>
         <Spacer size="sm" />
         <View style={styles.filtrosDataContainer}>
           <TextInput
-            style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: t.colors.surfaceSecondary }]}
-            placeholder="Data inicial (MM/AAAA)"
+            style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: corFundoDestaque }]}
+            placeholder="MM/AAAA"
             placeholderTextColor={t.colors.textSecondary}
             value={filtroDataInicioInput}
-            onChangeText={setFiltroDataInicioInput}
+            onChangeText={(valor) => atualizarFiltroRelatorio(valor, 'inicio')}
             autoCapitalize="none"
             autoCorrect={false}
+            keyboardType="numeric"
+            inputMode="numeric"
           />
           <TextInput
-            style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: t.colors.surfaceSecondary }]}
-            placeholder="Data final (MM/AAAA)"
+            style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: corFundoDestaque }]}
+            placeholder="MM/AAAA"
             placeholderTextColor={t.colors.textSecondary}
             value={filtroDataFimInput}
-            onChangeText={setFiltroDataFimInput}
+            onChangeText={(valor) => atualizarFiltroRelatorio(valor, 'fim')}
             autoCapitalize="none"
             autoCorrect={false}
+            keyboardType="numeric"
+            inputMode="numeric"
           />
         </View>
         <Spacer size="sm" />
         <View style={styles.filtrosDataAcoes}>
-          <Button variant="primary" size="small" onPress={aplicarFiltrosRelatorio}>Aplicar filtros</Button>
-          <Button variant="outline" size="small" onPress={limparFiltrosRelatorio}>Limpar</Button>
+          <Button variant="primary" size="small" onPress={aplicarFiltrosRelatorio} disabled={!isPeriodoRelatorioValido} altoContraste={isHighContrast}>Aplicar filtros</Button>
+          <Button variant="outline" size="small" onPress={limparFiltrosRelatorio} altoContraste={isHighContrast}>Limpar</Button>
         </View>
 
         <Spacer size="sm" />
@@ -681,7 +725,8 @@ export default function Admin() {
             variant={tipoRelatorioExportacao === 'usuarios' ? 'primary' : 'outline'}
             size="small"
             onPress={() => setTipoRelatorioExportacao('usuarios')}
-            disabled={exportandoRelatorio}
+            disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
+            altoContraste={isHighContrast}
           >
             Usuários
           </Button>
@@ -689,7 +734,8 @@ export default function Admin() {
             variant={tipoRelatorioExportacao === 'locais' ? 'primary' : 'outline'}
             size="small"
             onPress={() => setTipoRelatorioExportacao('locais')}
-            disabled={exportandoRelatorio}
+            disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
+            altoContraste={isHighContrast}
           >
             Locais
           </Button>
@@ -701,7 +747,8 @@ export default function Admin() {
             size="small"
             onPress={() => exportarRelatorio('csv')}
             loading={exportandoRelatorio}
-            disabled={exportandoRelatorio}
+            disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
+            altoContraste={isHighContrast}
           >
             Exportar CSV
           </Button>
@@ -710,7 +757,8 @@ export default function Admin() {
             size="small"
             onPress={() => exportarRelatorio('pdf')}
             loading={exportandoRelatorio}
-            disabled={exportandoRelatorio}
+            disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
+            altoContraste={isHighContrast}
           >
             Exportar PDF
           </Button>
@@ -726,7 +774,7 @@ export default function Admin() {
         </ThemedText>
       </Card>
 
-      <Card style={styles.cardUsuario}>
+      <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
         <Spacer size="md" />
         <View style={styles.gridKpis}>
@@ -739,7 +787,7 @@ export default function Admin() {
         </View>
       </Card>
 
-      <Card style={styles.cardUsuario}>
+      <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Usuários</ThemedText>
         <Spacer size="md" />
         <View style={styles.listaMetricasContainer}>
@@ -785,7 +833,7 @@ export default function Admin() {
         </View>
       </Card>
 
-      <Card style={styles.cardUsuario}>
+      <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
         <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Locais</ThemedText>
         <Spacer size="md" />
         <View style={styles.listaMetricasContainer}>

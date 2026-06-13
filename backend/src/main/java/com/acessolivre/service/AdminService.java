@@ -365,8 +365,7 @@ public class AdminService {
         csv.append("Total Admins;").append(relatorio.get("totalAdmins")).append("\n");
         csv.append("Total Usuarios Comuns;").append(relatorio.get("totalUsuariosComuns")).append("\n");
         csv.append("Cadastros Ultimos 30 Dias;").append(relatorio.get("cadastrosUltimos30Dias")).append("\n");
-        csv.append("Filtro Data Inicio;").append(formatarData(relatorio.get("filtroDataInicio"))).append("\n");
-        csv.append("Filtro Data Fim;").append(formatarData(relatorio.get("filtroDataFim"))).append("\n");
+        csv.append("Período;").append(formatarPeriodo(relatorio.get("filtroDataInicio"), relatorio.get("filtroDataFim"))).append("\n");
         csv.append("Gerado Em;").append(formatarData(relatorio.get("geradoEm"))).append("\n\n");
 
         csv.append("Perfil;Total\n");
@@ -414,8 +413,7 @@ public class AdminService {
         csv.append("Locais Sem Avaliacao;").append(relatorio.get("locaisSemAvaliacao")).append("\n");
         csv.append("Media Avaliacao Geral;").append(df.format((Double) relatorio.getOrDefault("mediaAvaliacaoGeral", 0.0))).append("\n");
         csv.append("Total Avaliacoes;").append(relatorio.get("totalAvaliacoes")).append("\n");
-        csv.append("Filtro Data Inicio;").append(formatarData(relatorio.get("filtroDataInicio"))).append("\n");
-        csv.append("Filtro Data Fim;").append(formatarData(relatorio.get("filtroDataFim"))).append("\n");
+        csv.append("Período;").append(formatarPeriodo(relatorio.get("filtroDataInicio"), relatorio.get("filtroDataFim"))).append("\n");
         csv.append("Gerado Em;").append(formatarData(relatorio.get("geradoEm"))).append("\n\n");
 
         csv.append("Categoria;Total\n");
@@ -475,7 +473,7 @@ public class AdminService {
 
             document.add(new Paragraph("Relatorio de Usuarios - AcessoLivre", titulo));
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Periodo: " + formatarData(relatorio.get("filtroDataInicio")) + " ate " + formatarData(relatorio.get("filtroDataFim")), texto));
+            document.add(new Paragraph("Período: " + formatarPeriodo(relatorio.get("filtroDataInicio"), relatorio.get("filtroDataFim")), texto));
             document.add(new Paragraph("Gerado em: " + formatarData(relatorio.get("geradoEm")), texto));
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Resumo", secao));
@@ -551,7 +549,7 @@ public class AdminService {
 
             document.add(new Paragraph("Relatorio de Locais - AcessoLivre", titulo));
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Periodo: " + formatarData(relatorio.get("filtroDataInicio")) + " ate " + formatarData(relatorio.get("filtroDataFim")), texto));
+            document.add(new Paragraph("Período: " + formatarPeriodo(relatorio.get("filtroDataInicio"), relatorio.get("filtroDataFim")), texto));
             document.add(new Paragraph("Gerado em: " + formatarData(relatorio.get("geradoEm")), texto));
             document.add(new Paragraph(" "));
             document.add(new Paragraph("Total locais: " + relatorio.get("totalLocais"), texto));
@@ -656,6 +654,15 @@ public class AdminService {
         if (valor instanceof LocalDateTime dt) return dt.format(FMT_DATA_HORA);
         if (valor instanceof java.time.LocalDate d) return d.format(FMT_DATA);
         return String.valueOf(valor);
+    }
+
+    private String formatarPeriodo(Object inicio, Object fim) {
+        String di = formatarData(inicio);
+        String df = formatarData(fim);
+        if (di.isEmpty() && df.isEmpty()) return "Todo o período";
+        if (di.isEmpty()) return "Até " + df;
+        if (df.isEmpty()) return "A partir de " + di;
+        return di + " até " + df;
     }
 
     private boolean estaNoPeriodo(LocalDateTime dataReferencia, LocalDate dataInicio, LocalDate dataFim) {
