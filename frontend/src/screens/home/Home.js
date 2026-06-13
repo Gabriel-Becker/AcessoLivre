@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: 12,
     marginBottom: 8,
   },

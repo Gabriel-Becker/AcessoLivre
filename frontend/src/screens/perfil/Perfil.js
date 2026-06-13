@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
@@ -14,7 +14,6 @@ import AuthService from '../../services/AuthService';
 import { resetToHome, navigate } from '../../navigation/navigationRef';
 import toastHelper from '../../utils/toastHelper';
 import LocalService from '../../services/LocalService';
-import { Alert } from 'react-native';
 
 export default function Perfil() {
   const { usuario, logout } = useAuth();
@@ -32,6 +31,9 @@ export default function Perfil() {
   const [carregandoLogout, setCarregandoLogout] = useState(false);
   const [meusLocais, setMeusLocais] = useState([]);
   const [carregandoMeusLocais, setCarregandoMeusLocais] = useState(false);
+  const [modalExcluirVisivel, setModalExcluirVisivel] = useState(false);
+  const [localParaExcluir, setLocalParaExcluir] = useState(null);
+  const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
 
   const roleUsuario = String(usuario?.role || '').toUpperCase();
@@ -94,20 +96,6 @@ export default function Perfil() {
     VoiceService.speak(`Não encontrei nenhum local chamado ${nomeLocal} na sua lista.`);
     return false;
   }, [meusLocais]);
-
-  const confirmarExclusaoPorVoz = useCallback((idLocal, nomeLocal) => {
-    Alert.alert(
-      'Excluir local',
-      `Tem certeza que deseja excluir o local "${nomeLocal}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel', onPress: () => VoiceService.speak('Exclusão cancelada') },
-        { text: 'Excluir', style: 'destructive', onPress: () => {
-          VoiceService.speak(`Excluindo ${nomeLocal}`);
-          handleExcluirLocal(idLocal);
-        }}
-      ]
-    );
-  }, []);
 
   useEffect(() => {
     if (voiceEnabled) {
@@ -197,18 +185,14 @@ export default function Perfil() {
     }
   };
 
-  const confirmarExcluirLocal = (idLocal, nomeLocal) => {
+  const confirmarExcluirLocal = (local) => {
+    if (!local?.idLocal) return;
+
+    setLocalParaExcluir(local);
+    setModalExcluirVisivel(true);
+
     if (voiceEnabled) {
-      confirmarExclusaoPorVoz(idLocal, nomeLocal);
-    } else {
-      Alert.alert(
-        'Excluir local',
-        `Tem certeza que deseja excluir o local "${nomeLocal}"? Esta ação é definitiva (exclusão lógica).`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Excluir', style: 'destructive', onPress: () => handleExcluirLocal(idLocal) }
-        ]
-      );
+      VoiceService.speak(`Confirme se deseja excluir o local ${local.nome}`);
     }
   };
 
@@ -218,11 +202,42 @@ export default function Perfil() {
       toastHelper.showSuccess('Local excluído com sucesso.');
       if (voiceEnabled) VoiceService.speak('Local excluído com sucesso');
       carregarMeusLocais();
+      return true;
     } catch (erro) {
       console.error('Erro ao excluir local:', erro);
       const msg = erro?.response?.data?.message || erro?.message || 'Erro ao excluir local.';
       toastHelper.showError(msg);
       if (voiceEnabled) VoiceService.speak('Erro ao excluir o local');
+      return false;
+    }
+  };
+
+  const handleConfirmarExcluirLocal = async () => {
+    if (!localParaExcluir?.idLocal) return;
+
+    try {
+      setCarregandoExclusao(true);
+
+      if (voiceEnabled) {
+        VoiceService.speak(`Excluindo ${localParaExcluir.nome}`);
+      }
+
+      const sucesso = await handleExcluirLocal(localParaExcluir.idLocal);
+      if (sucesso) {
+        setModalExcluirVisivel(false);
+        setLocalParaExcluir(null);
+      }
+    } finally {
+      setCarregandoExclusao(false);
+    }
+  };
+
+  const handleCancelarExcluirLocal = () => {
+    setModalExcluirVisivel(false);
+    setLocalParaExcluir(null);
+
+    if (voiceEnabled) {
+      VoiceService.speak('Exclusão cancelada');
     }
   };
 
@@ -443,7 +458,7 @@ export default function Perfil() {
                     <Button 
                       variant="danger" 
                       size="small" 
-                      onPress={() => confirmarExcluirLocal(local.idLocal, local.nome)} 
+                      onPress={() => confirmarExcluirLocal(local)} 
                       altoContraste={isHighContrast}
                     >
                       Excluir
@@ -461,6 +476,70 @@ export default function Perfil() {
         onClose={() => setShowChangePassword(false)}
         altoContraste={isHighContrast}
       />
+
+      <Modal
+        visible={modalExcluirVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelarExcluirLocal}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContainer,
+              {
+                backgroundColor: t.colors.surface,
+                width: width < 768 ? '88%' : width < 1024 ? '52%' : '35%',
+              },
+            ]}
+          >
+            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+              Excluir local
+            </ThemedText>
+
+            <Spacer size="lg" />
+
+            <View style={styles.modalMessage}>
+              <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
+                Tem certeza que deseja inativar o local{' '}
+                <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
+                  {localParaExcluir?.nome || ''}
+                </ThemedText>
+                ?
+              </ThemedText>
+            </View>
+
+            <Spacer size="xl" />
+
+            <View style={styles.modalBotoes}>
+              <Button
+                variant="danger"
+                size="medium"
+                fullWidth
+                onPress={handleConfirmarExcluirLocal}
+                loading={carregandoExclusao}
+                disabled={carregandoExclusao}
+                altoContraste={isHighContrast}
+              >
+                Confirmar exclusão
+              </Button>
+
+              <Spacer size="xs" />
+
+              <Button
+                variant="outline"
+                size="medium"
+                fullWidth
+                onPress={handleCancelarExcluirLocal}
+                disabled={carregandoExclusao}
+                altoContraste={isHighContrast}
+              >
+                Cancelar
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <TwoFactorModal
         visible={showTwoFactorModal}
@@ -517,5 +596,22 @@ const styles = StyleSheet.create({
   segurancaTexto: {
     flex: 1,
     marginLeft: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  modalContainer: {
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalMessage: {
+    alignItems: 'center',
+  },
+  modalBotoes: {
+    width: '100%',
   },
 });
