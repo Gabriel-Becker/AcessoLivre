@@ -1,4 +1,3 @@
-// repository/ImagemRepository.java
 package com.acessolivre.repository;
 
 import com.acessolivre.model.Imagem;

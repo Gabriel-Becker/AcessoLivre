@@ -35,10 +35,8 @@ public class LocalResponseDTO {
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
     
-    // ✅ NOVO CAMPO - Nome do local principal (declarativo)
     private String nomeLocalPrincipal;
     
-    // Informações do auto-relacionamento
     private Long idLocalPrincipal;
     private List<LocalResumoResponseDTO> subLocais;
     private Integer nivelHierarquia;

@@ -40,29 +40,27 @@ public class LocalMapper {
             return null;
         }
 
-        // ===== PROCESSAR IMAGENS COM DEDUPLICAÇÃO =====
         List<ImagemResponseDTO> imagensDTO = new ArrayList<>();
         String imagemUrl = null;
         
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
-            // Ordena as imagens por ordem
             List<Imagem> imagensOrdenadas = entity.getImagens().stream()
                     .sorted(Comparator.comparing(Imagem::getOrdem, Comparator.nullsLast(Comparator.naturalOrder())))
                     .collect(Collectors.toList());
             
-            // CORRIGIDO: Deduplicação das imagens por ID para evitar duplicatas causadas por produto cartesiano
+        
             imagensDTO = imagensOrdenadas.stream()
                     .collect(Collectors.toMap(
                             Imagem::getIdImagem,
                             ImagemMapper::toResponse,
-                            (existing, replacement) -> existing, // Mantém a primeira ocorrência
-                            LinkedHashMap::new // Mantém ordem de inserção
+                            (existing, replacement) -> existing,
+                            LinkedHashMap::new 
                     ))
                     .values()
                     .stream()
                     .toList();
             
-            // Pega a primeira imagem para URL (já deduplicada)
+        
             if (!imagensDTO.isEmpty()) {
                 imagemUrl = imagensDTO.get(0).getUrlCompleta();
             }
@@ -87,7 +85,7 @@ public class LocalMapper {
                 .isRaiz(entity.isRaiz())
                 .isFolha(entity.isFolha())
                 .imagens(imagensDTO)
-                .totalImagens(imagensDTO.size()) // Agora reflete o total correto após deduplicação
+                .totalImagens(imagensDTO.size()) 
                 .nomeLocalPrincipal(entity.getNomeLocalPrincipal());
 
         if (entity.getLocalPrincipal() != null) {
@@ -113,7 +111,6 @@ public class LocalMapper {
         
         String imagemUrl = null;
         if (entity.getImagens() != null && !entity.getImagens().isEmpty()) {
-            // CORRIGIDO: Deduplicação também no resumo
             Imagem primeiraImagem = entity.getImagens().stream()
                     .collect(Collectors.toMap(
                             Imagem::getIdImagem,
@@ -167,7 +164,6 @@ public class LocalMapper {
             entity.getTiposAcessibilidade().addAll(dto.getTiposAcessibilidade());
         }
         
-        // Atualiza o nome do local principal
         entity.setNomeLocalPrincipal(dto.getNomeLocalPrincipal());
     }
 }

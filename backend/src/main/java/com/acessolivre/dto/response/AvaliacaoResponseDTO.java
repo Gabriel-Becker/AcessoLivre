@@ -23,10 +23,8 @@ public class AvaliacaoResponseDTO {
     private Boolean moderado;
     private LocalDateTime dataAvaliacao;
     
-    // Dados do usuário (NECESSÁRIO PARA EXIBIR NOME)
     private UsuarioResumoDTO usuario;
-    
-    // Dados do local
+   
     private Long idLocal;
     private String nomeLocal;
     

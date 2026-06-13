@@ -37,9 +37,7 @@ class EnderecoServiceTest {
         enderecoValido.setNumero("119");
         enderecoValido.setComplemento("Apto 101");
     }
-
-    // TESTES DE CEP 
-    
+ 
     @Test
     void validarEndereco_ComEnderecoNulo_DeveLancarExcecao() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -91,7 +89,6 @@ class EnderecoServiceTest {
         assertEquals("CEP deve conter exatamente 8 digitos", exception.getMessage());
     }
 
-     // TESTES DE ESTADO 
     
     @Test
     void validarEndereco_ComEstadoNulo_DeveLancarExcecao() throws Exception {

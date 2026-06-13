@@ -20,31 +20,17 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
-    /**
-     * Lista todos os usuários
-     * @return Lista de todos os usuários
-     */
     public List<Usuario> listarTodos() {
         log.info("Listando todos os usuários");
         return usuarioRepository.findAllByAtivoTrue();
     }
 
-    /**
-     * Busca um usuário pelo ID
-     * @param id ID do usuário
-     * @return Optional contendo o usuário se encontrado
-     */
+ 
     public Optional<Usuario> buscarPorId(Long id) {
-        log.info("Buscando usuário por ID: {}", id);
         return usuarioRepository.findByIdUsuarioAndAtivoTrue(id);
     }
 
-    /**
-     * Salva um novo usuário
-     * @param usuario Usuário a ser salvo
-     * @return Usuário salvo
-    * @throws IllegalArgumentException se email já existir
-     */
+
     @Transactional
     public Usuario salvar(Usuario usuario) {
         usuario.setNome(NomeValidator.normalize(usuario.getNome()));
@@ -61,12 +47,7 @@ public class UsuarioService {
         return usuarioSalvo;
     }
 
-    /**
-     * Atualiza um usuário existente
-     * @param usuario Usuário com os dados atualizados
-     * @return Usuário atualizado
-     * @throws IllegalArgumentException se usuário não existir
-     */
+
     @Transactional
     public Usuario atualizar(Usuario usuario) {
         usuario.setNome(NomeValidator.normalize(usuario.getNome()));
@@ -83,10 +64,6 @@ public class UsuarioService {
         return usuarioAtualizado;
     }
 
-    /**
-     * Deleta um usuário pelo ID
-     * @param id ID do usuário a ser deletado
-     */
     @Transactional
     public void deletar(Long id) {
         log.info("Deletando usuário ID: {}", id);

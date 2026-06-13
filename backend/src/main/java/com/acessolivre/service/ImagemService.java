@@ -43,9 +43,7 @@ public class ImagemService {
 
     @Transactional
     public Imagem salvar(ImagemUploadDTO uploadDTO) {
-        log.info("Salvando imagem para local ID: {}", uploadDTO.getIdLocal());
-        
-        // Usar o repository diretamente para evitar ciclo
+        log.info("Salvando imagem para local ID: {}", uploadDTO.getIdLocal());       
         Local local = localRepository.findById(uploadDTO.getIdLocal())
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado com ID: " + uploadDTO.getIdLocal()));
         

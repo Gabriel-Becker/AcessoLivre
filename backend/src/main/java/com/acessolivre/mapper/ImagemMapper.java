@@ -14,7 +14,7 @@ public class ImagemMapper {
     @Autowired
     public void setStorageService(StorageService service) {
         storageService = service;
-        System.out.println("✅ ImagemMapper inicializado com StorageService");
+        System.out.println(" ImagemMapper inicializado com StorageService");
     }
     
     public static ImagemResponseDTO toResponse(Imagem entity) {
@@ -25,9 +25,9 @@ public class ImagemMapper {
         String urlCompleta = null;
         if (storageService != null && entity.getCaminhoRelativo() != null) {
             urlCompleta = storageService.construirUrlCompleta(entity.getCaminhoRelativo());
-            System.out.println("🔍 Construindo URL: " + entity.getCaminhoRelativo() + " -> " + urlCompleta);
+            System.out.println(" Construindo URL: " + entity.getCaminhoRelativo() + " -> " + urlCompleta);
         } else {
-            System.out.println("⚠️ StorageService é null ou caminho vazio");
+            System.out.println("StorageService é null ou caminho vazio");
         }
         
         return ImagemResponseDTO.builder()

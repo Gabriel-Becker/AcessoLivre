@@ -9,7 +9,6 @@ import com.acessolivre.model.Usuario;
 public class AvaliacaoMapper {
 
     private AvaliacaoMapper() {
-        // Construtor privado para evitar instanciação
     }
 
     public static AvaliacaoResponseDTO toResponse(Avaliacao avaliacao) {
@@ -27,7 +26,7 @@ public class AvaliacaoMapper {
                 .moderado(avaliacao.getModerado())
                 .dataAvaliacao(avaliacao.getDataAvaliacao());
 
-        // Adicionar dados do usuário
+        
         if (avaliacao.getUsuario() != null) {
             Usuario usuario = avaliacao.getUsuario();
             AvaliacaoResponseDTO.UsuarioResumoDTO usuarioDTO = AvaliacaoResponseDTO.UsuarioResumoDTO.builder()
@@ -38,7 +37,6 @@ public class AvaliacaoMapper {
             builder.usuario(usuarioDTO);
         }
 
-        // Adicionar dados do local
         if (avaliacao.getLocal() != null) {
             Local local = avaliacao.getLocal();
             builder.idLocal(local.getIdLocal())

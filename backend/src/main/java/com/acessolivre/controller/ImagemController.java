@@ -59,7 +59,7 @@ public class ImagemController {
             @RequestParam("idLocal") Long idLocal,
             @RequestParam(value = "ordem", defaultValue = "0") Integer ordem) {
         
-        log.info("📸 POST /api/imagens - Salvando imagem para local {}, ordem {}", idLocal, ordem);
+        log.info(" POST /api/imagens - Salvando imagem para local {}, ordem {}", idLocal, ordem);
         log.info("   Arquivo: nome={}, tamanho={}, tipo={}", 
             arquivo.getOriginalFilename(), arquivo.getSize(), arquivo.getContentType());
         
@@ -71,19 +71,19 @@ public class ImagemController {
                     .build();
             
             Imagem imagem = imagemService.salvar(uploadDTO);
-            log.info("✅ Imagem salva com sucesso. ID: {}", imagem.getIdImagem());
+            log.info(" Imagem salva com sucesso. ID: {}", imagem.getIdImagem());
             
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ImagemMapper.toResponse(imagem));
                     
         } catch (IllegalArgumentException e) {
-            log.warn("⚠️ Erro de validação: {}", e.getMessage());
+            log.warn(" Erro de validação: {}", e.getMessage());
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(errorResponse);
         } catch (Exception e) {
-            log.error("❌ Erro ao salvar imagem", e);
+            log.error(" Erro ao salvar imagem", e);
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Erro interno ao processar imagem: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
