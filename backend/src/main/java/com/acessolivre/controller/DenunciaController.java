@@ -94,12 +94,6 @@ public class DenunciaController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * NOVO ENDPOINT: Resolve uma denúncia e remove o conteúdo denunciado automaticamente
-     * - Se for LOCAL → remove o local
-     * - Se for AVALIACAO → remove a avaliação
-     * - Marca a denúncia como RESOLVED
-     */
     @PostMapping("/{id}/resolver")
     @Operation(summary = "Resolver denúncia e remover conteúdo denunciado")
     public ResponseEntity<ResolucaoDenunciaResponseDTO> resolverDenuncia(@PathVariable Long id) {
@@ -111,9 +105,6 @@ public class DenunciaController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * NOVO ENDPOINT: Rejeita uma denúncia (marca como rejeitada sem remover conteúdo)
-     */
     @PostMapping("/{id}/rejeitar")
     @Operation(summary = "Rejeitar denúncia (marca como rejeitada sem remover conteúdo)")
     public ResponseEntity<ResolucaoDenunciaResponseDTO> rejeitarDenuncia(
