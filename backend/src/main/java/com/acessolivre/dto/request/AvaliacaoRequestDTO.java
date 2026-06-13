@@ -29,7 +29,6 @@ public class AvaliacaoRequestDTO {
     @Max(value = 5, message = "Nota máxima é 5")
     private Integer notaAcessibilidadeAuditiva;
 
-    // Comentário opcional junto à avaliação
     private String comentario;
 
     @NotNull(message = "ID do usuário é obrigatório")

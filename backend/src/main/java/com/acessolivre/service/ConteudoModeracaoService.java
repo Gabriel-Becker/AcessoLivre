@@ -16,7 +16,6 @@ public class ConteudoModeracaoService {
 
     @Transactional
     public String removerConteudoDenunciado(TipoDenuncia tipo, Long targetId) {
-        log.info("🔨 [MODERAÇÃO] Removendo conteúdo denunciado (soft delete) - Tipo: {}, TargetId: {}", tipo, targetId);
 
         try {
             if (tipo == TipoDenuncia.LOCAL) {
@@ -28,13 +27,10 @@ public class ConteudoModeracaoService {
                 return String.format("Avaliação ID %d foi ocultada (exclusão lógica)", targetId);
                 
             } else {
-                log.warn("[MODERAÇÃO] Tipo de denúncia não suportado para remoção automática: {}", tipo);
                 return "Nenhum conteúdo foi removido (tipo de denúncia não suportado)";
             }
             
         } catch (Exception e) {
-            log.error("[MODERAÇÃO] Erro ao remover conteúdo - Tipo: {}, TargetId: {}, Erro: {}", 
-                     tipo, targetId, e.getMessage(), e);
             throw new RuntimeException("Falha ao remover conteúdo: " + e.getMessage(), e);
         }
     }

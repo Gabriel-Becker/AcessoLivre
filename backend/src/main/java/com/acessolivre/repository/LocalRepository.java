@@ -20,7 +20,6 @@ import java.util.Set;
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
-    // CORRIGIDO: Removeu o JOIN FETCH de tiposAcessibilidade para evitar produto cartesiano
     @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
@@ -28,8 +27,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
         WHERE l.localPrincipal IS NULL AND l.status <> :status
     """)
     Page<Local> findAllLocaisRaizWithImages(@Param("status") StatusLocal status, Pageable pageable);
-    
-    // CORRIGIDO: Usa EntityGraph em vez de múltiplos JOIN FETCH
+
     @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
@@ -38,7 +36,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     """)
     Page<Local> findAllWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
-    // CORRIGIDO: Removeu o JOIN FETCH de tiposAcessibilidade
+
     @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
     @Query("""
         SELECT DISTINCT l
@@ -48,8 +46,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     Optional<Local> findByIdWithImages(@Param("id") Long id, @Param("status") StatusLocal status);
     
     Optional<Local> findByNomeIgnoreCase(String nome);
-    
-    // ===== MÉTODOS EXISTENTES =====
+
     
     @Override
     @EntityGraph(attributePaths = {"tiposAcessibilidade", "endereco", "usuario", "imagens"})

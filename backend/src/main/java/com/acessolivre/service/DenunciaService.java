@@ -24,22 +24,9 @@ public interface DenunciaService {
         Pageable pageable
     );
     DenunciaResponseDTO atualizarStatus(Long id, StatusDenuncia novoStatus, String resolvidoPor, String observacoes);
-    
-    /**
-     * Resolve uma denúncia e remove o conteúdo denunciado
-     * @param id ID da denúncia
-     * @param resolvidoPor Email do moderador que resolveu
-     * @return DTO com informações da resolução
-     */
+
     ResolucaoDenunciaResponseDTO resolverDenuncia(Long id, String resolvidoPor);
     
-    /**
-     * Rejeita uma denúncia (marca como rejeitada sem remover conteúdo)
-     * @param id ID da denúncia
-     * @param resolvidoPor Email do moderador que rejeitou
-     * @param observacoes Motivo da rejeição
-     * @return DTO com informações da rejeição
-     */
     ResolucaoDenunciaResponseDTO rejeitarDenuncia(Long id, String resolvidoPor, String observacoes);
     
     void excluirDenuncia(Long id);

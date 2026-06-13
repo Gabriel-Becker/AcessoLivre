@@ -16,10 +16,7 @@ public class ImageOptimizerService {
         byte[] originalBytes = file.getBytes();
         long tamanhoOriginal = originalBytes.length;
         
-        log.info("📸 Processando imagem: {} bytes ({} KB)", tamanhoOriginal, tamanhoOriginal / 1024);
-        
-        // TODO: Implementar otimização real (redimensionamento, compressão)
-        // Por enquanto, retorna o arquivo original para não quebrar o fluxo
+        log.info(" Processando imagem: {} bytes ({} KB)", tamanhoOriginal, tamanhoOriginal / 1024);
         
         return originalBytes;
     }

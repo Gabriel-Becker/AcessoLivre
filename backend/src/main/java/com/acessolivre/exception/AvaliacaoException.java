@@ -3,9 +3,6 @@ package com.acessolivre.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-/**
- * Exceções relacionadas a operações de avaliações.
- */
 public class AvaliacaoException extends RuntimeException {
     
     public AvaliacaoException(String message) {

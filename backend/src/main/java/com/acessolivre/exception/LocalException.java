@@ -3,9 +3,7 @@ package com.acessolivre.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-/**
- * Exceções relacionadas a operações de locais acessíveis.
- */
+
 public class LocalException extends RuntimeException {
     
     public LocalException(String message) {

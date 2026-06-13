@@ -30,28 +30,20 @@ public class StorageService {
     private static final String DIR_USUARIOS = "usuarios";
     private static final String DIR_LOCAIS = "locais";
     
-    /**
-     * Salva a imagem na estrutura: uploads/usuarios/{idUsuario}_{nome}/locais/{idLocal}_{nomeLocal}/
-     */
     public String salvarImagem(MultipartFile arquivo, Long idLocal, Long idUsuario) throws IOException {
-        log.info("💾 Salvando imagem para local ID: {}, usuário ID: {}", idLocal, idUsuario);
-        
-        // 1. Buscar usuário e local
+ 
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado: " + idUsuario));
         
         Local local = localRepository.findById(idLocal)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado: " + idLocal));
         
-        // 2. Validar arquivo
         validarArquivo(arquivo);
         
-        // 3. Gerar nome único
         String extensao = getExtensao(arquivo.getOriginalFilename());
         String uuid = UUID.randomUUID().toString();
         String nomeArquivo = uuid + "." + extensao;
         
-        // 4. Construir caminho: usuarios/{idUsuario}_{nomeUsuario}/locais/{idLocal}_{nomeLocal}/
         String nomeUsuarioSanitizado = sanitizarNome(usuario.getNome());
         String nomeLocalSanitizado = sanitizarNome(local.getNome());
         
@@ -59,48 +51,39 @@ public class StorageService {
                 + "/" + DIR_LOCAIS + "/" + idLocal + "_" + nomeLocalSanitizado;
         
         Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
-        
-        // 5. Criar diretório se não existir
+
         if (!Files.exists(diretorio)) {
             Files.createDirectories(diretorio);
-            log.info("📁 Diretório criado: {}", diretorio.toAbsolutePath());
+            log.info(" Diretório criado: {}", diretorio.toAbsolutePath());
         }
         
-        // 6. Otimizar imagem
         byte[] imagemBytes;
         try {
             imagemBytes = imageOptimizerService.otimizarImagem(arquivo);
-            log.info("✅ Imagem otimizada: {} bytes", imagemBytes.length);
+            log.info("Imagem otimizada: {} bytes", imagemBytes.length);
         } catch (Exception e) {
-            log.warn("⚠️ Erro na otimização, usando original: {}", e.getMessage());
+            log.warn(" Erro na otimização, usando original: {}", e.getMessage());
             imagemBytes = arquivo.getBytes();
         }
-        
-        // 7. Salvar arquivo
+
         Path caminhoCompleto = diretorio.resolve(nomeArquivo);
         Files.write(caminhoCompleto, imagemBytes);
         
-        // 8. Retornar caminho relativo
+ 
         String caminhoRelativo = storageProperties.getStaticPrefix() + "/" + subDir + "/" + nomeArquivo;
         
-        log.info("✅ Imagem salva: {} ({} KB)", caminhoRelativo, imagemBytes.length / 1024);
+        log.info(" Imagem salva: {} ({} KB)", caminhoRelativo, imagemBytes.length / 1024);
         return caminhoRelativo;
     }
     
-    /**
-     * Salva imagem usando apenas ID do local (busca o usuário automaticamente)
-     */
     public String salvarImagem(MultipartFile arquivo, Long idLocal, String dominio) throws IOException {
-        // Buscar o local para obter o idUsuario
         Local local = localRepository.findById(idLocal)
                 .orElseThrow(() -> new IllegalArgumentException("Local não encontrado: " + idLocal));
         
         return salvarImagem(arquivo, idLocal, local.getUsuario().getIdUsuario());
     }
     
-    /**
-     * Deleta a imagem do disco
-     */
+
     public boolean deletarImagem(String caminhoRelativo) {
         try {
             String caminhoSemPrefix = caminhoRelativo.replace(storageProperties.getStaticPrefix() + "/", "");
@@ -123,7 +106,6 @@ public class StorageService {
             Path diretorio = Paths.get(storageProperties.getUploadDir(), subDir);
             
             if (Files.exists(diretorio)) {
-                // Deleta recursivamente toda a pasta do local
                 Files.walk(diretorio)
                     .sorted((a, b) -> -a.compareTo(b))
                     .forEach(path -> {
@@ -143,9 +125,7 @@ public class StorageService {
         }
     }
     
-    /**
-     * Constrói URL completa para acesso
-     */
+ 
     public String construirUrlCompleta(String caminhoRelativo) {
         if (caminhoRelativo == null) return null;
         if (caminhoRelativo.startsWith("http")) return caminhoRelativo;
@@ -161,25 +141,19 @@ public class StorageService {
         
         return baseUrl + caminhoRelativo;
     }
-    
-    /**
-     * Sanitiza nome para usar em pasta (remove acentos, espaços, caracteres especiais)
-     */
+
     private String sanitizarNome(String nome) {
         if (nome == null) return "sem_nome";
         
-        // Remove acentos
         String normalized = Normalizer.normalize(nome, Normalizer.Form.NFD);
         normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
-        
-        // Substitui espaços e caracteres especiais por underscore
+
         String sanitizado = normalized
                 .toLowerCase()
                 .replaceAll("[^a-z0-9]", "_")
                 .replaceAll("_+", "_")
                 .replaceAll("^_|_$", "");
         
-        // Limita tamanho
         if (sanitizado.length() > 50) {
             sanitizado = sanitizado.substring(0, 50);
         }

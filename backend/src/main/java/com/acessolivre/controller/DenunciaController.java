@@ -1,4 +1,3 @@
-// controller/DenunciaController.java (atualizado)
 package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.DenunciaRequestDTO;

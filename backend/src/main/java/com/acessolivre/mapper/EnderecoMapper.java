@@ -10,17 +10,12 @@ import com.acessolivre.model.Usuario;
 @Component
 public class EnderecoMapper {
 
-    /**
-     * Converte EnderecoRequestDTO para entidade Endereco
-     * @param dto DTO de requisição
-     * @return Entidade Endereco
-     */
     public static Endereco toEntity(EnderecoRequestDTO dto) {
         if (dto == null) {
             return null;
         }
         
-        // Cria um objeto Usuario com apenas o ID para o relacionamento
+      
         Usuario usuario = Usuario.builder()
                 .idUsuario(dto.getIdUsuario())
                 .build();
@@ -37,11 +32,6 @@ public class EnderecoMapper {
                 .build();
     }
 
-    /**
-     * Converte entidade Endereco para EnderecoResponseDTO
-     * @param entity Entidade Endereco
-     * @return DTO de resposta
-     */
     public static EnderecoResponseDTO toResponse(Endereco entity) {
         if (entity == null) {
             return null;

@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 public class ImagemResponseDTO {
     
     private Long idImagem;
-    private String urlCompleta;      // URL completa para acesso
-    private String caminhoRelativo;   // Caminho no servidor
+    private String urlCompleta;     
+    private String caminhoRelativo;   
     private String nomeOriginal;
     private Long idLocal;
     private Long tamanhoBytes;

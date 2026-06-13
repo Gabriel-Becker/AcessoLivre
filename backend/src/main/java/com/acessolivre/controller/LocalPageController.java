@@ -21,21 +21,17 @@ public class LocalPageController {
     @GetMapping("/{id}")
     public String paginaLocal(@PathVariable Long id, Model model) {
         try {
-            // Buscar local
             Local local = localService.buscarPorIdComImagens(id)
                     .orElseThrow(() -> new RuntimeException("Local não encontrado"));
             
-            // Dados que temos certeza que existem
             model.addAttribute("nome", local.getNome() != null ? local.getNome() : "Local sem nome");
             model.addAttribute("categoria", local.getCategoria() != null ? local.getCategoria().toString() : "Não informada");
             model.addAttribute("id", local.getIdLocal());
             model.addAttribute("avaliacaoMedia", local.getAvaliacaoMedia() != null ? local.getAvaliacaoMedia() : 0.0);
             model.addAttribute("descricao", local.getDescricao() != null ? local.getDescricao() : "");
             
-            // Total de avaliações (usando valor padrão)
             model.addAttribute("totalAvaliacoes", 0);
-            
-            // Endereço
+
             String endereco = "Endereço não informado";
             if (local.getEndereco() != null) {
                 StringBuilder sb = new StringBuilder();
@@ -47,10 +43,8 @@ public class LocalPageController {
             }
             model.addAttribute("endereco", endereco);
             
-            // Imagem padrão
             model.addAttribute("imagemUrl", "https://acessolivre.app/images/default-local.png");
-            
-            // Estrelas
+
             double media = local.getAvaliacaoMedia() != null ? local.getAvaliacaoMedia() : 0;
             model.addAttribute("fullStars", (int) Math.floor(media));
             model.addAttribute("hasHalfStar", (media - Math.floor(media)) >= 0.5);

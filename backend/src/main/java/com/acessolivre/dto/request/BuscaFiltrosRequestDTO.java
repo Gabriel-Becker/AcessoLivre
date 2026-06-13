@@ -8,13 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Set;
-
-/**
- * DTO para filtros de busca de locais
- * 
- * @author AcessoLivre Team
- * @version 1.0
- */
 @Data
 @Builder
 @NoArgsConstructor
