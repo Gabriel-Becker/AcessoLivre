@@ -27,6 +27,12 @@ export function AccessibilityProvider({ children }) {
       return;
     }
 
+    if (!VoiceService.canRecognizeSpeech()) {
+      setIsListening(false);
+      VoiceService.speak("Reconhecimento de voz indisponível neste aplicativo. Use um development build para falar comandos.");
+      return;
+    }
+
     if (isListening) {
       VoiceService.stop();
       setIsListening(false);

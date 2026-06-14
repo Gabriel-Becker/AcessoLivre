@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Container } from '../../components/layout';
 import {
@@ -655,6 +656,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const t = useMemo(() => getTheme(isHighContrast, fontSizeMultiplier), [isHighContrast, fontSizeMultiplier]);
   const { usuario } = useAuth();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const larguraVisual = Platform.OS === 'web' && typeof window !== 'undefined'
     ? (window.visualViewport?.width || window.innerWidth || width)
@@ -662,6 +664,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const fonteGrande = Number(fontSizeMultiplier) >= 1.5;
   const usarDuasColunas = larguraVisual >= Math.max(920, breakpoints.tablet) && !fonteGrande;
   const mostrarCardsLaterais = Platform.OS === 'web' && larguraVisual >= Math.max(1280, breakpoints.desktop) && !fonteGrande;
+  const paddingInferiorBase = fonteGrande ? t.spacing.xxxl + t.spacing.sm : t.spacing.xxxl;
+  const paddingInferiorMobile = Platform.OS === 'web' ? 0 : 28 + Math.max(insets.bottom, t.spacing.sm);
 
   const [formulario, setFormulario] = useState({
     nome: '',
@@ -1121,7 +1125,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       scroll
       background={isHighContrast ? 'background' : 'backgroundSecondary'}
       altoContraste={isHighContrast}
-      contentStyle={estilos.scroll}
+      contentStyle={[estilos.scroll, { paddingBottom: paddingInferiorBase + paddingInferiorMobile }]}
     >
       <CabecalhoPagina
         titulo="Adicionar Local"

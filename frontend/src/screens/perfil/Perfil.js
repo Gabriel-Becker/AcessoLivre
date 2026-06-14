@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Container } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
 import { Spacer, ThemedText } from '../../components/commons';
@@ -20,7 +21,9 @@ export default function Perfil() {
   const { isHighContrast, theme: t } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isMobile = width < 768;
+  const paddingInferiorScroll = isMobile ? 28 + Math.max(insets.bottom, 8) : 24;
   const corPrincipal = isHighContrast ? 'textOnPrimary' : 'textPrimary';
   const corSecundaria = isHighContrast ? 'textOnPrimary' : 'textSecondary';
   
@@ -291,7 +294,7 @@ export default function Perfil() {
 
   return (
     <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: paddingInferiorScroll }}>
         <ThemedText variant="h1" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meu Perfil</ThemedText>
         <Spacer size="md" />
 

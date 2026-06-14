@@ -1,3 +1,5 @@
+import { normalizarUrlImagem } from '../utils/urlImagem';
+
 class LocalMapper {
   static _resolverIdLocalPrincipal(local) {
     return (
@@ -90,12 +92,12 @@ class LocalMapper {
 
     if (local.imagens && Array.isArray(local.imagens) && local.imagens.length > 0) {
       const primeiraImagem = local.imagens[0];
-      return primeiraImagem.urlCompleta || primeiraImagem.url || primeiraImagem.caminhoRelativo || null;
+      return normalizarUrlImagem(primeiraImagem.urlCompleta || primeiraImagem.url || primeiraImagem.caminhoRelativo || null);
     }
 
-    if (local.imagemUrl) return local.imagemUrl;
-    if (local.imagemPrincipal) return local.imagemPrincipal;
-    if (local.imagem) return local.imagem;
+    if (local.imagemUrl) return normalizarUrlImagem(local.imagemUrl);
+    if (local.imagemPrincipal) return normalizarUrlImagem(local.imagemPrincipal);
+    if (local.imagem) return normalizarUrlImagem(local.imagem);
 
     return null;
   }
@@ -105,7 +107,7 @@ class LocalMapper {
 
     if (local.imagens && Array.isArray(local.imagens) && local.imagens.length > 0) {
       return local.imagens
-        .map(img => img.urlCompleta || img.url || img.caminhoRelativo)
+        .map(img => normalizarUrlImagem(img.urlCompleta || img.url || img.caminhoRelativo))
         .filter(Boolean);
     }
 

@@ -13,6 +13,7 @@ import {
   LayoutAnimation,
   UIManager
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import {
@@ -562,6 +563,7 @@ export default function Buscar({ onNavigate }) {
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const escalaZoom = useMemo(() => Math.max(1, Number(fontSizeMultiplier) || 1), [fontSizeMultiplier]);
 
   const larguraViewport = useMemo(() => {
@@ -577,6 +579,7 @@ export default function Buscar({ onNavigate }) {
   const isDesktop = larguraViewport >= BREAKPOINTS.TABLET;
   const isTablet = larguraViewport >= BREAKPOINTS.MOBILE && larguraViewport < BREAKPOINTS.TABLET;
   const usarLayoutEmpilhado = isDesktop && zoomAplicado;
+  const paddingInferiorLista = isDesktop && !usarLayoutEmpilhado ? 32 : 28 + Math.max(insets.bottom, 8);
   const [searchText, setSearchText] = useState('');
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
   const [recursosSelecionados, setRecursosSelecionados] = useState([]);
@@ -944,7 +947,7 @@ export default function Buscar({ onNavigate }) {
                 </>
               }
               ListEmptyComponent={!loading && renderEmptyState}
-              contentContainerStyle={styles.resultadosListContent}
+              contentContainerStyle={[styles.resultadosListContent, { paddingBottom: paddingInferiorLista }]}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
@@ -1005,7 +1008,10 @@ export default function Buscar({ onNavigate }) {
             </>
           }
           ListEmptyComponent={!loading && renderEmptyState}
-          contentContainerStyle={zoomAplicado ? styles.listContentZoom : styles.listContentMobile}
+          contentContainerStyle={[
+            zoomAplicado ? styles.listContentZoom : styles.listContentMobile,
+            { paddingBottom: paddingInferiorLista },
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
@@ -1049,11 +1055,11 @@ const styles = StyleSheet.create({
   
   listContentMobile: {
     paddingHorizontal: 12,
-    paddingBottom: 32,
+    paddingBottom: 0,
   },
   listContentZoom: {
     paddingHorizontal: 0,
-    paddingBottom: 32,
+    paddingBottom: 0,
   },
   
   filtrosCard: {

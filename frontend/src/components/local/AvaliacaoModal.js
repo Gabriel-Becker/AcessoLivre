@@ -7,8 +7,10 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Platform,
-  Alert
+  Alert,
+  KeyboardAvoidingView
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText, Spacer } from '../commons';
 import { Button, Input } from '../ui';
@@ -20,6 +22,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { getUsuarioId, isAuthenticated } = useAuth();
   const theme = getTheme(isHighContrast);
+  const insets = useSafeAreaInsets();
   const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
   const estilosDinamicos = {
     criterioContainer: {
@@ -199,11 +202,23 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View style={[
-              styles.modalContainer,
-              { backgroundColor: theme.colors.surface }
-            ]}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.keyboardWrapper}
+            >
+              <View style={[
+                styles.modalContainer,
+                {
+                  backgroundColor: theme.colors.surface,
+                  marginTop: Math.max(insets.top, 12),
+                  marginBottom: Math.max(insets.bottom, 12),
+                }
+              ]}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={styles.modalScrollContent}
+                >
                 {/* Header */}
                 <View style={styles.header}>
                   <ThemedText variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
@@ -377,7 +392,8 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                 <Spacer size="md" />
               </ScrollView>
-            </View>
+              </View>
+            </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -389,6 +405,11 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  keyboardWrapper: {
+    width: '100%',
     alignItems: 'center',
   },
   modalContainer: {
@@ -408,6 +429,9 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
       },
     }),
+  },
+  modalScrollContent: {
+    paddingBottom: 8,
   },
   header: {
     flexDirection: 'row',

@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   TouchableOpacity
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import {
@@ -173,6 +174,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { isAuthenticated } = useAuth();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { id, previousScreen } = route?.params || {};
   const now = useCurrentTime();
 
@@ -201,8 +203,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
         fontSizeMultiplier,
         zoomAtivo,
         corFundoPagina,
+        isDesktop,
+        insetsBottom: insets.bottom,
       }),
-    [corFundoPagina, fontSizeMultiplier, layoutEmpilhado, t, width, zoomAtivo]
+    [corFundoPagina, fontSizeMultiplier, insets.bottom, isDesktop, layoutEmpilhado, t, width, zoomAtivo]
   );
 
   const estilosDinamicos = {
@@ -954,9 +958,10 @@ const styles = StyleSheet.create({
   },
 });
 
-function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, zoomAtivo, corFundoPagina }) {
+function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, zoomAtivo, corFundoPagina, isDesktop, insetsBottom = 0 }) {
   const fonteGrande = fontSizeMultiplier >= 1.5;
   const acaoEmpilhada = width < 760 || fonteGrande;
+  const paddingInferiorConteudo = isDesktop ? t.spacing.xxxl : 28 + Math.max(insetsBottom, t.spacing.sm);
 
   return {
     container: {
@@ -993,6 +998,7 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
       alignSelf: 'center',
       paddingHorizontal: width >= 1280 ? t.spacing.xl : t.spacing.md,
       paddingTop: zoomAtivo ? t.spacing.sm : 0,
+      paddingBottom: paddingInferiorConteudo,
     },
     cardPrincipal: {
       padding: fonteGrande ? 24 : 20,

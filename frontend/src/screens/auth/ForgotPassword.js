@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Modal, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +13,7 @@ import authMessages from '../../utils/authMessages';
 import toastHelper from '../../utils/toastHelper';
 import AuthService from '../../services/AuthService';
 import { formatarErroEsqueciSenha } from '../../utils/authToastFormatter';
+import { breakpoints } from '../../config/theme';
 
 const schema = z.object({
   email: z.string().email(authMessages.validation.invalidEmail),
@@ -20,6 +21,8 @@ const schema = z.object({
 
 export default function ForgotPassword({ navigation }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= breakpoints.desktop;
   const [submitting, setSubmitting] = useState(false);
   const [showAccountDisabled, setShowAccountDisabled] = useState(false);
 
@@ -38,16 +41,19 @@ export default function ForgotPassword({ navigation }) {
     () =>
       StyleSheet.create({
         wrapper: {
-          flex: 1,
+          flexGrow: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: fontSizeMultiplier >= 2 ? t.spacing.xl : t.spacing.lg,
+          paddingHorizontal: isDesktop ? t.spacing.xl : t.spacing.lg,
           paddingVertical: t.spacing.xl,
+        },
+        scrollContainer: {
+          flexGrow: 1,
         },
         card: {
           width: '100%',
-          maxWidth: fontSizeMultiplier >= 2 ? 920 : 760,
-          padding: fontSizeMultiplier >= 2 ? t.spacing.xl : t.spacing.lg,
+          maxWidth: isDesktop ? 760 : 560,
+          padding: isDesktop ? t.spacing.xl : t.spacing.lg,
           backgroundColor: t.colors.surface,
           borderColor: t.colors.borderLight,
           borderWidth: isHighContrast ? 2 : 1,
@@ -85,7 +91,7 @@ export default function ForgotPassword({ navigation }) {
           lineHeight: fontSizeMultiplier >= 2 ? 30 : 26,
         },
       }),
-    [fontSizeMultiplier, isHighContrast, t]
+    [fontSizeMultiplier, isDesktop, isHighContrast, t]
   );
 
   const onSubmit = async (values) => {
@@ -134,14 +140,17 @@ export default function ForgotPassword({ navigation }) {
     navigation.navigate('Main', { screen: screenName });
   };
 
-  return (
-    <DesktopLayout current="ForgotPassword" onNavigate={handleNavigate} altoContraste={isHighContrast}>
-      <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
+  const conteudoTela = (
+    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={{ padding: 0 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <View style={styles.wrapper}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.scrollContainer, styles.wrapper]}
+          showsVerticalScrollIndicator={false}
+        >
           <Card style={styles.card} variant={isHighContrast ? 'outlined' : 'default'} altoContraste={isHighContrast}>
             <>
               <AuthHeader 
@@ -197,7 +206,7 @@ export default function ForgotPassword({ navigation }) {
               />
             </>
           </Card>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
       <Modal
         visible={showAccountDisabled}
@@ -228,9 +237,14 @@ export default function ForgotPassword({ navigation }) {
           </View>
         </View>
       </Modal>
-      </Container>
-    </DesktopLayout>
+    </Container>
   );
+
+  return isDesktop ? (
+    <DesktopLayout current="ForgotPassword" onNavigate={handleNavigate} altoContraste={isHighContrast}>
+      {conteudoTela}
+    </DesktopLayout>
+  ) : conteudoTela;
 }
 
 

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   useWindowDimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StatsBanner, LocalCard } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
@@ -29,6 +30,7 @@ export default function Home({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const mountedRef = useRef(true);
   const processedRefreshKey = useRef(null);
 
@@ -101,6 +103,11 @@ export default function Home({ onNavigate, routeParams }) {
     }
     return { compact: false };
   }, [width, fontSizeMultiplier]);
+
+  const paddingInferiorLista = useMemo(
+    () => (width < BREAKPOINTS.TABLET ? 28 + Math.max(insets.bottom, 8) : 20),
+    [insets.bottom, width]
+  );
 
   const anunciarHome = useCallback(() => {
     if (!voiceEnabled) return;
@@ -260,7 +267,7 @@ export default function Home({ onNavigate, routeParams }) {
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         columnWrapperStyle={gridConfig.columnWrapperStyle}
-        contentContainerStyle={gridConfig.contentContainerStyle}
+        contentContainerStyle={[gridConfig.contentContainerStyle, { paddingBottom: paddingInferiorLista }]}
         ListHeaderComponent={
           <>
             <StatsBanner 
@@ -318,11 +325,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 0,
   },
   listContentSingleColumn: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 0,
   },
   columnWrapper: {
     justifyContent: 'flex-start',

@@ -1,6 +1,7 @@
 import api from '../api/axios';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
+import { normalizarUrlImagem } from '../utils/urlImagem';
 
 const LocalService = {
   /**
@@ -159,29 +160,7 @@ const LocalService = {
    * Obtém URL completa da imagem
    */
   getImagemUrl(url) {
-    if (!url) return null;
-    if (typeof url !== 'string') return null;
-
-    const baseURL = (api.defaults.baseURL?.replace(/\/api\/?$/, '') || 'http://localhost:8080').replace(/\/$/, '');
-
-    // URLs de dados já vêm prontas
-    if (url.startsWith('data:')) return url;
-
-    // URLs absolutas: se apontarem para localhost/127.0.0.1, reescreve para o host real da API
-    if (url.startsWith('http')) {
-      try {
-        const parsed = new URL(url);
-        if (['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
-          return `${baseURL}${parsed.pathname}${parsed.search}${parsed.hash}`;
-        }
-      } catch (e) {
-        // mantém o valor original se não puder interpretar
-      }
-      return url;
-    }
-
-    const path = url.startsWith('/') ? url : `/${url}`;
-    return `${baseURL}${path}`;
+    return normalizarUrlImagem(url);
   },
 
   /**

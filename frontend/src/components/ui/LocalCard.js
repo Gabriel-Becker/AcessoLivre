@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
+import { normalizarUrlImagem } from '../../utils/urlImagem';
 
 const BREAKPOINTS = {
   MOBILE: 768,
@@ -66,7 +67,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const totalImagens = local?.totalImagens ?? 0;
   const isNew = local?.isMaisRecente === true;
 
-  const imagemUrl = local?.imagemUrl || local?.imagens?.[0]?.urlCompleta || local?.imagens?.[0]?.url || null;
+  const imagemUrl = normalizarUrlImagem(local?.imagemUrl || local?.imagens?.[0]?.urlCompleta || local?.imagens?.[0]?.url || null);
 
   const imageHeight = useMemo(() => {
     return compact

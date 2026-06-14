@@ -1,4 +1,5 @@
 import * as Speech from 'expo-speech';
+import Constants from 'expo-constants';
 
 let moduloReconhecimentoCache;
 
@@ -18,6 +19,16 @@ function obterModuloReconhecimento() {
   return moduloReconhecimentoCache;
 }
 
+function reconhecimentoDisponivel() {
+  const ambienteExecucao = Constants.executionEnvironment || Constants.appOwnership;
+
+  if (ambienteExecucao === 'storeClient' || ambienteExecucao === 'expo') {
+    return false;
+  }
+
+  return !!obterModuloReconhecimento();
+}
+
 class VoiceService {
   static isListening = false;
   static recognitionSubscription = null;
@@ -27,10 +38,14 @@ class VoiceService {
   static init() {
     // O expo-speech não tem setDefaultLanguage
     // O idioma é definido em cada chamada de speak()
-    if (!obterModuloReconhecimento()) {
+    if (!reconhecimentoDisponivel()) {
       console.warn('Reconhecimento de voz requer development build ou app nativo compilado.');
     }
     console.log('VoiceService inicializado');
+  }
+
+  static canRecognizeSpeech() {
+    return reconhecimentoDisponivel();
   }
 
   // 🔊 Texto para Fala (app fala)
@@ -56,6 +71,15 @@ class VoiceService {
   // 🎤 Fala para Texto (escuta o usuário)
   static async listen(onResult, onError) {
     try {
+      if (!reconhecimentoDisponivel()) {
+        const erro = {
+          message: 'Reconhecimento de voz indisponivel neste runtime. Use um development build ou app nativo compilado.',
+        };
+        console.warn(erro.message);
+        if (onError) onError(erro);
+        return;
+      }
+
       const moduloReconhecimento = obterModuloReconhecimento();
 
       if (!moduloReconhecimento) {

@@ -20,7 +20,10 @@ export default function MobileLayout({
   const { isAuthenticated } = useAuth();
   const insets = useSafeAreaInsets();
   const TAB_BAR_HEIGHT = 72;
-  const bottomInset = Math.max(insets.bottom, theme.spacing.sm);
+  const tabBarPaddingBottom = Platform.OS === 'ios'
+    ? Math.max(insets.bottom, theme.spacing.md)
+    : Math.max(insets.bottom, theme.spacing.sm);
+  const tabBarAlturaTotal = TAB_BAR_HEIGHT + tabBarPaddingBottom + theme.spacing.md;
 
   const navegar = useCallback(
     (screen) => {
@@ -71,7 +74,7 @@ export default function MobileLayout({
       </View>
 
       <View style={styles.contentWrapper}>
-        <View style={styles.content}>{children}</View>
+        <View style={[styles.content, { paddingBottom: tabBarAlturaTotal }]}>{children}</View>
 
         <View
           style={[
@@ -80,9 +83,7 @@ export default function MobileLayout({
               backgroundColor: t.colors.surface,
               borderTopColor: t.colors.borderLight,
               bottom: 0,
-              paddingBottom: Platform.OS === 'ios'
-                ? Math.max(insets.bottom, theme.spacing.md)
-                : Math.max(insets.bottom, theme.spacing.sm),
+              paddingBottom: tabBarPaddingBottom,
               minHeight: TAB_BAR_HEIGHT + insets.bottom,
             },
           ]}

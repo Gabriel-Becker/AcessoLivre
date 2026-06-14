@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { ThemedText, Spacer } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
+import { normalizarUrlImagem } from '../../utils/urlImagem';
 import { getTheme } from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 
@@ -285,7 +286,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   </View>
                   <View style={styles.previewCard}>
                     {local.imagemUrl ? (
-                      <Image source={{ uri: local.imagemUrl }} style={styles.previewImage} />
+                      <Image source={{ uri: normalizarUrlImagem(local.imagemUrl) }} style={styles.previewImage} />
                     ) : (
                       <View style={styles.previewImagePlaceholder}>
                         <Ionicons name="image-outline" size={40} color={theme.colors.textTertiary} />
