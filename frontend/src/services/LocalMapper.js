@@ -1,4 +1,21 @@
 class LocalMapper {
+  static _resolverIdLocalPrincipal(local) {
+    return (
+      local.idLocalPrincipal ||
+      local.localPrincipal?.idLocal ||
+      local.localPrincipal?.id ||
+      null
+    );
+  }
+
+  static _resolverNomeLocalPrincipal(local) {
+    return (
+      local.nomeLocalPrincipal ||
+      local.localPrincipal?.nome ||
+      null
+    );
+  }
+
  
   static fromApi(local) {
     if (!local) return null;
@@ -13,8 +30,8 @@ class LocalMapper {
       status: local.status || 'ATIVO',
 
       // ===== HIERARQUIA =====
-      nomeLocalPrincipal: local.nomeLocalPrincipal || null,
-      idLocalPrincipal: local.idLocalPrincipal || null,
+      nomeLocalPrincipal: this._resolverNomeLocalPrincipal(local),
+      idLocalPrincipal: this._resolverIdLocalPrincipal(local),
       subLocais: local.subLocais || [],
       nivelHierarquia: local.nivelHierarquia || 0,
       isRaiz: local.isRaiz || false,

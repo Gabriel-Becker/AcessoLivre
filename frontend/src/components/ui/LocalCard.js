@@ -62,6 +62,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const totalAvaliacoes = local?.totalAvaliacoes || 0;
   const tiposAcessibilidade = local?.tiposAcessibilidade || [];
   const nomeLocalPrincipal = local?.nomeLocalPrincipal || null;
+  const temLocalPrincipal = !!(nomeLocalPrincipal && nomeLocalPrincipal.trim());
   const totalImagens = local?.totalImagens ?? 0;
   const isNew = local?.isMaisRecente === true;
 
@@ -195,16 +196,18 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
       <View style={estilos.contentContainer}>
         <View style={staticStyles.nomeCategoriaRow}>
-          <View style={{ flex: 1 }}>
+          <View style={estilos.nomeContainer}>
             <ThemedText weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
               {nome}
             </ThemedText>
-        
-            {nomeLocalPrincipal && nomeLocalPrincipal.trim() && !compact && (
-              <ThemedText numberOfLines={1} style={estilos.nomeLocalPrincipal}>
-                Dentro de {nomeLocalPrincipal}
-              </ThemedText>
-            )}
+
+            <View style={estilos.subtituloContainer}>
+              {temLocalPrincipal ? (
+                <ThemedText numberOfLines={1} style={estilos.nomeLocalPrincipal}>
+                  Dentro de {nomeLocalPrincipal}
+                </ThemedText>
+              ) : null}
+            </View>
           </View>
 
           <View style={estilos.categoriaBadge}>
@@ -356,12 +359,23 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       fontSize: fontSize.nome,
       fontWeight: 'bold',
       color: t.colors.textPrimary,
-      marginBottom: 2,
+      marginBottom: 0,
+      lineHeight: isDesktop ? 20 : 22,
+    },
+    nomeContainer: {
+      flex: 1,
+      height: isDesktop ? 34 : 38,
+      justifyContent: 'flex-start',
+    },
+    subtituloContainer: {
+      height: isDesktop ? 12 : 14,
+      justifyContent: 'flex-start',
     },
     nomeLocalPrincipal: {
       fontSize: fontSize.endereco,
       color: t.colors.textSecondary,
-      marginTop: 2,
+      lineHeight: isDesktop ? 12 : 14,
+      marginTop: 0,
     },
     categoriaBadge: {
       backgroundColor: contrasteAtivo ? t.colors.surfaceSecondary : '#EAF3FF',
@@ -380,6 +394,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.gap,
+      marginTop: 2,
       marginBottom: spacing.marginBottom,
     },
     ratingNumber: {

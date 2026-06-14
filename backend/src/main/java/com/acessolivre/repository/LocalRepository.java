@@ -1,9 +1,9 @@
 package com.acessolivre.repository;
 
-import com.acessolivre.model.Local;
-import com.acessolivre.enums.StatusLocal;
-import com.acessolivre.enums.Categoria;
-import com.acessolivre.enums.TipoAcessibilidade;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -13,14 +13,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import com.acessolivre.enums.Categoria;
+import com.acessolivre.enums.StatusLocal;
+import com.acessolivre.enums.TipoAcessibilidade;
+import com.acessolivre.model.Local;
 
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
     
-    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario", "localPrincipal"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l
@@ -28,7 +29,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     """)
     Page<Local> findAllLocaisRaizWithImages(@Param("status") StatusLocal status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario", "localPrincipal"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l
@@ -37,7 +38,7 @@ public interface LocalRepository extends JpaRepository<Local, Long> {
     Page<Local> findAllWithImages(@Param("status") StatusLocal status, Pageable pageable);
     
 
-    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario"})
+    @EntityGraph(attributePaths = {"imagens", "endereco", "usuario", "localPrincipal"})
     @Query("""
         SELECT DISTINCT l
         FROM Local l

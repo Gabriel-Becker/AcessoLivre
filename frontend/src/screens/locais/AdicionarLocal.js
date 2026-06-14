@@ -942,7 +942,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     return true;
   };
 
-  const handleSalvarComVinculo = async () => {
+  const handleSalvarComVinculo = async (localPrincipalParaVinculo = localPrincipalSelecionado) => {
     if (enviando) return;
     
     const tiposAcessibilidade = obterTiposAcessibilidadeArray();
@@ -959,8 +959,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         categoria: formulario.categoria,
         tiposAcessibilidade,
         idUsuario: usuario.idUsuario,
-        nomeLocalPrincipal: localPrincipalSelecionado?.nome || null,
-        idLocalPrincipal: localPrincipalSelecionado?.idLocal || null,
+        nomeLocalPrincipal: localPrincipalParaVinculo?.nome || null,
+        idLocalPrincipal: localPrincipalParaVinculo?.idLocal || null,
         endereco: {
           cep: cepLimpo,
           logradouro: formulario.logradouro.trim(),
@@ -1076,7 +1076,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       setLocalPrincipalSelecionado(local);
     }
     setModalVinculoVisible(false);
-    handleSalvarComVinculo();
+    handleSalvarComVinculo(local || null);
   };
 
   const handleCriarLocalPrincipal = (nomeSugerido) => {

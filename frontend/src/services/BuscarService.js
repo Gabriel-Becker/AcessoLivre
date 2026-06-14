@@ -6,6 +6,37 @@ class BuscarService {
   static cacheTimestamp = null;
   static CACHE_DURATION = 5 * 60 * 1000; 
 
+  static preencherNomeLocalPrincipal(locais) {
+    if (!Array.isArray(locais) || locais.length === 0) {
+      return [];
+    }
+
+    const nomePorId = new Map(
+      locais
+        .filter(local => local?.idLocal && local?.nome)
+        .map(local => [String(local.idLocal), local.nome])
+    );
+
+    return locais.map(local => {
+      if (!local) return local;
+
+      const jaTemNomePai = !!local.nomeLocalPrincipal?.trim?.();
+      if (jaTemNomePai || !local.idLocalPrincipal) {
+        return local;
+      }
+
+      const nomePai = nomePorId.get(String(local.idLocalPrincipal));
+      if (!nomePai) {
+        return local;
+      }
+
+      return {
+        ...local,
+        nomeLocalPrincipal: nomePai,
+      };
+    });
+  }
+
   static async carregarTodosLocais(forceRefresh = false) {
     try {
       const agora = Date.now();
@@ -24,7 +55,8 @@ class BuscarService {
       
       const rawLocais = response.data?.content || response.data || [];
       
-      const locais = LocalMapper.fromApiList(rawLocais);
+      const locaisMapeados = LocalMapper.fromApiList(rawLocais);
+      const locais = this.preencherNomeLocalPrincipal(locaisMapeados);
       
       this.cache = locais;
       this.cacheTimestamp = agora;
