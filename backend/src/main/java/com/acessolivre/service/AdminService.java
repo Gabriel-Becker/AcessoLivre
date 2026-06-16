@@ -66,6 +66,19 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Usuario> listarUsuariosPorStatus(Pageable pageable, Boolean ativo) {
+        boolean ativoNormalizado = ativo == null || Boolean.TRUE.equals(ativo);
+        log.info("Listando usuários por status com paginação: página={}, tamanho={}, ativo={}",
+                pageable.getPageNumber(), pageable.getPageSize(), ativoNormalizado);
+
+        if (ativoNormalizado) {
+            return usuarioRepository.findAllByAtivoTrue(pageable);
+        }
+
+        return usuarioRepository.findAllByAtivoFalse(pageable);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
         return usuarioRepository.findById(id);
     }
@@ -104,6 +117,23 @@ public class AdminService {
         Usuario usuario = usuarioOpt.get();
         usuario.setAtivo(false);
         usuario.setTokenAtual(null);
+        usuarioRepository.save(usuario);
+
+        return true;
+    }
+
+    @Transactional
+    public boolean reativarUsuario(Long idUsuario) {
+        log.info("Reativando usuário: id={}", idUsuario);
+
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByIdUsuarioAndAtivoFalse(idUsuario);
+        if (usuarioOpt.isEmpty()) {
+            log.warn("Usuário inativo não encontrado para reativar: id={}", idUsuario);
+            return false;
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        usuario.setAtivo(true);
         usuarioRepository.save(usuario);
 
         return true;

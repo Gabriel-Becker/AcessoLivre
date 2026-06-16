@@ -32,7 +32,7 @@ export const renderDataCadastroUsuario = (item, altoContraste = false) => (
   </ThemedText>
 );
 
-export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEditar, onExcluir, altoContraste = false) => (
+export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEditar, onExcluir, onReativar, altoContraste = false) => (
   usuario?.idUsuario !== item.idUsuario ? (
     <View style={styles.acoesLinha}>
       <Button
@@ -45,16 +45,29 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
       >
         Editar
       </Button>
-      <Button
-        variant="danger"
-        size="small"
-        iconLeft="trash-outline"
-        loading={carregandoAcao}
-        disabled={carregandoAcao}
-        onPress={() => onExcluir(item)}
-      >
-        Excluir
-      </Button>
+      {item?.ativo === false ? (
+        <Button
+          variant="primary"
+          size="small"
+          iconLeft="refresh-outline"
+          loading={carregandoAcao}
+          disabled={carregandoAcao}
+          onPress={() => onReativar(item)}
+        >
+          Reativar
+        </Button>
+      ) : (
+        <Button
+          variant="danger"
+          size="small"
+          iconLeft="trash-outline"
+          loading={carregandoAcao}
+          disabled={carregandoAcao}
+          onPress={() => onExcluir(item)}
+        >
+          Excluir
+        </Button>
+      )}
     </View>
   ) : (
     <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" align="center" altoContraste={altoContraste}>
@@ -63,7 +76,7 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
   )
 );
 
-export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsuario, onEditar, onExcluir, altoContraste = false) => [
+export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsuario, onEditar, onExcluir, onReativar, altoContraste = false) => [
   {
     chave: 'nome',
     sortKey: 'nome',
@@ -100,9 +113,9 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
     chave: 'acoes',
     titulo: 'Ações',
     flex: 1.2,
-    minWidth: 190,
+    minWidth: 230,
     alinhamento: 'center',
-    render: (item) => renderAcoesUsuario(item, usuario, styles, carregandoAcao, onEditar, onExcluir, altoContraste),
+    render: (item) => renderAcoesUsuario(item, usuario, styles, carregandoAcao, onEditar, onExcluir, onReativar, altoContraste),
   },
 ];
 

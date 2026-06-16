@@ -20,9 +20,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByIdUsuarioAndAtivoTrue(Long idUsuario);
 
+    Optional<Usuario> findByIdUsuarioAndAtivoFalse(Long idUsuario);
+
     java.util.List<Usuario> findAllByAtivoTrue();
 
     Page<Usuario> findAllByAtivoTrue(Pageable pageable);
+
+    Page<Usuario> findAllByAtivoFalse(Pageable pageable);
 
     long countByAtivoTrue();
 

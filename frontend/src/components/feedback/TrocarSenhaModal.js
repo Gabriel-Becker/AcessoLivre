@@ -172,7 +172,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               render={({ field: { onChange, value } }) => (
                 <Input
                   label="Senha Atual"
-                  placeholder="Digite sua senha atual"
+                  placeholder="Senha atual"
                   value={value}
                   onChangeText={(texto) => {
                     if (erroSenhaAtual) setErroSenhaAtual('');
@@ -198,7 +198,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               render={({ field: { onChange, value } }) => (
                 <Input
                   label="Nova Senha"
-                  placeholder="Digite a nova senha"
+                  placeholder="Nova senha"
                   value={value}
                   onChangeText={onChange}
                   secureTextEntry
@@ -233,7 +233,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   label="Confirmar Nova Senha"
-                  placeholder="Confirme a nova senha"
+                  placeholder="Confirme a senha"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}

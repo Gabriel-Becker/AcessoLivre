@@ -450,10 +450,12 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: '#EAF3FF',
+      backgroundColor: contrasteAtivo ? t.colors.surfaceSecondary : '#EAF3FF',
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 16,
+      borderWidth: contrasteAtivo ? 1 : 0,
+      borderColor: contrasteAtivo ? t.colors.border : 'transparent',
     },
     recursosNumero: {
       fontSize: fontSize.recursosNumero,
@@ -462,7 +464,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     },
     recursosLabel: {
       fontSize: fontSize.recursos,
-      color: t.colors.textSecondary,
+      color: contrasteAtivo ? t.colors.textPrimary : t.colors.textSecondary,
     },
   });
 }

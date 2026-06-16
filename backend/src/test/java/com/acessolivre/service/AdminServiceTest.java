@@ -73,6 +73,17 @@ class AdminServiceTest {
     }
 
     @Test
+    void listarUsuariosPorStatus_DeveRetornarInativosQuandoFiltroForFalso() {
+        when(usuarioRepository.findAllByAtivoFalse(PageRequest.of(0, 10)))
+            .thenReturn(new PageImpl<>(List.of(criarUsuario(2L, false))));
+
+        Page<Usuario> pagina = adminService.listarUsuariosPorStatus(PageRequest.of(0, 10), false);
+
+        assertEquals(1, pagina.getTotalElements());
+        assertFalse(Boolean.TRUE.equals(pagina.getContent().get(0).getAtivo()));
+    }
+
+    @Test
     void buscarUsuarioPorId_DeveDelegarRepositorio() {
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(criarUsuario(2L, true)));
 
@@ -122,6 +133,27 @@ class AdminServiceTest {
         assertTrue(deletou);
         assertFalse(usuario.getAtivo());
         assertEquals(null, usuario.getTokenAtual());
+    }
+
+    @Test
+    void reativarUsuario_DeveAtivarUsuarioInativo() {
+        Usuario usuario = criarUsuario(21L, false);
+        when(usuarioRepository.findByIdUsuarioAndAtivoFalse(21L)).thenReturn(Optional.of(usuario));
+
+        boolean reativou = adminService.reativarUsuario(21L);
+
+        assertTrue(reativou);
+        assertTrue(Boolean.TRUE.equals(usuario.getAtivo()));
+        verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void reativarUsuario_DeveRetornarFalseQuandoUsuarioInativoNaoExiste() {
+        when(usuarioRepository.findByIdUsuarioAndAtivoFalse(21L)).thenReturn(Optional.empty());
+
+        boolean reativou = adminService.reativarUsuario(21L);
+
+        assertFalse(reativou);
     }
 
     @Test

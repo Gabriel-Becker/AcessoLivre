@@ -55,11 +55,12 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "dataCadastro") String sort,
-            @RequestParam(defaultValue = "DESC") String direction) {
+            @RequestParam(defaultValue = "DESC") String direction,
+            @RequestParam(defaultValue = "true") Boolean ativo) {
         String dirStr = direction == null ? "DESC" : direction;
         Sort.Direction dir = Sort.Direction.fromString(dirStr);
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
-        Page<UsuarioAdminResponseDTO> usuarios = adminService.listarTodosUsuarios(pageable)
+        Page<UsuarioAdminResponseDTO> usuarios = adminService.listarUsuariosPorStatus(pageable, ativo)
                 .map(this::toUsuarioAdminResponse);
         return ResponseEntity.ok(usuarios);
     }
@@ -96,6 +97,12 @@ public class AdminController {
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         boolean deletado = adminService.deletarUsuario(id);
         return deletado ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/usuarios/{id}/reativar")
+    public ResponseEntity<Void> reativarUsuario(@PathVariable Long id) {
+        boolean reativado = adminService.reativarUsuario(id);
+        return reativado ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/moderacao/avaliacoes/pendentes")

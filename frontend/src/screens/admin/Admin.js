@@ -39,6 +39,7 @@ export default function Admin() {
 
   const [buscaUsuarios, setBuscaUsuarios] = useState('');
   const [filtroRoleUsuarios, setFiltroRoleUsuarios] = useState('todos');
+  const [filtroStatusUsuarios, setFiltroStatusUsuarios] = useState('ativos');
 
   const [buscaLocais, setBuscaLocais] = useState('');
   const [filtroCategoriaLocais, setFiltroCategoriaLocais] = useState('todos');
@@ -226,6 +227,7 @@ export default function Admin() {
   const limparFiltrosUsuarios = () => {
     setBuscaUsuarios('');
     setFiltroRoleUsuarios('todos');
+    setFiltroStatusUsuarios('ativos');
   };
 
   const limparFiltrosLocais = () => {
@@ -247,7 +249,13 @@ export default function Admin() {
     setCarregando(true);
     setErro('');
     try {
-      const dados = await AdminService.listarUsuarios({ page: paginaUsuarios, size: 8, sort: sortField, direction: sortDirection });
+      const dados = await AdminService.listarUsuarios({
+        page: paginaUsuarios,
+        size: 8,
+        sort: sortField,
+        direction: sortDirection,
+        ativo: filtroStatusUsuarios !== 'inativos',
+      });
       const pagina = normalizarPaginacao(dados);
       setUsuarios(pagina.content);
       setTotalPaginasUsuarios(pagina.totalPages);
@@ -323,7 +331,7 @@ export default function Admin() {
       return;
     }
     carregarRelatorios();
-  }, [abaAtiva, paginaUsuarios, paginaLocais, sortField, sortDirection, filtroDataInicioAplicado, filtroDataFimAplicado]);
+  }, [abaAtiva, paginaUsuarios, paginaLocais, sortField, sortDirection, filtroDataInicioAplicado, filtroDataFimAplicado, filtroStatusUsuarios]);
 
   const aplicarFiltrosRelatorio = () => {
     const inicio = String(filtroDataInicioInput || '').trim();
@@ -434,11 +442,6 @@ export default function Admin() {
     setPaginaUsuarios(0);
   };
 
-  const opcoesRoleUsuarios = useMemo(
-    () => filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios).find(f => f.chave === 'role')?.opcoes || [],
-    []
-  );
-
   const usuariosFiltrados = useMemo(() => {
     const termo = normalizarTexto(buscaUsuarios);
 
@@ -446,13 +449,15 @@ export default function Admin() {
       const nome = normalizarTexto(item?.nome);
       const email = normalizarTexto(item?.email);
       const role = String(item?.role || 'ROLE_USER').toUpperCase();
+      const ativo = Boolean(item?.ativo);
 
       const atendeBusca = !termo || nome.includes(termo) || email.includes(termo);
       const atendeRole = filtroRoleUsuarios === 'todos' || role === filtroRoleUsuarios;
+      const atendeStatus = filtroStatusUsuarios === 'inativos' ? !ativo : ativo;
 
-      return atendeBusca && atendeRole;
+      return atendeBusca && atendeRole && atendeStatus;
     });
-  }, [usuarios, buscaUsuarios, filtroRoleUsuarios]);
+  }, [usuarios, buscaUsuarios, filtroRoleUsuarios, filtroStatusUsuarios]);
 
   const locaisFiltrados = useMemo(() => {
     const termo = normalizarTexto(buscaLocais);
@@ -490,6 +495,27 @@ export default function Admin() {
       const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o usuário.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao excluir usuário');
+    } finally {
+      setCarregandoAcao(false);
+    }
+  };
+
+  const reativarUsuario = async (usuarioItem) => {
+    setCarregandoAcao(true);
+    setErro('');
+    try {
+      await AdminService.reativarUsuario(usuarioItem.idUsuario);
+      toastHelper.showSuccess('Usuário reativado com sucesso.', 'Reativação concluída');
+
+      if (usuarios.length === 1 && paginaUsuarios > 0) {
+        setPaginaUsuarios((p) => Math.max(0, p - 1));
+      } else {
+        await carregarUsuarios();
+      }
+    } catch (e) {
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível reativar o usuário.';
+      setErro(mensagemErro);
+      toastHelper.showError(mensagemErro, 'Falha ao reativar usuário');
     } finally {
       setCarregandoAcao(false);
     }
@@ -592,8 +618,25 @@ export default function Admin() {
   );
 
   const renderUsuarios = () => {
-    const colunas = colunasUsuarios(usuario, styles, carregandoAcao, formatarRoleUsuario, confirmarEdicaoUsuario, confirmarApagarUsuario, isHighContrast);
-    const filtros = filtrosUsuarios(filtroRoleUsuarios, setFiltroRoleUsuarios);
+    const colunas = colunasUsuarios(
+      usuario,
+      styles,
+      carregandoAcao,
+      formatarRoleUsuario,
+      confirmarEdicaoUsuario,
+      confirmarApagarUsuario,
+      confirmarApagarUsuario,
+      isHighContrast
+    );
+    const filtros = filtrosUsuarios(
+      filtroRoleUsuarios,
+      setFiltroRoleUsuarios,
+      filtroStatusUsuarios,
+      (valor) => {
+        setFiltroStatusUsuarios(valor);
+        setPaginaUsuarios(0);
+      }
+    );
 
     return (
       <>
@@ -992,18 +1035,18 @@ export default function Admin() {
             ]}
           >
             <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
-              Apagar usuário
+              {usuarioParaDeletar?.ativo === false ? 'Reativar usuário' : 'Apagar usuário'}
             </ThemedText>
 
             <Spacer size="lg" />
 
             <View style={styles.modalMessage}>
               <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
-                Tem certeza que deseja apagar{' '}
+                Tem certeza que deseja {usuarioParaDeletar?.ativo === false ? 'reativar' : 'apagar'}{' '}
                 <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {usuarioParaDeletar?.nome || ''}
                 </ThemedText>
-                ? Esta ação não pode ser desfeita.
+                ? {usuarioParaDeletar?.ativo === false ? 'O usuário poderá voltar a acessar a plataforma.' : 'Esta ação não pode ser desfeita.'}
               </ThemedText>
             </View>
 
@@ -1011,17 +1054,21 @@ export default function Admin() {
 
             <View style={styles.modalBotoes}>
               <Button
-                variant="danger"
+                variant={usuarioParaDeletar?.ativo === false ? 'primary' : 'danger'}
                 size="medium"
                 fullWidth
                 onPress={async () => {
-                  await apagarUsuario(usuarioParaDeletar);
+                  if (usuarioParaDeletar?.ativo === false) {
+                    await reativarUsuario(usuarioParaDeletar);
+                  } else {
+                    await apagarUsuario(usuarioParaDeletar);
+                  }
                   setModalDeleteVisivel(false);
                 }}
                 loading={carregandoAcao}
                 disabled={carregandoAcao}
               >
-                Deletar
+                {usuarioParaDeletar?.ativo === false ? 'Reativar' : 'Deletar'}
               </Button>
 
               <Spacer size="xs" />
@@ -1220,7 +1267,7 @@ const styles = StyleSheet.create({
   acoesLinha: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: theme.spacing.xs,
     width: '100%',
   },

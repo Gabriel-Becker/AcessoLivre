@@ -1,9 +1,9 @@
 import api from '../api/axios';
 
 const AdminService = {
-  async listarUsuarios({ page = 0, size = 8, sort = 'dataCadastro', direction = 'DESC' } = {}) {
+  async listarUsuarios({ page = 0, size = 8, sort = 'dataCadastro', direction = 'DESC', ativo = true } = {}) {
     const response = await api.get('/admin/usuarios', {
-      params: { page, size, sort, direction },
+      params: { page, size, sort, direction, ativo },
     });
     return response.data;
   },
@@ -98,6 +98,11 @@ const AdminService = {
 
   async deletarUsuario(idUsuario) {
     const response = await api.delete(`/admin/usuarios/${idUsuario}`);
+    return response.data;
+  },
+
+  async reativarUsuario(idUsuario) {
+    const response = await api.put(`/admin/usuarios/${idUsuario}/reativar`);
     return response.data;
   },
 

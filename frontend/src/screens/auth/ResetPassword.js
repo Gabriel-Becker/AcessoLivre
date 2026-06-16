@@ -227,7 +227,7 @@ export default function ResetPassword({ navigation, route }) {
                     render={({ field: { onChange, value } }) => (
                       <Input
                         label="Confirmar nova senha"
-                        placeholder="Confirme a nova senha"
+                        placeholder="Confirme a senha"
                         value={value}
                         onChangeText={onChange}
                         leftIcon="lock-closed-outline"
