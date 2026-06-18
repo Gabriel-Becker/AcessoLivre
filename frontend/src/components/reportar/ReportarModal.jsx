@@ -5,6 +5,8 @@ import { Button } from '../ui';
 import { Spacer, ThemedText } from '../commons';
 import ReportarService from '../../services/ReportarService';
 import toastHelper from '../../utils/toastHelper';
+import { useThemeContext } from '../../context/ThemeContext';
+import { getTheme } from '../../config/theme';
 
 const MOTIVOS = [
   { value: 'CONTEUDO_IMPROPRIO', label: 'Conteúdo impróprio' },
@@ -16,9 +18,28 @@ const MOTIVOS = [
 ];
 
 export default function ReportarModal({ visible, onClose, tipo, targetId, targetName }) {
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
+  const theme = getTheme(isHighContrast);
+  const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
+
   const [selectedMotivo, setSelectedMotivo] = useState(null);
   const [descricao, setDescricao] = useState('');
   const [carregando, setCarregando] = useState(false);
+
+  const estilosZoom = {
+    titulo: {
+      fontSize: Math.round(24 * escalaZoom),
+      lineHeight: Math.round(30 * escalaZoom),
+    },
+    texto: {
+      fontSize: Math.round(16 * escalaZoom),
+      lineHeight: Math.round(22 * escalaZoom),
+    },
+    descricaoInput: {
+      fontSize: Math.round(14 * escalaZoom),
+      lineHeight: Math.round(20 * escalaZoom),
+    },
+  };
 
   const getMotivoLabel = (value) => {
     const motivo = MOTIVOS.find(m => m.value === value);
@@ -68,18 +89,29 @@ export default function ReportarModal({ visible, onClose, tipo, targetId, target
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+      <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+        <View style={[
+          styles.modalContainer,
+          {
+            backgroundColor: theme.colors.surface,
+            borderWidth: isHighContrast ? 2 : 0,
+            borderColor: theme.colors.border,
+          }
+        ]}>
           <View style={styles.header}>
-            <ThemedText variant="h2" weight="bold">Denunciar {getTipoLabel()}</ThemedText>
+            <ThemedText variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
+              Denunciar {getTipoLabel()}
+            </ThemedText>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#666" />
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <Spacer size="md" />
 
-          <ThemedText weight="semibold">Motivo da denúncia</ThemedText>
+          <ThemedText weight="semibold" style={[styles.textoLabel, estilosZoom.texto]}>
+            Motivo da denúncia
+          </ThemedText>
           <Spacer size="xs" />
           
           <ScrollView style={styles.motivosContainer} nestedScrollEnabled>
@@ -88,27 +120,58 @@ export default function ReportarModal({ visible, onClose, tipo, targetId, target
                 key={motivo.value}
                 style={[
                   styles.motivoOption,
-                  selectedMotivo === motivo.value && styles.motivoOptionSelected
+                  selectedMotivo === motivo.value && [
+                    styles.motivoOptionSelected,
+                    {
+                      backgroundColor: isHighContrast 
+                        ? theme.colors.primary + '30' 
+                        : '#F0F0FF',
+                      borderWidth: isHighContrast ? 2 : 0,
+                      borderColor: theme.colors.primary,
+                    }
+                  ]
                 ]}
                 onPress={() => setSelectedMotivo(motivo.value)}
               >
-                <View style={styles.motivoRadio}>
-                  {selectedMotivo === motivo.value && <View style={styles.motivoRadioSelected} />}
+                <View style={[
+                  styles.motivoRadio,
+                  {
+                    borderColor: isHighContrast ? theme.colors.textPrimary : '#007AFF',
+                  }
+                ]}>
+                  {selectedMotivo === motivo.value && (
+                    <View style={[
+                      styles.motivoRadioSelected,
+                      { backgroundColor: theme.colors.primary }
+                    ]} />
+                  )}
                 </View>
-                <ThemedText>{motivo.label}</ThemedText>
+                <ThemedText style={estilosZoom.texto}>{motivo.label}</ThemedText>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
           <Spacer size="md" />
 
-          <ThemedText weight="semibold">Descrição (opcional)</ThemedText>
+          <ThemedText weight="semibold" style={[styles.textoLabel, estilosZoom.texto]}>
+            Descrição (opcional)
+          </ThemedText>
           <Spacer size="xs" />
           <TextInput
-            style={styles.textArea}
+            style={[
+              styles.textArea,
+              {
+                borderColor: isHighContrast ? theme.colors.border : '#E0E0E0',
+                backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#FFFFFF',
+                color: theme.colors.textPrimary,
+                fontSize: estilosZoom.descricaoInput.fontSize,
+                lineHeight: estilosZoom.descricaoInput.lineHeight,
+              }
+            ]}
             multiline
             numberOfLines={4}
             placeholder="Descreva detalhadamente o problema..."
+            placeholderTextColor={theme.colors.textTertiary}
             value={descricao}
             onChangeText={setDescricao}
             textAlignVertical="top"
@@ -123,6 +186,7 @@ export default function ReportarModal({ visible, onClose, tipo, targetId, target
               onPress={onClose}
               disabled={carregando}
               style={styles.botaoCancelar}
+              altoContraste={isHighContrast}
             >
               Cancelar
             </Button>
@@ -133,6 +197,7 @@ export default function ReportarModal({ visible, onClose, tipo, targetId, target
               loading={carregando}
               disabled={carregando || !selectedMotivo}
               style={styles.botaoEnviar}
+              altoContraste={isHighContrast}
             >
               Enviar Denúncia
             </Button>
@@ -146,12 +211,10 @@ export default function ReportarModal({ visible, onClose, tipo, targetId, target
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 24,
     width: '90%',
@@ -163,8 +226,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  titulo: {
+    flex: 1,
+  },
   closeButton: {
     padding: 4,
+  },
+  textoLabel: {
+    marginBottom: 2,
   },
   motivosContainer: {
     maxHeight: 200,
@@ -177,7 +246,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   motivoOptionSelected: {
-    backgroundColor: '#F0F0FF',
     borderRadius: 8,
   },
   motivoRadio: {
@@ -185,7 +253,6 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -193,15 +260,12 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#007AFF',
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     padding: 12,
     minHeight: 100,
-    fontSize: 14,
     textAlignVertical: 'top',
   },
   botoes: {
