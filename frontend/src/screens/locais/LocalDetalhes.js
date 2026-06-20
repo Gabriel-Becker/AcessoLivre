@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 import {
   Card,
-  Button
+  Button,
+  LocalCard
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { Container } from '../../components/layout';
@@ -33,7 +34,7 @@ import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
 const useCurrentTime = () => {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -230,64 +231,6 @@ export default function LocalDetalhes({ onNavigate, route }) {
     },
   };
 
-  // Função para extrair URLs das imagens de forma consistente
-  const extrairUrlsImagens = useCallback((dados) => {
-    if (!dados) return [];
-    
-    // Debug: verificar estrutura recebida
-    console.log('🔍 [LocalDetalhes] Extraindo imagens de:', {
-      temImagens: !!dados.imagens,
-      imagensLength: dados.imagens?.length,
-      temImagensCompletas: !!dados.imagensCompletas,
-      imagensCompletasLength: dados.imagensCompletas?.length,
-      temImagemUrl: !!dados.imagemUrl,
-      temImagemPrincipal: !!dados.imagemPrincipal,
-    });
-    
-    // Prioridade 1: imagensCompletas (objetos completos)
-    if (dados.imagensCompletas && Array.isArray(dados.imagensCompletas) && dados.imagensCompletas.length > 0) {
-      const urls = dados.imagensCompletas
-        .map(img => img?.url || img?.urlCompleta || img?.caminhoRelativo)
-        .filter(Boolean);
-      
-      if (urls.length > 0) {
-        console.log('✅ Usando imagensCompletas:', urls.length);
-        return urls;
-      }
-    }
-    
-    // Prioridade 2: imagens (array de objetos)
-    if (dados.imagens && Array.isArray(dados.imagens) && dados.imagens.length > 0) {
-      const urls = dados.imagens
-        .map(img => {
-          // Tenta extrair URL de diferentes formatos
-          if (typeof img === 'string') return img;
-          return img?.urlCompleta || img?.url || img?.caminhoRelativo || img?.imagemUrl;
-        })
-        .filter(Boolean);
-      
-      if (urls.length > 0) {
-        console.log('✅ Usando imagens:', urls.length);
-        return urls;
-      }
-    }
-    
-    // Prioridade 3: imagemUrl única
-    if (dados.imagemUrl) {
-      console.log('✅ Usando imagemUrl única');
-      return [dados.imagemUrl];
-    }
-    
-    // Prioridade 4: imagemPrincipal
-    if (dados.imagemPrincipal) {
-      console.log('✅ Usando imagemPrincipal única');
-      return [dados.imagemPrincipal];
-    }
-    
-    console.log('⚠️ Nenhuma imagem encontrada');
-    return [];
-  }, []);
-
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
       setError('ID do local não informado');
@@ -307,6 +250,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       }
       
       const imagensList = HomeService.extrairTodasImagens(dados);
+      const idLocalAtual = dados?.idLocal || dados?.id;
 
       let avaliacoes = [];
       try {
@@ -317,7 +261,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         } else if (dados.avaliacoes) {
           avaliacoes = dados.avaliacoes;
         }
-      } catch (err) {
+      } catch (_err) {
         if (dados.avaliacoes) avaliacoes = dados.avaliacoes;
       }
       
@@ -327,11 +271,36 @@ export default function LocalDetalhes({ onNavigate, route }) {
         return dataB - dataA;
       });
 
+      let subLocaisDetalhados = [];
+      const subLocaisBase = Array.isArray(dados?.subLocais) ? dados.subLocais : [];
+
+      if (subLocaisBase.length > 0 && idLocalAtual) {
+        const detalhes = await Promise.all(
+          subLocaisBase.map(async (sub) => {
+            const idSubLocal = sub?.idLocal || sub?.id;
+            if (!idSubLocal) return null;
+
+            try {
+              return await HomeService.buscarLocalPorId(idSubLocal);
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        subLocaisDetalhados = detalhes.filter(
+          (sub) =>
+            sub &&
+            Number(sub.idLocalPrincipal) === Number(idLocalAtual)
+        );
+      }
+
       setLocal({
         ...dados,
         imagens:  imagensList,
         imagensCompletas: dados.imagensCompletas || dados.imagens || [],
         avaliacoes: avaliacoesOrdenadas,
+        subLocais: subLocaisDetalhados,
         tiposAcessibilidade: dados.tiposAcessibilidade || [],
         avaliacaoMedia: dados.avaliacaoMedia || 0,
         totalAvaliacoes: dados.totalAvaliacoes || avaliacoesOrdenadas.length,
@@ -350,7 +319,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }, [id]);
 
   useEffect(() => {
-    carregar();
+    const timeoutId = setTimeout(() => {
+      carregar();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [carregar]);
 
   const handleRefresh = () => carregar(true);
@@ -384,6 +357,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const handleVerTodasAvaliacoes = () => {
     onNavigate?.('TodasAvaliacoes', { localId: id, localNome: local?.nome });
   };
+
+  const handleAbrirOutroLocal = useCallback((idLocalDestino) => {
+    if (!idLocalDestino) return;
+    onNavigate?.('LocalDetalhes', { id: idLocalDestino, previousScreen: 'LocalDetalhes' });
+  }, [onNavigate]);
 
   const handleEnviarAvaliacao = async (avaliacaoData) => {
     try {
@@ -460,6 +438,83 @@ export default function LocalDetalhes({ onNavigate, route }) {
             </ThemedText>
           </TouchableOpacity>
         )}
+      </View>
+    );
+  };
+
+  const renderHierarquiaLocal = () => {
+    const nomeLocalPrincipal = local?.nomeLocalPrincipal || null;
+    const idLocalPrincipal = local?.idLocalPrincipal || null;
+    const subLocais = Array.isArray(local?.subLocais) ? local.subLocais : [];
+    const subLocaisMapeados = subLocais.map((sub) => ({
+      id: sub?.idLocal || sub?.id,
+      idLocal: sub?.idLocal || sub?.id,
+      nome: sub?.nome || 'Sublocal',
+      imagemUrl: sub?.imagem || sub?.imagemUrl || null,
+      avaliacaoMedia: Number(sub?.avaliacaoMedia || 0),
+      categoria: sub?.categoria || 'Sem categoria',
+      totalAvaliacoes: sub?.totalAvaliacoes || 0,
+      tiposAcessibilidade: sub?.tiposAcessibilidade || [],
+      endereco: sub?.endereco || null,
+      idLocalPrincipal: local?.idLocal || local?.id || null,
+      nomeLocalPrincipal: local?.nome || null,
+    }));
+
+    const mostrarLocalPrincipal = Boolean(nomeLocalPrincipal || idLocalPrincipal);
+    const mostrarSubLocais = subLocais.length > 0;
+
+    if (!mostrarLocalPrincipal && !mostrarSubLocais) return null;
+
+    const tituloSecao = mostrarSubLocais ? 'Locais Interiores' : 'Local principal';
+
+    return (
+      <View style={[styles.hierarquiaContainer, { borderColor: t.colors.borderLight, backgroundColor: isHighContrast ? t.colors.surfaceSecondary : '#F8F9FA' }]}>
+        <ThemedText weight="bold" style={styles.hierarquiaTitulo}>
+          {tituloSecao}
+        </ThemedText>
+
+        {mostrarLocalPrincipal ? (
+          <View style={styles.hierarquiaBloco}>
+            <ThemedText variant="caption" color="textSecondary">Local principal</ThemedText>
+            <TouchableOpacity
+              disabled={!idLocalPrincipal}
+              onPress={() => handleAbrirOutroLocal(idLocalPrincipal)}
+              style={styles.hierarquiaItemPressable}
+            >
+              <ThemedText weight="semibold" color={idLocalPrincipal ? 'primary' : 'textPrimary'} numberOfLines={1}>
+                {nomeLocalPrincipal || `ID ${idLocalPrincipal}`}
+              </ThemedText>
+              {idLocalPrincipal ? <Ionicons name="chevron-forward" size={14} color={t.colors.primary} /> : null}
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {mostrarSubLocais ? (
+          <View style={styles.hierarquiaBloco}>
+            <Card style={styles.subLocaisCardCarousel} altoContraste={isHighContrast}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.subLocaisCarouselContent}
+              >
+                {subLocaisMapeados.map((sub) => {
+                  const idSub = sub?.idLocal || sub?.id;
+
+                  return (
+                    <View key={String(idSub || sub?.nome)} style={styles.subLocaisCarouselItem}>
+                      <LocalCard
+                        local={sub}
+                        onPress={() => handleAbrirOutroLocal(idSub)}
+                        altoContraste={isHighContrast}
+                        compact
+                      />
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </Card>
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -691,6 +746,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
         </Card>
 
         <Spacer size="lg" />
+
+        {renderHierarquiaLocal() ? (
+          <>
+            {renderHierarquiaLocal()}
+            <Spacer size="lg" />
+          </>
+        ) : null}
 
         <Card style={[styles.cardAvaliacoes, estilosZoom.cardAvaliacoes]} altoContraste={isHighContrast}>
           {renderAvaliacoes()}
@@ -955,6 +1017,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     paddingVertical: 8,
+  },
+  hierarquiaContainer: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    gap: 8,
+  },
+  hierarquiaTitulo: {
+    fontSize: 13,
+  },
+  hierarquiaBloco: {
+    gap: 4,
+  },
+  hierarquiaLista: {
+    gap: 4,
+  },
+  hierarquiaItemPressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  hierarquiaItemLinha: {
+    paddingVertical: 2,
+  },
+  subLocaisCardCarousel: {
+    marginTop: 6,
+    padding: 10,
+  },
+  subLocaisCarouselContent: {
+    paddingRight: 6,
+    gap: 12,
+  },
+  subLocaisCarouselItem: {
+    width: 280,
   },
 });
 

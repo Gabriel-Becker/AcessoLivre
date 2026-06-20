@@ -201,6 +201,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     paddingVertical: theme.spacing.md,
     outlineStyle: 'none',
+    outlineWidth: 0,
+    borderWidth: 0,
+    ...(Platform.OS === 'web' ? { boxShadow: 'none' } : {}),
   },
   inputWithLeftIcon: {
     paddingLeft: theme.spacing.sm,

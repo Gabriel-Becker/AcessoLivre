@@ -28,7 +28,7 @@ export const renderRoleUsuario = (item, formatarRoleUsuario) => (
 
 export const renderDataCadastroUsuario = (item, altoContraste = false) => (
   <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
-    {item?.dataCadastro || 'Sem data'}
+    {formatarDataHora(item?.dataCadastro)}
   </ThemedText>
 );
 
@@ -151,13 +151,22 @@ const formatarDataHora = (valor) => {
   const data = new Date(valor);
   if (Number.isNaN(data.getTime())) return 'Sem data';
 
-  return new Intl.DateTimeFormat('pt-BR', {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(data);
+    hour12: false,
+    timeZone: 'America/Sao_Paulo',
+  }).formatToParts(data);
+
+  const mapa = Object.fromEntries(partes.map((parte) => [parte.type, parte.value]));
+  if (!mapa.day || !mapa.month || !mapa.year || !mapa.hour || !mapa.minute) {
+    return 'Sem data';
+  }
+
+  return `${mapa.day}/${mapa.month}/${mapa.year} - ${mapa.hour}:${mapa.minute}`;
 };
 
 export const renderDataCadastroLocal = (item, altoContraste = false) => (
