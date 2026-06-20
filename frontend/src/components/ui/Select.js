@@ -96,14 +96,20 @@ export default function Select({
         accessibilityRole="button"
         ref={inputRef}
       >
-        <ThemedText
-          color={selecionado ? 'textPrimary' : 'textTertiary'}
-          style={estilos.texto}
-          altoContraste={contraste}
-          permitirEscalaFonte={permitirEscalaFonte}
-        >
-          {selecionado?.label || placeholder}
-        </ThemedText>
+        <View style={estilos.valorContainer}>
+          {selecionado?.icon ? (
+            <Ionicons name={selecionado.icon} size={16} color={t.colors.primary} style={estilos.itemIcone} />
+          ) : null}
+          <ThemedText
+            color={selecionado ? 'textPrimary' : 'textTertiary'}
+            style={estilos.texto}
+            altoContraste={contraste}
+            permitirEscalaFonte={permitirEscalaFonte}
+            numberOfLines={1}
+          >
+            {selecionado?.label || placeholder}
+          </ThemedText>
+        </View>
         <Ionicons name="chevron-down" size={18} color={t.colors.textSecondary} />
       </Pressable>
 
@@ -139,13 +145,19 @@ export default function Select({
                       style={[estilos.item, ativo && estilos.itemAtivo]}
                       onPress={() => handleSelect(item)}
                     >
-                      <ThemedText
-                        color={ativo ? 'primary' : 'textPrimary'}
-                        altoContraste={contraste}
-                        permitirEscalaFonte={permitirEscalaFonte}
-                      >
-                        {item.label}
-                      </ThemedText>
+                      <View style={estilos.itemConteudo}>
+                        {item.icon ? (
+                          <Ionicons name={item.icon} size={16} color={ativo ? t.colors.primary : t.colors.textSecondary} style={estilos.itemIcone} />
+                        ) : null}
+                        <ThemedText
+                          color={ativo ? 'primary' : 'textPrimary'}
+                          altoContraste={contraste}
+                          permitirEscalaFonte={permitirEscalaFonte}
+                          numberOfLines={1}
+                        >
+                          {item.label}
+                        </ThemedText>
+                      </View>
                     </TouchableOpacity>
                   );
                 }}
@@ -208,9 +220,16 @@ function criarEstilos(t, contraste) {
     },
     texto: {
       flex: 1,
-      marginRight: t.spacing.sm,
+      marginRight: t.spacing.xs,
       fontSize: t.typography.fontSize.md,
       lineHeight: t.typography.fontSize.md * t.typography.lineHeight.normal,
+    },
+    valorContainer: {
+      flex: 1,
+      marginRight: t.spacing.sm,
+      flexDirection: 'row',
+      alignItems: 'center',
+      minWidth: 0,
     },
     overlay: {
       position: isWeb ? 'fixed' : 'absolute',
@@ -245,6 +264,14 @@ function criarEstilos(t, contraste) {
     item: {
       paddingHorizontal: t.spacing.md,
       paddingVertical: t.spacing.sm,
+    },
+    itemConteudo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minWidth: 0,
+    },
+    itemIcone: {
+      marginRight: t.spacing.xs,
     },
     itemAtivo: {
       backgroundColor: t.colors.backgroundSecondary,

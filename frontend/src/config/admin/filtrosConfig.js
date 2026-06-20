@@ -1,3 +1,5 @@
+import { obterCategoriaIcone, obterCategoriaLabel } from '../categoriasConfig';
+
 export const opcoesRoleUsuarios = [
   { label: 'Todas as roles', value: 'todos' },
   { label: 'Administrador', value: 'ROLE_ADMIN' },
@@ -37,7 +39,11 @@ export const gerarOpcoesCategoriaLocais = (locais) => {
 
   return [
     { label: 'Todas as categorias', value: 'todos' },
-    ...categorias.map((categoria) => ({ label: categoria, value: categoria })),
+    ...categorias.map((categoria) => ({
+      label: obterCategoriaLabel(categoria),
+      value: categoria,
+      icon: obterCategoriaIcone(categoria),
+    })),
   ];
 };
 

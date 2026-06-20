@@ -31,19 +31,8 @@ import VoiceService from '../../services/acessibilidade/VoiceService';
 import BuscarService from '../../services/BuscarService';
 import { getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
+import { obterCategoriaIcone, obterCategoriaLabel } from '../../config/categoriasConfig';
 import toastHelper from '../../utils/toastHelper';
-
-const CATEGORIAS_LABELS = {
-  COMERCIAL: 'Comercial',
-  PUBLICO: 'Público',
-  SAUDE: 'Saúde',
-  EDUCACAO: 'Educação',
-  LAZER: 'Lazer',
-  TRANSPORTE: 'Transporte',
-  ALIMENTACAO: 'Alimentação',
-  HOSPEDAGEM: 'Hospedagem',
-  SERVICOS: 'Serviços',
-};
 
 const RECURSOS_ACESSIBILIDADE = [
   { id: 'RAMPA', label: 'Rampa', icon: 'logo-usd' },
@@ -147,12 +136,12 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
 
   const anunciarCategorias = useCallback(() => {
     if (!voiceEnabled) return;
-    const selecionadas = categoriasSelecionadas.map(c => CATEGORIAS_LABELS[c] || c).join(', ');
+    const selecionadas = categoriasSelecionadas.map((c) => obterCategoriaLabel(c)).join(', ');
     VoiceService.speak(
       `Filtro de categoria. ${categoriasSelecionadas.length > 0 
         ? `Categorias selecionadas: ${selecionadas}. ` 
         : 'Nenhuma categoria selecionada. '}
-      Você tem as seguintes opções: ${CATEGORIAS.map(c => CATEGORIAS_LABELS[c] || c).join(', ')}.`
+      Você tem as seguintes opções: ${CATEGORIAS.map((c) => obterCategoriaLabel(c)).join(', ')}.`
     );
   }, [voiceEnabled, categoriasSelecionadas]);
 
@@ -193,7 +182,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
                 style={[styles.filtroItem, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(6 * escalaFiltro) }]} 
                 onPress={() => onToggleCategoria(categoria)} 
                 activeOpacity={0.7}
-                accessibilityLabel={`${CATEGORIAS_LABELS[categoria] || categoria} ${selecionada ? 'selecionada' : 'não selecionada'}`}
+                accessibilityLabel={`${obterCategoriaLabel(categoria)} ${selecionada ? 'selecionada' : 'não selecionada'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionada }}
               >
@@ -206,8 +195,15 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
                 }]}>
                   {selecionada && <Ionicons name="checkmark" size={Math.round(12 * escalaFiltro)} color="#FFF" />}
                 </View>
-                <Ionicons name="apps-outline" size={Math.round((isDesktop ? 14 : 16) * escalaFiltro)} color={theme.colors.primary} style={styles.filtroIcon} />
-                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>{CATEGORIAS_LABELS[categoria] || categoria}</ThemedText>
+                <Ionicons
+                  name={obterCategoriaIcone(categoria)}
+                  size={Math.round((isDesktop ? 14 : 16) * escalaFiltro)}
+                  color={theme.colors.primary}
+                  style={styles.filtroIcon}
+                />
+                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
+                  {obterCategoriaLabel(categoria)}
+                </ThemedText>
               </TouchableOpacity>
             );
           })}

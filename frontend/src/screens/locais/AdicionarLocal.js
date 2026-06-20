@@ -37,19 +37,8 @@ import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
+import { obterCategoriaIcone, obterCategoriaLabel } from '../../config/categoriasConfig';
 import { breakpoints, getTheme } from '../../config/theme';
-
-const CATEGORIAS_LABELS = {
-  COMERCIAL: 'Comercial',
-  PUBLICO: 'Público',
-  SAUDE: 'Saúde',
-  EDUCACAO: 'Educação',
-  LAZER: 'Lazer',
-  TRANSPORTE: 'Transporte',
-  ALIMENTACAO: 'Alimentação',
-  HOSPEDAGEM: 'Hospedagem',
-  SERVICOS: 'Serviços',
-};
 
 const RECURSOS_ACESSIBILIDADE = [
   { id: 'rampa', titulo: 'Rampa de acesso', descricao: 'Rampa para cadeira de rodas na entrada', icon: 'walk-outline', cor: 'rampa', enumValue: 'RAMPA' },
@@ -718,7 +707,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
   const opcoesCategoria = useMemo(() => (
     CATEGORIAS.map((categoria) => ({
       value: categoria,
-      label: CATEGORIAS_LABELS[categoria] || categoria,
+      label: obterCategoriaLabel(categoria),
+      icon: obterCategoriaIcone(categoria),
     }))
   ), []);
 

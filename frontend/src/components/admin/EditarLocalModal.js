@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, CartaoSelecao, Input, Select } from '../ui';
@@ -7,7 +7,9 @@ import { useThemeContext } from '../../context/ThemeContext';
 import LocalService from '../../services/LocalService';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
-import { CATEGORIAS_LABELS, RECURSOS_ACESSIBILIDADE, STATUS_LOCAL_OPCOES } from '../../config/admin/locaisConfig';
+import { RECURSOS_ACESSIBILIDADE, STATUS_LOCAL_OPCOES } from '../../config/admin/locaisConfig';
+import { obterCategoriaIcone, obterCategoriaLabel } from '../../config/categoriasConfig';
+import { getTheme } from '../../config/theme';
 
 const FORMULARIO_INICIAL = {
   nome: '',
@@ -27,7 +29,9 @@ const FORMULARIO_INICIAL = {
 };
 
 export default function EditarLocalModal({ visible, onClose, local, onSucesso, altoContraste = false }) {
-  const { theme: t } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = useMemo(() => getTheme(contrasteAtivo, fontSizeMultiplier), [contrasteAtivo, fontSizeMultiplier]);
   const { width } = useWindowDimensions();
   const [carregandoDados, setCarregandoDados] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,17 +40,21 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
 
   const opcoesCategoria = useMemo(
-    () => CATEGORIAS.map((categoria) => ({ value: categoria, label: CATEGORIAS_LABELS[categoria] || categoria })),
+    () => CATEGORIAS.map((categoria) => ({
+      value: categoria,
+      label: obterCategoriaLabel(categoria),
+      icon: obterCategoriaIcone(categoria),
+    })),
     []
   );
 
   const isWideLayout = width >= 1200;
-  const estilos = useMemo(() => criarEstilos(t, isWideLayout), [t, isWideLayout]);
+  const estilos = useMemo(() => criarEstilos(t, isWideLayout, contrasteAtivo), [t, isWideLayout, contrasteAtivo]);
   const larguraModal = width < 768 ? '96%' : width < 1100 ? '90%' : '88%';
 
   const normalizarArray = (valor) => (Array.isArray(valor) ? [...valor].sort().join('|') : '');
 
-  const carregarDadosLocal = async () => {
+  const carregarDadosLocal = useCallback(async () => {
     if (!visible || !local?.idLocal) {
       return;
     }
@@ -106,20 +114,27 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
     } finally {
       setCarregandoDados(false);
     }
-  };
+  }, [visible, local]);
 
   useEffect(() => {
     if (visible) {
-      carregarDadosLocal();
-      return;
+      const timeoutId = setTimeout(() => {
+        carregarDadosLocal();
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
 
-    setFormulario(FORMULARIO_INICIAL);
-    setDadosOriginais(FORMULARIO_INICIAL);
-    setErro('');
-    setCarregandoDados(false);
-    setSubmitting(false);
-  }, [visible, local?.idLocal]);
+    const timeoutId = setTimeout(() => {
+      setFormulario(FORMULARIO_INICIAL);
+      setDadosOriginais(FORMULARIO_INICIAL);
+      setErro('');
+      setCarregandoDados(false);
+      setSubmitting(false);
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [visible, local?.idLocal, carregarDadosLocal]);
 
   const atualizarCampo = (campo) => (valor) => {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
@@ -277,17 +292,17 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
           >
             <View style={estilos.header}>
               <View style={estilos.headerTexto}>
-                <ThemedText variant="h2" weight="bold" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'} style={estilos.titulo}>
+                <ThemedText variant="h2" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'} style={estilos.titulo}>
                   Editar local
                 </ThemedText>
                 <Spacer size="xs" />
-                <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste} style={estilos.headerSubtitulo}>
+                <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo} style={estilos.headerSubtitulo}>
                   Ajuste os dados essenciais sem sair do painel de administração.
                 </ThemedText>
               </View>
 
               <TouchableOpacity onPress={handleClose} style={estilos.botaoFechar}>
-                <Ionicons name="close" size={22} color={altoContraste ? t.colors.textOnPrimary : t.colors.textSecondary} />
+                <Ionicons name="close" size={22} color={contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -295,7 +310,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
 
             {carregandoDados ? (
               <View style={estilos.estadoCentralizado}>
-                <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+                <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
                   Carregando dados do local...
                 </ThemedText>
               </View>
@@ -310,7 +325,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       placeholder="Digite o nome do local"
                       value={formulario.nome}
                       onChangeText={atualizarCampo('nome')}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -321,7 +336,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       value={formulario.categoria}
                       options={opcoesCategoria}
                       onSelect={(valor) => atualizarCampo('categoria')(valor)}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -332,7 +347,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       value={formulario.status}
                       options={STATUS_LOCAL_OPCOES}
                       onSelect={(valor) => atualizarCampo('status')(valor)}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -344,7 +359,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       onChangeText={atualizarCampo('cep')}
                       keyboardType="numeric"
                       maxLength={9}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -354,7 +369,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       placeholder="Rua, avenida, praça"
                       value={formulario.logradouro}
                       onChangeText={atualizarCampo('logradouro')}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -365,7 +380,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       value={formulario.numero}
                       onChangeText={atualizarCampo('numero')}
                       keyboardType="numeric"
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -375,7 +390,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       placeholder="Sala, bloco, andar"
                       value={formulario.complemento}
                       onChangeText={atualizarCampo('complemento')}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -385,7 +400,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       placeholder="Centro"
                       value={formulario.bairro}
                       onChangeText={atualizarCampo('bairro')}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -395,7 +410,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       placeholder="Florianópolis"
                       value={formulario.cidade}
                       onChangeText={atualizarCampo('cidade')}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
 
@@ -407,7 +422,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                       onChangeText={atualizarCampo('estado')}
                       autoCapitalize="characters"
                       maxLength={2}
-                      altoContraste={altoContraste}
+                      altoContraste={contrasteAtivo}
                     />
                   </View>
                 </View>
@@ -419,17 +434,17 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   onChangeText={atualizarCampo('descricao')}
                   multiline
                   numberOfLines={4}
-                  altoContraste={altoContraste}
+                  altoContraste={contrasteAtivo}
                 />
 
                 <Spacer size="sm" />
 
                 <View style={estilos.blocoRecursos}>
-                  <ThemedText variant="h3" weight="bold" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'}>
+                  <ThemedText variant="h3" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'}>
                     Recursos de acessibilidade
                   </ThemedText>
                   <Spacer size="xs" />
-                  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+                  <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
                     Selecione os recursos que o local realmente possui.
                   </ThemedText>
 
@@ -445,7 +460,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                         corDestaque={t.colors.accessibility?.[recurso.cor] || t.colors.primary}
                         selecionado={formulario.tiposAcessibilidade.includes(recurso.enumValue)}
                         onPress={() => alternarRecurso(recurso.enumValue)}
-                        altoContraste={altoContraste}
+                        altoContraste={contrasteAtivo}
                         style={estilos.recursoItem}
                       />
                     ))}
@@ -455,7 +470,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                 {erro ? (
                   <>
                     <Spacer size="md" />
-                    <ThemedText color="error" size="sm" align="center" altoContraste={altoContraste}>
+                    <ThemedText color="error" size="sm" align="center" altoContraste={contrasteAtivo}>
                       {erro}
                     </ThemedText>
                   </>
@@ -471,7 +486,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                     onPress={handleSalvar}
                     loading={submitting}
                     disabled={submitting || carregandoDados}
-                    altoContraste={altoContraste}
+                    altoContraste={contrasteAtivo}
                   >
                     Salvar alterações
                   </Button>
@@ -482,7 +497,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                     fullWidth
                     onPress={handleClose}
                     disabled={submitting || carregandoDados}
-                    altoContraste={altoContraste}
+                    altoContraste={contrasteAtivo}
                   >
                     Cancelar
                   </Button>
@@ -496,13 +511,13 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
   );
 }
 
-function criarEstilos(t, isWideLayout) {
+function criarEstilos(t, isWideLayout, altoContraste) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.55)',
+      backgroundColor: altoContraste ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.55)',
       padding: t.spacing.md,
     },
     container: {
@@ -510,6 +525,8 @@ function criarEstilos(t, isWideLayout) {
       borderRadius: t.borderRadius.xl,
       padding: t.spacing.xl,
       overflow: 'hidden',
+      borderWidth: altoContraste ? 2 : 0,
+      borderColor: altoContraste ? t.colors.border : 'transparent',
       ...t.shadows.lg,
     },
     conteudoScroll: {
@@ -538,7 +555,9 @@ function criarEstilos(t, isWideLayout) {
       borderRadius: t.borderRadius.full,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: t.colors.backgroundTertiary,
+      backgroundColor: altoContraste ? t.colors.surfaceSecondary : t.colors.backgroundTertiary,
+      borderWidth: altoContraste ? 1 : 0,
+      borderColor: altoContraste ? t.colors.border : 'transparent',
     },
     estadoCentralizado: {
       alignItems: 'center',
@@ -559,8 +578,12 @@ function criarEstilos(t, isWideLayout) {
     blocoRecursos: {
       marginTop: t.spacing.sm,
       paddingTop: t.spacing.md,
+      paddingHorizontal: altoContraste ? t.spacing.sm : 0,
+      paddingBottom: altoContraste ? t.spacing.sm : 0,
+      borderRadius: altoContraste ? t.borderRadius.md : 0,
       borderTopWidth: 1,
       borderTopColor: t.colors.borderLight,
+      backgroundColor: altoContraste ? t.colors.surfaceSecondary : 'transparent',
     },
     recursosGrid: {
       flexDirection: 'row',

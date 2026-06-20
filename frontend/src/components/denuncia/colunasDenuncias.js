@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet } from 'react-native';
 import { Button } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
 
@@ -87,6 +87,11 @@ export const formatarData = (data) => {
 
 export const colunasDenuncias = (handlers, isHighContrast, theme) => {
   const { onAtualizarStatus, onExcluir, carregandoAcao } = handlers;
+  const renderComTooltipWeb = (texto, children) => (
+    <View {...(Platform.OS === 'web' ? { title: texto } : {})}>
+      {children}
+    </View>
+  );
 
   return [
     {
@@ -137,8 +142,9 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       minWidth: 250,
       flex: 2,
       sortKey: false,
-      render: (item) => (
-        <ThemedText variant="caption" color="textSecondary" numberOfLines={2} altoContraste={isHighContrast}>
+      render: (item) => renderComTooltipWeb(
+        item.descricao || '—',
+        <ThemedText variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
           {item.descricao || '—'}
         </ThemedText>
       ),

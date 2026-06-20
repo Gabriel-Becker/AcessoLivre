@@ -1,16 +1,29 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { ThemedText } from '../../components/commons';
 import { EtiquetaStatus } from '../../components/admin';
 import { Button } from '../../components/ui';
 import { obterCategoriaLabel, obterStatusLabel, obterTipoEtiquetaStatus } from './locaisConfig';
 
+const renderTextoTruncadoComTooltipWeb = (textoCompleto, children) => (
+  <View {...(Platform.OS === 'web' ? { title: textoCompleto } : {})}>
+    {children}
+  </View>
+);
+
 export const renderNomeUsuario = (item, altoContraste = false) => (
-  <View>
-    <ThemedText weight="bold" size="sm" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'}>
+  renderTextoTruncadoComTooltipWeb(
+    item.nome || 'Usuário sem nome',
+    <ThemedText
+      weight="bold"
+      size="sm"
+      numberOfLines={1}
+      altoContraste={altoContraste}
+      color={altoContraste ? 'textOnPrimary' : 'textPrimary'}
+    >
       {item.nome || 'Usuário sem nome'}
     </ThemedText>
-  </View>
+  )
 );
 
 export const renderEmailUsuario = (item, altoContraste = false) => (
@@ -120,11 +133,18 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
 ];
 
 export const renderNomeLocal = (item, altoContraste = false) => (
-  <View>
-    <ThemedText weight="bold" size="sm" altoContraste={altoContraste} color={altoContraste ? 'textOnPrimary' : 'textPrimary'}>
+  renderTextoTruncadoComTooltipWeb(
+    item.nome || 'Local sem nome',
+    <ThemedText
+      weight="bold"
+      size="sm"
+      numberOfLines={1}
+      altoContraste={altoContraste}
+      color={altoContraste ? 'textOnPrimary' : 'textPrimary'}
+    >
       {item.nome || 'Local sem nome'}
     </ThemedText>
-  </View>
+  )
 );
 
 export const renderCategoriaLocal = (item, altoContraste = false) => (
