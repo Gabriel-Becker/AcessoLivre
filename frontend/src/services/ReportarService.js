@@ -4,6 +4,12 @@ import AuthService from './AuthService';
 class ReportarService {
   static baseURL = '/denuncias';
 
+  static _capitalizarPrimeiraLetra(texto) {
+    const valor = String(texto || '').trim();
+    if (!valor) return null;
+    return valor.charAt(0).toUpperCase() + valor.slice(1);
+  }
+
   static async _getToken() {
     return await AuthService.getToken();
   }
@@ -22,10 +28,10 @@ class ReportarService {
       const payload = {
         tipo: data.tipo,
         targetId: data.targetId,
-        targetName: data.targetName,
+        targetName: this._capitalizarPrimeiraLetra(data.targetName),
         motivo: data.motivo,
-        motivoLabel: data.motivoLabel,
-        descricao: data.descricao,
+        motivoLabel: this._capitalizarPrimeiraLetra(data.motivoLabel),
+        descricao: this._capitalizarPrimeiraLetra(data.descricao),
       };
 
       const response = await api.post(this.baseURL, payload, {
@@ -132,7 +138,7 @@ class ReportarService {
       });
       
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, data: this._getEmptyStats() };
     }
   }
@@ -219,7 +225,7 @@ class ReportarService {
       });
       
       return { success: true, reported: response.data?.reported || false };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, reported: false };
     }
   }

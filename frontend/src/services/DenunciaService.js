@@ -9,20 +9,47 @@ class DenunciaService {
       if (filters.status && filters.status !== 'todos') params.status = filters.status;
       if (filters.tipo && filters.tipo !== 'todos') params.tipo = filters.tipo;
       if (filters.search) params.search = filters.search;
+      if (typeof filters.page === 'number') params.page = filters.page;
+      if (typeof filters.size === 'number') params.size = filters.size;
+      if (filters.sort) params.sort = filters.sort;
 
       const response = await api.get(this.baseURL, { params });
 
       let denuncias = [];
+      let pagination = {
+        page: 0,
+        size: filters.size || 10,
+        totalElements: 0,
+        totalPages: 1,
+      };
+
       if (response.data?.content) {
         denuncias = response.data.content;
+        pagination = {
+          page: response.data.number ?? 0,
+          size: response.data.size ?? (filters.size || 10),
+          totalElements: response.data.totalElements ?? denuncias.length,
+          totalPages: response.data.totalPages ?? 1,
+        };
       } else if (Array.isArray(response.data)) {
         denuncias = response.data;
+        pagination = {
+          page: 0,
+          size: denuncias.length || (filters.size || 10),
+          totalElements: denuncias.length,
+          totalPages: 1,
+        };
       }
 
-      return { success: true, data: denuncias };
+      return { success: true, data: denuncias, pagination };
     } catch (error) {
       console.error('Erro ao listar denúncias:', error);
-      return { success: false, data: [], message: error.response?.data?.message };
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message,
+        pagination: { page: 0, size: 10, totalElements: 0, totalPages: 1 },
+      };
     }
   }
 

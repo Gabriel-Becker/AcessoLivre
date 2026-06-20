@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
@@ -51,6 +52,7 @@ public class AdminService {
     private static final String UTF8_BOM = "\uFEFF";
     private static final DateTimeFormatter FMT_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final ZoneId ZONA_PADRAO_RELATORIO = ZoneId.of("America/Sao_Paulo");
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
@@ -208,7 +210,7 @@ public class AdminService {
         long totalAdmins = usuarios.stream().filter(u -> Role.ROLE_ADMIN.equals(u.getRole())).count();
         long totalUsuariosComuns = totalUsuarios - totalAdmins;
 
-        var agora = LocalDateTime.now();
+        var agora = agoraRelatorio();
         var limite30Dias = agora.minusDays(30);
         long cadastrosUltimos30Dias = usuarios.stream()
             .filter(u -> u.getDataCadastro() != null && !u.getDataCadastro().isBefore(limite30Dias))
@@ -220,7 +222,7 @@ public class AdminService {
 
         Map<String, Long> cadastrosUltimosSeisMeses = new LinkedHashMap<>();
         for (int i = 5; i >= 0; i--) {
-            java.time.YearMonth referencia = java.time.YearMonth.now().minusMonths(i);
+            java.time.YearMonth referencia = java.time.YearMonth.now(ZONA_PADRAO_RELATORIO).minusMonths(i);
             String chave = String.format("%02d/%d", referencia.getMonthValue(), referencia.getYear());
             cadastrosUltimosSeisMeses.put(chave, 0L);
         }
@@ -379,7 +381,7 @@ public class AdminService {
         relatorio.put("locaisRecentes", locaisRecentes);
         relatorio.put("filtroDataInicio", dataInicio);
         relatorio.put("filtroDataFim", dataFim);
-        relatorio.put("geradoEm", LocalDateTime.now());
+        relatorio.put("geradoEm", agoraRelatorio());
 
         return relatorio;
     }
@@ -693,6 +695,10 @@ public class AdminService {
         if (di.isEmpty()) return "Até " + df;
         if (df.isEmpty()) return "A partir de " + di;
         return di + " até " + df;
+    }
+
+    private LocalDateTime agoraRelatorio() {
+        return LocalDateTime.now(ZONA_PADRAO_RELATORIO);
     }
 
     private boolean estaNoPeriodo(LocalDateTime dataReferencia, LocalDate dataInicio, LocalDate dataFim) {

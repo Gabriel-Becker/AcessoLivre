@@ -48,7 +48,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
-  const escalaZoom = Math.max(1, Number(fontSizeMultiplier) || 1);
   
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
@@ -92,13 +91,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
     marginBottom: isDesktop ? 6 : 8,
     borderRadius: isDesktop ? 16 : 20,
   }), [isDesktop]);
-
-  const cardWidth = useMemo(() => {
-    if (isDesktop) {
-      return compact ? 320 : 380;
-    }
-    return '100%';
-  }, [isDesktop, compact]);
 
   const imagemParaExibir = useMemo(() => {
     if (imageError) return null;
@@ -179,7 +171,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
           </View>
         )}
         
-        {isNew && !compact && (
+        {isNew && (
           <View style={estilos.newBadge}>
             <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color="#FFF" />
             <ThemedText weight="bold" style={estilos.newBadgeText}>Novo</ThemedText>
@@ -221,12 +213,14 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
           <ThemedText weight="bold" style={estilos.ratingNumber}>
             {avaliacaoMedia.toFixed(1)}
           </ThemedText>
-          <ThemedText style={estilos.ratingCount}>
-            ({totalAvaliacoes})
-          </ThemedText>
+          {totalAvaliacoes > 0 ? (
+            <ThemedText style={estilos.ratingCount}>
+              ({totalAvaliacoes})
+            </ThemedText>
+          ) : null}
         </View>
 
-        {endereco && (enderecoLinha1 || enderecoLinha2) && !compact && (
+        {endereco && (enderecoLinha1 || enderecoLinha2) && (
           <View style={estilos.enderecoContainer}>
             <Ionicons name="location-outline" size={isDesktop ? 12 : 14} color={t.colors.textSecondary} style={estilos.enderecoIcon} />
             <View style={staticStyles.enderecoTextos}>
@@ -270,16 +264,6 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  nomeCategoriaRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    gap: 8,
-  },
-});
 
 function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop) {
   return StyleSheet.create({

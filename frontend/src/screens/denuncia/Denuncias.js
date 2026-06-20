@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { Spacer, ThemedText } from '../../components/commons';
+import { Button } from '../../components/ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import DenunciaService from '../../services/DenunciaService';
 import toastHelper from '../../utils/toastHelper';
@@ -28,6 +29,8 @@ export default function Denuncias() {
   const [buscaDenuncias, setBuscaDenuncias] = useState('');
   const [filtroStatusDenuncias, setFiltroStatusDenuncias] = useState('todos');
   const [filtroTipoDenuncias, setFiltroTipoDenuncias] = useState('todos');
+  const [paginaAtual, setPaginaAtual] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   const [estatisticas, setEstatisticas] = useState({ total: 0, pendentes: 0 });
   const [modalStatusVisivel, setModalStatusVisivel] = useState(false);
   const [denunciaSelecionada, setDenunciaSelecionada] = useState(null);
@@ -56,11 +59,20 @@ export default function Denuncias() {
       if (filtroStatusDenuncias !== 'todos') filters.status = filtroStatusDenuncias;
       if (filtroTipoDenuncias !== 'todos') filters.tipo = filtroTipoDenuncias;
       if (buscaDenuncias) filters.search = buscaDenuncias;
+      filters.page = paginaAtual;
+      filters.size = 10;
+      filters.sort = 'dataCriacao,desc';
 
       const result = await DenunciaService.getAll(filters);
       
       if (result.success && mountedRef.current) {
         setDenuncias(result.data || []);
+        const paginas = Math.max(1, Number(result.pagination?.totalPages || 1));
+        setTotalPaginas(paginas);
+        const paginaRetornada = Number(result.pagination?.page ?? paginaAtual);
+        if (paginaRetornada !== paginaAtual) {
+          setPaginaAtual(Math.max(0, paginaRetornada));
+        }
       } else if (!result.success && mountedRef.current) {
         toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
@@ -72,14 +84,22 @@ export default function Denuncias() {
     } finally {
       if (mountedRef.current) setCarregando(false);
     }
-  }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias]);
+  }, [filtroStatusDenuncias, filtroTipoDenuncias, buscaDenuncias, paginaAtual]);
 
   useEffect(() => {
-    carregarDenuncias();
+    const timeoutId = setTimeout(() => {
+      carregarDenuncias();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [carregarDenuncias]);
 
   useEffect(() => {
-    carregarEstatisticas();
+    const timeoutId = setTimeout(() => {
+      carregarEstatisticas();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [carregarEstatisticas]);
 
   const atualizarEstatisticasLocalmente = (statusAntigo, statusNovo) => {
@@ -225,8 +245,16 @@ export default function Denuncias() {
 
   const colunas = colunasDenuncias(tableHandlers, isHighContrast, t);
   const filtros = filtrosDenuncias(
-    filtroStatusDenuncias, setFiltroStatusDenuncias,
-    filtroTipoDenuncias, setFiltroTipoDenuncias
+    filtroStatusDenuncias,
+    (valor) => {
+      setFiltroStatusDenuncias(valor);
+      setPaginaAtual(0);
+    },
+    filtroTipoDenuncias,
+    (valor) => {
+      setFiltroTipoDenuncias(valor);
+      setPaginaAtual(0);
+    }
   );
 
   return (
@@ -251,7 +279,10 @@ export default function Denuncias() {
       <BarraFiltroAdmin
         titulo="Denúncias"
         pesquisa={buscaDenuncias}
-        onChangePesquisa={setBuscaDenuncias}
+        onChangePesquisa={(valor) => {
+          setBuscaDenuncias(valor);
+          setPaginaAtual(0);
+        }}
         pesquisaPlaceholder="Pesquisar por motivo ou alvo"
         filtros={filtros}
         altoContraste={isHighContrast}
@@ -276,6 +307,32 @@ export default function Denuncias() {
         larguraMinima={1300}
         altoContraste={isHighContrast}
       />
+
+      <Spacer size="sm" />
+
+      <View style={styles.paginacao}>
+        <Button
+          variant="outline"
+          size="small"
+          onPress={() => setPaginaAtual((p) => Math.max(0, p - 1))}
+          disabled={carregando || paginaAtual <= 0}
+          altoContraste={isHighContrast}
+        >
+          Anterior
+        </Button>
+        <ThemedText color="textSecondary" altoContraste={isHighContrast}>
+          Página {paginaAtual + 1} de {Math.max(1, totalPaginas)}
+        </ThemedText>
+        <Button
+          variant="outline"
+          size="small"
+          onPress={() => setPaginaAtual((p) => Math.min(Math.max(1, totalPaginas) - 1, p + 1))}
+          disabled={carregando || paginaAtual + 1 >= Math.max(1, totalPaginas)}
+          altoContraste={isHighContrast}
+        >
+          Próxima
+        </Button>
+      </View>
 
       <ModalStatusDenuncia
         visible={modalStatusVisivel}
@@ -322,5 +379,11 @@ const styles = StyleSheet.create({
   emptyContainer: {
     padding: 32,
     alignItems: 'center',
+  },
+  paginacao: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
 });

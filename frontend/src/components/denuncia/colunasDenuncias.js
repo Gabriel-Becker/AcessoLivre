@@ -78,6 +78,7 @@ export const formatarData = (data) => {
   if (!data) return '—';
   try {
     const date = new Date(data);
+    if (Number.isNaN(date.getTime())) return '—';
     return date.toLocaleDateString('pt-BR');
   } catch {
     return '—';
@@ -88,19 +89,6 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
   const { onAtualizarStatus, onExcluir, carregandoAcao } = handlers;
 
   return [
-    {
-      key: 'id',
-      chave: 'id',
-      titulo: 'ID',
-      minWidth: 70,
-      flex: 0.5,
-      sortKey: 'id',
-      render: (item) => (
-        <ThemedText variant="caption" weight="bold" style={{ color: theme.colors.primary }} altoContraste={isHighContrast}>
-          #{item.id}
-        </ThemedText>
-      ),
-    },
     {
       key: 'tipo',
       chave: 'tipo',
@@ -179,7 +167,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       sortKey: 'createdAt',
       render: (item) => (
         <ThemedText variant="caption" color="textSecondary" altoContraste={isHighContrast}>
-          {formatarData(item.createdAt)}
+          {formatarData(item.dataCriacao || item.createdAt)}
         </ThemedText>
       ),
     },
