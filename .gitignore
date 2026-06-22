@@ -33,7 +33,9 @@ build/
 .vscode/
 
 ### Github ###
-/.github
+/.github/*
+!/.github/workflows/
+!/.github/workflows/**
 
 # Arquivos de chaves e propriedades sensíveis
 backend/src/main/resources/app.pub
