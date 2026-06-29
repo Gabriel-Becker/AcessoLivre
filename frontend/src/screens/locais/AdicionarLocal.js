@@ -433,8 +433,8 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
           modalStyles.modalContainer,
           { 
             backgroundColor: theme.colors.surface,
-            maxWidth: Platform.OS === 'web' ? 500 : '90%',
-            width: Platform.OS === 'web' ? '100%' : '90%',
+            maxWidth: Platform.OS === 'web' ? 560 : '96%',
+            width: Platform.OS === 'web' ? '100%' : '96%',
           }
         ]}>
           <View style={modalStyles.modalHeader}>
@@ -555,10 +555,11 @@ const modalStyles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: Platform.OS === 'web' ? 16 : 8,
   },
   modalContainer: {
     borderRadius: 20,
-    padding: 24,
+    padding: Platform.OS === 'web' ? 24 : 16,
     maxHeight: '80%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

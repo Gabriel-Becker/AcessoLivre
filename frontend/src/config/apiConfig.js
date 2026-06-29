@@ -29,8 +29,11 @@ function getApiUrl() {
     : 'https://api.acessolivre.com/api';
 }
 
+const resolvedUrl = getApiUrl();
+console.log('[apiConfig] URL do backend:', resolvedUrl);
+
 export const API_CONFIG = {
-  BASE_URL: getApiUrl(),
+  BASE_URL: resolvedUrl,
   TIMEOUT: 30000,
 };
 

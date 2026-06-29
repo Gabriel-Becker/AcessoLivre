@@ -444,7 +444,7 @@ const FiltrosCard = React.memo(({
           padding: Math.round(16 * escalaFiltro),
           borderRadius: Math.round(14 * escalaFiltro),
           marginTop: Math.round(8 * escalaFiltro),
-          marginHorizontal: ocuparLarguraTotal ? 0 : 12,
+          marginHorizontal: ocuparLarguraTotal ? 0 : (isDesktop ? 12 : 0),
         },
       ]}
       altoContraste={isHighContrast}
@@ -575,6 +575,7 @@ export default function Buscar({ onNavigate }) {
   const isDesktop = larguraViewport >= BREAKPOINTS.TABLET;
   const isTablet = larguraViewport >= BREAKPOINTS.MOBILE && larguraViewport < BREAKPOINTS.TABLET;
   const usarLayoutEmpilhado = isDesktop && zoomAplicado;
+  const mostrarCabecalhoTexto = isDesktop;
   const paddingInferiorLista = isDesktop && !usarLayoutEmpilhado ? 32 : 28 + Math.max(insets.bottom, 8);
   const [searchText, setSearchText] = useState('');
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
@@ -874,14 +875,14 @@ export default function Buscar({ onNavigate }) {
     );
   }
 
-  const cabecalhoLista = (
+  const cabecalhoLista = mostrarCabecalhoTexto ? (
     <CabecalhoPagina
       titulo="Buscar Locais"
       subtitulo={zoomAplicado ? undefined : 'Encontre e avalie locais acessíveis'}
       altoContraste={isHighContrast}
       style={styles.cabecalhoBuscar}
     />
-  );
+  ) : null;
 
   return (
     <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
@@ -1050,7 +1051,7 @@ const styles = StyleSheet.create({
   },
   
   listContentMobile: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingBottom: 0,
   },
   listContentZoom: {
@@ -1062,7 +1063,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 14,
     overflow: 'hidden',
-    marginHorizontal: 12,
+    marginHorizontal: 0,
     marginTop: 8,
   },
   filtrosHeader: {
@@ -1187,7 +1188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 16,
-    marginHorizontal: 12,
+    marginHorizontal: 4,
     marginBottom: 8,
   },
   resultadosListContent: {
