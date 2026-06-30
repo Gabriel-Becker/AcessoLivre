@@ -1,28 +1,33 @@
-export const filtrosDenuncias = (filtroStatus, setFiltroStatus, filtroTipo, setFiltroTipo) => [
+export const filtrosDenuncias = (
+  filtroStatus,
+  setFiltroStatus,
+  filtroTipo,
+  setFiltroTipo
+) => [
   {
     chave: 'status',
     label: 'Status',
-    opcoes: [
-      { valor: 'todos', label: 'Todos' },
-      { valor: 'PENDING', label: 'Pendentes' },
-      { valor: 'REVIEWED', label: 'Em análise' },
-      { valor: 'RESOLVED', label: 'Resolvidos' },
-      { valor: 'REJECTED', label: 'Rejeitados' },
-    ],
     valor: filtroStatus,
     onSelect: setFiltroStatus,
+    opcoes: [
+      { value: 'todos', label: 'Todos' },
+      { value: 'PENDING', label: 'Pendentes' },
+      { value: 'REVIEWED', label: 'Em análise' },
+      { value: 'RESOLVED', label: 'Resolvidos' },
+      { value: 'REJECTED', label: 'Rejeitados' },
+    ],
   },
   {
     chave: 'tipo',
     label: 'Tipo',
-    opcoes: [
-      { valor: 'todos', label: 'Todos' },
-      { valor: 'LOCAL', label: 'Locais' },
-      { valor: 'COMENTARIO', label: 'Comentários' },
-      { valor: 'AVALIACAO', label: 'Avaliações' },
-    ],
     valor: filtroTipo,
     onSelect: setFiltroTipo,
+    opcoes: [
+      { value: 'todos', label: 'Todos' },
+      { value: 'LOCAL', label: 'Locais' },
+      { value: 'COMENTARIO', label: 'Comentários' },
+      { value: 'AVALIACAO', label: 'Avaliações' },
+    ],
   },
 ];
 
