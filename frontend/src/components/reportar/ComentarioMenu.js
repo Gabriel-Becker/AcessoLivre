@@ -1,5 +1,3 @@
-// src/components/reportar/ComentarioMenu.jsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -39,9 +37,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
     setShowReportarModal(false);
   };
 
-  // Extrair o ID correto do comentário/avaliação
   const getComentarioId = () => {
-    // Prioridades diferentes formatos de ID
     if (comentario?.id) return comentario.id;
     if (comentario?.idAvaliacao) return comentario.idAvaliacao;
     if (comentario?.avaliacaoId) return comentario.avaliacaoId;

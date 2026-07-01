@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import { Button } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
+import TooltipText from '../../components/ui/TooltipText';
 
 // Estilos específicos para a tabela
 const styles = StyleSheet.create({
@@ -73,7 +74,6 @@ export const getStatusColor = (status) => {
   }
 };
 
-
 export const formatarData = (data) => {
   if (!data) return '—';
   try {
@@ -87,11 +87,6 @@ export const formatarData = (data) => {
 
 export const colunasDenuncias = (handlers, isHighContrast, theme) => {
   const { onAtualizarStatus, onExcluir, carregandoAcao } = handlers;
-  const renderComTooltipWeb = (texto, children) => (
-    <View {...(Platform.OS === 'web' ? { title: texto } : {})}>
-      {children}
-    </View>
-  );
 
   return [
     {
@@ -142,11 +137,13 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       minWidth: 250,
       flex: 2,
       sortKey: false,
-      render: (item) => renderComTooltipWeb(
-        item.descricao || '—',
-        <ThemedText variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
-          {item.descricao || '—'}
-        </ThemedText>
+      render: (item) => (
+        <TooltipText
+          text={item.descricao}
+          maxLength={40}
+          altoContraste={isHighContrast}
+          position="top"
+        />
       ),
     },
     {
