@@ -1,15 +1,15 @@
-/**
- * Toast Helper - Centraliza exibição de mensagens Toast
- * Baseado no padrão do Inkspiration
+﻿/**
+ * Toast Helper - Centraliza exibiï¿½ï¿½o de mensagens Toast
+ * Baseado no padrï¿½o do Inkspiration
  */
 import Toast from 'react-native-toast-message';
 
 /**
- * Exibe toast genérico
+ * Exibe toast genï¿½rico
  * @param {string} type - Tipo do toast (success, error, info, warning)
- * @param {string} title - Título do toast
+ * @param {string} title - Tï¿½tulo do toast
  * @param {string} message - Mensagem do toast
- * @param {object} options - Opções adicionais
+ * @param {object} options - Opï¿½ï¿½es adicionais
  */
 export const showToast = (type, title, message, options = {}) => {
   Toast.show({
@@ -26,7 +26,7 @@ export const showToast = (type, title, message, options = {}) => {
 /**
  * Exibe toast de sucesso
  * @param {string} message - Mensagem de sucesso
- * @param {string} title - Título (opcional)
+ * @param {string} title - Tï¿½tulo (opcional)
  */
 const showSuccess = (message, title = 'Sucesso') => {
   showToast('success', title, message);
@@ -35,27 +35,27 @@ const showSuccess = (message, title = 'Sucesso') => {
 /**
  * Exibe toast de erro
  * @param {string} message - Mensagem de erro
- * @param {string} title - Título (opcional)
+ * @param {string} title - Tï¿½tulo (opcional)
  */
 const showError = (message, title = 'Erro') => {
   showToast('error', title, message);
 };
 
 /**
- * Exibe toast de informação
+ * Exibe toast de informaï¿½ï¿½o
  * @param {string} message - Mensagem informativa
- * @param {string} title - Título (opcional)
+ * @param {string} title - Tï¿½tulo (opcional)
  */
-const showInfo = (message, title = 'Informação') => {
+const showInfo = (message, title = 'Informaï¿½ï¿½o') => {
   showToast('info', title, message);
 };
 
 /**
- * Exibe toast de atenção/warning
- * @param {string} message - Mensagem de atenção
- * @param {string} title - Título (opcional)
+ * Exibe toast de atenï¿½ï¿½o/warning
+ * @param {string} message - Mensagem de atenï¿½ï¿½o
+ * @param {string} title - Tï¿½tulo (opcional)
  */
-const showWarning = (message, title = 'Atenção') => {
+const showWarning = (message, title = 'Atenï¿½ï¿½o') => {
   showToast('warning', title, message);
 };
 

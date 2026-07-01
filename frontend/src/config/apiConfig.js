@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+﻿import { Platform } from 'react-native';
 import {
   ENVIRONMENT,
   WEB_API_URL,

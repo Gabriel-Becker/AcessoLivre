@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,10 +13,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, Spacer } from '../commons';
-import { Button, Input } from '../ui';
+import { TextoTematizado, Espacador } from '../commons';
+import { Botao, Entrada } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/ContextoAutenticacao';
 import { getTheme } from '../../config/theme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -121,19 +121,19 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const handleEnviar = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login necessário', 'Faça login para avaliar um local');
+      Alert.alert('Login necessÃ¡rio', 'FaÃ§a login para avaliar um local');
       onClose();
       return;
     }
 
     const userId = getUsuarioId();
     if (!userId) {
-      Alert.alert('Erro', 'Usuário não identificado. Faça login novamente.');
+      Alert.alert('Erro', 'UsuÃ¡rio nÃ£o identificado. FaÃ§a login novamente.');
       return;
     }
 
     if (notaVisual === 0 || notaMotora === 0 || notaAuditiva === 0) {
-      setErro('Avalie todos os critérios');
+      setErro('Avalie todos os critÃ©rios');
       return;
     }
 
@@ -154,8 +154,8 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Erro ao enviar avaliação:', error);
-      setErro(error.message || 'Erro ao enviar avaliação');
+      console.error('Erro ao enviar avaliaÃ§Ã£o:', error);
+      setErro(error.message || 'Erro ao enviar avaliaÃ§Ã£o');
     } finally {
       setLoading(false);
     }
@@ -221,7 +221,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                   contentContainerStyle={styles.modalScrollContent}
                 >
                   <View style={styles.header}>
-                    <ThemedText variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
+                    <TextoTematizado variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
                       Avaliar Local
                     </ThemedText>
                     <TouchableOpacity onPress={handleClose} style={styles.closeButton} disabled={loading}>
@@ -229,31 +229,31 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     </TouchableOpacity>
                   </View>
 
-                  <Spacer size="xs" />
+                  <Espacador size="xs" />
 
                   <View style={styles.localInfo}>
-                    <ThemedText variant="h3" weight="semibold" numberOfLines={1} style={styles.localNome}>
+                    <TextoTematizado variant="h3" weight="semibold" numberOfLines={1} style={styles.localNome}>
                       {local?.nome}
                     </ThemedText>
-                    <ThemedText color="textSecondary" variant="caption" style={styles.localCategoria}>
+                    <TextoTematizado color="textSecondary" variant="caption" style={styles.localCategoria}>
                       {local?.categoria}
                     </ThemedText>
                   </View>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
-                  <ThemedText color="textSecondary" style={[styles.subtitulo, estilosZoom.subtitulo]}>
+                  <TextoTematizado color="textSecondary" style={[styles.subtitulo, estilosZoom.subtitulo]}>
                     Avalie a acessibilidade
                   </ThemedText>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                     <View style={styles.criterioHeader}>
                       <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                         <Ionicons name="eye-outline" size={isMobile ? 18 : 20} color={theme.colors.primary} />
                       </View>
-                      <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Visual
                       </ThemedText>
                     </View>
@@ -262,19 +262,19 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       {renderStars(notaVisual, setNotaVisual, hoverVisual, setHoverVisual, 'Visual', loading)}
                     </View>
                     
-                    <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaVisual)}
                     </ThemedText>
                   </View>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                     <View style={styles.criterioHeader}>
                       <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                         <Ionicons name="body-outline" size={isMobile ? 18 : 20} color={theme.colors.primary} />
                       </View>
-                      <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Motora
                       </ThemedText>
                     </View>
@@ -283,19 +283,19 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       {renderStars(notaMotora, setNotaMotora, hoverMotora, setHoverMotora, 'Motora', loading)}
                     </View>
                     
-                    <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaMotora)}
                     </ThemedText>
                   </View>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   <View style={[styles.criterioContainer, estilosDinamicos.criterioContainer]}>
                     <View style={styles.criterioHeader}>
                       <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '20' }]}>
                         <Ionicons name="ear-outline" size={isMobile ? 18 : 20} color={theme.colors.primary} />
                       </View>
-                      <ThemedText weight="bold" style={styles.criterioTitulo}>
+                      <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Auditiva
                       </ThemedText>
                     </View>
@@ -304,65 +304,65 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       {renderStars(notaAuditiva, setNotaAuditiva, hoverAuditiva, setHoverAuditiva, 'Auditiva', loading)}
                     </View>
                     
-                    <ThemedText variant="caption" color="textSecondary" style={styles.notaDescricao}>
+                    <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaAuditiva)}
                     </ThemedText>
                   </View>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   {todasNotasSelecionadas && (
                     <View style={[styles.mediaContainer, estilosDinamicos.mediaContainer]}>
-                      <ThemedText weight="bold" style={styles.mediaTexto}>Média:</ThemedText>
+                      <TextoTematizado weight="bold" style={styles.mediaTexto}>MÃ©dia:</ThemedText>
                       <View style={styles.mediaStars}>
-                        {renderStars(parseFloat(calcularMedia()), null, null, null, 'Média', true)}
+                        {renderStars(parseFloat(calcularMedia()), null, null, null, 'MÃ©dia', true)}
                       </View>
-                      <ThemedText weight="bold" style={styles.mediaValor}>
+                      <TextoTematizado weight="bold" style={styles.mediaValor}>
                         {calcularMedia()}
                       </ThemedText>
                     </View>
                   )}
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   <View>
-                    <ThemedText weight="bold" style={[styles.comentarioLabel, estilosZoom.comentarioLabel]}>
-                      Comentário
+                    <TextoTematizado weight="bold" style={[styles.comentarioLabel, estilosZoom.comentarioLabel]}>
+                      ComentÃ¡rio
                     </ThemedText>
-                    <ThemedText color="textSecondary" variant="caption" style={[styles.comentarioHint, estilosZoom.comentarioHint]}>
+                    <TextoTematizado color="textSecondary" variant="caption" style={[styles.comentarioHint, estilosZoom.comentarioHint]}>
                       Opcional
                     </ThemedText>
                     
-                    <Spacer size="xs" />
+                    <Espacador size="xs" />
 
-                    <Input
+                    <Entrada
                       multiline
                       numberOfLines={3}
                       value={comentario}
                       onChangeText={setComentario}
-                      placeholder="Compartilhe sua experiência..."
+                      placeholder="Compartilhe sua experiÃªncia..."
                       altoContraste={isHighContrast}
                       style={[styles.comentarioInput, estilosZoom.comentarioInput]}
                       editable={!loading}
                     />
                   </View>
 
-                  <Spacer size="sm" />
+                  <Espacador size="sm" />
 
                   {erro ? (
                     <>
                       <View style={[styles.erroContainer, { backgroundColor: theme.colors.error + '20' }]}>
                         <Ionicons name="alert-circle" size={14} color={theme.colors.error} />
-                        <ThemedText color="error" style={styles.erroTexto}>
+                        <TextoTematizado color="error" style={styles.erroTexto}>
                           {erro}
                         </ThemedText>
                       </View>
-                      <Spacer size="sm" />
+                      <Espacador size="sm" />
                     </>
                   ) : null}
 
                   <View style={styles.botoesContainer}>
-                    <Button
+                    <Botao
                       variant="outline"
                       onPress={handleClose}
                       style={styles.botaoCancelar}
@@ -372,7 +372,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     >
                       Cancelar
                     </Button>
-                    <Button
+                    <Botao
                       variant="primary"
                       onPress={handleEnviar}
                       style={styles.botaoEnviar}
@@ -385,7 +385,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     </Button>
                   </View>
 
-                  <Spacer size="xs" />
+                  <Espacador size="xs" />
                 </ScrollView>
               </View>
             </KeyboardAvoidingView>

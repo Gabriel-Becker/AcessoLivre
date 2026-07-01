@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from './Card';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -41,12 +41,12 @@ export default function CardInfoIcone({
         >
           <Ionicons name={icone} size={tamanhoIcone} color={corIcone || t.colors.primary} />
         </View>
-        <ThemedText weight="semibold" align={centralizado ? 'center' : 'left'}>
+        <TextoTematizado weight="semibold" align={centralizado ? 'center' : 'left'}>
           {titulo}
         </ThemedText>
       </View>
 
-      <Spacer size="sm" />
+      <Espacador size="sm" />
 
       {children}
     </Card>

@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, CartaoSelecao, Input, Select } from '../ui';
-import { Spacer, ThemedText } from '../commons';
+import { Botao, CartaoSelecao, Entrada, Selecao } from '../ui';
+import { Espacador, TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import LocalService from '../../services/LocalService';
+import ServicoLocal from '../../services/ServicoLocal';
 import toastHelper from '../../utils/toastHelper';
 import { CATEGORIAS } from '../../constants/enums';
 import { RECURSOS_ACESSIBILIDADE, STATUS_LOCAL_OPCOES } from '../../config/admin/locaisConfig';
@@ -86,7 +86,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
       setFormulario(formularioCarregado);
       setDadosOriginais(formularioCarregado);
     } catch (error) {
-      const mensagem = error?.response?.data?.message || 'Não foi possível carregar os dados do local.';
+      const mensagem = error?.response?.data?.message || 'Nï¿½o foi possï¿½vel carregar os dados do local.';
       setErro(mensagem);
       toastHelper.showError(mensagem, 'Falha ao carregar local');
 
@@ -188,27 +188,27 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
 
   const validarFormulario = () => {
     if (!formulario.nome.trim()) {
-      setErro('Nome do local é obrigatório.');
+      setErro('Nome do local ï¿½ obrigatï¿½rio.');
       return false;
     }
 
     if (!formulario.descricao.trim()) {
-      setErro('Descrição é obrigatória.');
+      setErro('Descriï¿½ï¿½o ï¿½ obrigatï¿½ria.');
       return false;
     }
 
     if (!formulario.categoria) {
-      setErro('Categoria é obrigatória.');
+      setErro('Categoria ï¿½ obrigatï¿½ria.');
       return false;
     }
 
     if (!formulario.idUsuario) {
-      setErro('Não foi possível identificar o usuário responsável.');
+      setErro('Nï¿½o foi possï¿½vel identificar o usuï¿½rio responsï¿½vel.');
       return false;
     }
 
     if (!formulario.cep.trim() || !formulario.logradouro.trim() || !formulario.numero.trim() || !formulario.bairro.trim() || !formulario.cidade.trim() || !formulario.estado.trim()) {
-      setErro('Preencha os campos de endereço antes de salvar.');
+      setErro('Preencha os campos de endereï¿½o antes de salvar.');
       return false;
     }
 
@@ -230,7 +230,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
     }
 
     if (!houveMudancas) {
-      setErro('Faça uma alteração para habilitar o salvamento.');
+      setErro('Faï¿½a uma alteraï¿½ï¿½o para habilitar o salvamento.');
       return;
     }
 
@@ -263,7 +263,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
       onSucesso?.();
       onClose?.();
     } catch (error) {
-      const mensagem = error?.response?.data?.message || 'Não foi possível salvar as alterações do local.';
+      const mensagem = error?.response?.data?.message || 'Nï¿½o foi possï¿½vel salvar as alteraï¿½ï¿½es do local.';
       setErro(mensagem);
       toastHelper.showError(mensagem, 'Falha ao atualizar local');
     } finally {
@@ -292,12 +292,12 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
           >
             <View style={estilos.header}>
               <View style={estilos.headerTexto}>
-                <ThemedText variant="h2" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'} style={estilos.titulo}>
+                <TextoTematizado variant="h2" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'} style={estilos.titulo}>
                   Editar local
                 </ThemedText>
-                <Spacer size="xs" />
-                <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo} style={estilos.headerSubtitulo}>
-                  Ajuste os dados essenciais sem sair do painel de administração.
+                <Espacador size="xs" />
+                <TextoTematizado color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo} style={estilos.headerSubtitulo}>
+                  Ajuste os dados essenciais sem sair do painel de administraï¿½ï¿½o.
                 </ThemedText>
               </View>
 
@@ -306,11 +306,11 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
               </TouchableOpacity>
             </View>
 
-            <Spacer size="lg" />
+            <Espacador size="lg" />
 
             {carregandoDados ? (
               <View style={estilos.estadoCentralizado}>
-                <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
+                <TextoTematizado color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
                   Carregando dados do local...
                 </ThemedText>
               </View>
@@ -320,7 +320,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
               <>
                 <View style={estilos.grid}>
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Nome do local"
                       placeholder="Digite o nome do local"
                       value={formulario.nome}
@@ -330,7 +330,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Select
+                    <Selecao
                       label="Categoria"
                       placeholder="Selecione a categoria"
                       value={formulario.categoria}
@@ -341,7 +341,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Select
+                    <Selecao
                       label="Status"
                       placeholder="Selecione o status"
                       value={formulario.status}
@@ -352,7 +352,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="CEP"
                       placeholder="00000000"
                       value={formulario.cep}
@@ -364,9 +364,9 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Logradouro"
-                      placeholder="Rua, avenida, praça"
+                      placeholder="Rua, avenida, praï¿½a"
                       value={formulario.logradouro}
                       onChangeText={atualizarCampo('logradouro')}
                       altoContraste={contrasteAtivo}
@@ -374,8 +374,8 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
-                      label="Número"
+                    <Entrada
+                      label="Nï¿½mero"
                       placeholder="123"
                       value={formulario.numero}
                       onChangeText={atualizarCampo('numero')}
@@ -385,7 +385,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Complemento"
                       placeholder="Sala, bloco, andar"
                       value={formulario.complemento}
@@ -395,7 +395,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Bairro"
                       placeholder="Centro"
                       value={formulario.bairro}
@@ -405,9 +405,9 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Cidade"
-                      placeholder="Florianópolis"
+                      placeholder="Florianï¿½polis"
                       value={formulario.cidade}
                       onChangeText={atualizarCampo('cidade')}
                       altoContraste={contrasteAtivo}
@@ -415,7 +415,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
 
                   <View style={estilos.campoDuplo}>
-                    <Input
+                    <Entrada
                       label="Estado"
                       placeholder="UF"
                       value={formulario.estado}
@@ -427,9 +427,9 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   </View>
                 </View>
 
-                <Input
-                  label="Descrição"
-                  placeholder="Descreva o local e as condições de acessibilidade"
+                <Entrada
+                  label="Descriï¿½ï¿½o"
+                  placeholder="Descreva o local e as condiï¿½ï¿½es de acessibilidade"
                   value={formulario.descricao}
                   onChangeText={atualizarCampo('descricao')}
                   multiline
@@ -437,18 +437,18 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                   altoContraste={contrasteAtivo}
                 />
 
-                <Spacer size="sm" />
+                <Espacador size="sm" />
 
                 <View style={estilos.blocoRecursos}>
-                  <ThemedText variant="h3" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'}>
+                  <TextoTematizado variant="h3" weight="bold" altoContraste={contrasteAtivo} color={contrasteAtivo ? 'textOnPrimary' : 'textPrimary'}>
                     Recursos de acessibilidade
                   </ThemedText>
-                  <Spacer size="xs" />
-                  <ThemedText color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
+                  <Espacador size="xs" />
+                  <TextoTematizado color={contrasteAtivo ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={contrasteAtivo}>
                     Selecione os recursos que o local realmente possui.
                   </ThemedText>
 
-                  <Spacer size="md" />
+                  <Espacador size="md" />
 
                   <View style={estilos.recursosGrid}>
                     {RECURSOS_ACESSIBILIDADE.map((recurso) => (
@@ -469,17 +469,17 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
 
                 {erro ? (
                   <>
-                    <Spacer size="md" />
-                    <ThemedText color="error" size="sm" align="center" altoContraste={contrasteAtivo}>
+                    <Espacador size="md" />
+                    <TextoTematizado color="error" size="sm" align="center" altoContraste={contrasteAtivo}>
                       {erro}
                     </ThemedText>
                   </>
                 ) : null}
 
-                <Spacer size="lg" />
+                <Espacador size="lg" />
 
                 <View style={estilos.botoes}>
-                  <Button
+                  <Botao
                     variant="primary"
                     size="medium"
                     fullWidth
@@ -488,10 +488,10 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
                     disabled={submitting || carregandoDados}
                     altoContraste={contrasteAtivo}
                   >
-                    Salvar alterações
+                    Salvar alteraï¿½ï¿½es
                   </Button>
 
-                  <Button
+                  <Botao
                     variant="outline"
                     size="medium"
                     fullWidth

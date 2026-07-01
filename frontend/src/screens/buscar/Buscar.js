@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,12 +22,12 @@ import {
   Card
 } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
-import { Container } from '../../components/layout';
-import LocalCard from '../../components/ui/LocalCard';
+import { Recipiente } from '../../components/layout';
+import CartaoLocal from '../../components/ui/CartaoLocal';
 import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
-import AssistantEngine from '../../services/acessibilidade/AssistantEngine';
-import VoiceService from '../../services/acessibilidade/VoiceService';
+import MotoAssistente from '../../services/acessibilidade/MotoAssistente';
+import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
 import BuscarService from '../../services/BuscarService';
 import { getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
@@ -39,12 +39,12 @@ const RECURSOS_ACESSIBILIDADE = [
   { id: 'ELEVADOR', label: 'Elevador', icon: 'arrow-up-outline' },
   { id: 'BANHEIRO_ADAPTADO', label: 'Banheiro adaptado', icon: 'body-outline' },
   { id: 'ESTACIONAMENTO', label: 'Estacionamento', icon: 'car-outline' },
-  { id: 'PISO_TATIL', label: 'Piso tátil', icon: 'eye-outline' },
+  { id: 'PISO_TATIL', label: 'Piso tï¿½til', icon: 'eye-outline' },
   { id: 'ATENDIMENTO_ESPECIALIZADO', label: 'Atendimento especializado', icon: 'hand-left-outline' },
   { id: 'RECURSOS_AUDIOVISUAIS', label: 'Recursos audiovisuais', icon: 'mic-outline' },
-  { id: 'SINALIZACAO_BRAILLE', label: 'Sinalização em Braile', icon: 'braille-outline' },
-  { id: 'ESPACO_AMPLO', label: 'Espaço amplo', icon: 'resize-outline' },
-  { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliário adaptado', icon: 'grid-outline' },
+  { id: 'SINALIZACAO_BRAILLE', label: 'Sinalizaï¿½ï¿½o em Braile', icon: 'braille-outline' },
+  { id: 'ESPACO_AMPLO', label: 'Espaï¿½o amplo', icon: 'resize-outline' },
+  { id: 'MOBILIARIO_ADAPTADO', label: 'Mobiliï¿½rio adaptado', icon: 'grid-outline' },
 ];
 
 const BREAKPOINTS = {
@@ -105,9 +105,14 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
   }, [onSearch, localValue]);
 
   const anunciarPlaceholder = useCallback(() => {
+<<<<<<< Updated upstream
     if (voiceEnabled && !hasAnnounced.current) {
       VoiceService.speak('Campo de busca. Digite nome, endereço ou categoria do local.');
       hasAnnounced.current = true;
+=======
+    if (voiceEnabled) {
+      ServicoVoz.speak('Campo de busca. Digite nome, endereï¿½o ou categoria do local.');
+>>>>>>> Stashed changes
     }
   }, [voiceEnabled]);
 
@@ -135,6 +140,7 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
       <Ionicons name="search-outline" size={tamanhoIcone} color={theme.colors.textSecondary} />
       <TextInput
         ref={inputRef}
+<<<<<<< Updated upstream
         style={[
           styles.searchInput, 
           { 
@@ -146,6 +152,10 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
           }
         ]}
         placeholder="Buscar locais por nome, endereço ou categoria"
+=======
+        style={[styles.searchInput, { color: theme.colors.textPrimary, fontSize: tamanhoFonte }]}
+        placeholder="Buscar por nome, endereï¿½o ou categoria..."
+>>>>>>> Stashed changes
         placeholderTextColor={theme.colors.textTertiary}
         value={localValue}
         onChangeText={handleChange}
@@ -155,7 +165,7 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
         autoCorrect={false}
         blurOnSubmit={false}
         accessibilityLabel="Campo de busca"
-        accessibilityHint="Digite o nome, endereço ou categoria do local que deseja encontrar"
+        accessibilityHint="Digite o nome, endereï¿½o ou categoria do local que deseja encontrar"
         onFocus={anunciarPlaceholder}
       />
       {loading && (
@@ -184,18 +194,18 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
     const novoEstado = !expanded;
     setExpanded(novoEstado);
     if (voiceEnabled) {
-      VoiceService.speak(novoEstado ? 'Expandindo filtro de categoria' : 'Recolhendo filtro de categoria');
+      ServicoVoz.speak(novoEstado ? 'Expandindo filtro de categoria' : 'Recolhendo filtro de categoria');
     }
   }, [expanded, voiceEnabled]);
 
   const anunciarCategorias = useCallback(() => {
     if (!voiceEnabled) return;
     const selecionadas = categoriasSelecionadas.map((c) => obterCategoriaLabel(c)).join(', ');
-    VoiceService.speak(
+    ServicoVoz.speak(
       `Filtro de categoria. ${categoriasSelecionadas.length > 0 
         ? `Categorias selecionadas: ${selecionadas}. ` 
         : 'Nenhuma categoria selecionada. '}
-      Você tem as seguintes opções: ${CATEGORIAS.map((c) => obterCategoriaLabel(c)).join(', ')}.`
+      Vocï¿½ tem as seguintes opï¿½ï¿½es: ${CATEGORIAS.map((c) => obterCategoriaLabel(c)).join(', ')}.`
     );
   }, [voiceEnabled, categoriasSelecionadas]);
 
@@ -217,7 +227,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
         accessibilityHint={expanded ? 'Recolher categorias' : 'Expandir categorias'}
       >
         <Ionicons name="grid-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Categoria</ThemedText>
+        <TextoTematizado weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Categoria</ThemedText>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         {voiceEnabled && (
           <TouchableOpacity onPress={anunciarCategorias} style={styles.voiceIcon}>
@@ -236,7 +246,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
                 style={[styles.filtroItem, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(6 * escalaFiltro) }]} 
                 onPress={() => onToggleCategoria(categoria)} 
                 activeOpacity={0.7}
-                accessibilityLabel={`${obterCategoriaLabel(categoria)} ${selecionada ? 'selecionada' : 'não selecionada'}`}
+                accessibilityLabel={`${obterCategoriaLabel(categoria)} ${selecionada ? 'selecionada' : 'nï¿½o selecionada'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionada }}
               >
@@ -255,7 +265,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
                   color={theme.colors.primary}
                   style={styles.filtroIcon}
                 />
-                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
+                <TextoTematizado style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
                   {obterCategoriaLabel(categoria)}
                 </ThemedText>
               </TouchableOpacity>
@@ -277,7 +287,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
     const novoEstado = !expanded;
     setExpanded(novoEstado);
     if (voiceEnabled) {
-      VoiceService.speak(novoEstado ? 'Expandindo filtro de acessibilidade' : 'Recolhendo filtro de acessibilidade');
+      ServicoVoz.speak(novoEstado ? 'Expandindo filtro de acessibilidade' : 'Recolhendo filtro de acessibilidade');
     }
   }, [expanded, voiceEnabled]);
 
@@ -288,11 +298,11 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
       return recurso?.label || r;
     }).join(', ');
     
-    VoiceService.speak(
+    ServicoVoz.speak(
       `Filtro de recursos de acessibilidade. ${recursosSelecionados.length > 0 
         ? `Recursos selecionados: ${selecionados}. ` 
         : 'Nenhum recurso selecionado. '}
-      Você pode selecionar: rampa, elevador, banheiro adaptado, estacionamento, piso tátil, atendimento especializado, recursos audiovisuais, sinalização em braile, espaço amplo, ou mobiliário adaptado.`
+      Vocï¿½ pode selecionar: rampa, elevador, banheiro adaptado, estacionamento, piso tï¿½til, atendimento especializado, recursos audiovisuais, sinalizaï¿½ï¿½o em braile, espaï¿½o amplo, ou mobiliï¿½rio adaptado.`
     );
   }, [voiceEnabled, recursosSelecionados]);
 
@@ -313,7 +323,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
         accessibilityRole="button"
       >
         <Ionicons name="accessibility-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
-        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Acessibilidade</ThemedText>
+        <TextoTematizado weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Acessibilidade</ThemedText>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         {voiceEnabled && (
           <TouchableOpacity onPress={anunciarRecursos} style={styles.voiceIcon}>
@@ -332,7 +342,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
                 style={[styles.filtroItem, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(6 * escalaFiltro) }]} 
                 onPress={() => onToggleRecurso(recurso.id)} 
                 activeOpacity={0.7}
-                accessibilityLabel={`${recurso.label} ${selecionado ? 'selecionado' : 'não selecionado'}`}
+                accessibilityLabel={`${recurso.label} ${selecionado ? 'selecionado' : 'nï¿½o selecionado'}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selecionado }}
               >
@@ -346,7 +356,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
                   {selecionado && <Ionicons name="checkmark" size={Math.round(12 * escalaFiltro)} color="#FFF" />}
                 </View>
                 <Ionicons name={recurso.icon} size={Math.round((isDesktop ? 14 : 16) * escalaFiltro)} color={theme.colors.primary} style={styles.filtroIcon} />
-                <ThemedText style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>{recurso.label}</ThemedText>
+                <TextoTematizado style={[styles.filtroItemLabel, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>{recurso.label}</ThemedText>
               </TouchableOpacity>
             );
           })}
@@ -377,16 +387,16 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
 
   const anunciarNota = useCallback(() => {
     if (!voiceEnabled) return;
-    VoiceService.speak(
-      `Filtro por nota mínima. ${notaMinima === 0 ? 'Qualquer nota' : `${notaMinima} estrelas ou mais`}. ` +
-      `Opções disponíveis: qualquer, uma, duas, três, quatro, quatro e meia estrelas.`
+    ServicoVoz.speak(
+      `Filtro por nota mï¿½nima. ${notaMinima === 0 ? 'Qualquer nota' : `${notaMinima} estrelas ou mais`}. ` +
+      `Opï¿½ï¿½es disponï¿½veis: qualquer, uma, duas, trï¿½s, quatro, quatro e meia estrelas.`
     );
   }, [voiceEnabled, notaMinima]);
 
   const handleNotaChange = useCallback((nota) => {
     onNotaChange(nota);
     if (voiceEnabled) {
-      VoiceService.speak(nota === 0 ? 'Filtrando qualquer nota' : `Filtrando ${nota} estrelas ou mais`);
+      ServicoVoz.speak(nota === 0 ? 'Filtrando qualquer nota' : `Filtrando ${nota} estrelas ou mais`);
     }
   }, [onNotaChange, voiceEnabled]);
 
@@ -396,11 +406,11 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
         style={[styles.filtroHeader, { gap: Math.max(10, Math.round(10 * escalaFiltro)), paddingVertical: Math.round(8 * escalaFiltro) }]} 
         onPress={anunciarNota}
         activeOpacity={0.7}
-        accessibilityLabel="Filtro por nota mínima"
+        accessibilityLabel="Filtro por nota mï¿½nima"
         accessibilityRole="button"
       >
         <Ionicons name="star-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.warning} />
-        <ThemedText weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Nota Mínima</ThemedText>
+        <TextoTematizado weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Nota Mï¿½nima</ThemedText>
         {voiceEnabled && (
           <Ionicons name="volume-medium-outline" size={Math.round(16 * escalaFiltro)} color={theme.colors.primary} style={styles.voiceIcon} />
         )}
@@ -409,7 +419,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
       <View style={[styles.filtroContent, { paddingLeft: Math.round(30 * escalaFiltro), paddingTop: Math.round(8 * escalaFiltro), gap: Math.max(8, Math.round(8 * escalaFiltro)) }]}>
         <View style={[styles.notaContainer, { gap: Math.max(8, Math.round(8 * escalaFiltro)), marginBottom: Math.round(12 * escalaFiltro) }]}>
           <View style={styles.notaStars}>{renderStars(notaMinima)}</View>
-          <ThemedText weight="bold" style={[styles.notaValor, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
+          <TextoTematizado weight="bold" style={[styles.notaValor, { fontSize: Math.round((isDesktop ? 13 : 14) * escalaFiltro) }]}>
             {notaMinima === 0 ? 'Qualquer nota' : `${notaMinima}+ estrelas`}
           </ThemedText>
         </View>
@@ -436,7 +446,7 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
               accessibilityRole="radio"
               accessibilityState={{ selected: notaMinima === nota }}
             >
-              <ThemedText style={[
+              <TextoTematizado style={[
                 styles.notaBotaoTexto,
                 notaMinima === nota && {
                   color: isHighContrast ? (theme.colors.textOnPrimary || '#FFFFFF') : theme.colors.primary,
@@ -485,9 +495,9 @@ const FiltrosCard = React.memo(({
 
   const anunciarFiltros = useCallback(() => {
     if (!voiceEnabled) return;
-    VoiceService.speak(
-      `Painel de filtros. ${temFiltrosAtivos ? 'Você tem filtros ativos.' : 'Nenhum filtro ativo.'} ` +
-      `Toque em cada seção para expandir e selecionar opções. Use o botão limpar para remover todos os filtros.`
+    ServicoVoz.speak(
+      `Painel de filtros. ${temFiltrosAtivos ? 'Vocï¿½ tem filtros ativos.' : 'Nenhum filtro ativo.'} ` +
+      `Toque em cada seï¿½ï¿½o para expandir e selecionar opï¿½ï¿½es. Use o botï¿½o limpar para remover todos os filtros.`
     );
   }, [voiceEnabled, temFiltrosAtivos]);
 
@@ -516,7 +526,7 @@ const FiltrosCard = React.memo(({
           accessibilityLabel={filtrosVisiveis ? 'Recolher painel de filtros' : 'Expandir painel de filtros'}
         >
           <Ionicons name="options-outline" size={tamanhoIconeHeader} color={theme.colors.primary} />
-          <ThemedText variant="h3" weight="bold" style={[styles.filtrosTitulo, { fontSize: tamanhoFonteTitulo }]}>Filtros</ThemedText>
+          <TextoTematizado variant="h3" weight="bold" style={[styles.filtrosTitulo, { fontSize: tamanhoFonteTitulo }]}>Filtros</ThemedText>
           <Ionicons
             name={filtrosVisiveis ? 'chevron-up' : 'chevron-down'}
             size={Math.round(20 * escalaFiltro)}
@@ -543,7 +553,7 @@ const FiltrosCard = React.memo(({
             accessibilityRole="button"
           >
             <Ionicons name="close-circle-outline" size={Math.round(18 * escalaFiltro)} color={theme.colors.error} />
-            <ThemedText color="error" variant="caption" style={{ fontSize: Math.round(12 * escalaFiltro) }}>Limpar</ThemedText>
+            <TextoTematizado color="error" variant="caption" style={{ fontSize: Math.round(12 * escalaFiltro) }}>Limpar</ThemedText>
           </TouchableOpacity>
         )}
       </View>
@@ -593,7 +603,7 @@ const FiltrosCard = React.memo(({
           {!isDesktop && (
             <>
               <View style={{ height: espacamentoBloco }} />
-              <Button 
+              <Botao 
                 variant="primary" 
                 onPress={onAplicarFiltros} 
                 fullWidth 
@@ -715,13 +725,13 @@ export default function Buscar({ onNavigate }) {
     setRecursosSelecionados([]);
     setNotaMinima(0);
     setLoading(true);
-    if (voiceEnabled) VoiceService.speak('Todos os filtros foram limpos');
+    if (voiceEnabled) ServicoVoz.speak('Todos os filtros foram limpos');
   }, [voiceEnabled]);
 
   const aplicarFiltros = useCallback(() => {
     setLoading(true);
     realizarBusca();
-    if (voiceEnabled) VoiceService.speak('Aplicando filtros');
+    if (voiceEnabled) ServicoVoz.speak('Aplicando filtros');
   }, [realizarBusca, voiceEnabled]);
 
   const toggleCategoria = useCallback((categoria) => {
@@ -739,17 +749,17 @@ export default function Buscar({ onNavigate }) {
   const handleLocalPress = useCallback((local) => {
     const localId = local?.id || local?.idLocal;
     if (localId) {
-      if (voiceEnabled) VoiceService.speak(`Abrindo detalhes de ${local.nome}`);
+      if (voiceEnabled) ServicoVoz.speak(`Abrindo detalhes de ${local.nome}`);
       onNavigate?.('LocalDetalhes', { id: localId });
     } else {
       toastHelper.showError('Erro ao abrir local');
-      if (voiceEnabled) VoiceService.speak('Erro ao abrir detalhes do local');
+      if (voiceEnabled) ServicoVoz.speak('Erro ao abrir detalhes do local');
     }
   }, [onNavigate, voiceEnabled]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    if (voiceEnabled) VoiceService.speak('Atualizando busca');
+    if (voiceEnabled) ServicoVoz.speak('Atualizando busca');
     BuscarService.invalidateCache();
     BuscarService.carregarTodosLocais(true).finally(() => {
       realizarBusca();
@@ -767,7 +777,7 @@ export default function Buscar({ onNavigate }) {
     setFiltrosVisiveis((anterior) => {
       const proximo = !anterior;
       if (voiceEnabled) {
-        VoiceService.speak(proximo ? 'Painel de filtros expandido' : 'Painel de filtros recolhido');
+        ServicoVoz.speak(proximo ? 'Painel de filtros expandido' : 'Painel de filtros recolhido');
       }
       return proximo;
     });
@@ -790,11 +800,11 @@ export default function Buscar({ onNavigate }) {
   const anunciarBusca = useCallback(() => {
     if (!voiceEnabled) return;
     
-    VoiceService.speak(
+    ServicoVoz.speak(
       `Tela de busca de locais. ${totalResultados > 0 
         ? `Encontramos ${totalResultados} ${totalResultados === 1 ? 'local' : 'locais'}. ` 
         : 'Nenhum local encontrado. '}
-      Utilize os filtros para refinar sua busca. Diga ajuda para ouvir os comandos disponíveis.`
+      Utilize os filtros para refinar sua busca. Diga ajuda para ouvir os comandos disponï¿½veis.`
     );
   }, [voiceEnabled, totalResultados]);
 
@@ -802,10 +812,10 @@ export default function Buscar({ onNavigate }) {
     if (!voiceEnabled) return;
     
     if (totalResultados === 0) {
-      VoiceService.speak('Nenhum resultado encontrado para sua busca. Tente usar outros filtros.');
+      ServicoVoz.speak('Nenhum resultado encontrado para sua busca. Tente usar outros filtros.');
     } else {
       const primeirosLocais = resultados.slice(0, 3).map(l => l.nome).join(', ');
-      VoiceService.speak(
+      ServicoVoz.speak(
         `Total de ${totalResultados} ${totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}. ` +
         `${resultados.length > 0 ? `Primeiros resultados: ${primeirosLocais}. ` : ''}` +
         `Toque em qualquer card para ver os detalhes do local.`
@@ -837,7 +847,7 @@ export default function Buscar({ onNavigate }) {
 
   useEffect(() => {
     if (voiceEnabled) {
-      AssistantEngine.updateContext({
+      MotoAssistente.updateContext({
         screen: 'Buscar',
         totalResultados: totalResultados,
         resultados: resultados,
@@ -889,12 +899,12 @@ export default function Buscar({ onNavigate }) {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="search-outline" size={isDesktop ? 48 : 64} color={theme.colors.textTertiary} />
-      <Spacer size="md" />
-      <ThemedText variant="h3" weight="bold" align="center">
+      <Espacador size="md" />
+      <TextoTematizado variant="h3" weight="bold" align="center">
         {temFiltrosAtivos ? 'Nenhum local encontrado' : 'Digite algo para buscar'}
       </ThemedText>
-      <Spacer size="sm" />
-      <ThemedText color="textSecondary" align="center">
+      <Espacador size="sm" />
+      <TextoTematizado color="textSecondary" align="center">
         {temFiltrosAtivos 
           ? 'Tente ajustar os filtros ou buscar por outro termo'
           : 'Busque por nome, categoria ou recursos de acessibilidade'}
@@ -902,7 +912,7 @@ export default function Buscar({ onNavigate }) {
       {voiceEnabled && (
         <TouchableOpacity onPress={anunciarBusca} style={styles.voiceHelpButton}>
           <Ionicons name="volume-medium-outline" size={20} color={theme.colors.primary} />
-          <ThemedText color="primary" style={styles.voiceHelpText}>Ouvir ajuda</ThemedText>
+          <TextoTematizado color="primary" style={styles.voiceHelpText}>Ouvir ajuda</ThemedText>
         </TouchableOpacity>
       )}
     </View>
@@ -917,7 +927,7 @@ export default function Buscar({ onNavigate }) {
         numColumns === 3 && styles.cardWrapperTresColunas,
       ]}
     >
-      <LocalCard 
+      <CartaoLocal 
         local={item} 
         onPress={() => handleLocalPress(item)} 
         altoContraste={isHighContrast}
@@ -930,8 +940,8 @@ export default function Buscar({ onNavigate }) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Spacer size="md" />
-        <ThemedText color="textSecondary">Carregando locais...</ThemedText>
+        <Espacador size="md" />
+        <TextoTematizado color="textSecondary">Carregando locais...</ThemedText>
       </View>
     );
   }
@@ -939,14 +949,14 @@ export default function Buscar({ onNavigate }) {
   const cabecalhoLista = mostrarCabecalhoTexto ? (
     <CabecalhoPagina
       titulo="Buscar Locais"
-      subtitulo={zoomAplicado ? undefined : 'Encontre e avalie locais acessíveis'}
+      subtitulo={zoomAplicado ? undefined : 'Encontre e avalie locais acessï¿½veis'}
       altoContraste={isHighContrast}
       style={styles.cabecalhoBuscar}
     />
   ) : null;
 
   return (
-    <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
+    <Recipiente scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       {isDesktop && !usarLayoutEmpilhado ? (
         <View style={styles.conteudoDesktop}>
           <View style={[styles.colunaFiltrosDesktop, { width: larguraColunaFiltros }]}> 
@@ -991,7 +1001,7 @@ export default function Buscar({ onNavigate }) {
                 <>
                   {cabecalhoLista}
                   <View style={styles.resultadosHeader}>
-                    <ThemedText variant="h3" weight="bold">
+                    <TextoTematizado variant="h3" weight="bold">
                       {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
                     </ThemedText>
                     {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
@@ -1001,7 +1011,7 @@ export default function Buscar({ onNavigate }) {
                       </TouchableOpacity>
                     )}
                   </View>
-                  <Spacer size="md" />
+                  <Espacador size="md" />
                 </>
               }
               ListEmptyComponent={!loading && renderEmptyState}
@@ -1051,7 +1061,7 @@ export default function Buscar({ onNavigate }) {
               {!zoomAplicado && (
                 <>
                   <View style={styles.resultadosHeaderMobile}>
-                    <ThemedText variant="h3" weight="bold">
+                    <TextoTematizado variant="h3" weight="bold">
                       {totalResultados} {totalResultados === 1 ? 'local encontrado' : 'locais encontrados'}
                     </ThemedText>
                     {(loading || refreshing) && <ActivityIndicator size="small" color={theme.colors.primary} />}
@@ -1061,7 +1071,7 @@ export default function Buscar({ onNavigate }) {
                       </TouchableOpacity>
                     )}
                   </View>
-                  <Spacer size="md" />
+                  <Espacador size="md" />
                 </>
               )}
             </>

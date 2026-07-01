@@ -1,6 +1,6 @@
-import React, { createContext, useState, useEffect } from 'react';
-import VoiceService from '../services/acessibilidade/VoiceService';
-import AssistantEngine from '../services/acessibilidade/AssistantEngine';
+﻿import React, { createContext, useState, useEffect } from 'react';
+import ServicoVoz from '../services/acessibilidade/ServicoVoz';
+import MotoAssistente from '../services/acessibilidade/MotoAssistente';
 export const AccessibilityContext = createContext();
 
 export function AccessibilityProvider({ children }) {
@@ -10,10 +10,10 @@ export function AccessibilityProvider({ children }) {
 
   useEffect(() => {
     if (enabled) {
-      VoiceService.init();
-      VoiceService.speak("Modo acessibilidade ativado");
+      ServicoVoz.init();
+      ServicoVoz.speak("Modo acessibilidade ativado");
     } else {
-      VoiceService.stop();
+      ServicoVoz.stop();
     }
   }, [enabled]);
 
@@ -23,35 +23,35 @@ export function AccessibilityProvider({ children }) {
 
   const startListening = async () => {
     if (!enabled) {
-      VoiceService.speak("Ative o modo acessibilidade primeiro");
+      ServicoVoz.speak("Ative o modo acessibilidade primeiro");
       return;
     }
 
-    if (!VoiceService.canRecognizeSpeech()) {
+    if (!ServicoVoz.canRecognizeSpeech()) {
       setIsListening(false);
-      VoiceService.speak("Reconhecimento de voz indisponível neste aplicativo. Use um development build para falar comandos.");
+      ServicoVoz.speak("Reconhecimento de voz indisponÃ­vel neste aplicativo. Use um development build para falar comandos.");
       return;
     }
 
     if (isListening) {
-      VoiceService.stop();
+      ServicoVoz.stop();
       setIsListening(false);
       return;
     }
 
     setIsListening(true);
-    VoiceService.speak("Pode falar");
+    ServicoVoz.speak("Pode falar");
 
-    await VoiceService.listen(
+    await ServicoVoz.listen(
       (text) => {
         setLastCommand(text);
         setIsListening(false);
-        AssistantEngine.handle(text);
+        MotoAssistente.handle(text);
       },
       (error) => {
         console.error("Erro:", error);
         setIsListening(false);
-        VoiceService.speak("Erro no reconhecimento. Tente novamente.");
+        ServicoVoz.speak("Erro no reconhecimento. Tente novamente.");
       }
     );
   };

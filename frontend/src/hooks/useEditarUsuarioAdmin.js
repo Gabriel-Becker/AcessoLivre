@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import AdminService from '../services/AdminService';
+﻿import { useCallback, useState } from 'react';
+import ServicoAdmin from '../services/ServicoAdmin';
 import toastHelper from '../utils/toastHelper';
 
 const normalizarRole = (role) => {
@@ -40,7 +40,7 @@ export default function useEditarUsuarioAdmin() {
         imagemPerfil: dados?.imagemPerfil,
       };
     } catch (erro) {
-      toastHelper.showError('Não foi possível carregar todos os dados do usuário');
+      toastHelper.showError('Nï¿½o foi possï¿½vel carregar todos os dados do usuï¿½rio');
       return {
         nome: usuarioBase?.nome || '',
         email: usuarioBase?.email || '',
@@ -59,7 +59,7 @@ export default function useEditarUsuarioAdmin() {
     imagemPerfil,
   }) => {
     if (!usuarioId) {
-      return { sucesso: false, mensagem: 'Usuário inválido para edição.' };
+      return { sucesso: false, mensagem: 'Usuï¿½rio invï¿½lido para ediï¿½ï¿½o.' };
     }
 
     setSubmitting(true);
@@ -88,10 +88,10 @@ export default function useEditarUsuarioAdmin() {
         await AdminService.alterarSenhaUsuario(usuarioId, novaSenha);
       }
 
-      toastHelper.showSuccess('Usuário atualizado com sucesso');
+      toastHelper.showSuccess('Usuï¿½rio atualizado com sucesso');
       return { sucesso: true };
     } catch (erro) {
-      const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuário');
+      const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuï¿½rio');
       return { sucesso: false, mensagem };
     } finally {
       setSubmitting(false);

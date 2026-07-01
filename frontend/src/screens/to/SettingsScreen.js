@@ -1,3 +1,7 @@
+<<<<<<< Updated upstream
+=======
+﻿// Em algum lugar no seu cï¿½digo (ex: SettingsScreen.js)
+>>>>>>> Stashed changes
 import { useContext } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
@@ -17,7 +21,7 @@ export default function SettingsScreen() {
       </View>
       {enabled && (
         <Text style={styles.hint}>
-          Toque no botão 🎤 para usar comandos de voz
+          Toque no botï¿½o ?? para usar comandos de voz
         </Text>
       )}
     </View>

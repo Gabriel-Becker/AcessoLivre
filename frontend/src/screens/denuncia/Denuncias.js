@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
 import { Spacer, ThemedText } from '../../components/commons';
 import { Button } from '../../components/ui';
 import { useThemeContext } from '../../context/ThemeContext';
-import DenunciaService from '../../services/DenunciaService';
+import ServicoDenuncia from '../../services/ServicoDenuncia';
 import toastHelper from '../../utils/toastHelper';
 import { 
   colunasDenuncias, 
@@ -47,7 +47,7 @@ export default function Denuncias() {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.error('Erro ao carregar estatÃ­sticas:', error);
     }
   }, []);
 
@@ -74,12 +74,12 @@ export default function Denuncias() {
           setPaginaAtual(Math.max(0, paginaRetornada));
         }
       } else if (!result.success && mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao carregar denúncias');
+        toastHelper.showError(result.message || 'Erro ao carregar denÃºncias');
       }
     } catch (error) {
-      console.error('Erro ao carregar denúncias:', error);
+      console.error('Erro ao carregar denÃºncias:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao carregar denúncias');
+        toastHelper.showError('Erro ao carregar denÃºncias');
       }
     } finally {
       if (mountedRef.current) setCarregando(false);
@@ -133,7 +133,7 @@ export default function Denuncias() {
     try {
       const result = await DenunciaService.updateStatus(denunciaSelecionada.id, novoStatus);
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
+        toastHelper.showSuccess('Status da denÃºncia atualizado com sucesso');
         
         setDenuncias(prev => prev.map(item =>
           item.id === denunciaSelecionada.id
@@ -168,7 +168,7 @@ export default function Denuncias() {
       const result = await DenunciaService.resolver(denuncia.id);
       
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('Conteúdo removido e denúncia resolvida com sucesso');
+        toastHelper.showSuccess('ConteÃºdo removido e denÃºncia resolvida com sucesso');
         
         setDenuncias(prev => prev.map(item =>
           item.id === denuncia.id
@@ -186,17 +186,17 @@ export default function Denuncias() {
         await carregarEstatisticas();
         
       } else if (result.alreadyResolved && mountedRef.current) {
-        toastHelper.showInfo('Esta denúncia já foi processada anteriormente');
+        toastHelper.showInfo('Esta denÃºncia jÃ¡ foi processada anteriormente');
         await carregarDenuncias();
         await carregarEstatisticas();
         setModalStatusVisivel(false);
       } else if (mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao resolver denúncia');
+        toastHelper.showError(result.message || 'Erro ao resolver denÃºncia');
       }
     } catch (error) {
-      console.error('Erro ao resolver denúncia:', error);
+      console.error('Erro ao resolver denÃºncia:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao resolver denúncia. Tente novamente.');
+        toastHelper.showError('Erro ao resolver denÃºncia. Tente novamente.');
       }
     } finally {
       if (mountedRef.current) {
@@ -219,17 +219,17 @@ export default function Denuncias() {
     try {
       const result = await DenunciaService.delete(denunciaParaExcluir.id);
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('Denúncia excluída com sucesso');
+        toastHelper.showSuccess('DenÃºncia excluÃ­da com sucesso');
         setDenuncias(prev => prev.filter(item => item.id !== denunciaParaExcluir.id));
         await carregarEstatisticas();
         setModalExcluirVisivel(false);
       } else if (mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao excluir denúncia');
+        toastHelper.showError(result.message || 'Erro ao excluir denÃºncia');
       }
     } catch (error) {
-      console.error('Erro ao excluir denúncia:', error);
+      console.error('Erro ao excluir denÃºncia:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao excluir denúncia');
+        toastHelper.showError('Erro ao excluir denÃºncia');
       }
     } finally {
       if (mountedRef.current) setCarregandoAcao(false);
@@ -261,23 +261,23 @@ export default function Denuncias() {
     <>
       <View style={styles.statsBanner}>
         <View style={[styles.statCard, { backgroundColor: t.colors.warning + '20' }]}>
-          <ThemedText variant="h2" weight="bold" style={{ color: t.colors.warning }}>
+          <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.warning }}>
             {estatisticas.pendentes}
           </ThemedText>
-          <ThemedText variant="caption" color="textSecondary">Pendentes</ThemedText>
+          <TextoTematizado variant="caption" color="textSecondary">Pendentes</ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: t.colors.primary + '10' }]}>
-          <ThemedText variant="h2" weight="bold" style={{ color: t.colors.primary }}>
+          <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.primary }}>
             {estatisticas.total}
           </ThemedText>
-          <ThemedText variant="caption" color="textSecondary">Total</ThemedText>
+          <TextoTematizado variant="caption" color="textSecondary">Total</ThemedText>
         </View>
       </View>
 
-      <Spacer size="md" />
+      <Espacador size="md" />
 
       <BarraFiltroAdmin
-        titulo="Denúncias"
+        titulo="DenÃºncias"
         pesquisa={buscaDenuncias}
         onChangePesquisa={(valor) => {
           setBuscaDenuncias(valor);
@@ -288,7 +288,7 @@ export default function Denuncias() {
         altoContraste={isHighContrast}
       />
 
-      <Spacer size="sm" />
+      <Espacador size="sm" />
 
       <TabelaPlanilhaAdmin
         colunas={colunas}
@@ -296,10 +296,10 @@ export default function Denuncias() {
         chaveExtractor={(item) => String(item.id)}
         renderVazio={
           <View style={styles.emptyContainer}>
-            <ThemedText size="sm" color="textSecondary" align="center">
+            <TextoTematizado size="sm" color="textSecondary" align="center">
               {filtroStatusDenuncias === 'PENDING' 
-                ? 'Nenhuma denúncia pendente' 
-                : 'Nenhuma denúncia encontrada'}
+                ? 'Nenhuma denÃºncia pendente' 
+                : 'Nenhuma denÃºncia encontrada'}
             </ThemedText>
           </View>
         }
@@ -308,10 +308,10 @@ export default function Denuncias() {
         altoContraste={isHighContrast}
       />
 
-      <Spacer size="sm" />
+      <Espacador size="sm" />
 
       <View style={styles.paginacao}>
-        <Button
+        <Botao
           variant="outline"
           size="small"
           onPress={() => setPaginaAtual((p) => Math.max(0, p - 1))}
@@ -320,17 +320,17 @@ export default function Denuncias() {
         >
           Anterior
         </Button>
-        <ThemedText color="textSecondary" altoContraste={isHighContrast}>
-          Página {paginaAtual + 1} de {Math.max(1, totalPaginas)}
+        <TextoTematizado color="textSecondary" altoContraste={isHighContrast}>
+          PÃ¡gina {paginaAtual + 1} de {Math.max(1, totalPaginas)}
         </ThemedText>
-        <Button
+        <Botao
           variant="outline"
           size="small"
           onPress={() => setPaginaAtual((p) => Math.min(Math.max(1, totalPaginas) - 1, p + 1))}
           disabled={carregando || paginaAtual + 1 >= Math.max(1, totalPaginas)}
           altoContraste={isHighContrast}
         >
-          Próxima
+          PrÃ³xima
         </Button>
       </View>
 

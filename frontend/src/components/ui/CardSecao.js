@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from './Card';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -32,19 +32,19 @@ export default function CardSecao({
         >
           <Ionicons name={icone} size={20} color={corIcone || t.colors.primary} />
         </View>
-        <ThemedText variant="h3" weight="bold" permitirEscalaFonte={permitirEscalaFonte}>
+        <TextoTematizado variant="h3" weight="bold" permitirEscalaFonte={permitirEscalaFonte}>
           {titulo}
         </ThemedText>
       </View>
 
       {descricao ? (
         <>
-          <Spacer size="xs" />
-          <ThemedText color="textSecondary" permitirEscalaFonte={permitirEscalaFonte}>{descricao}</ThemedText>
+          <Espacador size="xs" />
+          <TextoTematizado color="textSecondary" permitirEscalaFonte={permitirEscalaFonte}>{descricao}</ThemedText>
         </>
       ) : null}
 
-      <Spacer size="md" />
+      <Espacador size="md" />
 
       {children}
     </Card>

@@ -1,13 +1,13 @@
-export const CATEGORIAS_LABELS = {
+﻿export const CATEGORIAS_LABELS = {
   COMERCIAL: 'Comercial',
-  PUBLICO: 'Público',
-  SAUDE: 'Saúde',
-  EDUCACAO: 'Educação',
+  PUBLICO: 'Pï¿½blico',
+  SAUDE: 'Saï¿½de',
+  EDUCACAO: 'Educaï¿½ï¿½o',
   LAZER: 'Lazer',
   TRANSPORTE: 'Transporte',
-  ALIMENTACAO: 'Alimentação',
+  ALIMENTACAO: 'Alimentaï¿½ï¿½o',
   HOSPEDAGEM: 'Hospedagem',
-  SERVICOS: 'Serviços',
+  SERVICOS: 'Serviï¿½os',
 };
 
 export const CATEGORIAS_ICONES = {

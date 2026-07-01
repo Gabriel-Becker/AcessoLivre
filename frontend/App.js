@@ -3,20 +3,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Toast, { BaseToast } from 'react-native-toast-message';
 import './src/api/interceptors';
-import { AuthProvider } from './src/context/AuthContext';
+import { AuthProvider } from './src/context/ContextoAutenticacao';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
-import NavigationService from './src/services/acessibilidade/NavigationService';
-import VoiceButton from './src/components/acessibilidade/VoiceButton';
+import NavigationService from './src/services/acessibilidade/ServicoNavegacao';
+import BotaoVoz from './src/components/acessibilidade/BotaoVoz';
 
 const linking = {
   prefixes: ['http://localhost:8081', 'frontend://'],
   config: {
     screens: {
-      Login: 'login',
-      Register: 'register',
+      Entrar: 'entrar',
+      Cadastro: 'cadastro',
       Main: 'home',
     },
   },

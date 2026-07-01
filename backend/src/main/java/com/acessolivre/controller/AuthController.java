@@ -56,7 +56,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
+    public ResponseEntity<?> cadastrar(@Valid @RequestBody RegistroRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
             UsuarioResponseDTO usuario = registroPendenteService.registrarUsuarioDireto(
@@ -193,7 +193,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/setup")
-    public ResponseEntity<?> setupTwoFactor(HttpServletRequest request) {
+    public ResponseEntity<?> prepararDoisFatores(HttpServletRequest request) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -220,7 +220,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/enable")
-    public ResponseEntity<?> enableTwoFactor(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
+    public ResponseEntity<?> habilitarDoisFatores(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -248,7 +248,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/disable")
-    public ResponseEntity<?> disableTwoFactor(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
+    public ResponseEntity<?> desabilitarDoisFatores(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -276,7 +276,7 @@ public class AuthController {
     }
 
     @GetMapping("/2fa/status")
-    public ResponseEntity<?> twoFactorStatus(HttpServletRequest request) {
+    public ResponseEntity<?> statusDoisFatores(HttpServletRequest request) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {

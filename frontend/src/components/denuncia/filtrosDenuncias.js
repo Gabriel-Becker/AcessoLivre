@@ -1,4 +1,4 @@
-export const filtrosDenuncias = (
+﻿export const filtrosDenuncias = (
   filtroStatus,
   setFiltroStatus,
   filtroTipo,
@@ -12,7 +12,7 @@ export const filtrosDenuncias = (
     opcoes: [
       { value: 'todos', label: 'Todos' },
       { value: 'PENDING', label: 'Pendentes' },
-      { value: 'REVIEWED', label: 'Em análise' },
+      { value: 'REVIEWED', label: 'Em anÃ¡lise' },
       { value: 'RESOLVED', label: 'Resolvidos' },
       { value: 'REJECTED', label: 'Rejeitados' },
     ],
@@ -25,15 +25,15 @@ export const filtrosDenuncias = (
     opcoes: [
       { value: 'todos', label: 'Todos' },
       { value: 'LOCAL', label: 'Locais' },
-      { value: 'COMENTARIO', label: 'Comentários' },
-      { value: 'AVALIACAO', label: 'Avaliações' },
+      { value: 'COMENTARIO', label: 'ComentÃ¡rios' },
+      { value: 'AVALIACAO', label: 'AvaliaÃ§Ãµes' },
     ],
   },
 ];
 
 export const statusOptions = [
   { value: 'PENDING', label: 'Pendente', color: '#FFA500' },
-  { value: 'REVIEWED', label: 'Em análise', color: '#3498DB' },
+  { value: 'REVIEWED', label: 'Em anÃ¡lise', color: '#3498DB' },
   { value: 'RESOLVED', label: 'Resolvido', color: '#27AE60' },
   { value: 'REJECTED', label: 'Rejeitado', color: '#E74C3C' },
 ];

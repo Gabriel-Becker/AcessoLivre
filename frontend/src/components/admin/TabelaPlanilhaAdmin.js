@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Card } from '../ui';
 import { ThemedText } from '../commons';
@@ -34,7 +34,7 @@ export default function TabelaPlanilhaAdmin({
             {colunas.map((coluna, colIndex) => {
               const isSortable = Boolean(coluna.sortKey);
               const isActive = isSortable && sortField && (coluna.sortKey === sortField || coluna.chave === sortField);
-              const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? '▲' : '▼') : '';
+              const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? 'â–²' : 'â–¼') : '';
               const isCenter = coluna.alinhamento === 'center';
               const paddingHorizontal = isCenter ? 0 : 6;
               const isLast = colIndex === colunas.length - 1;
@@ -56,7 +56,7 @@ export default function TabelaPlanilhaAdmin({
                 >
                   {isSortable ? (
                     <TouchableOpacity onPress={() => onChangeSort && onChangeSort(coluna.sortKey || coluna.chave)}>
-                      <ThemedText
+                      <TextoTematizado
                         size="xs"
                         weight="bold"
                         color={corTexto}
@@ -68,7 +68,7 @@ export default function TabelaPlanilhaAdmin({
                       </ThemedText>
                     </TouchableOpacity>
                   ) : (
-                    <ThemedText
+                    <TextoTematizado
                       size="xs"
                       weight="bold"
                       color={corTexto}
@@ -87,14 +87,14 @@ export default function TabelaPlanilhaAdmin({
           <View>
             {carregando ? (
               <View style={styles.estadoVazio}>
-                <ThemedText size="sm" color={corTexto} altoContraste={contrasteAtivo}>
+                <TextoTematizado size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                   Carregando dados...
                 </ThemedText>
               </View>
             ) : dados.length === 0 ? (
               <View style={styles.estadoVazio}>
                 {renderVazio || (
-                  <ThemedText size="sm" color={corTexto} altoContraste={contrasteAtivo}>
+                  <TextoTematizado size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                     Nenhum registro encontrado.
                   </ThemedText>
                 )}

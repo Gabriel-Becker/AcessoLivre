@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 
 import {
   View,
@@ -15,9 +15,9 @@ import { StatsBanner, LocalCard } from '../../components/ui';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
-import VoiceService from '../../services/acessibilidade/VoiceService';
-import BuscarService from '../../services/BuscarService';
-import SobreService from '../../services/SobreService';
+import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
+import ServicoBusca from '../../services/ServicoBusca';
+import ServicoSobre from '../../services/ServicoSobre';
 import toastHelper from '../../utils/toastHelper';
 
 const BREAKPOINTS = {
@@ -120,12 +120,12 @@ export default function Home({ onNavigate, routeParams }) {
       ? `Mostrando ${locaisDestaque.length} locais em destaque.`
       : 'Nenhum local em destaque no momento.';
 
-    VoiceService.speak(`Bem-vindo à página inicial. ${totalLocaisMsg} ${destaqueMsg} Você pode pedir ajuda a qualquer momento.`);
+    ServicoVoz.speak(`Bem-vindo ï¿½ pï¿½gina inicial. ${totalLocaisMsg} ${destaqueMsg} Vocï¿½ pode pedir ajuda a qualquer momento.`);
   }, [voiceEnabled, estatisticas.totalLocais, locaisDestaque.length]);
 
   const anunciarEstatisticas = useCallback(() => {
     if (!voiceEnabled) return;
-    VoiceService.speak(`Total de ${estatisticas.totalLocais} locais cadastrados e ${estatisticas.totalAvaliacoes} avaliações.`);
+    ServicoVoz.speak(`Total de ${estatisticas.totalLocais} locais cadastrados e ${estatisticas.totalAvaliacoes} avaliaï¿½ï¿½es.`);
   }, [voiceEnabled, estatisticas.totalLocais, estatisticas.totalAvaliacoes]);
 
   const buscarLocalPorNome = useCallback((nomeLocal) => {
@@ -136,12 +136,12 @@ export default function Home({ onNavigate, routeParams }) {
     );
     
     if (localEncontrado) {
-      VoiceService.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
+      ServicoVoz.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
       onNavigate?.('LocalDetalhes', { id: localEncontrado.id });
       return true;
     }
     
-    VoiceService.speak(`Não encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
+    ServicoVoz.speak(`Nï¿½o encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
     return false;
   }, [locaisDestaque, onNavigate]);
 
@@ -155,7 +155,7 @@ export default function Home({ onNavigate, routeParams }) {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.error('Erro ao carregar estatï¿½sticas:', error);
       if (mountedRef.current) {
         setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0 });
       }
@@ -223,14 +223,14 @@ export default function Home({ onNavigate, routeParams }) {
 
   const handleRefresh = () => {
     if (voiceEnabled) {
-      VoiceService.speak('Atualizando a página inicial');
+      ServicoVoz.speak('Atualizando a pï¿½gina inicial');
     }
     carregarDados(true, true);
   };
 
   const handleLocalPress = (local) => {
     if (voiceEnabled) {
-      VoiceService.speak(`Abrindo detalhes de ${local.nome}`);
+      ServicoVoz.speak(`Abrindo detalhes de ${local.nome}`);
     }
     onNavigate?.('LocalDetalhes', { id: local.id });
   };
@@ -238,7 +238,7 @@ export default function Home({ onNavigate, routeParams }) {
   const renderItem = ({ item, index }) => {
     return (
       <View style={[styles.cardWrapper, gridConfig.cardWrapperStyle]}>
-        <LocalCard
+        <CartaoLocal
           local={item}
           onPress={() => handleLocalPress(item)}
           altoContraste={isHighContrast}
@@ -252,8 +252,8 @@ export default function Home({ onNavigate, routeParams }) {
     return (
       <View style={[styles.loading, { backgroundColor: t.colors.backgroundSecondary }]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
-        <Spacer size="md" />
-        <ThemedText>Carregando...</ThemedText>
+        <Espacador size="md" />
+        <TextoTematizado>Carregando...</ThemedText>
       </View>
     );
   }
@@ -270,14 +270,14 @@ export default function Home({ onNavigate, routeParams }) {
         contentContainerStyle={[gridConfig.contentContainerStyle, { paddingBottom: paddingInferiorLista }]}
         ListHeaderComponent={
           <>
-            <StatsBanner 
+            <BannerEstatisticas 
               totalLocais={estatisticas.totalLocais}
               totalAvaliacoes={estatisticas.totalAvaliacoes}
               onPressStats={voiceEnabled ? anunciarEstatisticas : undefined}
             />
 
             <View style={styles.sectionHeader}>
-              <ThemedText variant="h2" weight="bold">
+              <TextoTematizado variant="h2" weight="bold">
                 Locais em Destaque
               </ThemedText>
 
@@ -286,8 +286,8 @@ export default function Home({ onNavigate, routeParams }) {
                 accessibilityLabel="Ver todos os locais"
                 accessibilityRole="button"
               >
-                <ThemedText color="primary" weight="semibold">
-                  Ver todos →
+                <TextoTematizado color="primary" weight="semibold">
+                  Ver todos ?
                 </ThemedText>
               </TouchableOpacity>
             </View>
@@ -304,7 +304,7 @@ export default function Home({ onNavigate, routeParams }) {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <ThemedText color="textSecondary" align="center">
+            <TextoTematizado color="textSecondary" align="center">
               Nenhum local em destaque no momento.
             </ThemedText>
           </View>

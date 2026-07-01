@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuth } from '../context/AuthContext';
-import { Container, DesktopLayout, MobileLayout } from '../components/layout';
-import { ThemedText, Spacer } from '../components/commons';
-import { Login, Register, ForgotPassword, ResetPassword } from '../screens/auth';
+import { useAuth } from '../context/ContextoAutenticacao';
+import { Recipiente, LayoutDesktop, LayoutMobile } from '../components/layout';
+import { TextoTematizado, Espacador } from '../components/commons';
+import { Entrar, Cadastro, EsqueciSenha, RedefinirSenha } from '../screens/auth';
 import Home from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
@@ -20,10 +20,10 @@ const Stack = createNativeStackNavigator();
 
 function LoadingScreen() {
   return (
-    <Container center background="backgroundSecondary">
+    <Recipiente center background="backgroundSecondary">
       <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Spacer size="md" />
-      <ThemedText color="textSecondary">Carregando...</ThemedText>
+      <Espacador size="md" />
+      <TextoTematizado color="textSecondary">Carregando...</ThemedText>
     </Container>
   );
 }
@@ -53,13 +53,13 @@ function MainApp({ navigation, route }) {
       return;
     }
 
-    if (screen === 'Login' || screen === 'Register' || screen === 'ForgotPassword' || screen === 'ResetPassword') {
+    if (screen === 'Entrar' || screen === 'Cadastro' || screen === 'EsqueciSenha' || screen === 'RedefinirSenha') {
       navigation?.navigate?.(screen, params);
       return;
     }
 
     if ((screen === 'Adicionar' || screen === 'Perfil') && !isAuthenticated) {
-      navigation?.navigate?.('Login');
+      navigation?.navigate?.('Entrar');
       return;
     }
 
@@ -142,14 +142,14 @@ function MainApp({ navigation, route }) {
 
   if (isDesktop) {
     return (
-      <DesktopLayout current={currentScreen} onNavigate={handleNavigate} screenAnterior={screenAnterior}>
+      <LayoutDesktop current={currentScreen} onNavigate={handleNavigate} screenAnterior={screenAnterior}>
         {renderScreen()}
       </DesktopLayout>
     );
   }
 
   return (
-    <MobileLayout current={currentScreen} onNavigate={handleNavigate}>
+    <LayoutMobile current={currentScreen} onNavigate={handleNavigate}>
       {renderScreen()}
     </MobileLayout>
   );
@@ -166,16 +166,16 @@ export default function AppNavigator() {
   }, [loading]);
 
   if (!sessaoInicializada && loading) {
-    return <LoadingScreen />;
+    return <CarregamentoScreen />;
   }
 
   return (
     <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainApp} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Register" component={Register} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-      <Stack.Screen name="ResetPassword" component={ResetPassword} />
+      <Stack.Screen name="Entrar" component={Entrar} />
+      <Stack.Screen name="Cadastro" component={Cadastro} />
+      <Stack.Screen name="EsqueciSenha" component={EsqueciSenha} />
+      <Stack.Screen name="RedefinirSenha" component={RedefinirSenha} />
     </Stack.Navigator>
   );
 }

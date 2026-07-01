@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Botao } from '../../components/ui';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import { statusOptions } from '../../components/denuncia/filtrosDenuncias';
 
 export default function ModalStatusDenuncia({ 
@@ -31,7 +31,7 @@ export default function ModalStatusDenuncia({
       case 'LOCAL':
         return 'Local';
       case 'AVALIACAO':
-        return 'Avaliação';
+        return 'Avaliaï¿½ï¿½o';
       default:
         return tipo || 'Desconhecido';
     }
@@ -68,11 +68,11 @@ export default function ModalStatusDenuncia({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
-          <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
-            Gerenciar Denúncia
+          <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
+            Gerenciar Denï¿½ncia
           </ThemedText>
 
-          <Spacer size="md" />
+          <Espacador size="md" />
 
           <View style={[styles.infoCard, { backgroundColor: theme.colors.background + '80' }]}>
             <View style={styles.infoHeader}>
@@ -81,43 +81,43 @@ export default function ModalStatusDenuncia({
                 size={24} 
                 color={theme.colors.primary} 
               />
-              <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast}>
+              <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast}>
                 {getTipoLabel(denuncia?.tipo)}
               </ThemedText>
             </View>
             
-            <Spacer size="xs" />
+            <Espacador size="xs" />
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Denúncia</ThemedText>
-              <ThemedText weight="medium">#{denuncia?.id}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Denï¿½ncia</ThemedText>
+              <TextoTematizado weight="medium">#{denuncia?.id}</ThemedText>
             </View>
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Alvo</ThemedText>
-              <ThemedText weight="medium" numberOfLines={2}>{denuncia?.targetName || 'Não informado'}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Alvo</ThemedText>
+              <TextoTematizado weight="medium" numberOfLines={2}>{denuncia?.targetName || 'Nï¿½o informado'}</ThemedText>
             </View>
             
             <View style={styles.infoRow}>
-              <ThemedText variant="caption" color="textSecondary">Motivo</ThemedText>
-              <ThemedText weight="medium">{denuncia?.motivoLabel || denuncia?.motivo}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Motivo</ThemedText>
+              <TextoTematizado weight="medium">{denuncia?.motivoLabel || denuncia?.motivo}</ThemedText>
             </View>
             
             {denuncia?.descricao && (
               <View style={styles.infoRow}>
-                <ThemedText variant="caption" color="textSecondary">Descrição</ThemedText>
-                <ThemedText size="sm" numberOfLines={3}>{denuncia.descricao}</ThemedText>
+                <TextoTematizado variant="caption" color="textSecondary">Descriï¿½ï¿½o</ThemedText>
+                <TextoTematizado size="sm" numberOfLines={3}>{denuncia.descricao}</ThemedText>
               </View>
             )}
           </View>
 
-          <Spacer size="lg" />
+          <Espacador size="lg" />
 
-          <ThemedText weight="bold" altoContraste={isHighContrast}>
+          <TextoTematizado weight="bold" altoContraste={isHighContrast}>
             Alterar status manualmente
           </ThemedText>
 
-          <Spacer size="sm" />
+          <Espacador size="sm" />
 
           <View style={styles.statusOptionsContainer}>
             {statusOptionsSemResolvido.map((option) => (
@@ -133,7 +133,7 @@ export default function ModalStatusDenuncia({
                 onPress={() => setSelectedStatus(option.value)}
               >
                 <View style={[styles.statusDot, { backgroundColor: option.color }]} />
-                <ThemedText weight={selectedStatus === option.value ? 'bold' : 'regular'} altoContraste={isHighContrast}>
+                <TextoTematizado weight={selectedStatus === option.value ? 'bold' : 'regular'} altoContraste={isHighContrast}>
                   {option.label}
                 </ThemedText>
                 {selectedStatus === option.value && (
@@ -143,10 +143,10 @@ export default function ModalStatusDenuncia({
             ))}
           </View>
 
-          <Spacer size="xl" />
+          <Espacador size="xl" />
 
           <View style={styles.modalBotoes}>
-            <Button
+            <Botao
               variant="danger"
               size="medium"
               fullWidth
@@ -154,12 +154,12 @@ export default function ModalStatusDenuncia({
               loading={carregando}
               disabled={carregando || !denuncia}
             >
-              Resolver e Remover Conteúdo
+              Resolver e Remover Conteï¿½do
             </Button>
 
-            <Spacer size="xs" />
+            <Espacador size="xs" />
 
-            <Button
+            <Botao
               variant="outline"
               size="medium"
               fullWidth
@@ -170,9 +170,9 @@ export default function ModalStatusDenuncia({
               Atualizar Status
             </Button>
 
-            <Spacer size="xs" />
+            <Espacador size="xs" />
 
-            <Button
+            <Botao
               variant="ghost"
               size="medium"
               fullWidth

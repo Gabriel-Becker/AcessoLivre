@@ -1,18 +1,18 @@
-// src/screens/Configuracoes.js (atualizado)
+﻿// src/screens/Configuracoes.js (atualizado)
 import React from 'react';
 import { View, StyleSheet, Switch, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Container } from '../../components/layout';
+import { Recipiente } from '../../components/layout';
 import { CabecalhoPagina, CardSecao } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { breakpoints } from '../../config/theme';
-import VoiceToggleButton from '../../components/acessibilidade/VoiceToggleButton'; 
+import BotaoAlternadorVoz from '../../components/acessibilidade/BotaoAlternadorVoz'; 
 
 const OPCOES_FONTE = [
-  { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
+  { valor: 1, rotulo: 'Padrï¿½o', subtitulo: '100%' },
   { valor: 1.5, rotulo: 'Maior', subtitulo: '150%' },
-  { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
+  { valor: 2, rotulo: 'Mï¿½xima', subtitulo: '200%' },
 ];
 
 export default function Configuracoes({ onNavigate }) {
@@ -33,21 +33,21 @@ export default function Configuracoes({ onNavigate }) {
   };
 
   return (
-    <Container scroll background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
+    <Recipiente scroll background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <CabecalhoPagina
-        {...(!isMobile ? { titulo: 'Configurações' } : {})}
+        {...(!isMobile ? { titulo: 'Configuraï¿½ï¿½es' } : {})}
         altoContraste={isHighContrast}
       />
 
       <View style={styles.conteudo}>
-        {/* NOVO: Seção do Assistente por Voz */}
+        {/* NOVO: Seï¿½ï¿½o do Assistente por Voz */}
         <CardSecao titulo="Assistente por Voz" icone="mic-outline" altoContraste={isHighContrast}>
-          <VoiceToggleButton />
+          <BotaoAlternadorVoz />
         </CardSecao>
 
         <CardSecao titulo="Acessibilidade" icone="accessibility-outline" altoContraste={isHighContrast}>
           <View style={[styles.linha, { paddingVertical: Math.round(8 * escala) }]}>
-            <ThemedText weight="medium" style={{ fontSize: Math.round(14 * escala) }}>Alto contraste</ThemedText>
+            <TextoTematizado weight="medium" style={{ fontSize: Math.round(14 * escala) }}>Alto contraste</ThemedText>
             <Switch
               value={isHighContrast}
               onValueChange={toggleTheme}
@@ -64,17 +64,17 @@ export default function Configuracoes({ onNavigate }) {
               <View style={styles.cabecalhoFonte}>
                 <View style={styles.tituloFonte}>
                   <Ionicons name="text-outline" size={18} color={theme.colors.primary} />
-                  <ThemedText weight="semibold">Tamanho da fonte</ThemedText>
+                  <TextoTematizado weight="semibold">Tamanho da fonte</ThemedText>
                 </View>
                 <View style={styles.badgeAtual}>
-                  <ThemedText weight="semibold" color="textOnPrimary" align="center">
+                  <TextoTematizado weight="semibold" color="textOnPrimary" align="center">
                     {nivelAtual.subtitulo}
                   </ThemedText>
                 </View>
               </View>
 
-              <ThemedText color="textSecondary">
-                Escolha um dos três níveis para aplicar em todas as telas.
+              <TextoTematizado color="textSecondary">
+                Escolha um dos trï¿½s nï¿½veis para aplicar em todas as telas.
               </ThemedText>
 
               <View style={styles.grupoOpcoes}>
@@ -100,7 +100,7 @@ export default function Configuracoes({ onNavigate }) {
                       accessibilityState={{ selected: selecionado }}
                     >
                       <View style={styles.opcaoTopo}>
-                        <ThemedText weight="bold" align="center">
+                        <TextoTematizado weight="bold" align="center">
                           {opcao.subtitulo}
                         </ThemedText>
                         {selecionado ? (
@@ -110,7 +110,7 @@ export default function Configuracoes({ onNavigate }) {
                         )}
                       </View>
 
-                      <ThemedText
+                      <TextoTematizado
                         weight="bold"
                         align="center"
                         style={{ fontSize: 16 * opcao.valor, lineHeight: 18 * opcao.valor }}
@@ -118,10 +118,10 @@ export default function Configuracoes({ onNavigate }) {
                         Aa
                       </ThemedText>
 
-                      <ThemedText weight="semibold" align="center">
+                      <TextoTematizado weight="semibold" align="center">
                         {opcao.rotulo}
                       </ThemedText>
-                      <ThemedText color="textSecondary" align="center">
+                      <TextoTematizado color="textSecondary" align="center">
                         Texto de exemplo
                       </ThemedText>
                     </TouchableOpacity>

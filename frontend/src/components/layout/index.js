@@ -1,6 +1,6 @@
-export { default as Container } from './Container';
-export { default as Header } from './Header';
-export { default as SafeArea } from './SafeArea';
-export { default as DesktopLayout } from './DesktopLayout';
-export { default as MobileLayout } from './MobileLayout';
-export { SidebarLayout, SidebarItem, SidebarUserPanel } from './sidebar/sidebar.exports';
+﻿export { default as Recipiente } from './Recipiente';
+export { default as Cabecalho } from './Cabecalho';
+export { default as AreaSegura } from './AreaSegura';
+export { default as LayoutDesktop } from './LayoutDesktop';
+export { default as LayoutMobile } from './LayoutMobile';
+export { LayoutBarra, ItemBarra, PainelUsuarioBarra } from './sidebar/sidebar.exports';

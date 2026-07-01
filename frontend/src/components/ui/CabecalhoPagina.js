@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -35,7 +35,7 @@ export default function CabecalhoPagina({
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
-          <ThemedText
+          <TextoTematizado
             style={estilos.textoVoltar}
             weight="medium"
             altoContraste={contrasteAtivo}
@@ -50,7 +50,7 @@ export default function CabecalhoPagina({
       )}
 
       <View style={[estilos.textos, !showBack && !hasRight ? estilos.textosCenter : null]}>
-        <ThemedText
+        <TextoTematizado
           variant="h1"
           weight="bold"
           altoContraste={contrasteAtivo}
@@ -66,8 +66,8 @@ export default function CabecalhoPagina({
         </ThemedText>
         {subtitulo ? (
           <>
-            <Spacer size="xs" />
-            <ThemedText
+            <Espacador size="xs" />
+            <TextoTematizado
               altoContraste={contrasteAtivo}
               color={corSecundaria}
               permitirEscalaFonte={permitirEscalaFonte}

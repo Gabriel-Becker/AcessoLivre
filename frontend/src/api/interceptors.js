@@ -1,6 +1,6 @@
-import api from './axios';
-import AuthService from '../services/AuthService';
-import { triggerLogout } from '../utils/SessionManager';
+﻿import api from './axios';
+import ServicoAutenticacao from '../services/ServicoAutenticacao';
+import { triggerLogout } from '../utils/GerenciadorSessao';
 import { resetToAuth } from '../navigation/navigationRef';
 
 let reautenticacaoEmAndamento = null;
@@ -64,8 +64,8 @@ api.interceptors.request.use(
         return config;
       }
 
-      const tokenEmMemoria = AuthService.getTokenEmMemoria();
-      const token = tokenEmMemoria || await AuthService.getToken();
+      const tokenEmMemoria = ServicoAutenticacao.getTokenEmMemoria();
+      const token = tokenEmMemoria || await ServicoAutenticacao.getToken();
       if (token) {
         if (config.headers && typeof config.headers.set === 'function') {
           config.headers.set('Authorization', `Bearer ${token}`);
@@ -91,7 +91,7 @@ api.interceptors.response.use(
     try {
       const newToken = response.headers?.['new-auth-token'];
       if (newToken) {
-        await AuthService.setToken(newToken);
+        await ServicoAutenticacao.setToken(newToken);
       }
     } catch (error) {
     }
@@ -113,8 +113,8 @@ api.interceptors.response.use(
     // Nunca tentar reautenticar quando a propria reautenticacao falhou.
     if (status === 401 && isReauthEndpoint) {
       try {
-        await AuthService.removeToken();
-        await AuthService.setUserData(null);
+        await ServicoAutenticacao.removeToken();
+        await ServicoAutenticacao.setUserData(null);
       } catch {
       }
       return Promise.reject(error);
@@ -127,7 +127,7 @@ api.interceptors.response.use(
 
     if (status === 401 && isPublicReadEndpoint) {
       try {
-        await AuthService.removeToken();
+        await ServicoAutenticacao.removeToken();
       } catch {
       }
       return Promise.reject(error);
@@ -138,7 +138,7 @@ api.interceptors.response.use(
       try {
         const originalRequest = requestConfig;
 
-        const tokenAtual = await AuthService.getToken();
+        const tokenAtual = await ServicoAutenticacao.getToken();
         const temTokenValido = typeof tokenAtual === 'string' && tokenAtual.trim().length > 0;
 
         // Visitante (sem token) nao deve ser redirecionado para login.
@@ -151,25 +151,25 @@ api.interceptors.response.use(
           originalRequest._retry = true;
 
           try {
-            const tokenData = AuthService.parseJwt(tokenAtual);
+            const tokenData = ServicoAutenticacao.parseJwt(tokenAtual);
             const userId = tokenData?.userId || tokenData?.user_id || tokenData?.sub || null;
 
             if (!userId) {
-              await AuthService.removeToken();
-              await AuthService.setUserData(null);
+              await ServicoAutenticacao.removeToken();
+              await ServicoAutenticacao.setUserData(null);
               return Promise.reject(error);
             }
 
             // attempt to reauthenticate once (single-flight para evitar tempestade de requests)
             if (!reautenticacaoEmAndamento) {
-              reautenticacaoEmAndamento = AuthService.reautenticar(userId).finally(() => {
+              reautenticacaoEmAndamento = ServicoAutenticacao.reautenticar(userId).finally(() => {
                 reautenticacaoEmAndamento = null;
               });
             }
 
             const newToken = await reautenticacaoEmAndamento;
             if (newToken) {
-              await AuthService.setToken(newToken);
+              await ServicoAutenticacao.setToken(newToken);
               // update header and retry original request
               if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
                 originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
@@ -187,8 +187,8 @@ api.interceptors.response.use(
         }
 
         // if reauth not possible or failed, proceed to logout
-        await AuthService.removeToken();
-        await AuthService.setUserData(null);
+        await ServicoAutenticacao.removeToken();
+        await ServicoAutenticacao.setUserData(null);
         await triggerLogout();
         resetToAuth();
       } catch (asyncError) {

@@ -1,11 +1,11 @@
-
+﻿
 /**
  * @typedef {Object} ReportarData
  * @property {string} tipo - Tipo do alvo (LOCAL, COMENTARIO, AVALIACAO, USUARIO)
  * @property {string|number} targetId - ID do alvo
- * @property {string} motivo - Motivo da denúncia
- * @property {string} descricao - Descrição detalhada (opcional)
- * @property {string} [comentario] - Comentário adicional
+ * @property {string} motivo - Motivo da denï¿½ncia
+ * @property {string} descricao - Descriï¿½ï¿½o detalhada (opcional)
+ * @property {string} [comentario] - Comentï¿½rio adicional
  */
 
 /**

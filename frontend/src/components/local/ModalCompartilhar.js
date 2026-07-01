@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { normalizarUrlImagem } from '../../utils/urlImagem';
 import { getTheme } from '../../config/theme';
@@ -38,21 +38,21 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const nomeLocal = local.nome || 'Local';
   const idLocal = local.id || local.idLocal;
   
-  // URL para compartilhar (aponta para a página com Open Graph)
+  // URL para compartilhar (aponta para a pï¿½gina com Open Graph)
   const baseUrl = Platform.OS === 'web' 
     ? (typeof window !== 'undefined' ? window.location.origin : 'https://acessolivre.app')
     : 'https://acessolivre.app';
   
-  // URL da página do local (com Open Graph para preview)
+  // URL da pï¿½gina do local (com Open Graph para preview)
   const urlLocalPage = `${baseUrl}/local/${idLocal}`;
   
-  // URL para fallback (quando Open Graph não funciona)
+  // URL para fallback (quando Open Graph nï¿½o funciona)
   const urlLocal = `${baseUrl}/#/local/${idLocal}`;
   
   const copiarLink = async () => {
     try {
       await Clipboard.setStringAsync(urlLocalPage);
-      toastHelper.showSuccess('Link copiado! O link já contém preview do local.');
+      toastHelper.showSuccess('Link copiado! O link jï¿½ contï¿½m preview do local.');
     } catch (error) {
       console.error('Erro ao copiar link:', error);
       toastHelper.showError('Erro ao copiar link');
@@ -65,7 +65,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     try {
       const result = await Share.share({
         title: `${nomeLocal} - Acesso Livre`,
-        message: `📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`,
+        message: `?? ${nomeLocal}\n\nConfira este local acessï¿½vel no Acesso Livre!\n\n${urlLocalPage}`,
         url: Platform.OS === 'ios' ? urlLocalPage : undefined,
       });
       
@@ -84,7 +84,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const compartilharWhatsApp = async () => {
     setCompartilhando(true);
     try {
-      const textoEncoded = encodeURIComponent(`📍 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`);
+      const textoEncoded = encodeURIComponent(`?? ${nomeLocal}\n\nConfira este local acessï¿½vel no Acesso Livre!\n\n${urlLocalPage}`);
       
       if (Platform.OS === 'web') {
         const webUrl = `https://wa.me/?text=${textoEncoded}`;
@@ -150,7 +150,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       
       if (Platform.OS === 'web') {
         window.open('https://www.instagram.com', '_blank');
-        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar. O link terá preview automático.');
+        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar. O link terï¿½ preview automï¿½tico.');
       } else {
         const deepLink = `instagram://library?AssetPath=`;
         const canOpen = await Linking.canOpenURL(deepLink);
@@ -167,7 +167,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     } catch (error) {
       console.error('Erro no Instagram:', error);
       await Clipboard.setStringAsync(urlLocalPage);
-      toastHelper.showSuccess('Link copiado! O link contém preview do local.');
+      toastHelper.showSuccess('Link copiado! O link contï¿½m preview do local.');
       onClose();
     } finally {
       setCompartilhando(false);
@@ -178,7 +178,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     setCompartilhando(true);
     try {
       const urlEncoded = encodeURIComponent(urlLocalPage);
-      const textoEncoded = encodeURIComponent(`📍 ${nomeLocal}\n\nConfira este local acessível!`);
+      const textoEncoded = encodeURIComponent(`?? ${nomeLocal}\n\nConfira este local acessï¿½vel!`);
       
       if (Platform.OS === 'web') {
         const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${textoEncoded}`;
@@ -238,7 +238,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       <View style={[styles.iconCircle, { backgroundColor: plataforma.cor + '15' }]}>
         <Ionicons name={plataforma.icon} size={30} color={plataforma.cor} />
       </View>
-      <ThemedText variant="caption" style={styles.plataformaNome}>
+      <TextoTematizado variant="caption" style={styles.plataformaNome}>
         {plataforma.nome}
       </ThemedText>
     </TouchableOpacity>
@@ -260,7 +260,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
             ]}>
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
-                  <ThemedText variant="h2" weight="bold" style={styles.titulo}>
+                  <TextoTematizado variant="h2" weight="bold" style={styles.titulo}>
                     Compartilhar este local
                   </ThemedText>
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -268,21 +268,21 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   </TouchableOpacity>
                 </View>
 
-                <Spacer size="sm" />
+                <Espacador size="sm" />
 
-                <ThemedText color="textSecondary" align="center" style={styles.subtitulo}>
-                  Ajuda outras pessoas compartilhando este local acessível.
+                <TextoTematizado color="textSecondary" align="center" style={styles.subtitulo}>
+                  Ajuda outras pessoas compartilhando este local acessï¿½vel.
                 </ThemedText>
 
-                <Spacer size="lg" />
+                <Espacador size="lg" />
 
-                {/* Preview do card que será compartilhado */}
+                {/* Preview do card que serï¿½ compartilhado */}
                 <View style={[styles.previewContainer, { backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F8F9FA' }]}>
                   <View style={styles.previewHeader}>
                     <View style={styles.previewIcon}>
                       <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
                     </View>
-                    <ThemedText variant="caption" color="textSecondary">WhatsApp Preview</ThemedText>
+                    <TextoTematizado variant="caption" color="textSecondary">WhatsApp Preview</ThemedText>
                   </View>
                   <View style={styles.previewCard}>
                     {local.imagemUrl ? (
@@ -293,24 +293,24 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                       </View>
                     )}
                     <View style={styles.previewContent}>
-                      <ThemedText weight="bold" numberOfLines={1} style={styles.previewTitle}>
+                      <TextoTematizado weight="bold" numberOfLines={1} style={styles.previewTitle}>
                         {nomeLocal}
                       </ThemedText>
-                      <ThemedText variant="caption" color="textSecondary" numberOfLines={2}>
-                        {local.categoria} • ⭐ {local.avaliacaoMedia?.toFixed(1) || 0} ({local.totalAvaliacoes || 0} avaliações)
+                      <TextoTematizado variant="caption" color="textSecondary" numberOfLines={2}>
+                        {local.categoria} ï¿½ ? {local.avaliacaoMedia?.toFixed(1) || 0} ({local.totalAvaliacoes || 0} avaliaï¿½ï¿½es)
                       </ThemedText>
-                      <ThemedText variant="caption" color="textTertiary" numberOfLines={1}>
+                      <TextoTematizado variant="caption" color="textTertiary" numberOfLines={1}>
                         {urlLocalPage}
                       </ThemedText>
                     </View>
                   </View>
                 </View>
 
-                <Spacer size="md" />
+                <Espacador size="md" />
 
                 <View style={[styles.urlContainer, { backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F5F5F5' }]}>
                   <Ionicons name="link-outline" size={20} color={theme.colors.primary} />
-                  <ThemedText color="textSecondary" style={styles.urlTexto} numberOfLines={1}>
+                  <TextoTematizado color="textSecondary" style={styles.urlTexto} numberOfLines={1}>
                     {urlLocalPage}
                   </ThemedText>
                   <TouchableOpacity onPress={copiarLink} style={styles.copiarIcon}>
@@ -318,13 +318,13 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   </TouchableOpacity>
                 </View>
 
-                <Spacer size="md" />
+                <Espacador size="md" />
 
-                <ThemedText weight="semibold" style={styles.compartilharViaLabel}>
+                <TextoTematizado weight="semibold" style={styles.compartilharViaLabel}>
                   Compartilhar via
                 </ThemedText>
 
-                <Spacer size="sm" />
+                <Espacador size="sm" />
 
                 <View style={styles.plataformasGrid}>
                   {PLATAFORMAS_COMPARTILHAMENTO.map((plataforma) => (
@@ -332,24 +332,24 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   ))}
                 </View>
 
-                <Spacer size="lg" />
+                <Espacador size="lg" />
 
                 <View style={[styles.footer, { borderTopColor: theme.colors.borderLight }]}>
                   <Ionicons name="information-circle-outline" size={14} color={theme.colors.textTertiary} />
-                  <ThemedText variant="caption" color="textTertiary" align="center" style={styles.footerTexto}>
-                    O link compartilhado inclui um preview com foto e informações do local.
+                  <TextoTematizado variant="caption" color="textTertiary" align="center" style={styles.footerTexto}>
+                    O link compartilhado inclui um preview com foto e informaï¿½ï¿½es do local.
                   </ThemedText>
                 </View>
 
-                <Spacer size="md" />
+                <Espacador size="md" />
 
                 <TouchableOpacity style={styles.botaoFechar} onPress={onClose}>
-                  <ThemedText color="primary" weight="semibold" align="center">
+                  <TextoTematizado color="primary" weight="semibold" align="center">
                     Fechar
                   </ThemedText>
                 </TouchableOpacity>
 
-                <Spacer size="sm" />
+                <Espacador size="sm" />
               </ScrollView>
             </View>
           </TouchableWithoutFeedback>

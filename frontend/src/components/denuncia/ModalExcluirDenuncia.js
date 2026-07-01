@@ -1,28 +1,28 @@
-import React from 'react';
+﻿import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { Button } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Botao } from '../../components/ui';
+import { Espacador, TextoTematizado } from '../../components/commons';
 
 export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onConfirm, carregando, isHighContrast, theme }) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
-          <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
-            Excluir denúncia
+          <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
+            Excluir denï¿½ncia
           </ThemedText>
 
-          <Spacer size="lg" />
+          <Espacador size="lg" />
 
-          <ThemedText color="textSecondary" align="center" altoContraste={isHighContrast}>
-            Tem certeza que deseja excluir está denúncia #{denuncia?.id} da tabela?
-            Esta ação não pode ser desfeita.
+          <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast}>
+            Tem certeza que deseja excluir estï¿½ denï¿½ncia #{denuncia?.id} da tabela?
+            Esta aï¿½ï¿½o nï¿½o pode ser desfeita.
           </ThemedText>
 
-          <Spacer size="xl" />
+          <Espacador size="xl" />
 
           <View style={styles.modalBotoes}>
-            <Button
+            <Botao
               variant="danger"
               size="medium"
               fullWidth
@@ -33,9 +33,9 @@ export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onCon
               Excluir
             </Button>
 
-            <Spacer size="xs" />
+            <Espacador size="xs" />
 
-            <Button
+            <Botao
               variant="outline"
               size="medium"
               fullWidth

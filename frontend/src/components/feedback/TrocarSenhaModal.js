@@ -1,13 +1,13 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { Modal, View, StyleSheet, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Input } from '../ui';
-import { Spacer, ThemedText } from '../commons';
+import { Botao, Entrada } from '../ui';
+import { Espacador, TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import AuthService from '../../services/AuthService';
+import ServicoAutenticacao from '../../services/ServicoAutenticacao';
 import toastHelper from '../../utils/toastHelper';
 import { formatarErroTrocarSenha } from '../../utils/authToastFormatter';
 
@@ -19,17 +19,17 @@ const REQUISITOS_SENHA = [
   },
   {
     chave: 'letraMaiuscula',
-    texto: 'Pelo menos 1 letra maiúscula',
+    texto: 'Pelo menos 1 letra maiÃºscula',
     validar: (senha) => /[A-Z]/.test(senha),
   },
   {
     chave: 'letraMinuscula',
-    texto: 'Pelo menos 1 letra minúscula',
+    texto: 'Pelo menos 1 letra minÃºscula',
     validar: (senha) => /[a-z]/.test(senha),
   },
   {
     chave: 'numero',
-    texto: 'Pelo menos 1 número',
+    texto: 'Pelo menos 1 nÃºmero',
     validar: (senha) => /[0-9]/.test(senha),
   },
   {
@@ -41,19 +41,19 @@ const REQUISITOS_SENHA = [
 
 const schema = z
   .object({
-    senhaAtual: z.string().min(8, 'A senha atual deve ter no mínimo 8 caracteres'),
+    senhaAtual: z.string().min(8, 'A senha atual deve ter no mÃ­nimo 8 caracteres'),
     novaSenha: z
       .string()
-      .min(8, 'A nova senha deve ter no mínimo 8 caracteres')
-      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
-      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
-      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
+      .min(8, 'A nova senha deve ter no mÃ­nimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiÃºscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minÃºscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um nÃºmero')
       .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmarSenha: z.string(),
   })
   .refine((data) => data.novaSenha === data.confirmarSenha, {
     path: ['confirmarSenha'],
-    message: 'As senhas não conferem',
+    message: 'As senhas nÃ£o conferem',
   });
 
 export default function TrocarSenhaModal({ visible, onClose, altoContraste = false }) {
@@ -95,7 +95,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
       setSubmitting(true);
       setTentouTrocarSenha(true);
       setErroSenhaAtual('');
-      const resultado = await AuthService.trocarSenha({
+      const resultado = await ServicoAutenticacao.trocarSenha({
         senhaAtual: values.senhaAtual,
         novaSenha: values.novaSenha,
       });
@@ -115,11 +115,11 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
         mensagemNormalizada.includes('senha atual') && mensagemNormalizada.includes('incorreta');
 
       if (senhaAtualIncorreta) {
-        setErroSenhaAtual('A senha atual informada está incorreta.');
+        setErroSenhaAtual('A senha atual informada estÃ¡ incorreta.');
         return;
       }
 
-      toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
+      toastHelper.showError(mensagemErro, 'NÃ£o foi possÃ­vel trocar a senha');
     } catch (erro) {
       const mensagemErro = formatarErroTrocarSenha(erro?.message || 'Erro ao trocar senha');
       const mensagemNormalizada = mensagemErro.toLowerCase();
@@ -128,11 +128,11 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
 
       if (senhaAtualIncorreta) {
         setTentouTrocarSenha(true);
-        setErroSenhaAtual('A senha atual informada está incorreta.');
+        setErroSenhaAtual('A senha atual informada estÃ¡ incorreta.');
         return;
       }
 
-      toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
+      toastHelper.showError(mensagemErro, 'NÃ£o foi possÃ­vel trocar a senha');
     } finally {
       setSubmitting(false);
     }
@@ -161,16 +161,16 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            <ThemedText variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal} style={styles.titulo}>
+            <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal} style={styles.titulo}>
               Trocar Senha
             </ThemedText>
-            <Spacer size="sm" />
+            <Espacador size="sm" />
 
             <Controller
               control={control}
               name="senhaAtual"
               render={({ field: { onChange, value } }) => (
-                <Input
+                <Entrada
                   label="Senha Atual"
                   placeholder="Senha atual"
                   value={value}
@@ -187,7 +187,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
             />
 
             {tentouTrocarSenha && erroSenhaAtual ? (
-              <ThemedText color="error" variant="caption" style={styles.inlineError}>
+              <TextoTematizado color="error" variant="caption" style={styles.inlineError}>
                 {erroSenhaAtual}
               </ThemedText>
             ) : null}
@@ -196,7 +196,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               control={control}
               name="novaSenha"
               render={({ field: { onChange, value } }) => (
-                <Input
+                <Entrada
                   label="Nova Senha"
                   placeholder="Nova senha"
                   value={value}
@@ -214,7 +214,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
                 {requisitosPendentesSenha.map((requisito) => (
                   <View key={requisito.chave} style={styles.passwordHintRow}>
                     <Ionicons name="close-circle" size={18} color={t.colors.error} />
-                    <ThemedText
+                    <TextoTematizado
                       variant="caption"
                       color="error"
                       style={styles.passwordHintText}
@@ -231,7 +231,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               control={control}
               name="confirmarSenha"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
+                <Entrada
                   label="Confirmar Nova Senha"
                   placeholder="Confirme a senha"
                   value={value}
@@ -253,21 +253,21 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
                     size={18}
                     color={senhasCoincidem ? t.colors.success : t.colors.error}
                   />
-                  <ThemedText
+                  <TextoTematizado
                     variant="caption"
                     color={senhasCoincidem ? 'success' : 'error'}
                     style={styles.passwordHintText}
                     altoContraste={altoContraste}
                   >
-                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
+                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas nÃ£o coincidem'}
                   </ThemedText>
                 </View>
               </View>
             ) : null}
 
-            <Spacer size="md" />
+            <Espacador size="md" />
 
-            <Button
+            <Botao
               variant="primary"
               size="large"
               fullWidth
@@ -279,9 +279,9 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
               Salvar
             </Button>
 
-            <Spacer size="sm" />
+            <Espacador size="sm" />
 
-            <Button
+            <Botao
               variant="ghost"
               size="large"
               fullWidth
@@ -350,3 +350,4 @@ function criarEstilos(t, fontSizeMultiplier, height) {
     },
   });
 }
+

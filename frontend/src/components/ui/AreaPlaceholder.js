@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -20,12 +20,12 @@ export default function AreaPlaceholder({
   return (
     <View style={[estilos.container, alturaMinima ? { minHeight: alturaMinima } : null, style]}>
       <Ionicons name={icone} size={32} color={t.colors.textTertiary} />
-      <Spacer size="xs" />
-      <ThemedText weight="semibold" align="center">
+      <Espacador size="xs" />
+      <TextoTematizado weight="semibold" align="center">
         {titulo}
       </ThemedText>
       {subtitulo ? (
-        <ThemedText color="textTertiary" variant="caption" align="center">
+        <TextoTematizado color="textTertiary" variant="caption" align="center">
           {subtitulo}
         </ThemedText>
       ) : null}

@@ -21,13 +21,13 @@ public class RecuperacaoSenhaController {
     private final RecuperacaoSenhaService passwordResetService;
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody @Valid EsqueciSenhaRequestDTO dto) {
+    public ResponseEntity<String> esqueceuSenha(@RequestBody @Valid EsqueciSenhaRequestDTO dto) {
         String message = passwordResetService.gerarCodigoRecuperacaoComValidacao(dto.getEmail());
         return ResponseEntity.ok(message);
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody @Valid RedefinirSenhaRequestDTO dto) {
+    public ResponseEntity<String> redefinirSenha(@RequestBody @Valid RedefinirSenhaRequestDTO dto) {
         String message = passwordResetService.redefinirSenhaComValidacao(dto.getEmail(), dto.getCode(), dto.getNovaSenha());
         return ResponseEntity.ok(message);
     }

@@ -1,11 +1,11 @@
-/**
- * Utilitários de Formatação e Validação
+﻿/**
+ * Utilitï¿½rios de Formataï¿½ï¿½o e Validaï¿½ï¿½o
  * Adaptado do projeto Inkspiration para AcessoLivre
  */
 
 /**
- * Formata CEP com hífen
- * @param {string} value - CEP sem formatação
+ * Formata CEP com hï¿½fen
+ * @param {string} value - CEP sem formataï¿½ï¿½o
  * @returns {string} CEP formatado (00000-000)
  */
 export const formatCEP = (value) => {
@@ -16,8 +16,8 @@ export const formatCEP = (value) => {
 };
 
 /**
- * Formata telefone com DDD e máscara
- * @param {string} value - Telefone sem formatação
+ * Formata telefone com DDD e mï¿½scara
+ * @param {string} value - Telefone sem formataï¿½ï¿½o
  * @returns {string} Telefone formatado ((00) 00000-0000)
  */
 export const formatPhone = (value) => {
@@ -30,7 +30,7 @@ export const formatPhone = (value) => {
 
 /**
  * Formata data de nascimento
- * @param {string} value - Data sem formatação
+ * @param {string} value - Data sem formataï¿½ï¿½o
  * @returns {string} Data formatada (DD/MM/AAAA)
  */
 export const formatBirthDate = (value) => {
@@ -57,7 +57,7 @@ export const formatBirthDate = (value) => {
 /**
  * Valida formato de email
  * @param {string} email - Email a validar
- * @returns {boolean} True se válido
+ * @returns {boolean} True se vï¿½lido
  */
 export const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -66,8 +66,8 @@ export const validateEmail = (email) => {
 
 /**
  * Valida telefone (celular ou fixo)
- * @param {string} phone - Telefone formatado ou não
- * @returns {boolean} True se válido
+ * @param {string} phone - Telefone formatado ou nï¿½o
+ * @returns {boolean} True se vï¿½lido
  */
 export const validatePhone = (phone) => {
   if (!phone || phone.trim() === '') return false;
@@ -79,7 +79,7 @@ export const validatePhone = (phone) => {
 };
 
 /**
- * Retorna mensagem de erro de validação de telefone
+ * Retorna mensagem de erro de validaï¿½ï¿½o de telefone
  * @param {string} phone - Telefone a validar
  * @returns {string|null} Mensagem de erro ou null
  */
@@ -93,30 +93,30 @@ export const getPhoneValidationMessage = (phone) => {
   }
   
   if (numbers.length === 10) {
-    // Fixo: primeiro dígito deve ser 2-5
+    // Fixo: primeiro dï¿½gito deve ser 2-5
     if (!/^[1-9][2-5]/.test(numbers)) {
-      return 'Número de telefone fixo inválido';
+      return 'Nï¿½mero de telefone fixo invï¿½lido';
     }
   } else if (numbers.length === 11) {
-    // Celular: terceiro dígito deve ser 9
+    // Celular: terceiro dï¿½gito deve ser 9
     if (numbers.charAt(2) !== '9') {
-      return 'Número de celular deve começar com 9';
+      return 'Nï¿½mero de celular deve comeï¿½ar com 9';
     }
   } else {
-    return 'Telefone com número incorreto de dígitos';
+    return 'Telefone com nï¿½mero incorreto de dï¿½gitos';
   }
   
   if (!validatePhone(phone)) {
-    return 'Telefone inválido';
+    return 'Telefone invï¿½lido';
   }
   
   return null;
 };
 
 /**
- * Valida data de nascimento (formato e data válida)
+ * Valida data de nascimento (formato e data vï¿½lida)
  * @param {string} birthDate - Data no formato DD/MM/AAAA
- * @returns {boolean} True se formato e data válidos
+ * @returns {boolean} True se formato e data vï¿½lidos
  */
 export const validateBirthDate = (birthDate) => {
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
@@ -127,7 +127,7 @@ export const validateBirthDate = (birthDate) => {
   
   const birthDateObj = new Date(year, month - 1, day);
   
-  // Verifica se a data é válida
+  // Verifica se a data ï¿½ vï¿½lida
   if (
     birthDateObj.getFullYear() !== year ||
     birthDateObj.getMonth() !== month - 1 ||
@@ -136,7 +136,7 @@ export const validateBirthDate = (birthDate) => {
     return false;
   }
   
-  // Verifica se não é data futura
+  // Verifica se nï¿½o ï¿½ data futura
   const today = new Date();
   if (birthDateObj > today) {
     return false;
@@ -146,9 +146,9 @@ export const validateBirthDate = (birthDate) => {
 };
 
 /**
- * Valida nome (mínimo 2 caracteres, sem espaços extras)
+ * Valida nome (mï¿½nimo 2 caracteres, sem espaï¿½os extras)
  * @param {string} firstName - Nome a validar
- * @returns {boolean} True se válido
+ * @returns {boolean} True se vï¿½lido
  */
 export const validateFirstName = (firstName) => {
   if (!firstName) return false;
@@ -162,7 +162,7 @@ export const validateFirstName = (firstName) => {
   const spaceCount = (firstName.match(/ /g) || []).length;
   if (spaceCount > 1) return false;
   
-  if (!/^[a-zA-ZáàâãéèêíìîóòôõúùûüçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÜÇ ]+$/.test(firstName)) return false;
+  if (!/^[a-zA-Zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ]+$/.test(firstName)) return false;
   
   if (spaceCount === 1) {
     const parts = firstName.split(' ');
@@ -174,9 +174,9 @@ export const validateFirstName = (firstName) => {
 };
 
 /**
- * Valida sobrenome (mínimo 2 caracteres)
+ * Valida sobrenome (mï¿½nimo 2 caracteres)
  * @param {string} surname - Sobrenome a validar
- * @returns {boolean} True se válido
+ * @returns {boolean} True se vï¿½lido
  */
 export const validateSurname = (surname) => {
   if (!surname) return false;
@@ -195,9 +195,9 @@ export const validateFullNameLength = (firstName, surname) => {
 };
 
 /**
- * Valida senha (mínimo 8 caracteres, maiúscula, número e especial)
+ * Valida senha (mï¿½nimo 8 caracteres, maiï¿½scula, nï¿½mero e especial)
  * @param {string} password - Senha a validar
- * @returns {boolean} True se válido
+ * @returns {boolean} True se vï¿½lido
  */
 export const validatePassword = (password) => {
   if (!password) return false;
@@ -214,13 +214,13 @@ export const validatePassword = (password) => {
  * @returns {string} Mensagem de requisitos
  */
 export const getPasswordRequirements = () => {
-  return 'A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial';
+  return 'A senha deve ter no mï¿½nimo 8 caracteres, uma letra maiï¿½scula, um nï¿½mero e um caractere especial';
 };
 
 /**
  * Valida CEP (formato e comprimento)
- * @param {string} cep - CEP formatado ou não
- * @returns {boolean} True se válido
+ * @param {string} cep - CEP formatado ou nï¿½o
+ * @returns {boolean} True se vï¿½lido
  */
 export const validateCEP = (cep) => {
   const numbers = cep.replace(/\D/g, '');
@@ -228,9 +228,9 @@ export const validateCEP = (cep) => {
 };
 
 /**
- * Remove formatação de string (deixa apenas números)
+ * Remove formataï¿½ï¿½o de string (deixa apenas nï¿½meros)
  * @param {string} value - String a limpar
- * @returns {string} Apenas números
+ * @returns {string} Apenas nï¿½meros
  */
 export const removeFormatting = (value) => {
   return value.replace(/\D/g, '');

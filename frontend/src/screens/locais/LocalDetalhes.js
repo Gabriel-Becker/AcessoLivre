@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,23 +13,23 @@ import { Ionicons } from '@expo/vector-icons';
 
 import {
   Card,
-  Button,
-  LocalCard
+  Botao,
+  CartaoLocal
 } from '../../components/ui';
-import { ThemedText, Spacer } from '../../components/commons';
-import { Container } from '../../components/layout';
+import { TextoTematizado, Espacador } from '../../components/commons';
+import { Recipiente } from '../../components/layout';
 
-import LocalAccessibility from '../../components/local/LocalAccessibility';
+import AcessibilidadeLocal from '../../components/local/AcessibilidadeLocal';
 import AvaliacaoModal from '../../components/local/AvaliacaoModal';
-import LocalGallery from '../../components/local/LocalGallery';
+import GaleriaLocal from '../../components/local/GaleriaLocal';
 import ModalCompartilhar from '../../components/local/ModalCompartilhar';
-import ReportarModal from '../../components/reportar/ReportarModal';
-import ComentarioMenu from '../../components/reportar/ComentarioMenu';
+import ModalReportar from '../../components/reportar/ModalReportar';
+import MenuComentario from '../../components/reportar/MenuComentario';
 
 import { useThemeContext } from '../../context/ThemeContext';
-import { useAuth } from '../../context/AuthContext';
-import HomeService from '../../services/HomeService';
-import AvaliacaoService from '../../services/AvaliacaoService';
+import { useAuth } from '../../context/ContextoAutenticacao';
+import ServicoHome from '../../services/ServicoHome';
+import ServicoAvaliacao from '../../services/ServicoAvaliacao';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
@@ -48,7 +48,7 @@ const useCurrentTime = () => {
 };
 
 const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
-  if (!dataOriginal) return 'Data não informada';
+  if (!dataOriginal) return 'Data nÃ£o informada';
   
   try {
     let data;
@@ -60,11 +60,11 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
     } else if (dataOriginal instanceof Date) {
       data = dataOriginal;
     } else {
-      return 'Data inválida';
+      return 'Data invÃ¡lida';
     }
     
     if (isNaN(data.getTime())) {
-      return 'Data inválida';
+      return 'Data invÃ¡lida';
     }
     
     const agora = new Date(agoraTimestamp);
@@ -74,23 +74,23 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins === 1) return 'Há 1 minuto';
-    if (diffMins < 60) return `Há ${diffMins} minutos`;
-    if (diffHours === 1) return 'Há 1 hora';
-    if (diffHours < 24) return `Há ${diffHours} horas`;
+    if (diffMins === 1) return 'HÃ¡ 1 minuto';
+    if (diffMins < 60) return `HÃ¡ ${diffMins} minutos`;
+    if (diffHours === 1) return 'HÃ¡ 1 hora';
+    if (diffHours < 24) return `HÃ¡ ${diffHours} horas`;
     if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `Há ${diffDays} dias`;
-    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
-    if (diffDays < 365) return `Há ${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
-    return `Há ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
+    if (diffDays < 7) return `HÃ¡ ${diffDays} dias`;
+    if (diffDays < 30) return `HÃ¡ ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
+    if (diffDays < 365) return `HÃ¡ ${Math.floor(diffDays / 30)} mÃªs${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
+    return `HÃ¡ ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
     
   } catch (error) {
     console.error('Erro ao formatar data:', error);
-    return 'Data inválida';
+    return 'Data invÃ¡lida';
   }
 };
 
-// Componente de Avaliação com Menu de Reportar
+// Componente de AvaliaÃ§Ã£o com Menu de Reportar
 const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
@@ -112,7 +112,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const nomeUsuario = avaliacao.usuario?.nome || 
                       avaliacao.usuarioNome || 
                       avaliacao.nomeUsuario || 
-                      'Usuário';
+                      'UsuÃ¡rio';
   
   const primeiraLetra = nomeUsuario.charAt(0).toUpperCase();
   
@@ -133,13 +133,13 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
       <View style={styles.avaliacaoHeader}>
         <View style={styles.usuarioInfo}>
           <View style={[styles.avatar, estilosDinamicos.avatar, { backgroundColor: theme.colors.primary }]}>
-            <ThemedText color="textOnPrimary" weight="bold" style={[styles.avatarTexto, estilosDinamicos.avatarTexto]}>
+            <TextoTematizado color="textOnPrimary" weight="bold" style={[styles.avatarTexto, estilosDinamicos.avatarTexto]}>
               {primeiraLetra}
             </ThemedText>
           </View>
           
           <View style={styles.usuarioDetails}>
-            <ThemedText weight="semibold" style={[styles.usuarioNome, estilosDinamicos.usuarioNome]} numberOfLines={1}>
+            <TextoTematizado weight="semibold" style={[styles.usuarioNome, estilosDinamicos.usuarioNome]} numberOfLines={1}>
               {nomeUsuario}
             </ThemedText>
             <View style={styles.estrelasRow}>
@@ -147,7 +147,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
                 {renderStars(mediaGeral)}
               </View>
               <View style={styles.dataContainer}>
-                <ThemedText variant="caption" color="textTertiary" style={[styles.dataAvaliacao, estilosDinamicos.dataAvaliacao]}>
+                <TextoTematizado variant="caption" color="textTertiary" style={[styles.dataAvaliacao, estilosDinamicos.dataAvaliacao]}>
                   {dataFormatada}
                 </ThemedText>
               </View>
@@ -163,7 +163,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
       </View>
       
       {comentarioReal ? (
-        <ThemedText color="textSecondary" style={[styles.comentario, estilosDinamicos.comentario]} numberOfLines={3}>
+        <TextoTematizado color="textSecondary" style={[styles.comentario, estilosDinamicos.comentario]} numberOfLines={3}>
           {comentarioReal}
         </ThemedText>
       ) : null}
@@ -233,7 +233,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
-      setError('ID do local não informado');
+      setError('ID do local nÃ£o informado');
       setLoading(false);
       return;
     }
@@ -246,7 +246,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       const dados = await HomeService.buscarLocalPorId(id);
       
       if (!dados) {
-        throw new Error('Local não encontrado');
+        throw new Error('Local nÃ£o encontrado');
       }
       
       const imagensList = HomeService.extrairTodasImagens(dados);
@@ -310,7 +310,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       setMostrarTodasAvaliacoes(false);
     } catch (err) {
       console.error('Erro ao carregar local:', err);
-      setError('Não foi possível carregar os detalhes do local');
+      setError('NÃ£o foi possÃ­vel carregar os detalhes do local');
       toastHelper.showError('Erro ao carregar detalhes');
     } finally {
       setLoading(false);
@@ -334,8 +334,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleAvaliar = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para avaliar este local');
-      onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
+      toastHelper.showInfo('FaÃ§a login para avaliar este local');
+      onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
       return;
     }
     setModalAvaliacaoVisible(true);
@@ -347,8 +347,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleReportarLocal = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para reportar este local');
-      onNavigate?.('Login', { redirect: `LocalDetalhes?id=${id}` });
+      toastHelper.showInfo('FaÃ§a login para reportar este local');
+      onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
       return;
     }
     setShowReportarLocalModal(true);
@@ -368,15 +368,15 @@ export default function LocalDetalhes({ onNavigate, route }) {
       const result = await AvaliacaoService.criarAvaliacao(avaliacaoData);
       
       if (result.success) {
-        toastHelper.showSuccess('Avaliação enviada com sucesso!');
+        toastHelper.showSuccess('AvaliaÃ§Ã£o enviada com sucesso!');
         setModalAvaliacaoVisible(false);
         await carregar(true);
       } else {
-        toastHelper.showError(result.message || 'Erro ao enviar avaliação');
+        toastHelper.showError(result.message || 'Erro ao enviar avaliaÃ§Ã£o');
       }
     } catch (error) {
-      console.error('Erro ao enviar avaliação:', error);
-      toastHelper.showError('Erro ao enviar avaliação');
+      console.error('Erro ao enviar avaliaÃ§Ã£o:', error);
+      toastHelper.showError('Erro ao enviar avaliaÃ§Ã£o');
     }
   };
 
@@ -398,7 +398,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   };
 
   const formatEnderecoCompleto = (end) => {
-    if (!end) return 'Endereço não informado';
+    if (!end) return 'EndereÃ§o nÃ£o informado';
     const partes = [];
     if (end.logradouro) partes.push(end.logradouro);
     if (end.numero) partes.push(end.numero);
@@ -419,12 +419,12 @@ export default function LocalDetalhes({ onNavigate, route }) {
       <View style={[styles.descricaoContainer, estilosDinamicos.descricaoContainer]}>
         <View style={styles.descricaoHeader}>
           <Ionicons name="document-text-outline" size={estilosZoom.descricaoIcone} color={t.colors.primary} />
-          <ThemedText weight="bold" style={[styles.descricaoTitulo, estilosZoom.descricaoTitulo]}>
+          <TextoTematizado weight="bold" style={[styles.descricaoTitulo, estilosZoom.descricaoTitulo]}>
             Sobre o local
           </ThemedText>
         </View>
-        <Spacer size="sm" />
-        <ThemedText color="textSecondary" style={[styles.descricaoTexto, estilosZoom.descricaoTexto]}>
+        <Espacador size="sm" />
+        <TextoTematizado color="textSecondary" style={[styles.descricaoTexto, estilosZoom.descricaoTexto]}>
           {descricaoExibida}
           {shouldTruncate && !descricaoExpandida && '...'}
         </ThemedText>
@@ -433,8 +433,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             onPress={() => setDescricaoExpandida(!descricaoExpandida)} 
             style={styles.verMaisButtonDescricao}
           >
-            <ThemedText color="primary" weight="semibold" variant="caption">
-              {descricaoExpandida ? 'Ver menos ▲' : 'Ver mais ▼'}
+            <TextoTematizado color="primary" weight="semibold" variant="caption">
+              {descricaoExpandida ? 'Ver menos â–²' : 'Ver mais â–¼'}
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -469,19 +469,19 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
     return (
       <View style={[styles.hierarquiaContainer, { borderColor: t.colors.borderLight, backgroundColor: isHighContrast ? t.colors.surfaceSecondary : '#F8F9FA' }]}>
-        <ThemedText weight="bold" style={styles.hierarquiaTitulo}>
+        <TextoTematizado weight="bold" style={styles.hierarquiaTitulo}>
           {tituloSecao}
         </ThemedText>
 
         {mostrarLocalPrincipal ? (
           <View style={styles.hierarquiaBloco}>
-            <ThemedText variant="caption" color="textSecondary">Local principal</ThemedText>
+            <TextoTematizado variant="caption" color="textSecondary">Local principal</ThemedText>
             <TouchableOpacity
               disabled={!idLocalPrincipal}
               onPress={() => handleAbrirOutroLocal(idLocalPrincipal)}
               style={styles.hierarquiaItemPressable}
             >
-              <ThemedText weight="semibold" color={idLocalPrincipal ? 'primary' : 'textPrimary'} numberOfLines={1}>
+              <TextoTematizado weight="semibold" color={idLocalPrincipal ? 'primary' : 'textPrimary'} numberOfLines={1}>
                 {nomeLocalPrincipal || `ID ${idLocalPrincipal}`}
               </ThemedText>
               {idLocalPrincipal ? <Ionicons name="chevron-forward" size={14} color={t.colors.primary} /> : null}
@@ -502,7 +502,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
                   return (
                     <View key={String(idSub || sub?.nome)} style={styles.subLocaisCarouselItem}>
-                      <LocalCard
+                      <CartaoLocal
                         local={sub}
                         onPress={() => handleAbrirOutroLocal(idSub)}
                         altoContraste={isHighContrast}
@@ -524,8 +524,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
       return (
         <View style={styles.semAvaliacoes}>
           <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
-          <ThemedText color="textSecondary" align="center">Nenhuma avaliação ainda.</ThemedText>
-          <ThemedText variant="caption" color="textTertiary" align="center">
+          <TextoTematizado color="textSecondary" align="center">Nenhuma avaliaÃ§Ã£o ainda.</ThemedText>
+          <TextoTematizado variant="caption" color="textTertiary" align="center">
             Seja o primeiro a avaliar este local!
           </ThemedText>
         </View>
@@ -562,18 +562,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <View style={[styles.headerAvaliacoes, estilosZoom.headerAvaliacoes]}>
           <View style={styles.headerAvaliacoesLeft}>
             <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
-            <ThemedText variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>
-              Avaliações Recentes
+            <TextoTematizado variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>
+              AvaliaÃ§Ãµes Recentes
             </ThemedText>
             <View style={styles.totalBadge}>
-              <ThemedText variant="caption" weight="bold" style={styles.totalBadgeTexto}>
+              <TextoTematizado variant="caption" weight="bold" style={styles.totalBadgeTexto}>
                 {local.avaliacoes.length}
               </ThemedText>
             </View>
           </View>
         </View>
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
 
         {precisaScroll ? (
           <ScrollView
@@ -594,8 +594,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             style={styles.verMaisComentarios}
             onPress={() => setMostrarTodasAvaliacoes(true)}
           >
-            <ThemedText color="primary" weight="semibold">
-              Ver mais comentários
+            <TextoTematizado color="primary" weight="semibold">
+              Ver mais comentÃ¡rios
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -605,7 +605,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
             style={styles.verMaisComentarios}
             onPress={() => setMostrarTodasAvaliacoes(false)}
           >
-            <ThemedText color="primary" weight="semibold">
+            <TextoTematizado color="primary" weight="semibold">
               Mostrar menos
             </ThemedText>
           </TouchableOpacity>
@@ -616,8 +616,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             style={styles.verTodasPagina}
             onPress={handleVerTodasAvaliacoes}
           >
-            <ThemedText color="textSecondary" variant="caption">
-              Ver todas em nova página →
+            <TextoTematizado color="textSecondary" variant="caption">
+              Ver todas em nova pÃ¡gina â†’
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -629,8 +629,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
     return (
       <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
-        <Spacer size="md" />
-        <ThemedText color="textSecondary">Carregando detalhes...</ThemedText>
+        <Espacador size="md" />
+        <TextoTematizado color="textSecondary">Carregando detalhes...</ThemedText>
       </View>
     );
   }
@@ -638,13 +638,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
   if (error || !local) {
     return (
       <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
-        <ThemedText color="error" align="center">{error || 'Local não encontrado'}</ThemedText>
-        <Spacer size="md" />
-        <Button variant="primary" onPress={handleRefresh} iconLeft="refresh-outline">
+        <TextoTematizado color="error" align="center">{error || 'Local nÃ£o encontrado'}</ThemedText>
+        <Espacador size="md" />
+        <Botao variant="primary" onPress={handleRefresh} iconLeft="refresh-outline">
           Tentar novamente
         </Button>
-        <Spacer size="sm" />
-        <Button variant="outline" onPress={handleVoltar}>
+        <Espacador size="sm" />
+        <Botao variant="outline" onPress={handleVoltar}>
           Voltar
         </Button>
       </View>
@@ -652,7 +652,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }
 
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={estilosZoom.container}>
+    <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={estilosZoom.container}>
       <View style={estilosZoom.cabecalho}>
         <TouchableOpacity
           onPress={handleVoltar}
@@ -660,7 +660,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
           accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={20} color={t.colors.textPrimary} />
-          <ThemedText weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</ThemedText>
+          <TextoTematizado weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -680,77 +680,77 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <Card style={[styles.cardPrincipal, estilosZoom.cardPrincipal]} altoContraste={isHighContrast}>
           <View style={[styles.headerLocal, estilosZoom.headerLocal]}>
             <View style={styles.infoLocal}>
-              <ThemedText variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>
+              <TextoTematizado variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>
                 {local.nome}
               </ThemedText>
               <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
-                <ThemedText variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
+                <TextoTematizado variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
                   {local.categoria}
                 </ThemedText>
               </View>
               <View style={[styles.enderecoRow, estilosZoom.enderecoRow]}>
                 <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
-                <ThemedText color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>
+                <TextoTematizado color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>
                   {formatEnderecoCompleto(local.endereco)}
                 </ThemedText>
               </View>
             </View>
             <View style={[styles.ratingBox, estilosZoom.ratingBox]}>
               <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
-              <ThemedText variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>
+              <TextoTematizado variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>
                 {(local.avaliacaoMedia || 0).toFixed(1)}
               </ThemedText>
-              <ThemedText variant="caption" color="textSecondary">
-                {local.totalAvaliacoes || 0} avaliações
+              <TextoTematizado variant="caption" color="textSecondary">
+                {local.totalAvaliacoes || 0} avaliaÃ§Ãµes
               </ThemedText>
             </View>
           </View>
 
-          <Spacer size="lg" />
-          <LocalAccessibility tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
+          <Espacador size="lg" />
+          <AcessibilidadeLocal tiposAcessibilidade={local.tiposAcessibilidade} altoContraste={isHighContrast} />
           
           {renderDescricaoLocal()}
           
-          <Spacer size="xl" />
+          <Espacador size="xl" />
 
           <View style={[styles.botoesContainer, estilosZoom.botoesContainer]}>
-            <Button variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>
+            <Botao variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>
               Avaliar
             </Button>
-            <Button variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
+            <Botao variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
               Compartilhar
             </Button>
-            <Button variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportarLocal} style={[styles.botaoAcao, estilosZoom.botao]}>
+            <Botao variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportarLocal} style={[styles.botaoAcao, estilosZoom.botao]}>
               Reportar
             </Button>
           </View>
         </Card>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
-        {/* CORRIGIDO: Card de Fotos com verificação de imagens */}
+        {/* CORRIGIDO: Card de Fotos com verificaÃ§Ã£o de imagens */}
         <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
           <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
             <Ionicons name="images-outline" size={22} color={t.colors.primary} />
-            <ThemedText variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
+            <TextoTematizado variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
             {local.imagens && local.imagens.length > 0 && (
-              <ThemedText variant="caption" color="textSecondary">
+              <TextoTematizado variant="caption" color="textSecondary">
                 ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
               </ThemedText>
             )}
           </View>
-          <Spacer size="sm" />
+          <Espacador size="sm" />
 
-          <LocalGallery imagens={local.imagens || []} />
+          <GaleriaLocal imagens={local.imagens || []} />
 
         </Card>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
         {renderHierarquiaLocal() ? (
           <>
             {renderHierarquiaLocal()}
-            <Spacer size="lg" />
+            <Espacador size="lg" />
           </>
         ) : null}
 
@@ -758,7 +758,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
           {renderAvaliacoes()}
         </Card>
 
-        <Spacer size="xl" />
+        <Espacador size="xl" />
       </ScrollView>
 
       <AvaliacaoModal
@@ -774,7 +774,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         local={local}
       />
 
-      <ReportarModal
+      <ModalReportar
         visible={showReportarLocalModal}
         onClose={() => setShowReportarLocalModal(false)}
         tipo="LOCAL"
@@ -1195,3 +1195,4 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
     },
   };
 }
+

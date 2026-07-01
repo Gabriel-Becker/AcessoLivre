@@ -1,9 +1,9 @@
-export { default as Button } from './Button';
-export { default as Input } from './Input';
+﻿export { default as Botao } from './Botao';
+export { default as Entrada } from './Entrada';
 export { default as Card } from './Card';
-export { default as StatsBanner } from './StatsBanner';
-export { default as LocalCard } from './LocalCard';
-export { default as Select } from './Select';
+export { default as BannerEstatisticas } from './BannerEstatisticas';
+export { default as CartaoLocal } from './CartaoLocal';
+export { default as Selecao } from './Selecao';
 export { default as CabecalhoPagina } from './CabecalhoPagina';
 export { default as CardSecao } from './CardSecao';
 export { default as AreaPlaceholder } from './AreaPlaceholder';

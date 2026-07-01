@@ -1,7 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Input, Select } from '../ui';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -24,23 +24,23 @@ export default function BarraFiltroAdmin({
   return (
     <View style={styles.container}>
       <View>
-        <ThemedText variant="h3" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
+        <TextoTematizado variant="h3" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
           {titulo}
         </ThemedText>
         {subtitulo ? (
           <>
-            <Spacer size="xs" />
-            <ThemedText color={corSecundaria} size="sm" altoContraste={contrasteAtivo}>
+            <Espacador size="xs" />
+            <TextoTematizado color={corSecundaria} size="sm" altoContraste={contrasteAtivo}>
               {subtitulo}
             </ThemedText>
           </>
         ) : null}
       </View>
 
-      <Spacer size="md" />
+      <Espacador size="md" />
 
       <View style={styles.linhaPrincipal}>
-        <Input
+        <Entrada
           placeholder={pesquisaPlaceholder}
           value={pesquisa}
           onChangeText={onChangePesquisa}
@@ -52,7 +52,7 @@ export default function BarraFiltroAdmin({
 
         <View style={styles.filtrosContainer}>
           {filtros.map((filtro) => (
-            <Select
+            <Selecao
               key={filtro.chave}
               label={filtro.label}
               placeholder={filtro.placeholder || 'Todos'}
@@ -69,8 +69,8 @@ export default function BarraFiltroAdmin({
 
       {onLimparFiltros ? (
         <>
-          <Spacer size="sm" />
-          <ThemedText
+          <Espacador size="sm" />
+          <TextoTematizado
             color={corSecundaria}
             size="sm"
             style={[styles.limparFiltros, { color: t.colors.primary }]}

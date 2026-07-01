@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '../commons';
@@ -41,11 +41,11 @@ export default function CartaoSelecao({
       <View style={estilos.conteudo}>
         <View style={estilos.tituloLinha}>
           <Ionicons name={icone} size={18} color={corDestaque} />
-          <ThemedText weight="semibold" style={estilos.titulo} permitirEscalaFonte={permitirEscalaFonte}>
+          <TextoTematizado weight="semibold" style={estilos.titulo} permitirEscalaFonte={permitirEscalaFonte}>
             {titulo}
           </ThemedText>
         </View>
-        <ThemedText color="textSecondary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
+        <TextoTematizado color="textSecondary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
           {descricao}
         </ThemedText>
       </View>

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import ReportarService from '../services/ReportarService';
+﻿import { useState, useCallback } from 'react';
+import ServicoReportar from '../services/ServicoReportar';
 import toastHelper from '../utils/toastHelper';
 
 const useReportar = () => {
@@ -24,15 +24,15 @@ const useReportar = () => {
       
       if (response.success) {
         setSuccess(true);
-        toastHelper.showSuccess(response.message || 'Denúncia enviada com sucesso!');
+        toastHelper.showSuccess(response.message || 'DenÃºncia enviada com sucesso!');
         return true;
       } else {
         setError(response.message);
-        toastHelper.showError(response.message || 'Erro ao enviar denúncia');
+        toastHelper.showError(response.message || 'Erro ao enviar denÃºncia');
         return false;
       }
     } catch (err) {
-      const message = err.message || 'Erro ao enviar denúncia';
+      const message = err.message || 'Erro ao enviar denÃºncia';
       setError(message);
       toastHelper.showError(message);
       return false;
@@ -45,7 +45,7 @@ const useReportar = () => {
     try {
       return await ReportarService.hasUserReported(tipo, targetId);
     } catch (err) {
-      console.error('Erro ao verificar denúncia:', err);
+      console.error('Erro ao verificar denÃºncia:', err);
       return false;
     }
   }, []);

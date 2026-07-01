@@ -1,5 +1,5 @@
-export { default as Login } from './Login';
-export { default as Register } from './Register';
-export { default as ForgotPassword } from './ForgotPassword';
-export { default as ResetPassword } from './ResetPassword';
-export { default as TwoFactorSetup } from './TwoFactorSetup';
+﻿export { default as Entrar } from './Entrar';
+export { default as Cadastro } from './Cadastro';
+export { default as EsqueciSenha } from './EsqueciSenha';
+export { default as RedefinirSenha } from './RedefinirSenha';
+export { default as ConfigurarDoisFatores } from './ConfigurarDoisFatores';

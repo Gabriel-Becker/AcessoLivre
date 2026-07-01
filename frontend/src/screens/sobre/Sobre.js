@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { Card, CardInfoIcone } from '../../components/ui';
-import { Container } from '../../components/layout';
+import { Recipiente } from '../../components/layout';
 import { ThemedText, Spacer } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
-import SobreService from '../../services/SobreService';
+import ServicoSobre from '../../services/ServicoSobre';
 
 export default function Sobre() {
   const { isHighContrast, theme: t } = useThemeContext();
@@ -48,68 +48,68 @@ export default function Sobre() {
   const valores = [
     {
       icone: 'heart-outline',
-      titulo: 'Inclusão',
-      descricao: 'Acreditamos que todos merecem acesso igual aos espaços públicos e privados.',
+      titulo: 'Inclusï¿½o',
+      descricao: 'Acreditamos que todos merecem acesso igual aos espaï¿½os pï¿½blicos e privados.',
     },
     {
       icone: 'people-outline',
       titulo: 'Comunidade',
-      descricao: 'Construímos uma rede colaborativa de pessoas comprometidas com a acessibilidade.',
+      descricao: 'Construï¿½mos uma rede colaborativa de pessoas comprometidas com a acessibilidade.',
     },
     {
       icone: 'locate-outline',
       titulo: 'Impacto',
-      descricao: 'Focamos em criar mudanças reais e mensuráveis na vida das pessoas.',
+      descricao: 'Focamos em criar mudanï¿½as reais e mensurï¿½veis na vida das pessoas.',
     },
   ];
 
   const colunasImpacto = [
     { valor: formatarNumero(metricas.totalLocais), legenda: 'Locais Cadastrados' },
-    { valor: formatarNumero(metricas.totalAvaliacoes), legenda: 'Avaliações' },
-    { valor: formatarNumero(metricas.totalUsuariosAtivos), legenda: 'Usuários Ativos' },
+    { valor: formatarNumero(metricas.totalAvaliacoes), legenda: 'Avaliaï¿½ï¿½es' },
+    { valor: formatarNumero(metricas.totalUsuariosAtivos), legenda: 'Usuï¿½rios Ativos' },
   ];
 
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
+    <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.blocoBranco}>
-          <ThemedText variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
-            Nossa Missão
+          <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+            Nossa Missï¿½o
           </ThemedText>
-          <Spacer size="sm" />
-          <ThemedText align="center" altoContraste={isHighContrast} color={corSecundaria}>
-            Criar um mundo mais acessível através da tecnologia e colaboração comunitária
+          <Espacador size="sm" />
+          <TextoTematizado align="center" altoContraste={isHighContrast} color={corSecundaria}>
+            Criar um mundo mais acessï¿½vel atravï¿½s da tecnologia e colaboraï¿½ï¿½o comunitï¿½ria
           </ThemedText>
         </View>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
         <Card
           variant="default"
           style={styles.cardProposito}
           altoContraste={isHighContrast}
         >
-          <ThemedText variant="h3" weight="bold" align="center" style={styles.textoPropositoTitulo}>
+          <TextoTematizado variant="h3" weight="bold" align="center" style={styles.textoPropositoTitulo}>
             Por que o AcessoLivre existe?
           </ThemedText>
-          <Spacer size="md" />
-          <ThemedText align="center" style={styles.textoPropositoDescricao}>
-            Milhões de pessoas enfrentam barreiras diárias para acessar locais públicos e privados.
+          <Espacador size="md" />
+          <TextoTematizado align="center" style={styles.textoPropositoDescricao}>
+            Milhï¿½es de pessoas enfrentam barreiras diï¿½rias para acessar locais pï¿½blicos e privados.
             O AcessoLivre nasceu da necessidade de criar uma plataforma colaborativa onde a comunidade
-            pode compartilhar informações sobre acessibilidade, ajudando a construir um mundo mais
+            pode compartilhar informaï¿½ï¿½es sobre acessibilidade, ajudando a construir um mundo mais
             inclusivo para todos.
           </ThemedText>
         </Card>
 
-        <Spacer size="xl" />
+        <Espacador size="xl" />
 
         <View style={styles.blocoBranco}>
-          <ThemedText variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+          <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
             Nossos Valores
           </ThemedText>
         </View>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
         <View style={styles.gradeValores}>
           {valores.map((item) => (
@@ -126,29 +126,29 @@ export default function Sobre() {
               altoContraste={isHighContrast}
               style={[styles.cardValor, { width: larguraCardValor }]}
             >
-              <ThemedText align="center" color={corSecundaria}>
+              <TextoTematizado align="center" color={corSecundaria}>
                 {item.descricao}
               </ThemedText>
             </CardInfoIcone>
           ))}
         </View>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
         <View style={styles.bannerImpacto}>
-          <ThemedText variant="h2" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
+          <TextoTematizado variant="h2" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
             Nosso Impacto
           </ThemedText>
-          <Spacer size="lg" />
+          <Espacador size="lg" />
 
           <View style={styles.gradeImpacto}>
             {colunasImpacto.map((coluna) => (
               <View key={coluna.legenda} style={styles.colunaImpacto}>
-                <ThemedText variant="h1" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
+                <TextoTematizado variant="h1" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
                   {coluna.valor}
                 </ThemedText>
-                <Spacer size="xs" />
-                <ThemedText align="center" color="textOnPrimary" altoContraste={isHighContrast}>
+                <Espacador size="xs" />
+                <TextoTematizado align="center" color="textOnPrimary" altoContraste={isHighContrast}>
                   {coluna.legenda}
                 </ThemedText>
               </View>
@@ -156,7 +156,7 @@ export default function Sobre() {
           </View>
         </View>
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
       </ScrollView>
     </Container>
   );

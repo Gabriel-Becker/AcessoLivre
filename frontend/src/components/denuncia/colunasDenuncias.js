@@ -1,9 +1,13 @@
-import React from 'react';
+﻿import React from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
-import { Button } from '../../components/ui';
+import { Botao } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
-import TooltipText from '../../components/ui/TooltipText';
+import TextoTooltip from '../../components/ui/TextoTooltip';
 
+<<<<<<< Updated upstream
+=======
+// Estilos especï¿½ficos para a tabela
+>>>>>>> Stashed changes
 const styles = StyleSheet.create({
   tipoBadge: {
     paddingHorizontal: 8,
@@ -37,9 +41,9 @@ const styles = StyleSheet.create({
 export const getTipoLabel = (tipo) => {
   const labels = {
     LOCAL: 'Local',
-    COMENTARIO: 'Comentário',
-    AVALIACAO: 'Avaliação',
-    USUARIO: 'Usuário',
+    COMENTARIO: 'Comentï¿½rio',
+    AVALIACAO: 'Avaliaï¿½ï¿½o',
+    USUARIO: 'Usuï¿½rio',
   };
   return labels[tipo] || tipo;
 };
@@ -56,7 +60,7 @@ export const getTipoColor = (tipo) => {
 export const getStatusLabel = (status) => {
   const labels = {
     PENDING: 'Pendente',
-    REVIEWED: 'Em análise',
+    REVIEWED: 'Em anï¿½lise',
     RESOLVED: 'Resolvido',
     REJECTED: 'Rejeitado',
   };
@@ -74,13 +78,13 @@ export const getStatusColor = (status) => {
 };
 
 export const formatarData = (data) => {
-  if (!data) return '—';
+  if (!data) return 'ï¿½';
   try {
     const date = new Date(data);
-    if (Number.isNaN(date.getTime())) return '—';
+    if (Number.isNaN(date.getTime())) return 'ï¿½';
     return date.toLocaleDateString('pt-BR');
   } catch {
-    return '—';
+    return 'ï¿½';
   }
 };
 
@@ -97,7 +101,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       sortKey: 'tipo',
       render: (item) => (
         <View style={[styles.tipoBadge, { backgroundColor: getTipoColor(item.tipo) + '20' }]}>
-          <ThemedText variant="caption" weight="bold" style={{ color: getTipoColor(item.tipo) }}>
+          <TextoTematizado variant="caption" weight="bold" style={{ color: getTipoColor(item.tipo) }}>
             {getTipoLabel(item.tipo)}
           </ThemedText>
         </View>
@@ -111,8 +115,8 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       flex: 1.2,
       sortKey: 'motivo',
       render: (item) => (
-        <ThemedText variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
-          {item.motivoLabel || item.motivo || 'Não informado'}
+        <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
+          {item.motivoLabel || item.motivo || 'Nï¿½o informado'}
         </ThemedText>
       ),
     },
@@ -124,7 +128,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       flex: 1.5,
       sortKey: 'targetName',
       render: (item) => (
-        <ThemedText variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
+        <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
           {item.targetName || `ID: ${item.targetId}`}
         </ThemedText>
       ),
@@ -132,12 +136,12 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
     {
       key: 'descricao',
       chave: 'descricao',
-      titulo: 'DESCRIÇÃO',
+      titulo: 'DESCRIï¿½ï¿½O',
       minWidth: 250,
       flex: 2,
       sortKey: false,
       render: (item) => (
-        <TooltipText
+        <TextoTooltip
           text={item.descricao}
           maxLength={40}
           altoContraste={isHighContrast}
@@ -154,7 +158,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       sortKey: 'status',
       render: (item) => (
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-          <ThemedText variant="caption" weight="bold" style={{ color: getStatusColor(item.status) }}>
+          <TextoTematizado variant="caption" weight="bold" style={{ color: getStatusColor(item.status) }}>
             {getStatusLabel(item.status)}
           </ThemedText>
         </View>
@@ -168,7 +172,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       flex: 0.8,
       sortKey: 'createdAt',
       render: (item) => (
-        <ThemedText variant="caption" color="textSecondary" altoContraste={isHighContrast}>
+        <TextoTematizado variant="caption" color="textSecondary" altoContraste={isHighContrast}>
           {formatarData(item.dataCriacao || item.createdAt)}
         </ThemedText>
       ),
@@ -176,13 +180,13 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
     {
       key: 'acoes',
       chave: 'acoes',
-      titulo: 'AÇÕES',
+      titulo: 'Aï¿½ï¿½ES',
       minWidth: 150,
       flex: 1,
       alinhamento: 'center',
       render: (item) => (
         <View style={styles.acoesLinha}>
-          <Button
+          <Botao
             variant="outline"
             size="small"
             onPress={() => onAtualizarStatus(item)}
@@ -192,7 +196,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
           >
             Status
           </Button>
-          <Button
+          <Botao
             variant="danger"
             size="small"
             onPress={() => onExcluir(item)}

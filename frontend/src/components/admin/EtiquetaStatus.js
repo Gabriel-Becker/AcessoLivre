@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
@@ -18,7 +18,7 @@ export default function EtiquetaStatus({
 
   return (
     <View style={[estilos.container, { backgroundColor: corFundo, borderColor: corTexto }]}>
-      <ThemedText size="xs" weight="bold" align="center" style={{ color: corTexto }}>
+      <TextoTematizado size="xs" weight="bold" align="center" style={{ color: corTexto }}>
         {texto}
       </ThemedText>
     </View>

@@ -1,9 +1,9 @@
-import { obterCategoriaIcone, obterCategoriaLabel } from '../categoriasConfig';
+﻿import { obterCategoriaIcone, obterCategoriaLabel } from '../categoriasConfig';
 
 export const opcoesRoleUsuarios = [
   { label: 'Todas as roles', value: 'todos' },
   { label: 'Administrador', value: 'ROLE_ADMIN' },
-  { label: 'Usuário', value: 'ROLE_USER' },
+  { label: 'UsuÃ¡rio', value: 'ROLE_USER' },
 ];
 
 export const opcoesStatusUsuarios = [

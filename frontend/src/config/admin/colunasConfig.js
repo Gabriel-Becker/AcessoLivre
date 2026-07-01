@@ -1,8 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import { Platform, View } from 'react-native';
 import { ThemedText } from '../../components/commons';
 import { EtiquetaStatus } from '../../components/admin';
-import { Button } from '../../components/ui';
+import { Botao } from '../../components/ui';
 import { obterCategoriaLabel, obterStatusLabel, obterTipoEtiquetaStatus } from './locaisConfig';
 
 const renderTextoTruncadoComTooltipWeb = (textoCompleto, children) => (
@@ -13,22 +13,22 @@ const renderTextoTruncadoComTooltipWeb = (textoCompleto, children) => (
 
 export const renderNomeUsuario = (item, altoContraste = false) => (
   renderTextoTruncadoComTooltipWeb(
-    item.nome || 'Usuário sem nome',
-    <ThemedText
+    item.nome || 'Usuï¿½rio sem nome',
+    <TextoTematizado
       weight="bold"
       size="sm"
       numberOfLines={1}
       altoContraste={altoContraste}
       color={altoContraste ? 'textOnPrimary' : 'textPrimary'}
     >
-      {item.nome || 'Usuário sem nome'}
+      {item.nome || 'Usuï¿½rio sem nome'}
     </ThemedText>
   )
 );
 
 export const renderEmailUsuario = (item, altoContraste = false) => (
-  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
-    {item.email || 'E-mail não informado'}
+  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+    {item.email || 'E-mail nï¿½o informado'}
   </ThemedText>
 );
 
@@ -40,7 +40,7 @@ export const renderRoleUsuario = (item, formatarRoleUsuario) => (
 );
 
 export const renderDataCadastroUsuario = (item, altoContraste = false) => (
-  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
     {formatarDataHora(item?.dataCadastro)}
   </ThemedText>
 );
@@ -48,7 +48,7 @@ export const renderDataCadastroUsuario = (item, altoContraste = false) => (
 export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEditar, onExcluir, onReativar, altoContraste = false) => (
   usuario?.idUsuario !== item.idUsuario ? (
     <View style={styles.acoesLinha}>
-      <Button
+      <Botao
         variant="outline"
         size="small"
         iconLeft="create-outline"
@@ -59,7 +59,7 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
         Editar
       </Button>
       {item?.ativo === false ? (
-        <Button
+        <Botao
           variant="primary"
           size="small"
           iconLeft="refresh-outline"
@@ -70,7 +70,7 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
           Reativar
         </Button>
       ) : (
-        <Button
+        <Botao
           variant="danger"
           size="small"
           iconLeft="trash-outline"
@@ -83,7 +83,7 @@ export const renderAcoesUsuario = (item, usuario, styles, carregandoAcao, onEdit
       )}
     </View>
   ) : (
-    <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" align="center" altoContraste={altoContraste}>
+    <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" align="center" altoContraste={altoContraste}>
       Conta atual
     </ThemedText>
   )
@@ -124,7 +124,7 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
   },
   {
     chave: 'acoes',
-    titulo: 'Ações',
+    titulo: 'Aï¿½ï¿½es',
     flex: 1.2,
     minWidth: 230,
     alinhamento: 'center',
@@ -135,7 +135,7 @@ export const colunasUsuarios = (usuario, styles, carregandoAcao, formatarRoleUsu
 export const renderNomeLocal = (item, altoContraste = false) => (
   renderTextoTruncadoComTooltipWeb(
     item.nome || 'Local sem nome',
-    <ThemedText
+    <TextoTematizado
       weight="bold"
       size="sm"
       numberOfLines={1}
@@ -152,7 +152,7 @@ export const renderCategoriaLocal = (item, altoContraste = false) => (
 );
 
 export const renderCidadeLocal = (item, altoContraste = false) => (
-  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
     {item?.endereco?.cidade || 'N/I'} - {item?.endereco?.estado || 'N/I'}
   </ThemedText>
 );
@@ -190,14 +190,14 @@ const formatarDataHora = (valor) => {
 };
 
 export const renderDataCadastroLocal = (item, altoContraste = false) => (
-  <ThemedText color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
+  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
     {formatarDataHora(item?.dataCriacao)}
   </ThemedText>
 );
 
 export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExcluir, altoContraste = false) => (
   <View style={styles.acoesLinha}>
-    <Button
+    <Botao
       variant="outline"
       size="small"
       iconLeft="create-outline"
@@ -208,7 +208,7 @@ export const renderAcoesLocal = (item, styles, carregandoAcao, onEditar, onExclu
     >
       Editar
     </Button>
-    <Button
+    <Botao
       variant="danger"
       size="small"
       iconLeft="trash-outline"
@@ -254,7 +254,7 @@ export const colunasLocais = (styles, carregandoAcao, onEditar, onExcluir, altoC
   },
   {
     chave: 'acoes',
-    titulo: 'Ações',
+    titulo: 'Aï¿½ï¿½es',
     flex: 1.2,
     minWidth: 190,
     alinhamento: 'center',

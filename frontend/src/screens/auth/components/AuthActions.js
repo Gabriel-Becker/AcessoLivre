@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { ThemedText } from '../../../components/commons';
 import theme, { getTheme } from '../../../config/theme';
@@ -10,9 +10,9 @@ export default function AuthActions({ text, actionLabel, onPress, altoContraste 
 
   return (
     <View style={styles.container}>
-      <ThemedText color={corTexto} altoContraste={altoContraste}>{text}</ThemedText>
+      <TextoTematizado color={corTexto} altoContraste={altoContraste}>{text}</ThemedText>
       <TouchableOpacity onPress={onPress}>
-        <ThemedText color={corAcao} weight="semibold" altoContraste={altoContraste}>
+        <TextoTematizado color={corAcao} weight="semibold" altoContraste={altoContraste}>
           {` ${actionLabel}`}
         </ThemedText>
       </TouchableOpacity>

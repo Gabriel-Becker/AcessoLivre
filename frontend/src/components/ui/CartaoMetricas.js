@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText, Spacer } from '../commons';
+import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -18,21 +18,21 @@ export default function CartaoMetricas({
 
   return (
     <View style={[estilos.container, { backgroundColor: corFundo || t.colors.primary }, style]}>
-      <ThemedText color={corTexto} weight="semibold" align="center">
+      <TextoTematizado color={corTexto} weight="semibold" align="center">
         {titulo}
       </ThemedText>
 
-      <Spacer size="md" />
+      <Espacador size="md" />
 
       {metricas.map((metrica) => (
         <View key={metrica.legenda} style={estilos.item}>
-          <ThemedText variant="h1" color={corTexto} weight="bold" align="center">
+          <TextoTematizado variant="h1" color={corTexto} weight="bold" align="center">
             {metrica.valor}
           </ThemedText>
-          <ThemedText color={corTexto} align="center">
+          <TextoTematizado color={corTexto} align="center">
             {metrica.legenda}
           </ThemedText>
-          <Spacer size="md" />
+          <Espacador size="md" />
         </View>
       ))}
     </View>

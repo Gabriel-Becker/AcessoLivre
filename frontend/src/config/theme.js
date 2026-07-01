@@ -1,12 +1,12 @@
-export const defaultTheme = {
+﻿export const defaultTheme = {
   // Cores principais
   colors: {
-    // Primária (azul institucional)
+    // Primï¿½ria (azul institucional)
     primary: '#4A90E2',
     primaryLight: '#6BA3E8',
     primaryDark: '#3A7BC8',
     
-    // Secundária (acentos)
+    // Secundï¿½ria (acentos)
     secondary: '#2ECC71',
     secondaryLight: '#58D68D',
     secondaryDark: '#27AE60',
@@ -22,7 +22,7 @@ export const defaultTheme = {
     backgroundSecondary: '#F8F9FA',
     backgroundTertiary: '#E9ECEF',
     
-    // Superfícies (cards, modais)
+    // Superfï¿½cies (cards, modais)
     surface: '#FFFFFF',
     surfaceSecondary: '#F8F9FA',
     
@@ -46,7 +46,7 @@ export const defaultTheme = {
     shadow: 'rgba(0, 0, 0, 0.1)',
     shadowDark: 'rgba(0, 0, 0, 0.2)',
     
-    // Badges de acessibilidade (cores específicas do projeto)
+    // Badges de acessibilidade (cores especï¿½ficas do projeto)
     accessibility: {
       rampa: '#4A90E2',
       elevador: '#9B59B6',
@@ -87,7 +87,7 @@ export const defaultTheme = {
     },
   },
   
-  // Espaçamentos (padrão 8px)
+  // Espaï¿½amentos (padrï¿½o 8px)
   spacing: {
     xs: 4,
     sm: 8,
@@ -119,7 +119,7 @@ export const defaultTheme = {
     full: 999,
   },
   
-  // Sombras (elevação)
+  // Sombras (elevaï¿½ï¿½o)
   shadows: {
     none: {
       shadowColor: 'transparent',
@@ -161,12 +161,12 @@ export const defaultTheme = {
 
 export const highContrastTheme = {
   colors: {
-    // Primária (ciano brilhante para alto contraste)
+    // Primï¿½ria (ciano brilhante para alto contraste)
     primary: '#00F7EF',
     primaryLight: '#66FFF7',
     primaryDark: '#00CFC0',
     
-    // Secundária (verde mais escuro)
+    // Secundï¿½ria (verde mais escuro)
     secondary: '#1E7E34',
     secondaryLight: '#28A745',
     secondaryDark: '#155724',
@@ -182,11 +182,11 @@ export const highContrastTheme = {
     backgroundSecondary: '#0A0A0A',
     backgroundTertiary: '#141414',
     
-    // Superfícies
+    // Superfï¿½cies
     surface: '#1A1A1A',
     surfaceSecondary: '#2D2D2D',
     
-    // Texto (branco puro para máximo contraste)
+    // Texto (branco puro para mï¿½ximo contraste)
     textPrimary: '#FFFFFF',
     textSecondary: '#E0E0E0',
     textTertiary: '#B0B0B0',
@@ -217,7 +217,7 @@ export const highContrastTheme = {
     },
   },
   
-  // Tipografia (mesma estrutura, pode aumentar tamanhos se necessário)
+  // Tipografia (mesma estrutura, pode aumentar tamanhos se necessï¿½rio)
   typography: {
     fontSize: {
       xs: 12,
@@ -242,7 +242,7 @@ export const highContrastTheme = {
     },
   },
   
-  // Espaçamentos (iguais ao padrão)
+  // Espaï¿½amentos (iguais ao padrï¿½o)
   spacing: {
     xs: 4,
     sm: 8,

@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, Modal, TextInput, useWindowDimensions, Platform } from 'react-native';
-import { Container } from '../../components/layout';
-import { Button, Card } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Recipiente } from '../../components/layout';
+import { Botao, Card } from '../../components/ui';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import EditarUsuarioModal from '../../components/feedback/EditarUsuarioModal';
 import EditarLocalModal from '../../components/admin/EditarLocalModal';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/ContextoAutenticacao';
 import { useThemeContext } from '../../context/ThemeContext';
-import AdminService from '../../services/AdminService';
-import LocalService from '../../services/LocalService';
+import ServicoAdmin from '../../services/ServicoAdmin';
+import ServicoLocal from '../../services/ServicoLocal';
 import theme from '../../config/theme';
 import toastHelper from '../../utils/toastHelper';
 import { colunasUsuarios, colunasLocais } from '../../config/admin/colunasConfig';
@@ -68,10 +68,10 @@ export default function Admin() {
 
   const abas = useMemo(
     () => [
-      { key: 'usuarios', label: 'Usuários' },
+      { key: 'usuarios', label: 'UsuÃ¡rios' },
       { key: 'locais', label: 'Locais' },
-      { key: 'denuncias', label: 'Denúncias' },  
-      { key: 'relatorios', label: 'Relatórios' },
+      { key: 'denuncias', label: 'DenÃºncias' },  
+      { key: 'relatorios', label: 'RelatÃ³rios' },
     ],
     []
   );
@@ -85,7 +85,7 @@ export default function Admin() {
   const formatarRoleUsuario = (role) => {
     const roleNormalizada = String(role || 'ROLE_USER').trim().toUpperCase();
     if (roleNormalizada === 'ROLE_ADMIN') return 'Administrador';
-    return 'Usuário';
+    return 'UsuÃ¡rio';
   };
 
   const normalizarTexto = (texto) =>
@@ -97,45 +97,45 @@ export default function Admin() {
 
   const mapaCategorias = {
     COMERCIAL: 'Comercial',
-    PUBLICO: 'Público',
-    SAUDE: 'Saúde',
-    EDUCACAO: 'Educação',
+    PUBLICO: 'PÃºblico',
+    SAUDE: 'SaÃºde',
+    EDUCACAO: 'EducaÃ§Ã£o',
     LAZER: 'Lazer',
     TRANSPORTE: 'Transporte',
-    ALIMENTACAO: 'Alimentação',
+    ALIMENTACAO: 'AlimentaÃ§Ã£o',
     HOSPEDAGEM: 'Hospedagem',
-    SERVICOS: 'Serviços',
-    SEM_CATEGORIA: 'Não informado',
+    SERVICOS: 'ServiÃ§os',
+    SEM_CATEGORIA: 'NÃ£o informado',
   };
 
   const mapaStatusLocal = {
     ATIVO: 'Ativo',
     INATIVO: 'Inativo',
-    EM_ANALISE: 'Em análise',
+    EM_ANALISE: 'Em anÃ¡lise',
     REPORTADO: 'Reportado',
-    SEM_STATUS: 'Não informado',
+    SEM_STATUS: 'NÃ£o informado',
   };
 
   const mapaTiposAcessibilidade = {
     RAMPA: 'Rampa de acesso',
-    ELEVADOR: 'Elevador acessível',
+    ELEVADOR: 'Elevador acessÃ­vel',
     BANHEIRO_ADAPTADO: 'Banheiro adaptado',
-    PISO_TATIL: 'Piso tátil',
-    SINALIZACAO_BRAILLE: 'Sinalização em braille',
-    ESTACIONAMENTO: 'Estacionamento acessível',
-    ESPACO_AMPLO: 'Espaço amplo',
+    PISO_TATIL: 'Piso tÃ¡til',
+    SINALIZACAO_BRAILLE: 'SinalizaÃ§Ã£o em braille',
+    ESTACIONAMENTO: 'Estacionamento acessÃ­vel',
+    ESPACO_AMPLO: 'EspaÃ§o amplo',
     RECURSOS_AUDIOVISUAIS: 'Recursos audiovisuais',
     ATENDIMENTO_ESPECIALIZADO: 'Atendimento especializado',
-    MOBILIARIO_ADAPTADO: 'Mobiliário adaptado',
-    SEM_TIPO: 'Não informado',
+    MOBILIARIO_ADAPTADO: 'MobiliÃ¡rio adaptado',
+    SEM_TIPO: 'NÃ£o informado',
   };
 
   const mapaPerfis = {
     ADMIN: 'Administrador',
-    USUARIO: 'Usuário',
-    USUÁRIO: 'Usuário',
+    USUARIO: 'UsuÃ¡rio',
+    USUÃRIO: 'UsuÃ¡rio',
     ROLE_ADMIN: 'Administrador',
-    ROLE_USER: 'Usuário',
+    ROLE_USER: 'UsuÃ¡rio',
   };
 
   const formatarLabelPadrao = (valor) => String(valor || '')
@@ -156,7 +156,7 @@ export default function Admin() {
   };
 
   const formatarDataHoraRelatorio = (valor) => {
-    if (!valor) return 'Não disponível';
+    if (!valor) return 'NÃ£o disponÃ­vel';
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return String(valor);
     return new Intl.DateTimeFormat('pt-BR', {
@@ -177,10 +177,10 @@ export default function Admin() {
   const formatarPeriodoAplicado = () => {
     const inicio = retornoPeriodoBackend?.dataInicio;
     const fim = retornoPeriodoBackend?.dataFim;
-    if (!inicio && !fim) return 'Período completo (sem filtro)';
-    if (inicio && fim) return `${inicio} até ${fim}`;
+    if (!inicio && !fim) return 'PerÃ­odo completo (sem filtro)';
+    if (inicio && fim) return `${inicio} atÃ© ${fim}`;
     if (inicio) return `A partir de ${inicio}`;
-    return `Até ${fim}`;
+    return `AtÃ© ${fim}`;
   };
 
   const isMesAnoValido = (valor) => /^(0[1-9]|1[0-2])\/\d{4}$/.test(String(valor || '').trim());
@@ -261,7 +261,7 @@ export default function Admin() {
       setTotalPaginasUsuarios(pagina.totalPages);
       setTotalUsuarios(pagina.totalElements);
     } catch (e) {
-      setErro('Não foi possível carregar os usuários.');
+      setErro('NÃ£o foi possÃ­vel carregar os usuÃ¡rios.');
       setUsuarios([]);
     } finally {
       setCarregando(false);
@@ -278,7 +278,7 @@ export default function Admin() {
       setTotalPaginasLocais(pagina.totalPages);
       setTotalLocais(pagina.totalElements);
     } catch (e) {
-      setErro('Não foi possível carregar os locais.');
+      setErro('NÃ£o foi possÃ­vel carregar os locais.');
       setLocais([]);
     } finally {
       setCarregando(false);
@@ -308,7 +308,7 @@ export default function Admin() {
       setRelatorioUsuarios(dadosUsuarios || {});
       setRelatorioLocais(dadosLocais || {});
     } catch (e) {
-      setErro('Não foi possível carregar o resumo administrativo.');
+      setErro('NÃ£o foi possÃ­vel carregar o resumo administrativo.');
       setEstatisticas(null);
       setRelatorioUsuarios(null);
       setRelatorioLocais(null);
@@ -338,12 +338,12 @@ export default function Admin() {
     const fim = String(filtroDataFimInput || '').trim();
 
     if (inicio && !isMesAnoValido(inicio)) {
-      toastHelper.showError('Data inicial inválida. Use o formato MM/AAAA.', 'Filtro inválido');
+      toastHelper.showError('Data inicial invÃ¡lida. Use o formato MM/AAAA.', 'Filtro invÃ¡lido');
       return;
     }
 
     if (fim && !isMesAnoValido(fim)) {
-      toastHelper.showError('Data final inválida. Use o formato MM/AAAA.', 'Filtro inválido');
+      toastHelper.showError('Data final invÃ¡lida. Use o formato MM/AAAA.', 'Filtro invÃ¡lido');
       return;
     }
 
@@ -353,7 +353,7 @@ export default function Admin() {
     const chaveFim = fim ? Number(`${anoFim}${mesFim}`) : null;
 
     if (chaveInicio && chaveFim && chaveInicio > chaveFim) {
-      toastHelper.showError('A data inicial deve ser menor ou igual à data final.', 'Filtro inválido');
+      toastHelper.showError('A data inicial deve ser menor ou igual Ã  data final.', 'Filtro invÃ¡lido');
       return;
     }
 
@@ -381,7 +381,7 @@ export default function Admin() {
 
   const baixarArquivoRelatorio = async (blob, nomeArquivo) => {
     if (Platform.OS !== 'web') {
-      toastHelper.showInfo('No momento, o download de relatório está disponível no painel web.', 'Download indisponível no app');
+      toastHelper.showInfo('No momento, o download de relatÃ³rio estÃ¡ disponÃ­vel no painel web.', 'Download indisponÃ­vel no app');
       return;
     }
 
@@ -424,9 +424,9 @@ export default function Admin() {
       const fallback = `relatorio-${tipoRelatorioExportacao}.${formato}`;
       const nomeArquivo = extrairNomeArquivo(resposta?.headers, fallback);
       await baixarArquivoRelatorio(resposta?.data, nomeArquivo);
-      toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'Relatório exportado');
+      toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'RelatÃ³rio exportado');
     } catch (e) {
-      toastHelper.showError('Não foi possível exportar o relatório.', 'Erro na exportação');
+      toastHelper.showError('NÃ£o foi possÃ­vel exportar o relatÃ³rio.', 'Erro na exportaÃ§Ã£o');
     } finally {
       setExportandoRelatorio(false);
     }
@@ -484,7 +484,7 @@ export default function Admin() {
     setErro('');
     try {
       await AdminService.deletarUsuario(usuarioItem.idUsuario);
-      toastHelper.showSuccess('Usuário removido com sucesso.', 'Exclusão concluída');
+      toastHelper.showSuccess('UsuÃ¡rio removido com sucesso.', 'ExclusÃ£o concluÃ­da');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
         setPaginaUsuarios((p) => Math.max(0, p - 1));
@@ -492,9 +492,9 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o usuário.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel apagar o usuÃ¡rio.';
       setErro(mensagemErro);
-      toastHelper.showError(mensagemErro, 'Falha ao excluir usuário');
+      toastHelper.showError(mensagemErro, 'Falha ao excluir usuÃ¡rio');
     } finally {
       setCarregandoAcao(false);
     }
@@ -505,7 +505,7 @@ export default function Admin() {
     setErro('');
     try {
       await AdminService.reativarUsuario(usuarioItem.idUsuario);
-      toastHelper.showSuccess('Usuário reativado com sucesso.', 'Reativação concluída');
+      toastHelper.showSuccess('UsuÃ¡rio reativado com sucesso.', 'ReativaÃ§Ã£o concluÃ­da');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
         setPaginaUsuarios((p) => Math.max(0, p - 1));
@@ -513,9 +513,9 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível reativar o usuário.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel reativar o usuÃ¡rio.';
       setErro(mensagemErro);
-      toastHelper.showError(mensagemErro, 'Falha ao reativar usuário');
+      toastHelper.showError(mensagemErro, 'Falha ao reativar usuÃ¡rio');
     } finally {
       setCarregandoAcao(false);
     }
@@ -532,7 +532,7 @@ export default function Admin() {
 
     try {
       await LocalService.removerLocal(localItem.idLocal);
-      toastHelper.showSuccess('Local removido com sucesso.', 'Exclusão concluída');
+      toastHelper.showSuccess('Local removido com sucesso.', 'ExclusÃ£o concluÃ­da');
 
       if (locais.length === 1 && paginaLocais > 0) {
         setPaginaLocais((p) => Math.max(0, p - 1));
@@ -540,7 +540,7 @@ export default function Admin() {
         await carregarLocais();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o local.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel apagar o local.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao excluir local');
     } finally {
@@ -569,7 +569,7 @@ export default function Admin() {
 
   const renderPaginacao = ({ paginaAtual, totalPaginas, onAnterior, onProxima }) => (
     <View style={[styles.paginacao, ehMobile && styles.paginacaoEmpilhada]}>
-      <Button
+      <Botao
         variant="outline"
         size="small"
         onPress={onAnterior}
@@ -579,10 +579,10 @@ export default function Admin() {
       >
         Anterior
       </Button>
-      <ThemedText color={corSecundaria} altoContraste={isHighContrast}>
-        Página {paginaAtual + 1} de {totalPaginas}
+      <TextoTematizado color={corSecundaria} altoContraste={isHighContrast}>
+        PÃ¡gina {paginaAtual + 1} de {totalPaginas}
       </ThemedText>
-      <Button
+      <Botao
         variant="outline"
         size="small"
         onPress={onProxima}
@@ -590,7 +590,7 @@ export default function Admin() {
         altoContraste={isHighContrast}
         textStyle={{ color: isHighContrast ? t.colors.textOnPrimary : undefined }}
       >
-        Próxima
+        PrÃ³xima
       </Button>
     </View>
   );
@@ -602,18 +602,18 @@ export default function Admin() {
 
   const renderLinhaMetrica = (label, valor) => (
     <View key={label} style={styles.itemMetricaLinha}>
-      <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</ThemedText>
+      <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</ThemedText>
       <View style={[styles.badgeValorMetrica, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}>
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
       </View>
     </View>
   );
 
   const renderKpi = (titulo, valor) => (
     <View key={titulo} style={[styles.kpiCard, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}> 
-      <ThemedText size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</ThemedText>
-      <Spacer size="xs" />
-      <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+      <TextoTematizado size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</ThemedText>
+      <Espacador size="xs" />
+      <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
     </View>
   );
 
@@ -641,7 +641,7 @@ export default function Admin() {
     return (
       <>
         <BarraFiltroAdmin
-          titulo="Planilha de usuários"
+          titulo="Planilha de usuÃ¡rios"
           pesquisa={buscaUsuarios}
           onChangePesquisa={setBuscaUsuarios}
           pesquisaPlaceholder="Pesquisar por nome ou e-mail"
@@ -649,15 +649,15 @@ export default function Admin() {
           altoContraste={isHighContrast}
         />
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
 
         <TabelaPlanilhaAdmin
           colunas={colunas}
           dados={usuariosFiltrados}
           chaveExtractor={(item) => String(item.idUsuario)}
           renderVazio={
-            <ThemedText size="sm" color={corSecundaria} altoContraste={isHighContrast}>
-              Nenhum usuário encontrado com os filtros atuais.
+            <TextoTematizado size="sm" color={corSecundaria} altoContraste={isHighContrast}>
+              Nenhum usuÃ¡rio encontrado com os filtros atuais.
             </ThemedText>
           }
           carregando={carregando}
@@ -668,7 +668,7 @@ export default function Admin() {
           altoContraste={isHighContrast}
         />
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
 
         {renderPaginacao({
           paginaAtual: paginaUsuarios,
@@ -695,14 +695,14 @@ export default function Admin() {
           altoContraste={isHighContrast}
         />
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
 
         <TabelaPlanilhaAdmin
           colunas={colunas}
           dados={locaisFiltrados}
           chaveExtractor={(item) => String(item.idLocal)}
           renderVazio={
-            <ThemedText size="sm" color={corSecundaria} altoContraste={isHighContrast}>
+            <TextoTematizado size="sm" color={corSecundaria} altoContraste={isHighContrast}>
               Nenhum local encontrado com os filtros atuais.
             </ThemedText>
           }
@@ -711,7 +711,7 @@ export default function Admin() {
           altoContraste={isHighContrast}
         />
 
-        <Spacer size="sm" />
+        <Espacador size="sm" />
 
         {renderPaginacao({
           paginaAtual: paginaLocais,
@@ -726,10 +726,10 @@ export default function Admin() {
   const renderRelatorios = () => (
     <View style={styles.relatoriosContainer}>
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatório</ThemedText>
-        <Spacer size="sm" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatório busca todos os dados.</ThemedText>
-        <Spacer size="sm" />
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatÃ³rio</ThemedText>
+        <Espacador size="sm" />
+        <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatÃ³rio busca todos os dados.</ThemedText>
+        <Espacador size="sm" />
         <View style={styles.filtrosDataContainer}>
           <TextInput
             style={[styles.inputData, { color: t.colors.textPrimary, borderColor: t.colors.border, backgroundColor: corFundoDestaque }]}
@@ -754,26 +754,26 @@ export default function Admin() {
             inputMode="numeric"
           />
         </View>
-        <Spacer size="sm" />
+        <Espacador size="sm" />
         <View style={styles.filtrosDataAcoes}>
-          <Button variant="primary" size="small" onPress={aplicarFiltrosRelatorio} disabled={!isPeriodoRelatorioValido} altoContraste={isHighContrast}>Aplicar filtros</Button>
-          <Button variant="outline" size="small" onPress={limparFiltrosRelatorio} altoContraste={isHighContrast}>Limpar</Button>
+          <Botao variant="primary" size="small" onPress={aplicarFiltrosRelatorio} disabled={!isPeriodoRelatorioValido} altoContraste={isHighContrast}>Aplicar filtros</Button>
+          <Botao variant="outline" size="small" onPress={limparFiltrosRelatorio} altoContraste={isHighContrast}>Limpar</Button>
         </View>
 
-        <Spacer size="sm" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Exportar relatório (um por vez)</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="sm" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Exportar relatÃ³rio (um por vez)</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.filtrosDataAcoes}>
-          <Button
+          <Botao
             variant={tipoRelatorioExportacao === 'usuarios' ? 'primary' : 'outline'}
             size="small"
             onPress={() => setTipoRelatorioExportacao('usuarios')}
             disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
             altoContraste={isHighContrast}
           >
-            Usuários
+            UsuÃ¡rios
           </Button>
-          <Button
+          <Botao
             variant={tipoRelatorioExportacao === 'locais' ? 'primary' : 'outline'}
             size="small"
             onPress={() => setTipoRelatorioExportacao('locais')}
@@ -783,9 +783,9 @@ export default function Admin() {
             Locais
           </Button>
         </View>
-        <Spacer size="xs" />
+        <Espacador size="xs" />
         <View style={styles.filtrosDataAcoes}>
-          <Button
+          <Botao
             variant="outline"
             size="small"
             onPress={() => exportarRelatorio('csv')}
@@ -795,7 +795,7 @@ export default function Admin() {
           >
             Exportar CSV
           </Button>
-          <Button
+          <Botao
             variant="primary"
             size="small"
             onPress={() => exportarRelatorio('pdf')}
@@ -807,68 +807,68 @@ export default function Admin() {
           </Button>
         </View>
 
-        <Spacer size="sm" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-          Período aplicado: {formatarPeriodoAplicado()}
+        <Espacador size="sm" />
+        <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+          PerÃ­odo aplicado: {formatarPeriodoAplicado()}
         </ThemedText>
-        <Spacer size="xs" />
-        <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-          Última atualização: {formatarDataHoraRelatorio(retornoPeriodoBackend.geradoEm)}
+        <Espacador size="xs" />
+        <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+          Ãšltima atualizaÃ§Ã£o: {formatarDataHoraRelatorio(retornoPeriodoBackend.geradoEm)}
         </ThemedText>
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
-        <Spacer size="md" />
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
+        <Espacador size="md" />
         <View style={styles.gridKpis}>
-          {renderKpi('Total de usuários', formatarNumero(estatisticas?.totalUsuarios))}
-          {renderKpi('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
-          {renderKpi('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderKpi('Total de usuÃ¡rios', formatarNumero(estatisticas?.totalUsuarios))}
+          {renderKpi('UsuÃ¡rios ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderKpi('UsuÃ¡rios inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
           {renderKpi('Total de locais', formatarNumero(estatisticas?.totalLocais))}
-          {renderKpi('Total de avaliações', formatarNumero(estatisticas?.totalAvaliacoes))}
-          {renderKpi('Avaliações pendentes', formatarNumero(estatisticas?.avaliacoesPendentes))}
+          {renderKpi('Total de avaliaÃ§Ãµes', formatarNumero(estatisticas?.totalAvaliacoes))}
+          {renderKpi('AvaliaÃ§Ãµes pendentes', formatarNumero(estatisticas?.avaliacoesPendentes))}
         </View>
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Usuários</ThemedText>
-        <Spacer size="md" />
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>RelatÃ³rio de UsuÃ¡rios</ThemedText>
+        <Espacador size="md" />
         <View style={styles.listaMetricasContainer}>
-          {renderLinhaMetrica('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
-          {renderLinhaMetrica('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderLinhaMetrica('UsuÃ¡rios ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderLinhaMetrica('UsuÃ¡rios inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
           {renderLinhaMetrica('Administradores', formatarNumero(relatorioUsuarios?.totalAdmins))}
-          {renderLinhaMetrica('Usuários comuns', formatarNumero(relatorioUsuarios?.totalUsuariosComuns))}
-          {renderLinhaMetrica('Cadastros nos últimos 30 dias', formatarNumero(relatorioUsuarios?.cadastrosUltimos30Dias))}
+          {renderLinhaMetrica('UsuÃ¡rios comuns', formatarNumero(relatorioUsuarios?.totalUsuariosComuns))}
+          {renderLinhaMetrica('Cadastros nos Ãºltimos 30 dias', formatarNumero(relatorioUsuarios?.cadastrosUltimos30Dias))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por perfil</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por perfil</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioUsuarios?.distribuicaoPorPerfil || {}).map(([perfil, total]) => (
             renderLinhaMetrica(formatarLabelRelatorio(perfil, 'perfil'), formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Cadastros (últimos 6 meses)</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Cadastros (Ãºltimos 6 meses)</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioUsuarios?.cadastrosUltimosSeisMeses || {}).map(([mes, total]) => (
             renderLinhaMetrica(mes, formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Últimos usuários cadastrados</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Ãšltimos usuÃ¡rios cadastrados</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {(relatorioUsuarios?.ultimosUsuarios || []).map((item) => (
             <View key={String(item?.idUsuario)} style={styles.itemListaTexto}>
-              <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+              <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
                 {item?.nome || 'Sem nome'}
               </ThemedText>
-              <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
+              <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
                 {item?.email || 'Sem e-mail'}
               </ThemedText>
             </View>
@@ -877,62 +877,62 @@ export default function Admin() {
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <ThemedText variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Locais</ThemedText>
-        <Spacer size="md" />
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>RelatÃ³rio de Locais</ThemedText>
+        <Espacador size="md" />
         <View style={styles.listaMetricasContainer}>
           {renderLinhaMetrica('Total de locais', formatarNumero(relatorioLocais?.totalLocais))}
-          {renderLinhaMetrica('Locais com avaliação', formatarNumero(relatorioLocais?.locaisComAvaliacao))}
-          {renderLinhaMetrica('Locais sem avaliação', formatarNumero(relatorioLocais?.locaisSemAvaliacao))}
-          {renderLinhaMetrica('Média geral', Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2))}
-          {renderLinhaMetrica('Total de avaliações registradas', formatarNumero(relatorioLocais?.totalAvaliacoes))}
+          {renderLinhaMetrica('Locais com avaliaÃ§Ã£o', formatarNumero(relatorioLocais?.locaisComAvaliacao))}
+          {renderLinhaMetrica('Locais sem avaliaÃ§Ã£o', formatarNumero(relatorioLocais?.locaisSemAvaliacao))}
+          {renderLinhaMetrica('MÃ©dia geral', Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2))}
+          {renderLinhaMetrica('Total de avaliaÃ§Ãµes registradas', formatarNumero(relatorioLocais?.totalAvaliacoes))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Status dos locais</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Status dos locais</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorStatus || {}).map(([status, total]) => (
             renderLinhaMetrica(formatarLabelRelatorio(status, 'status'), formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por categoria</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por categoria</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorCategoria || {}).map(([categoria, total]) => (
             renderLinhaMetrica(formatarLabelRelatorio(categoria, 'categoria'), formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por estado</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por estado</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorEstado || {}).map(([estado, total]) => (
             renderLinhaMetrica(estado, formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Recursos de acessibilidade mais usados</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Recursos de acessibilidade mais usados</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorTipoAcessibilidade || {}).map(([tipo, total]) => (
             renderLinhaMetrica(formatarLabelRelatorio(tipo, 'acessibilidade'), formatarNumero(total))
           ))}
         </View>
 
-        <Spacer size="md" />
-        <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Locais mais bem avaliados</ThemedText>
-        <Spacer size="xs" />
+        <Espacador size="md" />
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Locais mais bem avaliados</ThemedText>
+        <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {(relatorioLocais?.locaisMaisBemAvaliados || []).map((item) => (
             <View key={String(item?.idLocal)} style={styles.itemListaTexto}>
-              <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>
+              <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
                 {item?.nome || 'Sem nome'} ({item?.cidade || '-'} / {item?.estado || '-'})
               </ThemedText>
-              <ThemedText size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
+              <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
                 Nota {Number(item?.avaliacaoMedia || 0).toFixed(2)}
               </ThemedText>
             </View>
@@ -943,19 +943,19 @@ export default function Admin() {
   );
 
   return (
-    <Container background={isHighContrast ? 'background' : 'backgroundSecondary'} scroll contentStyle={styles.scrollContent} altoContraste={isHighContrast}>
+    <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} scroll contentStyle={styles.scrollContent} altoContraste={isHighContrast}>
       <View style={[styles.pageShell, { paddingHorizontal: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
         <View style={styles.cabecalhoPagina}>
-          <ThemedText variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+          <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
             Painel Administrativo
           </ThemedText>
         </View>
 
-        <Spacer size="lg" />
+        <Espacador size="lg" />
 
         <View style={styles.abasContainer}>
           {abas.map((aba) => (
-            <Button
+            <Botao
               key={aba.key}
               variant={abaAtiva === aba.key ? 'primary' : 'outline'}
               size="small"
@@ -967,19 +967,19 @@ export default function Admin() {
           ))}
         </View>
 
-        <Spacer size="md" />
+        <Espacador size="md" />
 
         {carregando && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <ThemedText size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</ThemedText>
+            <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</ThemedText>
           </Card>
         ) : null}
 
         {erro && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <ThemedText color="error" size="sm" altoContraste={isHighContrast}>{erro}</ThemedText>
-            <Spacer size="sm" />
-            <Button
+            <TextoTematizado color="error" size="sm" altoContraste={isHighContrast}>{erro}</ThemedText>
+            <Espacador size="sm" />
+            <Botao
               variant="outline"
               size="small"
               onPress={tentarNovamente}
@@ -1034,26 +1034,26 @@ export default function Admin() {
               },
             ]}
           >
-            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
-              {usuarioParaDeletar?.ativo === false ? 'Reativar usuário' : 'Apagar usuário'}
+            <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+              {usuarioParaDeletar?.ativo === false ? 'Reativar usuÃ¡rio' : 'Apagar usuÃ¡rio'}
             </ThemedText>
 
-            <Spacer size="lg" />
+            <Espacador size="lg" />
 
             <View style={styles.modalMessage}>
-              <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
+              <TextoTematizado color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
                 Tem certeza que deseja {usuarioParaDeletar?.ativo === false ? 'reativar' : 'apagar'}{' '}
-                <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
+                <TextoTematizado weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {usuarioParaDeletar?.nome || ''}
                 </ThemedText>
-                ? {usuarioParaDeletar?.ativo === false ? 'O usuário poderá voltar a acessar a plataforma.' : 'Esta ação não pode ser desfeita.'}
+                ? {usuarioParaDeletar?.ativo === false ? 'O usuÃ¡rio poderÃ¡ voltar a acessar a plataforma.' : 'Esta aÃ§Ã£o nÃ£o pode ser desfeita.'}
               </ThemedText>
             </View>
 
-            <Spacer size="xl" />
+            <Espacador size="xl" />
 
             <View style={styles.modalBotoes}>
-              <Button
+              <Botao
                 variant={usuarioParaDeletar?.ativo === false ? 'primary' : 'danger'}
                 size="medium"
                 fullWidth
@@ -1071,9 +1071,9 @@ export default function Admin() {
                 {usuarioParaDeletar?.ativo === false ? 'Reativar' : 'Deletar'}
               </Button>
 
-              <Spacer size="xs" />
+              <Espacador size="xs" />
 
-              <Button
+              <Botao
                 variant="outline"
                 size="medium"
                 fullWidth
@@ -1107,26 +1107,26 @@ export default function Admin() {
               },
             ]}
           >
-            <ThemedText variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
+            <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
               Apagar local
             </ThemedText>
 
-            <Spacer size="lg" />
+            <Espacador size="lg" />
 
             <View style={styles.modalMessage}>
-              <ThemedText color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
+              <TextoTematizado color={corSecundaria} align="center" size="sm" altoContraste={isHighContrast}>
                 Tem certeza que deseja apagar{' '}
-                <ThemedText weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
+                <TextoTematizado weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {localParaDeletar?.nome || ''}
                 </ThemedText>
-                ? Esta ação não pode ser desfeita.
+                ? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
               </ThemedText>
             </View>
 
-            <Spacer size="xl" />
+            <Espacador size="xl" />
 
             <View style={styles.modalBotoes}>
-              <Button
+              <Botao
                 variant="danger"
                 size="medium"
                 fullWidth
@@ -1140,9 +1140,9 @@ export default function Admin() {
                 Deletar
               </Button>
 
-              <Spacer size="xs" />
+              <Espacador size="xs" />
 
-              <Button
+              <Botao
                 variant="outline"
                 size="medium"
                 fullWidth

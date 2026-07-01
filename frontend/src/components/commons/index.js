@@ -1,3 +1,3 @@
-export { default as Spacer } from './Spacer';
-export { default as Divider } from './Divider';
-export { default as ThemedText } from './ThemedText';
+﻿export { default as Espacador } from './Espacador';
+export { default as Divisor } from './Divisor';
+export { default as TextoTematizado } from './TextoTematizado';

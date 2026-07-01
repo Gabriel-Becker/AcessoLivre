@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
@@ -22,7 +22,7 @@ export default function ListaMarcadores({
           <View style={estilos.marcadorWrapper}>
             <View style={[estilos.marcador, { backgroundColor: corMarcador || t.colors.primary }]} />
           </View>
-          <ThemedText color={corTexto} style={estilos.texto}>
+          <TextoTematizado color={corTexto} style={estilos.texto}>
             {texto}
           </ThemedText>
         </View>
