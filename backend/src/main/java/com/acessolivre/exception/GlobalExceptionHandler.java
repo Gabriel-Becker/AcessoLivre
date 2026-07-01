@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.acessolivre.dto.response.ErrorResponseDTO;
+import com.acessolivre.dto.response.ErroResponseDTO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -112,18 +112,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-        AuthenticationException.TokenInvalidoException.class,
-        AuthenticationException.TokenExpiradoException.class,
-        AuthenticationException.TokenRevogadoException.class,
-        AuthenticationException.CredenciaisInvalidasException.class,
-        AuthenticationException.AcessoNegadoException.class
+        ExcecaoAutenticacao.TokenInvalidoException.class,
+        ExcecaoAutenticacao.TokenExpiradoException.class,
+        ExcecaoAutenticacao.TokenRevogadoException.class,
+        ExcecaoAutenticacao.CredenciaisInvalidasException.class,
+        ExcecaoAutenticacao.AcessoNegadoException.class
     })
     public ResponseEntity<Map<String, String>> handleAuthenticationExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("erro", ex.getMessage());
         
         HttpStatus status = HttpStatus.UNAUTHORIZED;
-        if (ex instanceof AuthenticationException.AcessoNegadoException) {
+        if (ex instanceof ExcecaoAutenticacao.AcessoNegadoException) {
             status = HttpStatus.FORBIDDEN;
         }
         
@@ -137,17 +137,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-        PasswordResetException.CodigoInvalidoException.class,
-        PasswordResetException.CodigoExpiradoException.class,
-        PasswordResetException.CodigoJaUtilizadoException.class,
-        PasswordResetException.EnvioEmailException.class
+        ExcecaoRecuperacaoSenha.CodigoInvalidoException.class,
+        ExcecaoRecuperacaoSenha.CodigoExpiradoException.class,
+        ExcecaoRecuperacaoSenha.CodigoJaUtilizadoException.class,
+        ExcecaoRecuperacaoSenha.EnvioEmailException.class
     })
     public ResponseEntity<Map<String, String>> handlePasswordResetExceptions(RuntimeException ex) {
         Map<String, String> errors = new HashMap<>();
         errors.put("erro", ex.getMessage());
         
         HttpStatus status = HttpStatus.BAD_REQUEST;
-        if (ex instanceof PasswordResetException.EnvioEmailException) {
+        if (ex instanceof ExcecaoRecuperacaoSenha.EnvioEmailException) {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         
@@ -160,9 +160,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, status);
     }
 
-    @ExceptionHandler(ValidationException.class)
+    @ExceptionHandler(ExcecaoValidacao.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+    public ResponseEntity<Map<String, String>> handleValidationException(ExcecaoValidacao ex) {
         Map<String, String> response = new HashMap<>();
         response.put("erro", "Erro de validação");
         response.put("mensagem", ex.getMessage());
@@ -170,7 +170,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDTO> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErroResponseDTO> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> detalhes = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -178,7 +178,7 @@ public class GlobalExceptionHandler {
             detalhes.put(fieldName, errorMessage);
         });
 
-        ErrorResponseDTO response = ErrorResponseDTO.builder()
+        ErroResponseDTO response = ErroResponseDTO.builder()
             .timestamp(LocalDateTime.now())
             .status(HttpStatus.BAD_REQUEST.value())
             .erro("Erro de validação")

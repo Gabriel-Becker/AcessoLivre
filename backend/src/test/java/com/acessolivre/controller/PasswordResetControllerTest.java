@@ -12,23 +12,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.acessolivre.dto.request.ForgotPasswordRequestDTO;
-import com.acessolivre.dto.request.ResetPasswordRequestDTO;
-import com.acessolivre.service.PasswordResetService;
+import com.acessolivre.dto.request.EsqueciSenhaRequestDTO;
+import com.acessolivre.dto.request.RedefinirSenhaRequestDTO;
+import com.acessolivre.service.RecuperacaoSenhaService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class PasswordResetControllerTest {
 
     @Mock
-    private PasswordResetService passwordResetService;
+    private RecuperacaoSenhaService passwordResetService;
 
     @InjectMocks
-    private PasswordResetController passwordResetController;
+    private RecuperacaoSenhaController passwordResetController;
 
     @Test
     void forgotPassword_DeveRetornarMensagemComStatus200() {
-        ForgotPasswordRequestDTO request = ForgotPasswordRequestDTO.builder()
+        EsqueciSenhaRequestDTO request = EsqueciSenhaRequestDTO.builder()
             .email("user@acessolivre.com")
             .build();
 
@@ -44,7 +44,7 @@ class PasswordResetControllerTest {
 
     @Test
     void resetPassword_DeveRetornarMensagemComStatus200() {
-        ResetPasswordRequestDTO request = ResetPasswordRequestDTO.builder()
+        RedefinirSenhaRequestDTO request = RedefinirSenhaRequestDTO.builder()
             .email("user@acessolivre.com")
             .code("123456")
             .novaSenha("NovaSenha@123")
@@ -62,7 +62,7 @@ class PasswordResetControllerTest {
 
     @Test
     void forgotPassword_DeveRetornarMensagemNeutraParaEmailInvalido() {
-        ForgotPasswordRequestDTO request = ForgotPasswordRequestDTO.builder()
+        EsqueciSenhaRequestDTO request = EsqueciSenhaRequestDTO.builder()
             .email("inexistente@test.com")
             .build();
 

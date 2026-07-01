@@ -24,7 +24,7 @@ public class EmailService {
     @Value("${spring.mail.properties.mail.from:noreply@acessolivre.com.br}")
     private String emailFrom;
 
-    public void sendPasswordResetCode(String email, String nome, String code) {
+    public void enviarCodigoRecuperacaoSenha(String email, String nome, String code) {
         try {
             Context context = new Context();
             context.setVariable("nome", nome);
@@ -48,7 +48,7 @@ public class EmailService {
         }
     }
 
-    public void sendPasswordResetConfirmation(String email, String nome) {
+    public void enviarConfirmacaoRecuperacaoSenha(String email, String nome) {
         try {
             Context context = new Context();
             context.setVariable("nome", nome);

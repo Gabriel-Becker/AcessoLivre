@@ -1,6 +1,6 @@
 package com.acessolivre.validation;
 
-import com.acessolivre.util.TelefoneValidator;
+import com.acessolivre.util.ValidadorTelefone;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -11,6 +11,6 @@ public class TelefoneValidoValidator implements ConstraintValidator<TelefoneVali
         if (telefone == null || telefone.trim().isEmpty()) {
             return true;
         }
-        return TelefoneValidator.isValid(telefone);
+        return ValidadorTelefone.ehValido(telefone);
     }
 }

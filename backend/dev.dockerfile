@@ -20,9 +20,16 @@ if [ ! -s "$KEY_DIR/app.key" ]; then \n\
 else \n\
     echo "✅ Chaves RSA existentes encontradas." \n\
 fi \n\
+FIRST_RUN=true \n\
 while true; do \n\
-    mvn compile; \n\
-    mvn spring-boot:run -Dspring-boot.run.fork=false; \n\
+    if [ "$FIRST_RUN" = "true" ]; then \n\
+        echo "🧹 Limpando classes obsoletas..." \n\
+        mvn clean compile -q; \n\
+        FIRST_RUN=false \n\
+    else \n\
+        mvn compile -q; \n\
+    fi \n\
+    mvn spring-boot:run -Dspring-boot.run.fork=false -Dmaven.test.skip=true; \n\
     echo "♻️ Reiniciando devido a mudanças..."; \n\
     sleep 2; \n\
 done \n\

@@ -8,19 +8,19 @@ class NomeValidatorTest {
 
     @Test
     void normalize_DeveRetornarNuloQuandoEntradaNula() {
-        assertNull(NomeValidator.normalize(null));
+        assertNull(ValidadorNome.normalizar(null));
     }
 
     @Test
     void normalize_DeveNormalizarEspacosECapitalizarTodasAsPalavras() {
-        String nomeNormalizado = NomeValidator.normalize("  teste   um   local  ");
+        String nomeNormalizado = ValidadorNome.normalizar("  teste   um   local  ");
 
         assertEquals("Teste Um Local", nomeNormalizado);
     }
 
     @Test
     void normalize_DeveConverterPalavrasComCaixaMista() {
-        String nomeNormalizado = NomeValidator.normalize("mArIa dA sIlVa");
+        String nomeNormalizado = ValidadorNome.normalizar("mArIa dA sIlVa");
 
         assertEquals("Maria Da Silva", nomeNormalizado);
     }

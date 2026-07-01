@@ -32,14 +32,14 @@ import com.acessolivre.model.TokenRevogado;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.TokenRevogadoRepository;
 import com.acessolivre.repository.UsuarioRepository;
-import com.acessolivre.service.TwoFactorService;
+import com.acessolivre.service.DoisFatoresService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class AuthenticationServiceTest {
 
     @Mock
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private TokenRevogadoRepository tokenRevogadoRepository;
@@ -51,13 +51,13 @@ class AuthenticationServiceTest {
     private UsuarioRepository usuarioRepository;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private ServicoTentativasLogin loginAttemptService;
 
     @Mock
-    private TwoFactorService twoFactorService;
+    private DoisFatoresService twoFactorService;
 
     @InjectMocks
-    private AuthenticationService authenticationService;
+    private ServicoAutenticacao authenticationService;
 
     @Test
     void login_DeveRetornarTokenQuandoCredenciaisSaoValidas() {
@@ -68,7 +68,7 @@ class AuthenticationServiceTest {
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(loginAttemptService.estaBloqueado(email)).thenReturn(false);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
-        when(twoFactorService.isTwoFactorEnabledByEmail(email)).thenReturn(false);
+        when(twoFactorService.duasFatoresAtivadosPorEmail(email)).thenReturn(false);
         when(jwtService.gerarToken(eq(auth), eq(Boolean.TRUE))).thenReturn("jwt-token");
 
         String token = authenticationService.login(email, "Senha@123", true, null);
@@ -103,7 +103,7 @@ class AuthenticationServiceTest {
 
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(loginAttemptService.estaBloqueado(email)).thenReturn(true);
-        when(loginAttemptService.getBloqueioExpiraEm(email)).thenReturn(LocalDateTime.now().plusMinutes(10));
+        when(loginAttemptService.obterExpiracaoBloqueio(email)).thenReturn(LocalDateTime.now().plusMinutes(10));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
             () -> authenticationService.login(email, "Senha@123", false, null));
@@ -134,7 +134,7 @@ class AuthenticationServiceTest {
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(loginAttemptService.estaBloqueado(email)).thenReturn(false);
 
-        EmailNotVerifiedException ex = assertThrows(EmailNotVerifiedException.class,
+        ExcecaoEmailNaoVerificado ex = assertThrows(ExcecaoEmailNaoVerificado.class,
             () -> authenticationService.login(email, "Senha@123", false, null));
 
         assertNotNull(ex);
@@ -152,9 +152,9 @@ class AuthenticationServiceTest {
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(loginAttemptService.estaBloqueado(email)).thenReturn(false);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
-        when(twoFactorService.isTwoFactorEnabledByEmail(email)).thenReturn(true);
+        when(twoFactorService.duasFatoresAtivadosPorEmail(email)).thenReturn(true);
 
-        TwoFactorRequiredException ex = assertThrows(TwoFactorRequiredException.class,
+        ExcecaoDoisFatoresObrigatorio ex = assertThrows(ExcecaoDoisFatoresObrigatorio.class,
             () -> authenticationService.login(email, "Senha@123", false, null));
 
         assertNotNull(ex);
@@ -239,14 +239,14 @@ class AuthenticationServiceTest {
 
     @Test
     void validateToken_DeveRetornarFalseQuandoTokenRevogado() {
-        when(jwtService.isTokenRevogado("token-r")).thenReturn(true);
+        when(jwtService.tokenEhRevogado("token-r")).thenReturn(true);
 
         assertFalse(authenticationService.validateToken("token-r"));
     }
 
     @Test
     void validateToken_DeveRetornarFalseQuandoUsernameNulo() {
-        when(jwtService.isTokenRevogado("token-x")).thenReturn(false);
+        when(jwtService.tokenEhRevogado("token-x")).thenReturn(false);
         when(jwtService.extrairNomeUsuario("token-x")).thenReturn(null);
 
         assertFalse(authenticationService.validateToken("token-x"));
@@ -254,7 +254,7 @@ class AuthenticationServiceTest {
 
     @Test
     void validateToken_DeveRetornarFalseQuandoUsuarioNaoAtivo() {
-        when(jwtService.isTokenRevogado("token-z")).thenReturn(false);
+        when(jwtService.tokenEhRevogado("token-z")).thenReturn(false);
         when(jwtService.extrairNomeUsuario("token-z")).thenReturn("user@teste.com");
         when(usuarioRepository.findByEmailAndAtivoTrue("user@teste.com")).thenReturn(Optional.empty());
 
@@ -265,7 +265,7 @@ class AuthenticationServiceTest {
     void validateToken_DeveRetornarTrueQuandoTokenValido() {
         Usuario usuario = criarUsuario(33L, "ok@teste.com", true, true);
 
-        when(jwtService.isTokenRevogado("token-ok")).thenReturn(false);
+        when(jwtService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.extrairNomeUsuario("token-ok")).thenReturn("ok@teste.com");
         when(usuarioRepository.findByEmailAndAtivoTrue("ok@teste.com")).thenReturn(Optional.of(usuario));
 

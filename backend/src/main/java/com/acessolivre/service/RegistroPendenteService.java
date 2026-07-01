@@ -13,7 +13,7 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
-import com.acessolivre.util.NomeValidator;
+import com.acessolivre.util.ValidadorNome;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class RegistroPendenteService {
         boolean isPrimeiroUsuario = usuarioRepository.count() == 0;
 
         Usuario usuario = Usuario.builder()
-            .nome(NomeValidator.normalize(nome))
+            .nome(ValidadorNome.normalizar(nome))
             .email(email)
             .role(isPrimeiroUsuario ? Role.ROLE_ADMIN : Role.ROLE_USER)
             .emailVerified(true)

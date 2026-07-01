@@ -61,7 +61,7 @@ class ModelGettersSettersTest {
 
     @Test
     void testPasswordResetCode() {
-        PasswordResetCode code = new PasswordResetCode();
+        CodigoRecuperacaoSenha code = new CodigoRecuperacaoSenha();
         code.setId(1L);
         code.setCode("123456");
         assertEquals(1L, code.getId());
@@ -70,7 +70,7 @@ class ModelGettersSettersTest {
 
     @Test
     void testTwoFactorRecoveryCode() {
-        TwoFactorRecoveryCode code = new TwoFactorRecoveryCode();
+        CodigoRecuperacaoDoisFatores code = new CodigoRecuperacaoDoisFatores();
         code.setId(1L);
         code.setCodigo("abcdef");
         assertEquals(1L, code.getId());

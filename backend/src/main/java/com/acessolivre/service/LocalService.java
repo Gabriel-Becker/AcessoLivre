@@ -30,7 +30,7 @@ import com.acessolivre.repository.AvaliacaoRepository;
 import com.acessolivre.repository.EnderecoRepository;
 import com.acessolivre.repository.LocalRepository;
 import com.acessolivre.repository.UsuarioRepository;
-import com.acessolivre.util.NomeValidator;
+import com.acessolivre.util.ValidadorNome;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -224,7 +224,7 @@ public class LocalService {
 
     @Transactional
     public Local salvar(LocalRequestDTO dto) {
-        dto.setNome(NomeValidator.normalize(dto.getNome()));
+        dto.setNome(ValidadorNome.normalizar(dto.getNome()));
         log.info("Salvando novo local: nome={}", dto.getNome());
 
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
@@ -235,7 +235,7 @@ public class LocalService {
         if (authId == null) {
             throw new AccessDeniedException("Operação requer autenticação");
         }
-        if (!authId.equals(dto.getIdUsuario()) && !isUsuarioAdminAutenticado()) {
+        if (!authId.equals(dto.getIdUsuario()) && !ehUsuarioAdminAutenticado()) {
             throw new AccessDeniedException("Não autorizado a criar local para outro usuário");
         }
 
@@ -260,7 +260,7 @@ public class LocalService {
     
     @Transactional
     public Optional<Local> atualizar(Long id, LocalRequestDTO dto) {
-        dto.setNome(NomeValidator.normalize(dto.getNome()));
+        dto.setNome(ValidadorNome.normalizar(dto.getNome()));
         log.info("Atualizando local: id={}", id);
 
         if (dto.getTiposAcessibilidade() == null || dto.getTiposAcessibilidade().isEmpty()) {
@@ -271,7 +271,7 @@ public class LocalService {
             if (authId == null) {
                 throw new AccessDeniedException("Operação requer autenticação");
             }
-            if (!isUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
+            if (!ehUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
                 throw new AccessDeniedException("Não autorizado a atualizar este local");
             }
             Usuario usuario = validarUsuario(dto.getIdUsuario());
@@ -328,7 +328,7 @@ public class LocalService {
         if (authId == null) {
             throw new AccessDeniedException("Operação requer autenticação");
         }
-        if (!isUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
+        if (!ehUsuarioAdminAutenticado() && !local.getUsuario().getIdUsuario().equals(authId)) {
             throw new AccessDeniedException("Não autorizado a deletar este local");
         }
         
@@ -385,7 +385,7 @@ public class LocalService {
             novoPai = localRepository.findById(idNovoPai)
                     .orElseThrow(() -> new IllegalArgumentException("Local pai não encontrado"));
             
-            if (isCicloHierarquico(novoPai, idLocal)) {
+            if (temCicloHierarquico(novoPai, idLocal)) {
                 throw new IllegalArgumentException("Não é possível mover: esta operação criaria um ciclo na hierarquia");
             }
             
@@ -475,7 +475,7 @@ public class LocalService {
             );
         }
         
-        if (idLocalAtual != null && isCicloHierarquico(localPrincipal, idLocalAtual)) {
+        if (idLocalAtual != null && temCicloHierarquico(localPrincipal, idLocalAtual)) {
             throw new IllegalArgumentException("Esta operação criaria um ciclo na hierarquia");
         }
     }
@@ -506,7 +506,7 @@ public class LocalService {
         return profundidade;
     }
     
-    private boolean isCicloHierarquico(Local local, Long idLocalFilho) {
+    private boolean temCicloHierarquico(Local local, Long idLocalFilho) {
         Local atual = local;
         while (atual != null) {
             if (atual.getIdLocal().equals(idLocalFilho)) {
@@ -528,7 +528,7 @@ public class LocalService {
         }
     }
 
-    private boolean isUsuarioAdminAutenticado() {
+    private boolean ehUsuarioAdminAutenticado() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !auth.isAuthenticated()) return false;
@@ -546,8 +546,8 @@ public class LocalService {
         return obterIdUsuarioAutenticado();
     }
 
-    public boolean isUsuarioAdminAutenticadoPublic() {
-        return isUsuarioAdminAutenticado();
+    public boolean ehUsuarioAdminAutenticadoPublico() {
+        return ehUsuarioAdminAutenticado();
     }
     
     private void validarExistenciaLocal(Long idLocal) {

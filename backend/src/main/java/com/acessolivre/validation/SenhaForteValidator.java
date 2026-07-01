@@ -1,6 +1,6 @@
 package com.acessolivre.validation;
 
-import com.acessolivre.util.PasswordValidator;
+import com.acessolivre.util.ValidadorSenha;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -12,7 +12,7 @@ public class SenhaForteValidator implements ConstraintValidator<SenhaForte, Stri
             return true;
         }
         
-        String message = PasswordValidator.getStrengthMessage(password);
+        String message = ValidadorSenha.obterMensagemForca(password);
         if (message != null) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(message)

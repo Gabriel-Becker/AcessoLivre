@@ -1,12 +1,12 @@
 package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.DenunciaRequestDTO;
-import com.acessolivre.dto.request.StatusUpdateRequestDTO;
+import com.acessolivre.dto.request.AtualizarStatusRequestDTO;
 import com.acessolivre.dto.response.DenunciaResponseDTO;
 import com.acessolivre.dto.response.ResolucaoDenunciaResponseDTO;
 import com.acessolivre.enums.StatusDenuncia;
 import com.acessolivre.enums.TipoDenuncia;
-import com.acessolivre.security.AuthenticationFacade;
+import com.acessolivre.security.FachadaAutenticacao;
 import com.acessolivre.service.DenunciaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,14 +36,14 @@ import java.util.Map;
 public class DenunciaController {
 
     private final DenunciaService denunciaService;
-    private final AuthenticationFacade authenticationFacade;
+    private final FachadaAutenticacao authenticationFacade;
 
     @PostMapping
     @Operation(summary = "Criar uma nova denúncia")
     public ResponseEntity<DenunciaResponseDTO> criarDenuncia(@Valid @RequestBody DenunciaRequestDTO request) {
         log.info("Requisição para criar denúncia - Tipo: {}, TargetId: {}", request.getTipo(), request.getTargetId());
         
-        Long usuarioId = authenticationFacade.getAuthenticatedUserId();
+        Long usuarioId = authenticationFacade.obterIdUsuarioAutenticado();
         
         DenunciaResponseDTO response = denunciaService.criarDenuncia(request, usuarioId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -84,10 +84,10 @@ public class DenunciaController {
     @Operation(summary = "Atualizar status da denúncia")
     public ResponseEntity<DenunciaResponseDTO> atualizarStatus(
             @PathVariable Long id,
-            @Valid @RequestBody StatusUpdateRequestDTO request,
+            @Valid @RequestBody AtualizarStatusRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        String resolvidoPor = authenticationFacade.obterEmailUsuarioAutenticado();
         
         DenunciaResponseDTO response = denunciaService.atualizarStatus(
                 id, request.getStatus(), resolvidoPor, request.getObservacoes());
@@ -99,7 +99,7 @@ public class DenunciaController {
     public ResponseEntity<ResolucaoDenunciaResponseDTO> resolverDenuncia(@PathVariable Long id) {
         log.info("Requisição para resolver denúncia - ID: {}", id);
         
-        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        String resolvidoPor = authenticationFacade.obterEmailUsuarioAutenticado();
         
         ResolucaoDenunciaResponseDTO response = denunciaService.resolverDenuncia(id, resolvidoPor);
         return ResponseEntity.ok(response);
@@ -112,7 +112,7 @@ public class DenunciaController {
             @RequestBody(required = false) Map<String, String> request) {
         log.info("Requisição para rejeitar denúncia - ID: {}", id);
         
-        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        String resolvidoPor = authenticationFacade.obterEmailUsuarioAutenticado();
         String observacoes = request != null ? request.get("observacoes") : null;
         
         ResolucaoDenunciaResponseDTO response = denunciaService.rejeitarDenuncia(id, resolvidoPor, observacoes);
@@ -126,7 +126,7 @@ public class DenunciaController {
         List<Long> ids = (List<Long>) request.get("ids");
         StatusDenuncia status = StatusDenuncia.valueOf((String) request.get("status"));
         
-        String resolvidoPor = authenticationFacade.getAuthenticatedUserEmail();
+        String resolvidoPor = authenticationFacade.obterEmailUsuarioAutenticado();
         
         ids.forEach(id -> denunciaService.atualizarStatus(id, status, resolvidoPor, null));
         return ResponseEntity.noContent().build();
@@ -152,7 +152,7 @@ public class DenunciaController {
             @RequestParam TipoDenuncia tipo,
             @RequestParam Long targetId) {
         
-        Long usuarioId = authenticationFacade.getAuthenticatedUserId();
+        Long usuarioId = authenticationFacade.obterIdUsuarioAutenticado();
         
         boolean jaDenunciou = denunciaService.usuarioJaDenunciou(usuarioId, tipo, targetId);
         return ResponseEntity.ok(Map.of("reported", jaDenunciou));

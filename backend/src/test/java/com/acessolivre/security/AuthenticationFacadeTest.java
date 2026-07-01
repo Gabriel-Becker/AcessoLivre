@@ -24,7 +24,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import com.acessolivre.enums.Role;
-import com.acessolivre.exception.AuthenticationException;
+import com.acessolivre.exception.ExcecaoAutenticacao;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.UsuarioRepository;
 
@@ -36,7 +36,7 @@ class AuthenticationFacadeTest {
     private UsuarioRepository usuarioRepository;
 
     @InjectMocks
-    private AuthenticationFacade authenticationFacade;
+    private FachadaAutenticacao authenticationFacade;
 
     @AfterEach
     void limparContexto() {
@@ -47,7 +47,7 @@ class AuthenticationFacadeTest {
     void getAuthenticatedUser_DeveLancarQuandoNaoHaAutenticacao() {
         SecurityContextHolder.clearContext();
 
-        AuthenticationException ex = assertThrows(AuthenticationException.class,
+        ExcecaoAutenticacao ex = assertThrows(ExcecaoAutenticacao.class,
             () -> authenticationFacade.getAuthenticatedUser());
 
         assertEquals("Usuário não autenticado", ex.getMessage());
@@ -123,7 +123,7 @@ class AuthenticationFacadeTest {
         when(authentication.getName()).thenReturn("fallback@email.com");
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String email = authenticationFacade.getAuthenticatedUserEmail();
+        String email = authenticationFacade.obterEmailUsuarioAutenticado();
 
         assertEquals("fallback@email.com", email);
     }
@@ -135,7 +135,7 @@ class AuthenticationFacadeTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         when(usuarioRepository.findByEmail("naoexiste@email.com")).thenReturn(Optional.empty());
 
-        AuthenticationException ex = assertThrows(AuthenticationException.class,
+        ExcecaoAutenticacao ex = assertThrows(ExcecaoAutenticacao.class,
             () -> authenticationFacade.getAuthenticatedUser());
 
         assertEquals("Usuário não encontrado: naoexiste@email.com", ex.getMessage());
@@ -155,7 +155,7 @@ class AuthenticationFacadeTest {
             .build();
         when(usuarioRepository.findByEmail("id@email.com")).thenReturn(Optional.of(usuario));
 
-        Long id = authenticationFacade.getAuthenticatedUserId();
+        Long id = authenticationFacade.obterIdUsuarioAutenticado();
 
         assertEquals(77L, id);
     }
@@ -166,7 +166,7 @@ class AuthenticationFacadeTest {
         authentication.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        assertTrue(authenticationFacade.hasPermission("ROLE_ADMIN"));
+        assertTrue(authenticationFacade.temPermissao("ROLE_ADMIN"));
     }
 
     @Test
@@ -176,7 +176,7 @@ class AuthenticationFacadeTest {
         when(authentication.getName()).thenReturn("anonymousUser");
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        assertThrows(AuthenticationException.class, () -> authenticationFacade.getAuthenticatedUserEmail());
+        assertThrows(ExcecaoAutenticacao.class, () -> authenticationFacade.obterEmailUsuarioAutenticado());
     }
 
     @Test
@@ -189,7 +189,7 @@ class AuthenticationFacadeTest {
         authentication.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String email = authenticationFacade.getAuthenticatedUserEmail();
+        String email = authenticationFacade.obterEmailUsuarioAutenticado();
 
         assertNotNull(email);
         assertEquals("jwt2@email.com", email);

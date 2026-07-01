@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class CustomUserDetailsServiceTest {
 
     @InjectMocks
-    private CustomUserDetailsService customUserDetailsService;
+    private ServicoDetalhesUsuario customUserDetailsService;
 
     @Mock
     private UsuarioAutenticarRepository usuarioAutenticarRepository;

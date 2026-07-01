@@ -10,16 +10,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
-import com.acessolivre.dto.response.TwoFactorRecoveryCodeResponseDTO;
-import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.dto.request.CodigoRecuperacaoDoisFatoresRequestDTO;
+import com.acessolivre.dto.response.CodigoRecuperacaoDoisFatoresResponseDTO;
+import com.acessolivre.model.CodigoRecuperacaoDoisFatores;
 import com.acessolivre.model.Usuario;
 
 class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void toEntity_DeveRetornarNull_QuandoDtoForNull() {
-        assertNull(TwoFactorRecoveryCodeMapper.toEntity(null, Usuario.builder().idUsuario(1L).build()));
+        assertNull(CodigoRecuperacaoDoisFatoresMapper.toEntity(null, Usuario.builder().idUsuario(1L).build()));
     }
 
     @Test
@@ -27,7 +27,7 @@ class TwoFactorRecoveryCodeMapperTest {
         LocalDateTime criacao = LocalDateTime.of(2026, 6, 11, 8, 0);
         LocalDateTime expiracao = LocalDateTime.of(2026, 6, 18, 8, 0);
 
-        TwoFactorRecoveryCodeRequestDTO dto = TwoFactorRecoveryCodeRequestDTO.builder()
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = CodigoRecuperacaoDoisFatoresRequestDTO.builder()
             .codigo("  CODIGO-123  ")
             .dataCriacao(criacao)
             .dataExpiracao(expiracao)
@@ -37,7 +37,7 @@ class TwoFactorRecoveryCodeMapperTest {
 
         Usuario usuario = Usuario.builder().idUsuario(9L).build();
 
-        TwoFactorRecoveryCode entity = TwoFactorRecoveryCodeMapper.toEntity(dto, usuario);
+        CodigoRecuperacaoDoisFatores entity = CodigoRecuperacaoDoisFatoresMapper.toEntity(dto, usuario);
 
         assertNotNull(entity);
         assertEquals("CODIGO-123", entity.getCodigo());
@@ -49,14 +49,14 @@ class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void toResponse_DeveRetornarNull_QuandoEntidadeForNull() {
-        assertNull(TwoFactorRecoveryCodeMapper.toResponse(null));
+        assertNull(CodigoRecuperacaoDoisFatoresMapper.toResponse(null));
     }
 
     @Test
     void toResponse_DeveMapearCampos_ComUsuario() {
         Usuario usuario = Usuario.builder().idUsuario(77L).build();
 
-        TwoFactorRecoveryCode entity = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores entity = CodigoRecuperacaoDoisFatores.builder()
             .id(5L)
             .codigo("XYZ-999")
             .dataCriacao(LocalDateTime.of(2026, 6, 10, 10, 0))
@@ -65,7 +65,7 @@ class TwoFactorRecoveryCodeMapperTest {
             .usuario(usuario)
             .build();
 
-        TwoFactorRecoveryCodeResponseDTO response = TwoFactorRecoveryCodeMapper.toResponse(entity);
+        CodigoRecuperacaoDoisFatoresResponseDTO response = CodigoRecuperacaoDoisFatoresMapper.toResponse(entity);
 
         assertNotNull(response);
         assertEquals(5L, response.getId());
@@ -76,7 +76,7 @@ class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void toResponse_DeveMapearUsuarioIdNull_QuandoUsuarioAusente() {
-        TwoFactorRecoveryCode entity = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores entity = CodigoRecuperacaoDoisFatores.builder()
             .id(6L)
             .codigo("SEM-USUARIO")
             .dataCriacao(LocalDateTime.of(2026, 6, 10, 11, 0))
@@ -85,7 +85,7 @@ class TwoFactorRecoveryCodeMapperTest {
             .usuario(null)
             .build();
 
-        TwoFactorRecoveryCodeResponseDTO response = TwoFactorRecoveryCodeMapper.toResponse(entity);
+        CodigoRecuperacaoDoisFatoresResponseDTO response = CodigoRecuperacaoDoisFatoresMapper.toResponse(entity);
 
         assertNotNull(response);
         assertNull(response.getUsuarioId());
@@ -93,12 +93,12 @@ class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void fromEntityList_DeveRetornarNull_QuandoListaForNull() {
-        assertNull(TwoFactorRecoveryCodeMapper.fromEntityList(null));
+        assertNull(CodigoRecuperacaoDoisFatoresMapper.fromEntityList(null));
     }
 
     @Test
     void fromEntityList_DeveConverterLista() {
-        TwoFactorRecoveryCode item1 = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores item1 = CodigoRecuperacaoDoisFatores.builder()
             .id(1L)
             .codigo("A")
             .dataCriacao(LocalDateTime.now())
@@ -106,7 +106,7 @@ class TwoFactorRecoveryCodeMapperTest {
             .utilizado(false)
             .build();
 
-        TwoFactorRecoveryCode item2 = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores item2 = CodigoRecuperacaoDoisFatores.builder()
             .id(2L)
             .codigo("B")
             .dataCriacao(LocalDateTime.now())
@@ -114,8 +114,8 @@ class TwoFactorRecoveryCodeMapperTest {
             .utilizado(true)
             .build();
 
-        List<TwoFactorRecoveryCodeResponseDTO> response =
-            TwoFactorRecoveryCodeMapper.fromEntityList(List.of(item1, item2));
+        List<CodigoRecuperacaoDoisFatoresResponseDTO> response =
+            CodigoRecuperacaoDoisFatoresMapper.fromEntityList(List.of(item1, item2));
 
         assertNotNull(response);
         assertEquals(2, response.size());
@@ -125,9 +125,9 @@ class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void updateEntity_DeveRetornarMesmaEntidade_QuandoDtoForNull() {
-        TwoFactorRecoveryCode entity = TwoFactorRecoveryCode.builder().id(30L).codigo("ORIGINAL").build();
+        CodigoRecuperacaoDoisFatores entity = CodigoRecuperacaoDoisFatores.builder().id(30L).codigo("ORIGINAL").build();
 
-        TwoFactorRecoveryCode atualizado = TwoFactorRecoveryCodeMapper.updateEntity(entity, null, null);
+        CodigoRecuperacaoDoisFatores atualizado = CodigoRecuperacaoDoisFatoresMapper.updateEntity(entity, null, null);
 
         assertSame(entity, atualizado);
         assertEquals("ORIGINAL", atualizado.getCodigo());
@@ -135,7 +135,7 @@ class TwoFactorRecoveryCodeMapperTest {
 
     @Test
     void updateEntity_DeveRetornarNull_QuandoEntidadeForNull() {
-        TwoFactorRecoveryCodeRequestDTO dto = TwoFactorRecoveryCodeRequestDTO.builder()
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = CodigoRecuperacaoDoisFatoresRequestDTO.builder()
             .codigo("NOVO")
             .dataCriacao(LocalDateTime.now())
             .dataExpiracao(LocalDateTime.now().plusDays(1))
@@ -143,7 +143,7 @@ class TwoFactorRecoveryCodeMapperTest {
             .usuarioId(1L)
             .build();
 
-        assertNull(TwoFactorRecoveryCodeMapper.updateEntity(null, dto, null));
+        assertNull(CodigoRecuperacaoDoisFatoresMapper.updateEntity(null, dto, null));
     }
 
     @Test
@@ -151,12 +151,12 @@ class TwoFactorRecoveryCodeMapperTest {
         LocalDateTime criacao = LocalDateTime.of(2026, 6, 11, 9, 30);
         LocalDateTime expiracao = LocalDateTime.of(2026, 6, 20, 9, 30);
 
-        TwoFactorRecoveryCode entity = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores entity = CodigoRecuperacaoDoisFatores.builder()
             .id(40L)
             .codigo("ANTIGO")
             .build();
 
-        TwoFactorRecoveryCodeRequestDTO dto = TwoFactorRecoveryCodeRequestDTO.builder()
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = CodigoRecuperacaoDoisFatoresRequestDTO.builder()
             .codigo("  NOVO-CODIGO  ")
             .dataCriacao(criacao)
             .dataExpiracao(expiracao)
@@ -166,7 +166,7 @@ class TwoFactorRecoveryCodeMapperTest {
 
         Usuario usuario = Usuario.builder().idUsuario(55L).build();
 
-        TwoFactorRecoveryCode atualizado = TwoFactorRecoveryCodeMapper.updateEntity(entity, dto, usuario);
+        CodigoRecuperacaoDoisFatores atualizado = CodigoRecuperacaoDoisFatoresMapper.updateEntity(entity, dto, usuario);
 
         assertSame(entity, atualizado);
         assertEquals("NOVO-CODIGO", atualizado.getCodigo());

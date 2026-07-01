@@ -15,7 +15,7 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
-import com.acessolivre.util.NomeValidator;
+import com.acessolivre.util.ValidadorNome;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +60,7 @@ public class AdminBootstrapService {
         }
 
         Usuario usuario = Usuario.builder()
-            .nome(NomeValidator.normalize(dto.getNome()))
+            .nome(ValidadorNome.normalizar(dto.getNome()))
                 .email(dto.getEmail())
                 .role(Role.ROLE_ADMIN)
                 .build();

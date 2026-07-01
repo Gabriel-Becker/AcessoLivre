@@ -9,7 +9,7 @@ import com.acessolivre.enums.TipoAcessibilidade;
 import com.acessolivre.mapper.LocalMapper;
 import com.acessolivre.model.Local;
 import com.acessolivre.service.LocalService;
-import com.acessolivre.util.NomeValidator;
+import com.acessolivre.util.ValidadorNome;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -144,7 +144,7 @@ public class LocalController {
         log.info("GET /api/locais/usuario/{} - Buscando locais do usuário", idUsuario);
 
         Long authId = localService.obterIdUsuarioAutenticadoPublic();
-        boolean isAdmin = localService.isUsuarioAdminAutenticadoPublic();
+        boolean isAdmin = localService.ehUsuarioAdminAutenticadoPublico();
 
         if (authId == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -296,7 +296,7 @@ public class LocalController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LocalResponseDTO> salvar(@Valid @RequestBody LocalRequestDTO requestDTO) {
-        requestDTO.setNome(NomeValidator.normalize(requestDTO.getNome()));
+        requestDTO.setNome(ValidadorNome.normalizar(requestDTO.getNome()));
         log.info("POST /api/locais - Salvando local: {}", requestDTO.getNome());
         
         if (requestDTO.getTiposAcessibilidade() == null || requestDTO.getTiposAcessibilidade().isEmpty()) {
@@ -324,7 +324,7 @@ public class LocalController {
             return ResponseEntity.badRequest().build();
         }
         
-        requestDTO.setNome(NomeValidator.normalize(requestDTO.getNome()));
+        requestDTO.setNome(ValidadorNome.normalizar(requestDTO.getNome()));
 
         return localService.atualizar(id, requestDTO)
                 .map(LocalMapper::toResponse)

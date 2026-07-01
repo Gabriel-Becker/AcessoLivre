@@ -45,7 +45,7 @@ class EmailServiceTest {
         when(templateEngine.process(eq("email/codigo-reset-senha"), any(Context.class))).thenReturn("<html>codigo</html>");
         when(mailSender.createMimeMessage()).thenReturn(message);
 
-        emailService.sendPasswordResetCode("usuario@email.com", "Gabriel", "123456");
+        emailService.enviarCodigoRecuperacaoSenha("usuario@email.com", "Gabriel", "123456");
 
         verify(mailSender).send(message);
     }
@@ -56,7 +56,7 @@ class EmailServiceTest {
         when(templateEngine.process(eq("email/confirmacao-reset-senha"), any(Context.class))).thenReturn("<html>confirmacao</html>");
         when(mailSender.createMimeMessage()).thenReturn(message);
 
-        emailService.sendPasswordResetConfirmation("usuario@email.com", "Gabriel");
+        emailService.enviarConfirmacaoRecuperacaoSenha("usuario@email.com", "Gabriel");
 
         verify(mailSender).send(message);
     }

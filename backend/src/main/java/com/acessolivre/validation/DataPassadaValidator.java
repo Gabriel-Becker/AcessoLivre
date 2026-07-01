@@ -1,6 +1,6 @@
 package com.acessolivre.validation;
 
-import com.acessolivre.util.DateValidator;
+import com.acessolivre.util.ValidadorData;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
@@ -12,6 +12,6 @@ public class DataPassadaValidator implements ConstraintValidator<DataPassada, Lo
         if (date == null) {
             return true;
         }
-        return DateValidator.isPast(date);
+        return ValidadorData.ehPassado(date);
     }
 }

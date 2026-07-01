@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 class JwtServiceTest {
 
     @InjectMocks
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private JwtEncoder jwtEncoder;
@@ -50,7 +50,7 @@ class JwtServiceTest {
     void setUp() throws JOSEException {
         MockitoAnnotations.openMocks(this);
         rsaKey = new RSAKeyGenerator(2048).keyID("test-key").generate();
-        jwtService = new JwtService(jwtEncoder, jwtDecoder, tokenRevogadoRepository, usuarioRepository);
+        jwtService = new ServicoJwt(jwtEncoder, jwtDecoder, tokenRevogadoRepository, usuarioRepository);
     }
 
     @Test

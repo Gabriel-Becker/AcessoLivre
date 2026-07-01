@@ -16,10 +16,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class TokenRevogadoFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final ServicoJwt jwtService;
     private static final String ERRO_TOKEN_REVOGADO = "Sua sessão expirou ou foi encerrada. Por favor, faça login novamente.";
 
-    public TokenRevogadoFilter(JwtService jwtService) {
+    public TokenRevogadoFilter(ServicoJwt jwtService) {
         this.jwtService = jwtService;
     }
 
@@ -32,7 +32,7 @@ public class TokenRevogadoFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (jwtService.isTokenRevogado(token)) {
+            if (jwtService.tokenEhRevogado(token)) {
                 response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                 response.setContentType("application/json;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

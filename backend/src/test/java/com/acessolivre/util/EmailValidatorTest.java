@@ -5,24 +5,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EmailValidatorTest {
 
-    private final EmailValidator validator = new EmailValidator();
+    private final ValidadorEmail validator = new ValidadorEmail();
 
     @Test
     void isValid_deveRetornarTrue_paraEmailValido() {
-        assertTrue(validator.isValid("test@example.com"));
-        assertTrue(validator.isValid("test.name@example.co.uk"));
+        assertTrue(validator.ehValido("test@example.com"));
+        assertTrue(validator.ehValido("test.name@example.co.uk"));
     }
 
     @Test
     void isValid_deveRetornarFalse_paraEmailInvalido() {
-        assertFalse(validator.isValid("test"));
-        assertFalse(validator.isValid("test@"));
-        assertFalse(validator.isValid("@example.com"));
-        assertFalse(validator.isValid("test@.com"));
+        assertFalse(validator.ehValido("test"));
+        assertFalse(validator.ehValido("test@"));
+        assertFalse(validator.ehValido("@example.com"));
+        assertFalse(validator.ehValido("test@.com"));
     }
 
     @Test
     void isValid_deveRetornarFalse_paraEmailNulo() {
-        assertFalse(validator.isValid(null));
+        assertFalse(validator.ehValido(null));
     }
 }

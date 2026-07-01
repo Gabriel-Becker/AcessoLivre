@@ -128,7 +128,7 @@ class TokenRevogadoServiceTest {
     void isTokenRevogado_DeveConsultarRepositorioComTrim() {
         when(tokenRevogadoRepository.existsByToken("token-trimado")).thenReturn(true);
 
-        boolean resultado = tokenRevogadoService.isTokenRevogado("  token-trimado  ");
+        boolean resultado = tokenRevogadoService.tokenEhRevogado("  token-trimado  ");
 
         assertTrue(resultado);
         verify(tokenRevogadoRepository).existsByToken("token-trimado");

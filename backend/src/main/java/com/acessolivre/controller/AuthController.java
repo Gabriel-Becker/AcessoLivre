@@ -15,25 +15,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.acessolivre.dto.request.AuthRequestDTO;
-import com.acessolivre.dto.request.ChangePasswordRequestDTO;
-import com.acessolivre.dto.request.RegisterRequestDTO;
-import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.ValidateTokenRequestDTO;
-import com.acessolivre.dto.request.VerifyEmailRequestDTO;
-import com.acessolivre.dto.response.AuthResponseDTO;
+import com.acessolivre.dto.request.AutenticacaoRequestDTO;
+import com.acessolivre.dto.request.AlterarSenhaRequestDTO;
+import com.acessolivre.dto.request.RegistroRequestDTO;
+import com.acessolivre.dto.request.HabilitarDoisFatoresRequestDTO;
+import com.acessolivre.dto.request.ValidarTokenRequestDTO;
+import com.acessolivre.dto.request.VerificarEmailRequestDTO;
+import com.acessolivre.dto.response.AutenticacaoResponseDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
-import com.acessolivre.dto.response.ValidateTokenResponseDTO;
+import com.acessolivre.dto.response.ValidarTokenResponseDTO;
 import com.acessolivre.mapper.UsuarioMapper;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
-import com.acessolivre.security.AuthenticationService;
-import com.acessolivre.security.JwtService;
-import com.acessolivre.security.LoginAttemptService;
+import com.acessolivre.security.ServicoAutenticacao;
+import com.acessolivre.security.ServicoJwt;
+import com.acessolivre.security.ServicoTentativasLogin;
 import com.acessolivre.service.RegistroPendenteService;
-import com.acessolivre.service.TwoFactorService;
+import com.acessolivre.service.DoisFatoresService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -46,17 +46,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthController {
 
-    private final AuthenticationService authenticationService;
-    private final JwtService jwtService;
+    private final ServicoAutenticacao authenticationService;
+    private final ServicoJwt jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RegistroPendenteService registroPendenteService;
-    private final LoginAttemptService loginAttemptService;
-    private final TwoFactorService twoFactorService;
+    private final ServicoTentativasLogin loginAttemptService;
+    private final DoisFatoresService twoFactorService;
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegistroRequestDTO request) {
         try {
             log.info("Tentativa de registro para email: {}", request.getEmail());
             UsuarioResponseDTO usuario = registroPendenteService.registrarUsuarioDireto(
@@ -75,7 +75,7 @@ public class AuthController {
     }
 
     @PostMapping("/register/confirm")
-    public ResponseEntity<?> confirmarRegistro(@Valid @RequestBody VerifyEmailRequestDTO request) {
+    public ResponseEntity<?> confirmarRegistro(@Valid @RequestBody VerificarEmailRequestDTO request) {
         try {
             UsuarioResponseDTO usuario = registroPendenteService.concluirRegistro(
                 request.getEmail(),
@@ -107,7 +107,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequestDTO request) {
+    public ResponseEntity<?> login(@Valid @RequestBody AutenticacaoRequestDTO request) {
         try {
             String token = authenticationService.login(
                 request.getEmail(),
@@ -124,7 +124,7 @@ public class AuthController {
 
             Usuario usuario = u.get();
             UsuarioResponseDTO usuarioDTO = UsuarioMapper.toResponse(usuario);
-            AuthResponseDTO response = AuthResponseDTO.builder()
+            AutenticacaoResponseDTO response = AutenticacaoResponseDTO.builder()
                 .token(token)
                 .usuario(usuarioDTO)
                 .twoFactorRequired(false)
@@ -139,16 +139,16 @@ public class AuthController {
             return erro(HttpStatus.FORBIDDEN, e.getMessage());
         }
         
-        catch (com.acessolivre.security.TwoFactorRequiredException e) {
+        catch (com.acessolivre.security.ExcecaoDoisFatoresObrigatorio e) {
             log.info("2FA requerido para email={}", request.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(AuthResponseDTO.builder()
+                .body(AutenticacaoResponseDTO.builder()
                     .twoFactorRequired(true)
                     .build());
-        } catch (com.acessolivre.security.InvalidTwoFactorCodeException e) {
+        } catch (com.acessolivre.security.ExcecaoCodigoAutenticacaoInvalido e) {
             log.warn("Código 2FA inválido para email={}", request.getEmail());
             return erro(HttpStatus.UNAUTHORIZED, "Código de autenticação de dois fatores inválido");
-        } catch (com.acessolivre.security.EmailNotVerifiedException e) {
+        } catch (com.acessolivre.security.ExcecaoEmailNaoVerificado e) {
             log.warn("Email não verificado para email={}", request.getEmail());
             return erro(HttpStatus.FORBIDDEN, e.getMessage());
         } catch (RuntimeException e) {
@@ -220,7 +220,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/enable")
-    public ResponseEntity<?> enableTwoFactor(HttpServletRequest request, @Valid @RequestBody TwoFactorEnableRequestDTO body) {
+    public ResponseEntity<?> enableTwoFactor(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -248,7 +248,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/disable")
-    public ResponseEntity<?> disableTwoFactor(HttpServletRequest request, @Valid @RequestBody TwoFactorEnableRequestDTO body) {
+    public ResponseEntity<?> disableTwoFactor(HttpServletRequest request, @Valid @RequestBody HabilitarDoisFatoresRequestDTO body) {
         try {
             String auth = request.getHeader("Authorization");
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -308,7 +308,7 @@ public class AuthController {
             }
             String token = auth.substring(7);
 
-            if (authenticationService.isTokenRevoked(token)) {
+            if (authenticationService.tokenEhRevogado(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
@@ -327,23 +327,23 @@ public class AuthController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<ValidateTokenResponseDTO> validateToken(@Valid @RequestBody ValidateTokenRequestDTO request) {
+    public ResponseEntity<ValidarTokenResponseDTO> validateToken(@Valid @RequestBody ValidarTokenRequestDTO request) {
         try {
-            boolean isValid = authenticationService.validateToken(request.getToken());
+            boolean ehValido = authenticationService.validateToken(request.getToken());
 
-            if (!isValid) {
-                return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+            if (!ehValido) {
+                return ResponseEntity.ok(ValidarTokenResponseDTO.builder()
                     .valid(false)
                     .reason("Token inválido ou revogado")
                     .build());
             }
 
-            return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+            return ResponseEntity.ok(ValidarTokenResponseDTO.builder()
                 .valid(true)
                 .build());
         } catch (Exception e) {
             log.error("Erro ao validar token", e);
-            return ResponseEntity.ok(ValidateTokenResponseDTO.builder()
+            return ResponseEntity.ok(ValidarTokenResponseDTO.builder()
                 .valid(false)
                 .reason("Erro ao validar token")
                 .build());
@@ -365,7 +365,7 @@ public class AuthController {
                 return erro(HttpStatus.FORBIDDEN, "Usuário não autorizado");
             }
 
-            if (authenticationService.isTokenRevoked(currentToken)) {
+            if (authenticationService.tokenEhRevogado(currentToken)) {
                 return erro(HttpStatus.UNAUTHORIZED, "Token revogado");
             }
 
@@ -381,7 +381,7 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<?> trocarSenha(
-            @Valid @RequestBody ChangePasswordRequestDTO request,
+            @Valid @RequestBody AlterarSenhaRequestDTO request,
             HttpServletRequest httpRequest) {
         try {
             String auth = httpRequest.getHeader("Authorization");
@@ -391,7 +391,7 @@ public class AuthController {
             }
 
             String token = auth.substring(7);
-            if (authenticationService.isTokenRevoked(token)) {
+            if (authenticationService.tokenEhRevogado(token)) {
                 log.warn("Tentativa de trocar senha com token revogado");
                 return erro(HttpStatus.UNAUTHORIZED, "Token inválido");
             }

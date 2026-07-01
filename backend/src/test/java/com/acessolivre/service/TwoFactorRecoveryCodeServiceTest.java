@@ -20,37 +20,37 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.acessolivre.dto.request.TwoFactorRecoveryCodeRequestDTO;
-import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.dto.request.CodigoRecuperacaoDoisFatoresRequestDTO;
+import com.acessolivre.model.CodigoRecuperacaoDoisFatores;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.repository.TwoFactorRecoveryCodeRepository;
+import com.acessolivre.repository.CodigoRecuperacaoDoisFatoresRepository;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class TwoFactorRecoveryCodeServiceTest {
 
     @Mock
-    private TwoFactorRecoveryCodeRepository twoFactorRecoveryCodeRepository;
+    private CodigoRecuperacaoDoisFatoresRepository twoFactorRecoveryCodeRepository;
 
     @Mock
     private UsuarioService usuarioService;
 
     @InjectMocks
-    private TwoFactorRecoveryCodeService twoFactorRecoveryCodeService;
+    private CodigoRecuperacaoDoisFatoresService twoFactorRecoveryCodeService;
 
     @Test
     void listarTodos_DeveRetornarTodosOsCodigos() {
-        List<TwoFactorRecoveryCode> esperado = List.of(criarCodigo(1L, "ABC123", false, 30));
+        List<CodigoRecuperacaoDoisFatores> esperado = List.of(criarCodigo(1L, "ABC123", false, 30));
         when(twoFactorRecoveryCodeRepository.findAll()).thenReturn(esperado);
 
-        List<TwoFactorRecoveryCode> resultado = twoFactorRecoveryCodeService.listarTodos();
+        List<CodigoRecuperacaoDoisFatores> resultado = twoFactorRecoveryCodeService.listarTodos();
 
         assertSame(esperado, resultado);
     }
 
     @Test
     void salvar_DeveLancarQuandoUsuarioNaoExistir() {
-        TwoFactorRecoveryCodeRequestDTO dto = criarRequest("  REC123  ", 99L, 30);
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = criarRequest("  REC123  ", 99L, 30);
         when(usuarioService.buscarPorId(99L)).thenReturn(Optional.empty());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -63,7 +63,7 @@ class TwoFactorRecoveryCodeServiceTest {
     @Test
     void salvar_DeveLancarQuandoCodigoJaExistir() {
         Usuario usuario = Usuario.builder().idUsuario(7L).nome("Teste").email("teste@email.com").build();
-        TwoFactorRecoveryCodeRequestDTO dto = criarRequest("  DUP001  ", 7L, 20);
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = criarRequest("  DUP001  ", 7L, 20);
 
         when(usuarioService.buscarPorId(7L)).thenReturn(Optional.of(usuario));
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("DUP001", 7L))
@@ -79,20 +79,20 @@ class TwoFactorRecoveryCodeServiceTest {
     @Test
     void salvar_DevePersistirQuandoDadosValidos() {
         Usuario usuario = Usuario.builder().idUsuario(8L).nome("Teste").email("ok@email.com").build();
-        TwoFactorRecoveryCodeRequestDTO dto = criarRequest("  NOVO001  ", 8L, 60);
+        CodigoRecuperacaoDoisFatoresRequestDTO dto = criarRequest("  NOVO001  ", 8L, 60);
 
         when(usuarioService.buscarPorId(8L)).thenReturn(Optional.of(usuario));
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("NOVO001", 8L))
             .thenReturn(Optional.empty());
-        when(twoFactorRecoveryCodeRepository.save(any(TwoFactorRecoveryCode.class)))
+        when(twoFactorRecoveryCodeRepository.save(any(CodigoRecuperacaoDoisFatores.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        TwoFactorRecoveryCode salvo = twoFactorRecoveryCodeService.salvar(dto);
+        CodigoRecuperacaoDoisFatores salvo = twoFactorRecoveryCodeService.salvar(dto);
 
         assertEquals("NOVO001", salvo.getCodigo());
         assertSame(usuario, salvo.getUsuario());
         assertEquals(Boolean.FALSE, salvo.getUtilizado());
-        verify(twoFactorRecoveryCodeRepository).save(any(TwoFactorRecoveryCode.class));
+        verify(twoFactorRecoveryCodeRepository).save(any(CodigoRecuperacaoDoisFatores.class));
     }
 
     @Test
@@ -119,7 +119,7 @@ class TwoFactorRecoveryCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveLancarQuandoJaUtilizado() {
-        TwoFactorRecoveryCode codigo = criarCodigo(20L, "REC777", true, 30);
+        CodigoRecuperacaoDoisFatores codigo = criarCodigo(20L, "REC777", true, 30);
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("REC777", 9L))
             .thenReturn(Optional.of(codigo));
 
@@ -132,7 +132,7 @@ class TwoFactorRecoveryCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveLancarQuandoCodigoExpirado() {
-        TwoFactorRecoveryCode codigo = criarCodigo(21L, "REC888", false, -1);
+        CodigoRecuperacaoDoisFatores codigo = criarCodigo(21L, "REC888", false, -1);
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("REC888", 10L))
             .thenReturn(Optional.of(codigo));
 
@@ -145,7 +145,7 @@ class TwoFactorRecoveryCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveAtualizarStatusQuandoValido() {
-        TwoFactorRecoveryCode codigo = criarCodigo(22L, "REC999", false, 30);
+        CodigoRecuperacaoDoisFatores codigo = criarCodigo(22L, "REC999", false, 30);
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("REC999", 11L))
             .thenReturn(Optional.of(codigo));
 
@@ -161,25 +161,25 @@ class TwoFactorRecoveryCodeServiceTest {
         when(twoFactorRecoveryCodeRepository.existsByCodigoAndUtilizadoFalseAndDataExpiracaoAfter(eq("ABC123"), any(LocalDateTime.class)))
             .thenReturn(true);
 
-        boolean valido = twoFactorRecoveryCodeService.isCodigoValido("ABC123");
+        boolean valido = twoFactorRecoveryCodeService.codigoEhValido("ABC123");
 
         assertTrue(valido);
     }
 
     @Test
     void buscarCodigosValidosPorUsuario_DeveRetornarLista() {
-        List<TwoFactorRecoveryCode> esperado = List.of(criarCodigo(30L, "REC301", false, 50));
+        List<CodigoRecuperacaoDoisFatores> esperado = List.of(criarCodigo(30L, "REC301", false, 50));
         when(twoFactorRecoveryCodeRepository.findByUsuario_IdUsuarioAndUtilizadoFalseAndDataExpiracaoAfter(eq(33L), any(LocalDateTime.class)))
             .thenReturn(esperado);
 
-        List<TwoFactorRecoveryCode> resultado = twoFactorRecoveryCodeService.buscarCodigosValidosPorUsuario(33L);
+        List<CodigoRecuperacaoDoisFatores> resultado = twoFactorRecoveryCodeService.buscarCodigosValidosPorUsuario(33L);
 
         assertSame(esperado, resultado);
     }
 
     @Test
     void limparCodigosExpirados_DeveRemoverEInformarQuantidade() {
-        List<TwoFactorRecoveryCode> expirados = List.of(
+        List<CodigoRecuperacaoDoisFatores> expirados = List.of(
             criarCodigo(40L, "EXP001", false, -10),
             criarCodigo(41L, "EXP002", false, -3)
         );
@@ -193,9 +193,9 @@ class TwoFactorRecoveryCodeServiceTest {
         verify(twoFactorRecoveryCodeRepository).deleteAll(expirados);
     }
 
-    private TwoFactorRecoveryCodeRequestDTO criarRequest(String codigo, Long usuarioId, int minutosAteExpirar) {
+    private CodigoRecuperacaoDoisFatoresRequestDTO criarRequest(String codigo, Long usuarioId, int minutosAteExpirar) {
         LocalDateTime agora = LocalDateTime.now();
-        return TwoFactorRecoveryCodeRequestDTO.builder()
+        return CodigoRecuperacaoDoisFatoresRequestDTO.builder()
             .codigo(codigo)
             .dataCriacao(agora)
             .dataExpiracao(agora.plusMinutes(minutosAteExpirar))
@@ -204,9 +204,9 @@ class TwoFactorRecoveryCodeServiceTest {
             .build();
     }
 
-    private TwoFactorRecoveryCode criarCodigo(Long id, String codigo, boolean utilizado, int minutosAteExpirar) {
+    private CodigoRecuperacaoDoisFatores criarCodigo(Long id, String codigo, boolean utilizado, int minutosAteExpirar) {
         LocalDateTime agora = LocalDateTime.now();
-        return TwoFactorRecoveryCode.builder()
+        return CodigoRecuperacaoDoisFatores.builder()
             .id(id)
             .codigo(codigo)
             .dataCriacao(agora.minusMinutes(1))

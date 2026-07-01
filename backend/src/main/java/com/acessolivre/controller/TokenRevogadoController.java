@@ -121,7 +121,7 @@ public class TokenRevogadoController {
     public ResponseEntity<Boolean> verificarTokenRevogado(@RequestParam String token) {
         try {
             log.info("Recebida requisição para verificar se token foi revogado");
-            boolean isRevogado = tokenRevogadoService.isTokenRevogado(token);
+            boolean isRevogado = tokenRevogadoService.tokenEhRevogado(token);
             log.info("Token revogado: {}", isRevogado);
             return ResponseEntity.ok(isRevogado);
         } catch (Exception e) {

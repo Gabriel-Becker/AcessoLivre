@@ -89,11 +89,11 @@ public class Usuario {
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<TwoFactorRecoveryCode> twoFactorRecoveryCodes;
+    private List<CodigoRecuperacaoDoisFatores> twoFactorRecoveryCodes;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<PasswordResetCode> passwordResetCodes;
+    private List<CodigoRecuperacaoSenha> passwordResetCodes;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

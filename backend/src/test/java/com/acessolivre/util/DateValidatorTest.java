@@ -10,26 +10,26 @@ class DateValidatorTest {
 
     @Test
     void isPast_deveRetornarTrue_paraDataNoPassado() {
-        assertTrue(DateValidator.isPast(LocalDate.now().minusDays(1)));
+        assertTrue(ValidadorData.ehPassado(LocalDate.now().minusDays(1)));
     }
 
     @Test
     void isFuture_deveRetornarTrue_paraDataNoFuturo() {
-        assertTrue(DateValidator.isFuture(LocalDate.now().plusDays(1)));
+        assertTrue(ValidadorData.ehFuturo(LocalDate.now().plusDays(1)));
     }
 
     @Test
     void isMinAge_deveRetornarTrue_quandoAtingeIdadeMinima() {
-        assertTrue(DateValidator.isMinAge(LocalDate.now().minusYears(18), 18));
+        assertTrue(ValidadorData.ehIdadeMinima(LocalDate.now().minusYears(18), 18));
     }
 
     @Test
     void isMinAge_deveRetornarFalse_quandoNaoAtingeIdadeMinima() {
-        assertFalse(DateValidator.isMinAge(LocalDate.now().minusYears(17), 18));
+        assertFalse(ValidadorData.ehIdadeMinima(LocalDate.now().minusYears(17), 18));
     }
 
     @Test
     void calculateAge_deveCalcularIdadeEsperada() {
-        assertEquals(20, DateValidator.calculateAge(LocalDate.now().minusYears(20)));
+        assertEquals(20, ValidadorData.calcularIdade(LocalDate.now().minusYears(20)));
     }
 }

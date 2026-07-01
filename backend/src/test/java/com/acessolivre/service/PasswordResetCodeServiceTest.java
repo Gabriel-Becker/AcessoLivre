@@ -17,30 +17,30 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.acessolivre.dto.request.PasswordResetCodeRequestDTO;
+import com.acessolivre.dto.request.CodigoRecuperacaoSenhaRequestDTO;
 import com.acessolivre.enums.Role;
-import com.acessolivre.model.PasswordResetCode;
+import com.acessolivre.model.CodigoRecuperacaoSenha;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.repository.PasswordResetCodeRepository;
+import com.acessolivre.repository.CodigoRecuperacaoSenhaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class PasswordResetCodeServiceTest {
 
     @Mock
-    private PasswordResetCodeRepository passwordResetCodeRepository;
+    private CodigoRecuperacaoSenhaRepository passwordResetCodeRepository;
 
     @Mock
     private UsuarioService usuarioService;
 
     @InjectMocks
-    private PasswordResetCodeService passwordResetCodeService;
+    private CodigoRecuperacaoSenhaService passwordResetCodeService;
 
     @Test
     void listarTodos_DeveDelegarRepositorio() {
         when(passwordResetCodeRepository.findAll()).thenReturn(List.of(criarCodigo(1L, false)));
 
-        List<PasswordResetCode> resultado = passwordResetCodeService.listarTodos();
+        List<CodigoRecuperacaoSenha> resultado = passwordResetCodeService.listarTodos();
 
         assertEquals(1, resultado.size());
     }
@@ -53,7 +53,7 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void salvar_DeveLancarQuandoUsuarioNaoExiste() {
-        PasswordResetCodeRequestDTO dto = criarRequest(10L, "ABC");
+        CodigoRecuperacaoSenhaRequestDTO dto = criarRequest(10L, "ABC");
         when(usuarioService.buscarPorId(10L)).thenReturn(Optional.empty());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> passwordResetCodeService.salvar(dto));
@@ -63,7 +63,7 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void salvar_DeveLancarQuandoJaExisteCodigoValido() {
-        PasswordResetCodeRequestDTO dto = criarRequest(10L, "ABC");
+        CodigoRecuperacaoSenhaRequestDTO dto = criarRequest(10L, "ABC");
         when(usuarioService.buscarPorId(10L)).thenReturn(Optional.of(criarUsuario(10L)));
         when(passwordResetCodeRepository.findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(any(), any()))
             .thenReturn(List.of(criarCodigo(1L, false)));
@@ -75,19 +75,19 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void salvar_DeveSalvarQuandoSucesso() {
-        PasswordResetCodeRequestDTO dto = criarRequest(10L, "ABC");
+        CodigoRecuperacaoSenhaRequestDTO dto = criarRequest(10L, "ABC");
         Usuario usuario = criarUsuario(10L);
 
         when(usuarioService.buscarPorId(10L)).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.findByUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(any(), any()))
             .thenReturn(List.of());
-        when(passwordResetCodeRepository.save(any(PasswordResetCode.class))).thenAnswer(inv -> {
-            PasswordResetCode codigo = inv.getArgument(0);
+        when(passwordResetCodeRepository.save(any(CodigoRecuperacaoSenha.class))).thenAnswer(inv -> {
+            CodigoRecuperacaoSenha codigo = inv.getArgument(0);
             codigo.setId(99L);
             return codigo;
         });
 
-        PasswordResetCode salvo = passwordResetCodeService.salvar(dto);
+        CodigoRecuperacaoSenha salvo = passwordResetCodeService.salvar(dto);
 
         assertNotNull(salvo);
         assertEquals(99L, salvo.getId());
@@ -128,7 +128,7 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveLancarQuandoJaUsado() {
-        PasswordResetCode codigo = criarCodigo(1L, true);
+        CodigoRecuperacaoSenha codigo = criarCodigo(1L, true);
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario("ABC", 1L)).thenReturn(Optional.of(codigo));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -139,7 +139,7 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveLancarQuandoExpirado() {
-        PasswordResetCode codigo = criarCodigo(1L, false);
+        CodigoRecuperacaoSenha codigo = criarCodigo(1L, false);
         codigo.setExpiresAt(LocalDateTime.now().minusMinutes(1));
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario("ABC", 1L)).thenReturn(Optional.of(codigo));
 
@@ -151,7 +151,7 @@ class PasswordResetCodeServiceTest {
 
     @Test
     void marcarComoUsado_DeveMarcarEGuardarQuandoValido() {
-        PasswordResetCode codigo = criarCodigo(1L, false);
+        CodigoRecuperacaoSenha codigo = criarCodigo(1L, false);
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario("ABC", 1L)).thenReturn(Optional.of(codigo));
 
         boolean sucesso = passwordResetCodeService.marcarComoUsado("ABC", 1L);
@@ -171,8 +171,8 @@ class PasswordResetCodeServiceTest {
         verify(passwordResetCodeRepository).deleteAll(any(List.class));
     }
 
-    private PasswordResetCodeRequestDTO criarRequest(Long usuarioId, String code) {
-        return PasswordResetCodeRequestDTO.builder()
+    private CodigoRecuperacaoSenhaRequestDTO criarRequest(Long usuarioId, String code) {
+        return CodigoRecuperacaoSenhaRequestDTO.builder()
             .usuarioId(usuarioId)
             .code(code)
             .createdAt(LocalDateTime.now().minusMinutes(2))
@@ -191,8 +191,8 @@ class PasswordResetCodeServiceTest {
             .build();
     }
 
-    private PasswordResetCode criarCodigo(Long id, boolean usado) {
-        return PasswordResetCode.builder()
+    private CodigoRecuperacaoSenha criarCodigo(Long id, boolean usado) {
+        return CodigoRecuperacaoSenha.builder()
             .id(id)
             .code("ABC")
             .usuario(criarUsuario(1L))

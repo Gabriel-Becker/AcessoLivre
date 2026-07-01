@@ -33,7 +33,7 @@ class ImagemServiceTest {
     private ImagemRepository imagemRepository;
 
     @Mock
-    private StorageService storageService;
+    private ArmazenamentoService storageService;
 
     @Mock
     private LocalRepository localRepository;

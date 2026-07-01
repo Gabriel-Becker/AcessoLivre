@@ -26,7 +26,7 @@ class TokenRevogadoFilterTest {
     private TokenRevogadoFilter tokenRevogadoFilter;
 
     @Mock
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private HttpServletRequest request;
@@ -54,7 +54,7 @@ class TokenRevogadoFilterTest {
     void doFilterInternal_deveLimparContexto_quandoTokenRevogado() throws ServletException, IOException {
         String jwt = "revoked-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtService.isTokenRevogado(jwt)).thenReturn(true);
+        when(jwtService.tokenEhRevogado(jwt)).thenReturn(true);
 
         Authentication auth = mock(Authentication.class);
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -69,7 +69,7 @@ class TokenRevogadoFilterTest {
     void doFilterInternal_naoDeveFazerNada_quandoTokenNaoRevogado() throws ServletException, IOException {
         String jwt = "valid-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtService.isTokenRevogado(jwt)).thenReturn(false);
+        when(jwtService.tokenEhRevogado(jwt)).thenReturn(false);
 
         Authentication auth = mock(Authentication.class);
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -87,6 +87,6 @@ class TokenRevogadoFilterTest {
         tokenRevogadoFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtService, never()).isTokenRevogado(anyString());
+        verify(jwtService, never()).tokenEhRevogado(anyString());
     }
 }

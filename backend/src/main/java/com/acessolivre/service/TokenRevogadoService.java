@@ -64,7 +64,7 @@ public class TokenRevogadoService {
         log.info("Token revogado deletado: id={}", id);
     }
 
-    public boolean isTokenRevogado(String token) {
+    public boolean tokenEhRevogado(String token) {
         return tokenRevogadoRepository.existsByToken(token.trim());
     }
 

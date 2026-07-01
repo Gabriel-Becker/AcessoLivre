@@ -110,7 +110,7 @@ class LocalControllerTest {
     @Test
     void buscarPorUsuario_DeveRetornarForbiddenQuandoNaoForAdminENaoForDono() {
         when(localService.obterIdUsuarioAutenticadoPublic()).thenReturn(9L);
-        when(localService.isUsuarioAdminAutenticadoPublic()).thenReturn(false);
+        when(localService.ehUsuarioAdminAutenticadoPublico()).thenReturn(false);
 
         ResponseEntity<List<LocalResponseDTO>> response = localController.buscarPorUsuario(5L);
 
@@ -120,7 +120,7 @@ class LocalControllerTest {
     @Test
     void buscarPorUsuario_DeveFiltrarLocaisInativos() {
         when(localService.obterIdUsuarioAutenticadoPublic()).thenReturn(5L);
-        when(localService.isUsuarioAdminAutenticadoPublic()).thenReturn(false);
+        when(localService.ehUsuarioAdminAutenticadoPublico()).thenReturn(false);
         when(localService.buscarPorUsuario(5L)).thenReturn(List.of(
             criarLocal(1L, "Ativo", StatusLocal.ATIVO),
             criarLocal(2L, "Inativo", StatusLocal.INATIVO)));

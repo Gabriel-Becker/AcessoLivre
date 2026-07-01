@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockMultipartFile;
 
-import com.acessolivre.config.StorageProperties;
+import com.acessolivre.config.PropriedadesArmazenamento;
 import com.acessolivre.model.Local;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.LocalRepository;
@@ -36,10 +36,10 @@ import com.acessolivre.repository.UsuarioRepository;
 class StorageServiceTest {
 
     @Mock
-    private StorageProperties storageProperties;
+    private PropriedadesArmazenamento storageProperties;
 
     @Mock
-    private ImageOptimizerService imageOptimizerService;
+    private OtimizadorImagemService imageOptimizerService;
 
     @Mock
     private UsuarioRepository usuarioRepository;
@@ -48,7 +48,7 @@ class StorageServiceTest {
     private LocalRepository localRepository;
 
     @InjectMocks
-    private StorageService storageService;
+    private ArmazenamentoService storageService;
 
     @TempDir
     Path tempDir;

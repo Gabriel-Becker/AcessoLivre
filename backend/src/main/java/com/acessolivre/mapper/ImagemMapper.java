@@ -2,17 +2,17 @@ package com.acessolivre.mapper;
 
 import com.acessolivre.dto.response.ImagemResponseDTO;
 import com.acessolivre.model.Imagem;
-import com.acessolivre.service.StorageService;
+import com.acessolivre.service.ArmazenamentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ImagemMapper {
     
-    private static StorageService storageService;
+    private static ArmazenamentoService storageService;
     
     @Autowired
-    public void setStorageService(StorageService service) {
+    public void setStorageService(ArmazenamentoService service) {
         storageService = service;
         System.out.println(" ImagemMapper inicializado com StorageService");
     }

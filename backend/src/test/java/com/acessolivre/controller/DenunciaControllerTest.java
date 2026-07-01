@@ -23,12 +23,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.acessolivre.dto.request.DenunciaRequestDTO;
-import com.acessolivre.dto.request.StatusUpdateRequestDTO;
+import com.acessolivre.dto.request.AtualizarStatusRequestDTO;
 import com.acessolivre.dto.response.DenunciaResponseDTO;
 import com.acessolivre.dto.response.ResolucaoDenunciaResponseDTO;
 import com.acessolivre.enums.StatusDenuncia;
 import com.acessolivre.enums.TipoDenuncia;
-import com.acessolivre.security.AuthenticationFacade;
+import com.acessolivre.security.FachadaAutenticacao;
 import com.acessolivre.service.DenunciaService;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +39,7 @@ class DenunciaControllerTest {
     private DenunciaService denunciaService;
 
     @Mock
-    private AuthenticationFacade authenticationFacade;
+    private FachadaAutenticacao authenticationFacade;
 
     @InjectMocks
     private DenunciaController denunciaController;
@@ -59,7 +59,7 @@ class DenunciaControllerTest {
             .status(StatusDenuncia.PENDING)
             .build();
 
-        when(authenticationFacade.getAuthenticatedUserId()).thenReturn(5L);
+        when(authenticationFacade.obterIdUsuarioAutenticado()).thenReturn(5L);
         when(denunciaService.criarDenuncia(request, 5L)).thenReturn(response);
 
         ResponseEntity<DenunciaResponseDTO> resultado = denunciaController.criarDenuncia(request);
@@ -112,13 +112,13 @@ class DenunciaControllerTest {
 
     @Test
     void atualizarStatus_DeveRetornar200() {
-        StatusUpdateRequestDTO request = StatusUpdateRequestDTO.builder()
+        AtualizarStatusRequestDTO request = AtualizarStatusRequestDTO.builder()
             .status(StatusDenuncia.REVIEWED)
             .observacoes("ok")
             .build();
         DenunciaResponseDTO response = DenunciaResponseDTO.builder().id(15L).status(StatusDenuncia.REVIEWED).build();
 
-        when(authenticationFacade.getAuthenticatedUserEmail()).thenReturn("admin@email.com");
+        when(authenticationFacade.obterEmailUsuarioAutenticado()).thenReturn("admin@email.com");
         when(denunciaService.atualizarStatus(15L, StatusDenuncia.REVIEWED, "admin@email.com", "ok")).thenReturn(response);
 
         ResponseEntity<DenunciaResponseDTO> resultado = denunciaController.atualizarStatus(15L, request, null);
@@ -134,7 +134,7 @@ class DenunciaControllerTest {
             .status(StatusDenuncia.RESOLVED)
             .build();
 
-        when(authenticationFacade.getAuthenticatedUserEmail()).thenReturn("mod@email.com");
+        when(authenticationFacade.obterEmailUsuarioAutenticado()).thenReturn("mod@email.com");
         when(denunciaService.resolverDenuncia(9L, "mod@email.com")).thenReturn(response);
 
         ResponseEntity<ResolucaoDenunciaResponseDTO> resultado = denunciaController.resolverDenuncia(9L);
@@ -150,7 +150,7 @@ class DenunciaControllerTest {
             .status(StatusDenuncia.REJECTED)
             .build();
 
-        when(authenticationFacade.getAuthenticatedUserEmail()).thenReturn("mod@email.com");
+        when(authenticationFacade.obterEmailUsuarioAutenticado()).thenReturn("mod@email.com");
         when(denunciaService.rejeitarDenuncia(18L, "mod@email.com", "sem fundamento")).thenReturn(response);
 
         ResponseEntity<ResolucaoDenunciaResponseDTO> resultado = denunciaController.rejeitarDenuncia(18L, Map.of("observacoes", "sem fundamento"));
@@ -161,7 +161,7 @@ class DenunciaControllerTest {
 
     @Test
     void atualizarStatusEmMassa_DeveRetornar204EChamarServiceParaCadaId() {
-        when(authenticationFacade.getAuthenticatedUserEmail()).thenReturn("mod@email.com");
+        when(authenticationFacade.obterEmailUsuarioAutenticado()).thenReturn("mod@email.com");
 
         ResponseEntity<Void> resultado = denunciaController.atualizarStatusEmMassa(Map.of(
             "ids", List.of(1L, 2L),
@@ -186,7 +186,7 @@ class DenunciaControllerTest {
 
     @Test
     void verificarDenuncia_DeveRetornarMapaReported() {
-        when(authenticationFacade.getAuthenticatedUserId()).thenReturn(44L);
+        when(authenticationFacade.obterIdUsuarioAutenticado()).thenReturn(44L);
         when(denunciaService.usuarioJaDenunciou(44L, TipoDenuncia.USUARIO, 77L)).thenReturn(true);
 
         ResponseEntity<Map<String, Boolean>> resultado = denunciaController.verificarDenuncia(TipoDenuncia.USUARIO, 77L);

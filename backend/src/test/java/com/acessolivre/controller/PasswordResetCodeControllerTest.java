@@ -19,28 +19,28 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.acessolivre.dto.request.PasswordResetCodeRequestDTO;
-import com.acessolivre.dto.response.PasswordResetCodeResponseDTO;
+import com.acessolivre.dto.request.CodigoRecuperacaoSenhaRequestDTO;
+import com.acessolivre.dto.response.CodigoRecuperacaoSenhaResponseDTO;
 import com.acessolivre.enums.Role;
-import com.acessolivre.model.PasswordResetCode;
+import com.acessolivre.model.CodigoRecuperacaoSenha;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.service.PasswordResetCodeService;
+import com.acessolivre.service.CodigoRecuperacaoSenhaService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings("null")
 class PasswordResetCodeControllerTest {
 
     @Mock
-    private PasswordResetCodeService passwordResetCodeService;
+    private CodigoRecuperacaoSenhaService passwordResetCodeService;
 
     @InjectMocks
-    private PasswordResetCodeController passwordResetCodeController;
+    private CodigoRecuperacaoSenhaController passwordResetCodeController;
 
     @Test
     void listarTodos_DeveRetornarOkQuandoSucesso() {
         when(passwordResetCodeService.listarTodos()).thenReturn(List.of(criarCodigo(1L, "ABC123", false)));
 
-        ResponseEntity<List<PasswordResetCodeResponseDTO>> response = passwordResetCodeController.listarTodos();
+        ResponseEntity<List<CodigoRecuperacaoSenhaResponseDTO>> response = passwordResetCodeController.listarTodos();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -51,7 +51,7 @@ class PasswordResetCodeControllerTest {
     void listarTodos_DeveRetornar500QuandoErro() {
         when(passwordResetCodeService.listarTodos()).thenThrow(new RuntimeException("erro"));
 
-        ResponseEntity<List<PasswordResetCodeResponseDTO>> response = passwordResetCodeController.listarTodos();
+        ResponseEntity<List<CodigoRecuperacaoSenhaResponseDTO>> response = passwordResetCodeController.listarTodos();
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -62,7 +62,7 @@ class PasswordResetCodeControllerTest {
     void buscarPorId_DeveRetornarOkQuandoEncontrado() {
         when(passwordResetCodeService.buscarPorId(2L)).thenReturn(Optional.of(criarCodigo(2L, "DEF456", false)));
 
-        ResponseEntity<PasswordResetCodeResponseDTO> response = passwordResetCodeController.buscarPorId(2L);
+        ResponseEntity<CodigoRecuperacaoSenhaResponseDTO> response = passwordResetCodeController.buscarPorId(2L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -73,15 +73,15 @@ class PasswordResetCodeControllerTest {
     void buscarPorId_DeveRetornarNotFoundQuandoAusente() {
         when(passwordResetCodeService.buscarPorId(9L)).thenReturn(Optional.empty());
 
-        ResponseEntity<PasswordResetCodeResponseDTO> response = passwordResetCodeController.buscarPorId(9L);
+        ResponseEntity<CodigoRecuperacaoSenhaResponseDTO> response = passwordResetCodeController.buscarPorId(9L);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
     void salvar_DeveRetornarCreatedQuandoSucesso() {
-        PasswordResetCodeRequestDTO request = criarRequest("ZXCVBN", 1L);
-        when(passwordResetCodeService.salvar(any(PasswordResetCodeRequestDTO.class))).thenReturn(criarCodigo(3L, "ZXCVBN", false));
+        CodigoRecuperacaoSenhaRequestDTO request = criarRequest("ZXCVBN", 1L);
+        when(passwordResetCodeService.salvar(any(CodigoRecuperacaoSenhaRequestDTO.class))).thenReturn(criarCodigo(3L, "ZXCVBN", false));
 
         ResponseEntity<?> response = passwordResetCodeController.salvar(request);
 
@@ -90,8 +90,8 @@ class PasswordResetCodeControllerTest {
 
     @Test
     void salvar_DeveRetornarBadRequestQuandoRegraNegocioFalhar() {
-        PasswordResetCodeRequestDTO request = criarRequest("ZXCVBN", 1L);
-        when(passwordResetCodeService.salvar(any(PasswordResetCodeRequestDTO.class))).thenThrow(new IllegalArgumentException("Já existe código"));
+        CodigoRecuperacaoSenhaRequestDTO request = criarRequest("ZXCVBN", 1L);
+        when(passwordResetCodeService.salvar(any(CodigoRecuperacaoSenhaRequestDTO.class))).thenThrow(new IllegalArgumentException("Já existe código"));
 
         ResponseEntity<?> response = passwordResetCodeController.salvar(request);
 
@@ -113,7 +113,7 @@ class PasswordResetCodeControllerTest {
 
     @Test
     void verificarCodigo_DeveRetornarBoolean() {
-        when(passwordResetCodeService.isCodigoValido("VALIDO")).thenReturn(true);
+        when(passwordResetCodeService.codigoEhValido("VALIDO")).thenReturn(true);
 
         ResponseEntity<Boolean> response = passwordResetCodeController.verificarCodigo("VALIDO");
 
@@ -134,7 +134,7 @@ class PasswordResetCodeControllerTest {
     void buscarCodigosValidosPorUsuario_DeveRetornarLista() {
         when(passwordResetCodeService.buscarCodigosValidosPorUsuario(1L)).thenReturn(List.of(criarCodigo(4L, "X1", false)));
 
-        ResponseEntity<List<PasswordResetCodeResponseDTO>> response = passwordResetCodeController.buscarCodigosValidosPorUsuario(1L);
+        ResponseEntity<List<CodigoRecuperacaoSenhaResponseDTO>> response = passwordResetCodeController.buscarCodigosValidosPorUsuario(1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -152,8 +152,8 @@ class PasswordResetCodeControllerTest {
         assertEquals(3, response.getBody().get("removidos"));
     }
 
-    private PasswordResetCodeRequestDTO criarRequest(String code, Long usuarioId) {
-        return PasswordResetCodeRequestDTO.builder()
+    private CodigoRecuperacaoSenhaRequestDTO criarRequest(String code, Long usuarioId) {
+        return CodigoRecuperacaoSenhaRequestDTO.builder()
             .code(code)
             .createdAt(LocalDateTime.now().minusMinutes(1))
             .expiresAt(LocalDateTime.now().plusMinutes(15))
@@ -162,7 +162,7 @@ class PasswordResetCodeControllerTest {
             .build();
     }
 
-    private PasswordResetCode criarCodigo(Long id, String code, boolean used) {
+    private CodigoRecuperacaoSenha criarCodigo(Long id, String code, boolean used) {
         Usuario usuario = Usuario.builder()
             .idUsuario(1L)
             .nome("Admin")
@@ -171,7 +171,7 @@ class PasswordResetCodeControllerTest {
             .ativo(true)
             .build();
 
-        return PasswordResetCode.builder()
+        return CodigoRecuperacaoSenha.builder()
             .id(id)
             .code(code)
             .createdAt(LocalDateTime.now().minusMinutes(2))

@@ -116,7 +116,7 @@ class TokenRevogadoControllerTest {
 
     @Test
     void verificarTokenRevogado_DeveRetornarBoolean() {
-        when(tokenRevogadoService.isTokenRevogado("abc")).thenReturn(true);
+        when(tokenRevogadoService.tokenEhRevogado("abc")).thenReturn(true);
 
         ResponseEntity<Boolean> response = tokenRevogadoController.verificarTokenRevogado("abc");
 

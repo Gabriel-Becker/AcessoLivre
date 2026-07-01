@@ -23,40 +23,40 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.acessolivre.dto.request.AuthRequestDTO;
-import com.acessolivre.dto.request.ChangePasswordRequestDTO;
-import com.acessolivre.dto.request.RegisterRequestDTO;
-import com.acessolivre.dto.request.TwoFactorEnableRequestDTO;
-import com.acessolivre.dto.request.ValidateTokenRequestDTO;
-import com.acessolivre.dto.request.VerifyEmailRequestDTO;
-import com.acessolivre.dto.response.AuthResponseDTO;
-import com.acessolivre.dto.response.TwoFactorSetupResponseDTO;
+import com.acessolivre.dto.request.AutenticacaoRequestDTO;
+import com.acessolivre.dto.request.AlterarSenhaRequestDTO;
+import com.acessolivre.dto.request.RegistroRequestDTO;
+import com.acessolivre.dto.request.HabilitarDoisFatoresRequestDTO;
+import com.acessolivre.dto.request.ValidarTokenRequestDTO;
+import com.acessolivre.dto.request.VerificarEmailRequestDTO;
+import com.acessolivre.dto.response.AutenticacaoResponseDTO;
+import com.acessolivre.dto.response.ConfiguracaoDoisFatoresResponseDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
-import com.acessolivre.dto.response.ValidateTokenResponseDTO;
+import com.acessolivre.dto.response.ValidarTokenResponseDTO;
 import com.acessolivre.enums.Role;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.acessolivre.exception.UsuarioException;
-import com.acessolivre.security.AuthenticationService;
-import com.acessolivre.security.EmailNotVerifiedException;
-import com.acessolivre.security.InvalidTwoFactorCodeException;
-import com.acessolivre.security.JwtService;
-import com.acessolivre.security.LoginAttemptService;
-import com.acessolivre.security.TwoFactorRequiredException;
+import com.acessolivre.security.ServicoAutenticacao;
+import com.acessolivre.security.ExcecaoEmailNaoVerificado;
+import com.acessolivre.security.ExcecaoCodigoAutenticacaoInvalido;
+import com.acessolivre.security.ServicoJwt;
+import com.acessolivre.security.ServicoTentativasLogin;
+import com.acessolivre.security.ExcecaoDoisFatoresObrigatorio;
 import com.acessolivre.service.RegistroPendenteService;
-import com.acessolivre.service.TwoFactorService;
+import com.acessolivre.service.DoisFatoresService;
 
 @ExtendWith(MockitoExtension.class)
 @SuppressWarnings({"null", "unused"})
 class AuthControllerTest {
 
     @Mock
-    private AuthenticationService authenticationService;
+    private ServicoAutenticacao authenticationService;
 
     @Mock
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private UsuarioRepository usuarioRepository;
@@ -65,10 +65,10 @@ class AuthControllerTest {
     private RegistroPendenteService registroPendenteService;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private ServicoTentativasLogin loginAttemptService;
 
     @Mock
-    private TwoFactorService twoFactorService;
+    private DoisFatoresService twoFactorService;
 
     @Mock
     private UsuarioAutenticarRepository usuarioAutenticarRepository;
@@ -81,7 +81,7 @@ class AuthControllerTest {
 
     @Test
     void register_DeveRetornarCreatedQuandoSucesso() {
-        RegisterRequestDTO request = RegisterRequestDTO.builder()
+        RegistroRequestDTO request = RegistroRequestDTO.builder()
             .nome("Maria")
             .email("maria@teste.com")
             .senha("Senha@123")
@@ -105,7 +105,7 @@ class AuthControllerTest {
 
     @Test
     void register_DeveRetornarBadRequestQuandoErroDeNegocio() {
-        RegisterRequestDTO request = RegisterRequestDTO.builder()
+        RegistroRequestDTO request = RegistroRequestDTO.builder()
             .nome("Maria")
             .email("maria@teste.com")
             .senha("Senha@123")
@@ -125,7 +125,7 @@ class AuthControllerTest {
 
     @Test
     void register_DeveRetornarInternalServerErrorQuandoErroInesperado() {
-        RegisterRequestDTO request = RegisterRequestDTO.builder()
+        RegistroRequestDTO request = RegistroRequestDTO.builder()
             .nome("Maria")
             .email("maria@teste.com")
             .senha("Senha@123")
@@ -141,7 +141,7 @@ class AuthControllerTest {
 
     @Test
     void confirmarRegistro_DeveRetornarCreatedQuandoSucesso() {
-        VerifyEmailRequestDTO request = VerifyEmailRequestDTO.builder()
+        VerificarEmailRequestDTO request = VerificarEmailRequestDTO.builder()
             .email("novo@teste.com")
             .codigo("123456")
             .build();
@@ -163,7 +163,7 @@ class AuthControllerTest {
 
     @Test
     void confirmarRegistro_DeveRetornarBadRequestQuandoFalhaDeNegocio() {
-        VerifyEmailRequestDTO request = VerifyEmailRequestDTO.builder()
+        VerificarEmailRequestDTO request = VerificarEmailRequestDTO.builder()
             .email("novo@teste.com")
             .codigo("123456")
             .build();
@@ -178,7 +178,7 @@ class AuthControllerTest {
 
     @Test
     void confirmarRegistro_DeveRetornarInternalServerErrorQuandoFalhaInesperada() {
-        VerifyEmailRequestDTO request = VerifyEmailRequestDTO.builder()
+        VerificarEmailRequestDTO request = VerificarEmailRequestDTO.builder()
             .email("novo@teste.com")
             .codigo("123456")
             .build();
@@ -223,7 +223,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarTokenEUsuarioQuandoSucesso() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("joao@teste.com");
         request.setSenha("Senha@123");
         request.setRememberMe(true);
@@ -236,7 +236,7 @@ class AuthControllerTest {
         ResponseEntity<?> response = authController.login(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        AuthResponseDTO body = (AuthResponseDTO) response.getBody();
+        AutenticacaoResponseDTO body = (AutenticacaoResponseDTO) response.getBody();
         assertNotNull(body);
         assertEquals("token-123", body.getToken());
         assertFalse(Boolean.TRUE.equals(body.getTwoFactorRequired()));
@@ -245,29 +245,29 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedQuandoTwoFactorForObrigatorio() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("2fa@teste.com");
         request.setSenha("Senha@123");
 
         when(authenticationService.login(eq("2fa@teste.com"), any(), eq(null), eq(null)))
-            .thenThrow(new TwoFactorRequiredException("Código obrigatório"));
+            .thenThrow(new ExcecaoDoisFatoresObrigatorio("Código obrigatório"));
 
         ResponseEntity<?> response = authController.login(request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        AuthResponseDTO body = (AuthResponseDTO) response.getBody();
+        AutenticacaoResponseDTO body = (AutenticacaoResponseDTO) response.getBody();
         assertNotNull(body);
         assertTrue(Boolean.TRUE.equals(body.getTwoFactorRequired()));
     }
 
     @Test
     void login_DeveRetornarForbiddenQuandoEmailNaoVerificado() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("naoverificado@teste.com");
         request.setSenha("Senha@123");
 
         when(authenticationService.login(eq("naoverificado@teste.com"), any(), eq(null), eq(null)))
-            .thenThrow(new EmailNotVerifiedException("Email não verificado"));
+            .thenThrow(new ExcecaoEmailNaoVerificado("Email não verificado"));
 
         ResponseEntity<?> response = authController.login(request);
 
@@ -280,7 +280,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedQuandoUsuarioNaoForEncontradoAposAutenticacao() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("sumiu@teste.com");
         request.setSenha("Senha@123");
 
@@ -294,7 +294,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarForbiddenQuandoUsuarioInativo() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("inativo@teste.com");
         request.setSenha("Senha@123");
 
@@ -308,12 +308,12 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedQuandoCodigo2FAInvalido() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("2fa@teste.com");
         request.setSenha("Senha@123");
 
         when(authenticationService.login(eq("2fa@teste.com"), any(), eq(null), eq(null)))
-            .thenThrow(new InvalidTwoFactorCodeException("codigo inválido"));
+            .thenThrow(new ExcecaoCodigoAutenticacaoInvalido("codigo inválido"));
 
         ResponseEntity<?> response = authController.login(request);
 
@@ -322,7 +322,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarTooManyRequestsQuandoMensagemBloqueada() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("bloq@teste.com");
         request.setSenha("Senha@123");
 
@@ -336,7 +336,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedComTentativasRestantesQuandoErroGenerico() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("erro@teste.com");
         request.setSenha("Senha@123");
 
@@ -351,7 +351,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedComContaBloqueadaTemporariamenteQuandoSemTentativas() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("erro@teste.com");
         request.setSenha("Senha@123");
 
@@ -366,7 +366,7 @@ class AuthControllerTest {
 
     @Test
     void login_DeveRetornarUnauthorizedQuandoRuntimeExceptionGenerica() {
-        AuthRequestDTO request = new AuthRequestDTO();
+        AutenticacaoRequestDTO request = new AutenticacaoRequestDTO();
         request.setEmail("fatal@teste.com");
         request.setSenha("Senha@123");
 
@@ -439,7 +439,7 @@ class AuthControllerTest {
         request.addHeader("Authorization", "Bearer token-2fa");
 
         Usuario usuario = criarUsuario(55L, "2FA", "2fa@teste.com");
-        TwoFactorSetupResponseDTO setup = TwoFactorSetupResponseDTO.builder()
+        ConfiguracaoDoisFatoresResponseDTO setup = ConfiguracaoDoisFatoresResponseDTO.builder()
             .qrCode("data:image/png;base64,abc")
             .secretKey("SECRET")
             .build();
@@ -486,7 +486,7 @@ class AuthControllerTest {
     @Test
     void enableTwoFactor_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
         ResponseEntity<?> response = authController.enableTwoFactor(request, body);
@@ -499,7 +499,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-enable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
         Usuario usuario = criarUsuario(77L, "Enable", "enable@teste.com");
@@ -517,7 +517,7 @@ class AuthControllerTest {
     void enableTwoFactor_DeveRetornarUnauthorizedQuandoTokenSemUserId() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-enable");
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
         when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(null);
@@ -532,7 +532,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-enable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
         Usuario usuario = criarUsuario(77L, "Enable", "enable@teste.com");
@@ -551,7 +551,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-enable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
         Usuario usuario = criarUsuario(77L, "Enable", "enable@teste.com");
@@ -570,7 +570,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-disable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("654321");
 
         Usuario usuario = criarUsuario(78L, "Disable", "disable@teste.com");
@@ -589,7 +589,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-disable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("654321");
 
         when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(null);
@@ -604,7 +604,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-disable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("654321");
 
         Usuario usuario = criarUsuario(78L, "Disable", "disable@teste.com");
@@ -623,7 +623,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-disable");
 
-        TwoFactorEnableRequestDTO body = new TwoFactorEnableRequestDTO();
+        HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("654321");
 
         Usuario usuario = criarUsuario(78L, "Disable", "disable@teste.com");
@@ -702,7 +702,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-revogado");
 
-        when(authenticationService.isTokenRevoked("token-revogado")).thenReturn(true);
+        when(authenticationService.tokenEhRevogado("token-revogado")).thenReturn(true);
 
         ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
 
@@ -714,7 +714,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(123L);
         when(usuarioRepository.findById(123L)).thenReturn(Optional.empty());
 
@@ -728,7 +728,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(null);
 
         ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
@@ -741,7 +741,7 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenThrow(new RuntimeException("falha"));
+        when(authenticationService.tokenEhRevogado("token-ok")).thenThrow(new RuntimeException("falha"));
 
         ResponseEntity<UsuarioResponseDTO> response = authController.me(request);
 
@@ -755,7 +755,7 @@ class AuthControllerTest {
 
         Usuario usuario = criarUsuario(321L, "Lucas", "lucas@teste.com");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(321L);
         when(usuarioRepository.findById(321L)).thenReturn(Optional.of(usuario));
 
@@ -769,15 +769,15 @@ class AuthControllerTest {
 
     @Test
     void validateToken_DeveRetornarValidTrueQuandoTokenForValido() {
-        ValidateTokenRequestDTO request = new ValidateTokenRequestDTO();
+        ValidarTokenRequestDTO request = new ValidarTokenRequestDTO();
         request.setToken("token-valido");
 
         when(authenticationService.validateToken("token-valido")).thenReturn(true);
 
-        ResponseEntity<ValidateTokenResponseDTO> response = authController.validateToken(request);
+        ResponseEntity<ValidarTokenResponseDTO> response = authController.validateToken(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        ValidateTokenResponseDTO body = response.getBody();
+        ValidarTokenResponseDTO body = response.getBody();
         assertNotNull(body);
         assertTrue(body.isValid());
         assertNull(body.getReason());
@@ -785,15 +785,15 @@ class AuthControllerTest {
 
     @Test
     void validateToken_DeveRetornarValidFalseQuandoTokenForInvalido() {
-        ValidateTokenRequestDTO request = new ValidateTokenRequestDTO();
+        ValidarTokenRequestDTO request = new ValidarTokenRequestDTO();
         request.setToken("token-invalido");
 
         when(authenticationService.validateToken("token-invalido")).thenReturn(false);
 
-        ResponseEntity<ValidateTokenResponseDTO> response = authController.validateToken(request);
+        ResponseEntity<ValidarTokenResponseDTO> response = authController.validateToken(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        ValidateTokenResponseDTO body = response.getBody();
+        ValidarTokenResponseDTO body = response.getBody();
         assertNotNull(body);
         assertFalse(body.isValid());
         assertEquals("Token inválido ou revogado", body.getReason());
@@ -801,15 +801,15 @@ class AuthControllerTest {
 
     @Test
     void validateToken_DeveRetornarReasonDeErroQuandoExcecaoForLancada() {
-        ValidateTokenRequestDTO request = new ValidateTokenRequestDTO();
+        ValidarTokenRequestDTO request = new ValidarTokenRequestDTO();
         request.setToken("token-com-erro");
 
         when(authenticationService.validateToken("token-com-erro")).thenThrow(new RuntimeException("falha"));
 
-        ResponseEntity<ValidateTokenResponseDTO> response = authController.validateToken(request);
+        ResponseEntity<ValidarTokenResponseDTO> response = authController.validateToken(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        ValidateTokenResponseDTO body = response.getBody();
+        ValidarTokenResponseDTO body = response.getBody();
         assertNotNull(body);
         assertFalse(body.isValid());
         assertEquals("Erro ao validar token", body.getReason());
@@ -842,7 +842,7 @@ class AuthControllerTest {
         request.addHeader("Authorization", "Bearer token-atual");
 
         when(jwtService.obterIdUsuarioDoToken("token-atual")).thenReturn(11L);
-        when(authenticationService.isTokenRevoked("token-atual")).thenReturn(true);
+        when(authenticationService.tokenEhRevogado("token-atual")).thenReturn(true);
 
         ResponseEntity<?> response = authController.reautenticar(11L, false, request);
 
@@ -855,7 +855,7 @@ class AuthControllerTest {
         request.addHeader("Authorization", "Bearer token-atual");
 
         when(jwtService.obterIdUsuarioDoToken("token-atual")).thenReturn(11L);
-        when(authenticationService.isTokenRevoked("token-atual")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-atual")).thenReturn(false);
         when(authenticationService.reautenticar(11L, true)).thenReturn("token-novo");
 
         ResponseEntity<?> response = authController.reautenticar(11L, true, request);
@@ -870,7 +870,7 @@ class AuthControllerTest {
         request.addHeader("Authorization", "Bearer token-atual");
 
         when(jwtService.obterIdUsuarioDoToken("token-atual")).thenReturn(11L);
-        when(authenticationService.isTokenRevoked("token-atual")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-atual")).thenReturn(false);
         when(authenticationService.reautenticar(11L, true)).thenThrow(new RuntimeException("falha"));
 
         ResponseEntity<?> response = authController.reautenticar(11L, true, request);
@@ -881,7 +881,7 @@ class AuthControllerTest {
     @Test
     void trocarSenha_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
         ResponseEntity<?> response = authController.trocarSenha(body, request);
 
@@ -893,9 +893,9 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-revogado");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
-        when(authenticationService.isTokenRevoked("token-revogado")).thenReturn(true);
+        when(authenticationService.tokenEhRevogado("token-revogado")).thenReturn(true);
 
         ResponseEntity<?> response = authController.trocarSenha(body, request);
 
@@ -907,9 +907,9 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(null);
 
         ResponseEntity<?> response = authController.trocarSenha(body, request);
@@ -922,9 +922,9 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
         when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.empty());
 
@@ -938,12 +938,12 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
         UsuarioAutenticar auth = new UsuarioAutenticar();
         auth.setSenhaHash("hash-atual");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
         when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.of(auth));
         when(passwordEncoder.matches("Senha@123", "hash-atual")).thenReturn(false);
@@ -958,12 +958,12 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
         UsuarioAutenticar auth = new UsuarioAutenticar();
         auth.setSenhaHash("hash-atual");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
         when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.of(auth));
         when(passwordEncoder.matches("Senha@123", "hash-atual")).thenReturn(true);
@@ -980,12 +980,12 @@ class AuthControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token-ok");
 
-        ChangePasswordRequestDTO body = new ChangePasswordRequestDTO("Senha@123", "Nova@123");
+        AlterarSenhaRequestDTO body = new AlterarSenhaRequestDTO("Senha@123", "Nova@123");
 
         UsuarioAutenticar auth = new UsuarioAutenticar();
         auth.setSenhaHash("hash-atual");
 
-        when(authenticationService.isTokenRevoked("token-ok")).thenReturn(false);
+        when(authenticationService.tokenEhRevogado("token-ok")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-ok")).thenReturn(500L);
         when(usuarioAutenticarRepository.findByUsuario_IdUsuario(500L)).thenReturn(Optional.of(auth));
         when(passwordEncoder.matches("Senha@123", "hash-atual")).thenReturn(true);

@@ -20,12 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.acessolivre.enums.Role;
-import com.acessolivre.exception.PasswordResetException;
+import com.acessolivre.exception.ExcecaoRecuperacaoSenha;
 import com.acessolivre.exception.UsuarioException;
-import com.acessolivre.model.PasswordResetCode;
+import com.acessolivre.model.CodigoRecuperacaoSenha;
 import com.acessolivre.model.Usuario;
 import com.acessolivre.model.UsuarioAutenticar;
-import com.acessolivre.repository.PasswordResetCodeRepository;
+import com.acessolivre.repository.CodigoRecuperacaoSenhaRepository;
 import com.acessolivre.repository.UsuarioAutenticarRepository;
 import com.acessolivre.repository.UsuarioRepository;
 
@@ -34,7 +34,7 @@ import com.acessolivre.repository.UsuarioRepository;
 class PasswordResetServiceTest {
 
     @Mock
-    private PasswordResetCodeRepository passwordResetCodeRepository;
+    private CodigoRecuperacaoSenhaRepository passwordResetCodeRepository;
 
     @Mock
     private UsuarioRepository usuarioRepository;
@@ -49,7 +49,7 @@ class PasswordResetServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private PasswordResetService passwordResetService;
+    private RecuperacaoSenhaService passwordResetService;
 
     @Test
     void gerarCodigoRecuperacaoComValidacao_DeveRetornarMensagemNeutraQuandoEmailNaoExiste() {
@@ -75,7 +75,7 @@ class PasswordResetServiceTest {
         when(usuarioRepository.findByEmail("ativo@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.countByUsuario_IdUsuarioAndCreatedAtAfter(anyLong(), any(LocalDateTime.class))).thenReturn(3L);
 
-        PasswordResetException ex = assertThrows(PasswordResetException.class,
+        ExcecaoRecuperacaoSenha ex = assertThrows(ExcecaoRecuperacaoSenha.class,
             () -> passwordResetService.gerarCodigoRecuperacaoComValidacao("ativo@teste.com"));
 
         assertTrue(ex.getMessage().contains("Muitas tentativas"));
@@ -86,11 +86,11 @@ class PasswordResetServiceTest {
         Usuario usuario = criarUsuario(1L, true);
         when(usuarioRepository.findByEmail("ativo@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.countByUsuario_IdUsuarioAndCreatedAtAfter(anyLong(), any(LocalDateTime.class))).thenReturn(0L);
-        when(passwordResetCodeRepository.save(any(PasswordResetCode.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(passwordResetCodeRepository.save(any(CodigoRecuperacaoSenha.class))).thenAnswer(inv -> inv.getArgument(0));
         org.mockito.Mockito.doThrow(new RuntimeException("smtp off")).when(emailService)
-            .sendPasswordResetCode(any(), any(), any());
+            .enviarCodigoRecuperacaoSenha(any(), any(), any());
 
-        assertThrows(PasswordResetException.EnvioEmailException.class,
+        assertThrows(ExcecaoRecuperacaoSenha.EnvioEmailException.class,
             () -> passwordResetService.gerarCodigoRecuperacaoComValidacao("ativo@teste.com"));
     }
 
@@ -99,18 +99,18 @@ class PasswordResetServiceTest {
         Usuario usuario = criarUsuario(1L, true);
         when(usuarioRepository.findByEmail("ativo@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.countByUsuario_IdUsuarioAndCreatedAtAfter(anyLong(), any(LocalDateTime.class))).thenReturn(0L);
-        when(passwordResetCodeRepository.save(any(PasswordResetCode.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(passwordResetCodeRepository.save(any(CodigoRecuperacaoSenha.class))).thenAnswer(inv -> inv.getArgument(0));
 
         String mensagem = passwordResetService.gerarCodigoRecuperacaoComValidacao("ativo@teste.com");
 
         assertTrue(mensagem.contains("Se o email existir"));
         verify(passwordResetCodeRepository).markAllAsUsedByUsuarioId(1L);
-        verify(emailService).sendPasswordResetCode(any(), any(), any());
+        verify(emailService).enviarCodigoRecuperacaoSenha(any(), any(), any());
     }
 
     @Test
     void redefinirSenhaComValidacao_DeveLancarQuandoCodigoInvalidoNoFormato() {
-        PasswordResetException ex = assertThrows(PasswordResetException.class,
+        ExcecaoRecuperacaoSenha ex = assertThrows(ExcecaoRecuperacaoSenha.class,
             () -> passwordResetService.redefinirSenhaComValidacao("u@teste.com", "abc", "Senha@12345"));
 
         assertTrue(ex.getMessage().contains("inválido"));
@@ -118,7 +118,7 @@ class PasswordResetServiceTest {
 
     @Test
     void redefinirSenhaComValidacao_DeveLancarQuandoSenhaFraca() {
-        PasswordResetException ex = assertThrows(PasswordResetException.class,
+        ExcecaoRecuperacaoSenha ex = assertThrows(ExcecaoRecuperacaoSenha.class,
             () -> passwordResetService.redefinirSenhaComValidacao("u@teste.com", "123456", "123"));
 
         assertTrue(ex.getMessage().length() > 0);
@@ -128,7 +128,7 @@ class PasswordResetServiceTest {
     void redefinirSenhaComValidacao_DeveLancarQuandoUsuarioNaoExiste() {
         when(usuarioRepository.findByEmail("x@teste.com")).thenReturn(Optional.empty());
 
-        PasswordResetException ex = assertThrows(PasswordResetException.class,
+        ExcecaoRecuperacaoSenha ex = assertThrows(ExcecaoRecuperacaoSenha.class,
             () -> passwordResetService.redefinirSenhaComValidacao("x@teste.com", "123456", "Senha@12345"));
 
         assertEquals("Usuário não encontrado", ex.getMessage());
@@ -137,28 +137,28 @@ class PasswordResetServiceTest {
     @Test
     void redefinirSenhaComValidacao_DeveLancarQuandoCodigoJaUtilizado() {
         Usuario usuario = criarUsuario(2L, true);
-        PasswordResetCode codigo = criarCodigo(usuario, true, LocalDateTime.now().plusMinutes(5));
+        CodigoRecuperacaoSenha codigo = criarCodigo(usuario, true, LocalDateTime.now().plusMinutes(5));
 
         when(usuarioRepository.findByEmail("u2@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(eq("123456"), eq(2L), any(LocalDateTime.class)))
             .thenReturn(Optional.empty());
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario("123456", 2L)).thenReturn(Optional.of(codigo));
 
-        assertThrows(PasswordResetException.CodigoJaUtilizadoException.class,
+        assertThrows(ExcecaoRecuperacaoSenha.CodigoJaUtilizadoException.class,
             () -> passwordResetService.redefinirSenhaComValidacao("u2@teste.com", "123456", "Senha@12345"));
     }
 
     @Test
     void redefinirSenhaComValidacao_DeveLancarQuandoCodigoExpirado() {
         Usuario usuario = criarUsuario(2L, true);
-        PasswordResetCode codigo = criarCodigo(usuario, false, LocalDateTime.now().minusMinutes(1));
+        CodigoRecuperacaoSenha codigo = criarCodigo(usuario, false, LocalDateTime.now().minusMinutes(1));
 
         when(usuarioRepository.findByEmail("u2@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(eq("123456"), eq(2L), any(LocalDateTime.class)))
             .thenReturn(Optional.empty());
         when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuario("123456", 2L)).thenReturn(Optional.of(codigo));
 
-        assertThrows(PasswordResetException.CodigoExpiradoException.class,
+        assertThrows(ExcecaoRecuperacaoSenha.CodigoExpiradoException.class,
             () -> passwordResetService.redefinirSenhaComValidacao("u2@teste.com", "123456", "Senha@12345"));
     }
 
@@ -166,10 +166,11 @@ class PasswordResetServiceTest {
     void redefinirSenhaComValidacao_DeveAtualizarSenhaEConsumirCodigoQuandoSucesso() {
         Usuario usuario = criarUsuario(2L, true);
         UsuarioAutenticar credencial = UsuarioAutenticar.builder().usuario(usuario).senhaHash("old").build();
-        PasswordResetCode codigo = criarCodigo(usuario, false, LocalDateTime.now().plusMinutes(10));
+        CodigoRecuperacaoSenha codigo = criarCodigo(usuario, false, LocalDateTime.now().plusMinutes(10));
 
         when(usuarioRepository.findByEmail("u2@teste.com")).thenReturn(Optional.of(usuario));
-        when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(eq("123456"), eq(2L), any(LocalDateTime.class)))
+        when(passwordResetCodeRepository.findByCodeAndUsuario_IdUsuarioAndUsedFalseAndExpiresAtAfter(eq("123456"), eq(2L), 
+        any(LocalDateTime.class)))
             .thenReturn(Optional.of(codigo));
         when(usuarioAutenticarRepository.findByUsuario_IdUsuario(2L)).thenReturn(Optional.of(credencial));
         when(passwordEncoder.encode("Senha@12345")).thenReturn("novaHash");
@@ -193,8 +194,8 @@ class PasswordResetServiceTest {
             .build();
     }
 
-    private PasswordResetCode criarCodigo(Usuario usuario, boolean used, LocalDateTime expiracao) {
-        return PasswordResetCode.builder()
+    private CodigoRecuperacaoSenha criarCodigo(Usuario usuario, boolean used, LocalDateTime expiracao) {
+        return CodigoRecuperacaoSenha.builder()
             .id(1L)
             .code("123456")
             .usuario(usuario)

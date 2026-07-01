@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LoginAttemptServiceTest {
 
     @InjectMocks
-    private LoginAttemptService loginAttemptService;
+    private ServicoTentativasLogin loginAttemptService;
 
     @BeforeEach
     void setUp() {

@@ -21,7 +21,7 @@ import java.util.UUID;
 public class ImagemService {
 
     private final ImagemRepository imagemRepository;
-    private final StorageService storageService;
+    private final ArmazenamentoService storageService;
     private final LocalRepository localRepository; 
 
     private static final String DOMINIO_LOCAIS = "locais";

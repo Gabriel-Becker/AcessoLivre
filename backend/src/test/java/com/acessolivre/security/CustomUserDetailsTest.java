@@ -20,7 +20,7 @@ class CustomUserDetailsTest {
             .role(Role.ROLE_ADMIN)
             .build();
 
-        CustomUserDetails details = new CustomUserDetails(usuario);
+        DetalhesUsuario details = new DetalhesUsuario(usuario);
 
         assertEquals(42L, details.getId());
         assertEquals("Gabriel", details.getNome());
@@ -40,7 +40,7 @@ class CustomUserDetailsTest {
             .role(Role.ROLE_USER)
             .build();
 
-        CustomUserDetails details = new CustomUserDetails(usuario);
+        DetalhesUsuario details = new DetalhesUsuario(usuario);
 
         assertTrue(details.isAccountNonExpired());
         assertTrue(details.isAccountNonLocked());

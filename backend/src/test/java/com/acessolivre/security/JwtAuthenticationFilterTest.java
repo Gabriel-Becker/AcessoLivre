@@ -22,10 +22,10 @@ import static org.mockito.Mockito.*;
 class JwtAuthenticationFilterTest {
 
     @InjectMocks
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private FiltroAutenticacaoJwt jwtAuthenticationFilter;
 
     @Mock
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private UserDetailsService userDetailsService;
@@ -55,7 +55,7 @@ class JwtAuthenticationFilterTest {
 
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
-        when(jwtService.isTokenValid(jwt, userDetails)).thenReturn(true);
+        when(jwtService.tokenEhValido(jwt, userDetails)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

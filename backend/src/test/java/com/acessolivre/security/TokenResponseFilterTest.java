@@ -26,7 +26,7 @@ import jakarta.servlet.http.HttpServletResponse;
 class TokenResponseFilterTest {
 
     @Mock
-    private JwtService jwtService;
+    private ServicoJwt jwtService;
 
     @Mock
     private UsuarioRepository usuarioRepository;
@@ -41,7 +41,7 @@ class TokenResponseFilterTest {
     private FilterChain filterChain;
 
     @InjectMocks
-    private TokenResponseFilter tokenResponseFilter;
+    private FiltroRespostaToken tokenResponseFilter;
 
     @Test
     void doFilterInternal_DeveSeguirFluxoQuandoHeaderAusente() throws ServletException, IOException {
@@ -56,7 +56,7 @@ class TokenResponseFilterTest {
     @Test
     void doFilterInternal_DeveSeguirFluxoQuandoTokenRevogado() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Bearer token-revogado");
-        when(jwtService.isTokenRevogado("token-revogado")).thenReturn(true);
+        when(jwtService.tokenEhRevogado("token-revogado")).thenReturn(true);
 
         tokenResponseFilter.doFilterInternal(request, response, filterChain);
 
@@ -69,7 +69,7 @@ class TokenResponseFilterTest {
         Usuario usuario = Usuario.builder().idUsuario(5L).tokenAtual("novo-token").build();
 
         when(request.getHeader("Authorization")).thenReturn("Bearer token-antigo");
-        when(jwtService.isTokenRevogado("token-antigo")).thenReturn(false);
+        when(jwtService.tokenEhRevogado("token-antigo")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-antigo")).thenReturn(5L);
         when(usuarioRepository.findById(5L)).thenReturn(Optional.of(usuario));
 
@@ -85,7 +85,7 @@ class TokenResponseFilterTest {
         Usuario usuario = Usuario.builder().idUsuario(6L).tokenAtual("token-igual").build();
 
         when(request.getHeader("Authorization")).thenReturn("Bearer token-igual");
-        when(jwtService.isTokenRevogado("token-igual")).thenReturn(false);
+        when(jwtService.tokenEhRevogado("token-igual")).thenReturn(false);
         when(jwtService.obterIdUsuarioDoToken("token-igual")).thenReturn(6L);
         when(usuarioRepository.findById(6L)).thenReturn(Optional.of(usuario));
 
@@ -98,7 +98,7 @@ class TokenResponseFilterTest {
     @Test
     void doFilterInternal_DeveIgnorarExcecaoInternaESeguirFiltro() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Bearer token");
-        when(jwtService.isTokenRevogado("token")).thenThrow(new RuntimeException("erro"));
+        when(jwtService.tokenEhRevogado("token")).thenThrow(new RuntimeException("erro"));
 
         tokenResponseFilter.doFilterInternal(request, response, filterChain);
 

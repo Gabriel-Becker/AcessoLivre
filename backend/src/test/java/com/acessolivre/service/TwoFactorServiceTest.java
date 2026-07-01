@@ -19,11 +19,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.acessolivre.dto.response.TwoFactorSetupResponseDTO;
+import com.acessolivre.dto.response.ConfiguracaoDoisFatoresResponseDTO;
 import com.acessolivre.enums.Role;
-import com.acessolivre.model.TwoFactorRecoveryCode;
+import com.acessolivre.model.CodigoRecuperacaoDoisFatores;
 import com.acessolivre.model.Usuario;
-import com.acessolivre.repository.TwoFactorRecoveryCodeRepository;
+import com.acessolivre.repository.CodigoRecuperacaoDoisFatoresRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 
@@ -35,16 +35,16 @@ class TwoFactorServiceTest {
     private UsuarioRepository usuarioRepository;
 
     @Mock
-    private TwoFactorRecoveryCodeRepository twoFactorRecoveryCodeRepository;
+    private CodigoRecuperacaoDoisFatoresRepository twoFactorRecoveryCodeRepository;
 
     @InjectMocks
-    private TwoFactorService twoFactorService;
+    private DoisFatoresService twoFactorService;
 
     @Test
     void isTwoFactorEnabledByEmail_DeveRetornarFalseQuandoUsuarioNaoExiste() {
         when(usuarioRepository.findByEmail("x@teste.com")).thenReturn(Optional.empty());
 
-        assertFalse(twoFactorService.isTwoFactorEnabledByEmail("x@teste.com"));
+        assertFalse(twoFactorService.duasFatoresAtivadosPorEmail("x@teste.com"));
     }
 
     @Test
@@ -53,7 +53,7 @@ class TwoFactorServiceTest {
         usuario.setTwoFactorEnabled(true);
         when(usuarioRepository.findByEmail("u@teste.com")).thenReturn(Optional.of(usuario));
 
-        assertTrue(twoFactorService.isTwoFactorEnabledByEmail("u@teste.com"));
+        assertTrue(twoFactorService.duasFatoresAtivadosPorEmail("u@teste.com"));
     }
 
     @Test
@@ -61,7 +61,7 @@ class TwoFactorServiceTest {
         Usuario usuario = criarUsuario(1L, "u@teste.com");
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
-        TwoFactorSetupResponseDTO dto = twoFactorService.prepararConfiguracao(1L);
+        ConfiguracaoDoisFatoresResponseDTO dto = twoFactorService.prepararConfiguracao(1L);
 
         assertNotNull(dto);
         assertNotNull(dto.getSecretKey());
@@ -116,7 +116,7 @@ class TwoFactorServiceTest {
         usuario.setTwoFactorSecret("SECRET123");
         usuario.setTwoFactorEnabled(true);
 
-        TwoFactorRecoveryCode recoveryCode = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores recoveryCode = CodigoRecuperacaoDoisFatores.builder()
             .id(1L)
             .codigo("RCODE1")
             .usuario(usuario)
@@ -158,7 +158,7 @@ class TwoFactorServiceTest {
         when(twoFactorRecoveryCodeRepository.findByCodigoAndUsuario_IdUsuario("X", 1L)).thenReturn(Optional.empty());
         assertFalse(twoFactorService.validarCodigoRecuperacao(usuario, "X"));
 
-        TwoFactorRecoveryCode usado = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores usado = CodigoRecuperacaoDoisFatores.builder()
             .codigo("U")
             .usuario(usuario)
             .utilizado(true)
@@ -171,7 +171,7 @@ class TwoFactorServiceTest {
     @Test
     void validarCodigoRecuperacao_DeveMarcarComoUsadoQuandoValido() {
         Usuario usuario = criarUsuario(1L, "u@teste.com");
-        TwoFactorRecoveryCode valido = TwoFactorRecoveryCode.builder()
+        CodigoRecuperacaoDoisFatores valido = CodigoRecuperacaoDoisFatores.builder()
             .codigo("R1")
             .usuario(usuario)
             .utilizado(false)
