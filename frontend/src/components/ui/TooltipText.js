@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import {
   Modal,
   Platform,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { createPortal } from 'react-dom';
 import { ThemedText } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -29,6 +30,8 @@ export default function TooltipText({
     ctxTheme || getTheme(contraste, fontSizeMultiplier);
 
   const [showTooltip, setShowTooltip] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const ref = useRef(null);
 
   const texto = text || '—';
 
@@ -39,15 +42,29 @@ export default function TooltipText({
 
   const precisaTooltip = texto.length > maxLength;
 
+  const handleHoverIn = () => {
+    if (Platform.OS === 'web' && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setPosition({
+        top: rect.top - 12,
+        left: rect.left,
+      });
+      setShowTooltip(true);
+    }
+  };
+
+  const handleHoverOut = () => {
+    if (Platform.OS === 'web') {
+      setShowTooltip(false);
+    }
+  };
+
   return (
     <>
       <Pressable
-        onHoverIn={() =>
-          Platform.OS === 'web' && setShowTooltip(true)
-        }
-        onHoverOut={() =>
-          Platform.OS === 'web' && setShowTooltip(false)
-        }
+        ref={ref}
+        onHoverIn={handleHoverIn}
+        onHoverOut={handleHoverOut}
         onPress={() => {
           if (Platform.OS !== 'web' && precisaTooltip) {
             setShowTooltip(true);
@@ -64,28 +81,32 @@ export default function TooltipText({
         >
           {resumido}
         </ThemedText>
-
-        {Platform.OS === 'web' &&
-          showTooltip &&
-          precisaTooltip && (
-            <View
-              style={[
-                styles.tooltip,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <ThemedText
-                color="textPrimary"
-                altoContraste={contraste}
-              >
-                {texto}
-              </ThemedText>
-            </View>
-          )}
       </Pressable>
+
+      {Platform.OS === 'web' &&
+        showTooltip &&
+        precisaTooltip &&
+        createPortal(
+          <View
+            style={[
+              styles.tooltip,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                top: position.top,
+                left: position.left,
+              },
+            ]}
+          >
+            <ThemedText
+              color="textPrimary"
+              altoContraste={contraste}
+            >
+              {texto}
+            </ThemedText>
+          </View>,
+          document.body
+        )}
 
       {Platform.OS !== 'web' && (
         <Modal
@@ -135,13 +156,7 @@ const styles = StyleSheet.create({
   },
 
   tooltip: {
-    position: 'absolute',
-
-    // Agora aparece acima do texto
-    bottom: '100%',
-    left: 0,
-
-    marginBottom: 8,
+    position: 'fixed',
 
     padding: 12,
 
@@ -151,7 +166,7 @@ const styles = StyleSheet.create({
     minWidth: 240,
     maxWidth: 380,
 
-    zIndex: 999999,
+    zIndex: 999999999,
     elevation: 999,
 
     shadowColor: '#000',

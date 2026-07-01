@@ -53,30 +53,71 @@ const BREAKPOINTS = {
   DESKTOP: 1400,
 };
 
-const SearchInput = React.memo(({ onSearch, theme, voiceEnabled, escalaFiltro = 1 }) => {
-  const [text, setText] = useState('');
+const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, escalaFiltro = 1, loading = false }) => {
+  const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef(null);
   const debounceTimer = useRef(null);
+  const hasAnnounced = useRef(false);
+  const previousValue = useRef(value);
   const tamanhoIcone = Math.round(20 * escalaFiltro);
   const tamanhoFonte = Math.round(16 * escalaFiltro);
 
-  const handleChange = useCallback((value) => {
-    setText(value);
-    
+  useEffect(() => {
+    setLocalValue(value);
+    previousValue.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
+  const handleChange = useCallback((newValue) => {
+    setLocalValue(newValue);
+
+    if (newValue === previousValue.current) return;
+    previousValue.current = newValue;
+
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
-    
+
     debounceTimer.current = setTimeout(() => {
-      onSearch(value);
-    }, 400);
+      onSearch(newValue);
+      debounceTimer.current = null;
+    }, 200);
   }, [onSearch]);
 
+  const handleClear = useCallback(() => {
+    handleChange('');
+    inputRef.current?.focus();
+  }, [handleChange]);
+
+  const handleSubmitEditing = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
+    onSearch(localValue);
+  }, [onSearch, localValue]);
+
   const anunciarPlaceholder = useCallback(() => {
-    if (voiceEnabled) {
+    if (voiceEnabled && !hasAnnounced.current) {
       VoiceService.speak('Campo de busca. Digite nome, endereço ou categoria do local.');
+      hasAnnounced.current = true;
     }
   }, [voiceEnabled]);
+
+  useEffect(() => {
+    return () => {
+      hasAnnounced.current = false;
+    };
+  }, []);
+
+  const showClearButton = localValue.length > 0 && !loading;
 
   return (
     <View
@@ -94,12 +135,22 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled, escalaFiltro = 
       <Ionicons name="search-outline" size={tamanhoIcone} color={theme.colors.textSecondary} />
       <TextInput
         ref={inputRef}
-        style={[styles.searchInput, { color: theme.colors.textPrimary, fontSize: tamanhoFonte }]}
-        placeholder="Buscar por nome, endereço ou categoria..."
+        style={[
+          styles.searchInput, 
+          { 
+            color: theme.colors.textPrimary, 
+            fontSize: tamanhoFonte,
+            outlineStyle: 'none',
+            borderWidth: 0,
+            borderColor: 'transparent',
+          }
+        ]}
+        placeholder="Buscar locais por nome, endereço ou categoria"
         placeholderTextColor={theme.colors.textTertiary}
-        value={text}
+        value={localValue}
         onChangeText={handleChange}
         returnKeyType="search"
+        onSubmitEditing={handleSubmitEditing}
         autoCapitalize="none"
         autoCorrect={false}
         blurOnSubmit={false}
@@ -107,9 +158,12 @@ const SearchInput = React.memo(({ onSearch, theme, voiceEnabled, escalaFiltro = 
         accessibilityHint="Digite o nome, endereço ou categoria do local que deseja encontrar"
         onFocus={anunciarPlaceholder}
       />
-      {text !== '' && (
+      {loading && (
+        <ActivityIndicator size="small" color={theme.colors.primary} style={styles.loadingIcon} />
+      )}
+      {showClearButton && (
         <TouchableOpacity 
-          onPress={() => handleChange('')}
+          onPress={handleClear}
           accessibilityLabel="Limpar busca"
           accessibilityRole="button"
         >
@@ -420,7 +474,9 @@ const FiltrosCard = React.memo(({
   fontSizeMultiplier,
   filtrosVisiveis,
   onToggleFiltros,
-  ocuparLarguraTotal = false
+  ocuparLarguraTotal = false,
+  searchText = '',
+  loading = false
 }) => {
   const escalaFiltro = Math.max(1, Number(fontSizeMultiplier) || 1);
   const tamanhoIconeHeader = Math.round(22 * escalaFiltro);
@@ -497,10 +553,12 @@ const FiltrosCard = React.memo(({
           <View style={{ height: espacamentoBloco }} />
 
           <SearchInput 
+            value={searchText}
             onSearch={onSearchChange}
             theme={theme}
             voiceEnabled={voiceEnabled}
             escalaFiltro={escalaFiltro}
+            loading={loading}
           />
 
           <View style={{ height: espacamentoBloco }} />
@@ -588,6 +646,7 @@ export default function Buscar({ onNavigate }) {
   const [carregandoInicial, setCarregandoInicial] = useState(true);
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
   const [filtrosVisiveis, setFiltrosVisiveis] = useState(true);
+  const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -627,7 +686,29 @@ export default function Buscar({ onNavigate }) {
     }
   }, [searchText, categoriasSelecionadas, recursosSelecionados, notaMinima]);
 
-  // LIMPAR FILTROS
+  const handleSearchChange = useCallback((text) => {
+    setSearchText(text);
+    setLoading(true);
+  }, []);
+
+  useEffect(() => {
+    if (carregandoInicial) return;
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      realizarBusca();
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [categoriasSelecionadas, recursosSelecionados, notaMinima, searchText, carregandoInicial, realizarBusca]);
+
   const limparFiltros = useCallback(() => {
     setSearchText('');
     setCategoriasSelecionadas([]);
@@ -637,14 +718,12 @@ export default function Buscar({ onNavigate }) {
     if (voiceEnabled) VoiceService.speak('Todos os filtros foram limpos');
   }, [voiceEnabled]);
 
-  // APLICAR FILTROS
   const aplicarFiltros = useCallback(() => {
     setLoading(true);
     realizarBusca();
     if (voiceEnabled) VoiceService.speak('Aplicando filtros');
   }, [realizarBusca, voiceEnabled]);
 
-  // TOGGLE CATEGORIA
   const toggleCategoria = useCallback((categoria) => {
     setCategoriasSelecionadas(prev =>
       prev.includes(categoria) ? prev.filter(c => c !== categoria) : [...prev, categoria]
@@ -655,11 +734,6 @@ export default function Buscar({ onNavigate }) {
     setRecursosSelecionados(prev =>
       prev.includes(recurso) ? prev.filter(r => r !== recurso) : [...prev, recurso]
     );
-  }, []);
-
-  const handleSearchChange = useCallback((text) => {
-    setSearchText(text);
-    setLoading(true);
   }, []);
 
   const handleLocalPress = useCallback((local) => {
@@ -699,7 +773,6 @@ export default function Buscar({ onNavigate }) {
     });
   }, [voiceEnabled]);
 
-  // CARREGAR DADOS INICIAIS
   const carregarDadosIniciais = useCallback(async () => {
     setCarregandoInicial(true);
     try {
@@ -792,16 +865,6 @@ export default function Buscar({ onNavigate }) {
   }, [carregarDadosIniciais]);
 
   useEffect(() => {
-    if (!carregandoInicial) {
-      const debounce = setTimeout(() => {
-        realizarBusca();
-      }, 300);
-      return () => clearTimeout(debounce);
-    }
-  }, [categoriasSelecionadas, recursosSelecionados, notaMinima, carregandoInicial, realizarBusca]);
-
-  // Anunciar ao carregar
-  useEffect(() => {
     if (!carregandoInicial && !loading && voiceEnabled && !voiceFeedbackGiven) {
       anunciarBusca();
       if (totalResultados > 0) {
@@ -811,14 +874,12 @@ export default function Buscar({ onNavigate }) {
     }
   }, [carregandoInicial, loading, voiceEnabled, anunciarBusca, anunciarResultados, totalResultados, voiceFeedbackGiven]);
 
-  // Resetar feedback ao mudar resultados
   useEffect(() => {
     if (!loading && voiceEnabled && totalResultados > 0) {
       setVoiceFeedbackGiven(false);
     }
   }, [totalResultados, loading, voiceEnabled]);
 
-  // Resetar feedback quando o voice for reativado
   useEffect(() => {
     if (!voiceEnabled) {
       setVoiceFeedbackGiven(false);
@@ -887,9 +948,7 @@ export default function Buscar({ onNavigate }) {
   return (
     <Container scroll={false} background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       {isDesktop && !usarLayoutEmpilhado ? (
-        // Layout Desktop
         <View style={styles.conteudoDesktop}>
-          {/* Coluna de Filtros */}
           <View style={[styles.colunaFiltrosDesktop, { width: larguraColunaFiltros }]}> 
             <ScrollView 
               style={styles.filtrosScrollView}
@@ -898,6 +957,7 @@ export default function Buscar({ onNavigate }) {
               scrollEnabled={true}
             >
               <FiltrosCard 
+                searchText={searchText}
                 onSearchChange={handleSearchChange}
                 categoriasSelecionadas={categoriasSelecionadas}
                 onToggleCategoria={toggleCategoria}
@@ -915,6 +975,7 @@ export default function Buscar({ onNavigate }) {
                 fontSizeMultiplier={fontSizeMultiplier}
                 filtrosVisiveis={filtrosVisiveis}
                 onToggleFiltros={alternarVisibilidadeFiltros}
+                loading={loading}
               />
             </ScrollView>
           </View>
@@ -956,7 +1017,6 @@ export default function Buscar({ onNavigate }) {
           </View>
         </View>
       ) : (
-        // Layout Mobile/Zoom
         <FlatList
           data={resultados}
           key={numColumns}
@@ -967,6 +1027,7 @@ export default function Buscar({ onNavigate }) {
             <>
               {cabecalhoLista}
               <FiltrosCard 
+                searchText={searchText}
                 onSearchChange={handleSearchChange}
                 categoriasSelecionadas={categoriasSelecionadas}
                 onToggleCategoria={toggleCategoria}
@@ -985,6 +1046,7 @@ export default function Buscar({ onNavigate }) {
                 filtrosVisiveis={filtrosVisiveis}
                 onToggleFiltros={alternarVisibilidadeFiltros}
                 ocuparLarguraTotal={zoomAplicado}
+                loading={loading}
               />
               {!zoomAplicado && (
                 <>
@@ -1023,7 +1085,6 @@ export default function Buscar({ onNavigate }) {
 }
 
 const styles = StyleSheet.create({
-  // Layout Desktop
   conteudoDesktop: {
     flex: 1,
     flexDirection: 'row',
@@ -1049,7 +1110,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  
   listContentMobile: {
     paddingHorizontal: 8,
     paddingBottom: 0,
@@ -1058,7 +1118,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: 0,
   },
-  
   filtrosCard: {
     padding: 16,
     borderRadius: 14,
@@ -1089,7 +1148,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1102,8 +1160,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     padding: 0,
+    outlineStyle: 'none',
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
-
+  loadingIcon: {
+    marginLeft: 4,
+  },
   filtroGrupo: {
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
@@ -1147,7 +1210,6 @@ const styles = StyleSheet.create({
   voiceIcon: {
     padding: 4,
   },
-  
   notaContainer: {
     alignItems: 'center',
     gap: 8,
@@ -1175,7 +1237,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F0FF',
   },
   notaBotaoTexto: {},
- 
   resultadosHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1194,7 +1255,6 @@ const styles = StyleSheet.create({
   resultadosListContent: {
     paddingBottom: 20,
   },
-  
   cardWrapper: {
     paddingHorizontal: 6,
     paddingVertical: 8,
@@ -1211,7 +1271,6 @@ const styles = StyleSheet.create({
     width: '33.33%',
     maxWidth: '33.33%',
   },
-  
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1241,4 +1300,3 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 });
-

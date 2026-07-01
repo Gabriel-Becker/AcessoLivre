@@ -4,7 +4,6 @@ import { Button } from '../../components/ui';
 import { ThemedText } from '../../components/commons';
 import TooltipText from '../../components/ui/TooltipText';
 
-// Estilos específicos para a tabela
 const styles = StyleSheet.create({
   tipoBadge: {
     paddingHorizontal: 8,

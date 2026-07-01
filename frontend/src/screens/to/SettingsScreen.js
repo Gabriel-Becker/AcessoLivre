@@ -1,4 +1,3 @@
-// Em algum lugar no seu código (ex: SettingsScreen.js)
 import { useContext } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
