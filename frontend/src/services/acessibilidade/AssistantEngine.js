@@ -1,190 +1,166 @@
-import VoiceService from './VoiceService';
-import NavigationService from './NavigationService';
-
 class AssistantEngine {
-  static isProcessing = false;
-  
-  // Armazenar contexto da tela atual
-  static currentContext = {
+  static context = {
     screen: 'Home',
-    totalLocais: 0,
-    totalAvaliacoes: 0,
-    locaisDestaqueCount: 0,
-    buscarLocalPorNome: null,
-    locaisDestaque: []
+    metadata: {}
   };
 
-  // Método para atualizar o contexto da tela atual
   static updateContext(context) {
-    this.currentContext = { ...this.currentContext, ...context };
-    console.log('📢 Contexto do assistente atualizado:', this.currentContext);
+    this.context = { ...this.context, ...context };
   }
 
-  // Método para obter o contexto atual
   static getContext() {
-    return this.currentContext;
+    return this.context;
   }
 
-  static async handle(command, context = {}) {
-    if (this.isProcessing) {
-      VoiceService.speak('Aguarde, estou processando...');
-      return;
+  static parseCommand(command) {
+    const text = command.toLowerCase().trim();
+
+    if (this.matchAny(text, ['home', 'início', 'inicio', 'principal', 'página inicial'])) {
+      return {
+        action: 'NAVIGATE',
+        screen: 'Main',
+        params: { screen: 'Inicio' },
+        speech: 'Voltando para página inicial'
+      };
     }
 
-    this.isProcessing = true;
-    const text = command.toLowerCase();
- 
-    const fullContext = { ...this.currentContext, ...context };
-
-    if (text.includes('home') || text.includes('início') || text.includes('inicio') || text.includes('principal')) {
-      VoiceService.speak('Indo para a página inicial');
-      NavigationService.resetTo('Main', { screen: 'Inicio' });
-    }
-    
-    else if (text.includes('perfil') || text.includes('meu perfil') || text.includes('minha conta')) {
-      VoiceService.speak('Abrindo seu perfil');
-      NavigationService.navigate('Main', { screen: 'Perfil' });
-    }
-    
-    else if (text.includes('denunciar') || text.includes('reportar') || text.includes('fazer denúncia')) {
-      VoiceService.speak('Abrindo formulário de denúncia');
-      NavigationService.navigate('Main', { screen: 'Denuncia' });
-    }
-    
-    else if (text.includes('configurações') || text.includes('configuracoes') || text.includes('ajustes')) {
-      VoiceService.speak('Abrindo configurações');
-      NavigationService.navigate('Main', { screen: 'Configuracoes' });
-    }
-    
-    else if (text.includes('voltar') || text.includes('retornar') || text.includes('volta')) {
-      if (NavigationService.canGoBack()) {
-        VoiceService.speak('Voltando');
-        NavigationService.goBack();
-      } else {
-        VoiceService.speak('Não é possível voltar, você já está na tela inicial');
-      }
-    }
-    
-    else if (text.includes('sair') || text.includes('logout') || text.includes('deslogar')) {
-      VoiceService.speak('Saindo do aplicativo');
-      NavigationService.resetTo('Login');
-    }
-    
-    else if (text.includes('estatísticas') || text.includes('estatisticas') || 
-             text.includes('quantos locais') || text.includes('total de locais') ||
-             text.includes('quantas avaliações') || text.includes('total de avaliações')) {
-      
-      const totalLocais = fullContext.totalLocais || 0;
-      const totalAvaliacoes = fullContext.totalAvaliacoes || 0;
-      
-      if (totalLocais > 0) {
-        VoiceService.speak(`Total de ${totalLocais} locais cadastrados e ${totalAvaliacoes} avaliações registradas.`);
-      } else {
-        VoiceService.speak('Carregando estatísticas. Tente novamente em alguns instantes.');
-      }
-    }
-    
-    else if (text.includes('destaques') || text.includes('locais em destaque') || 
-             text.includes('quantos destaques') || text.includes('em destaque')) {
-      
-      const count = fullContext.locaisDestaqueCount || 0;
-      
-      if (count > 0) {
-        VoiceService.speak(`Mostrando ${count} locais em destaque na página inicial.`);
-      } else {
-        VoiceService.speak('Nenhum local em destaque no momento.');
-      }
-    }
-    
-    else if (text.includes('ver todos') || text.includes('todos os locais') || 
-             text.includes('lista completa') || text.includes('mais locais')) {
-      VoiceService.speak('Abrindo página de busca com todos os locais cadastrados');
-      NavigationService.navigate('Main', { screen: 'Buscar' });
-    }
-    
-    else if (text.includes('atualizar') || text.includes('recarregar') || 
-             text.includes('refresh') || text.includes('atualizar página')) {
-      VoiceService.speak('Atualizando a página inicial');
-      // Disparar evento de refresh (será capturado pela Home)
-      if (fullContext.onRefresh) {
-        fullContext.onRefresh();
-      } else {
-        VoiceService.speak('Não foi possível atualizar automaticamente. Tente puxar a tela para baixo.');
-      }
-    }
-    
-    else if (text.includes('buscar') || text.includes('procure') || 
-             text.includes('encontre') || text.includes('onde fica') ||
-             text.match(/^buscar\s+\w+/i) || text.match(/^procure\s+\w+/i)) {
-      
-      // Extrair nome do local (remove palavras de comando)
-      let nomeLocal = text
-        .replace(/buscar|procure|encontre|onde fica|o local|local|chamado|chamada/g, '')
-        .trim();
-      
-      if (nomeLocal && fullContext.buscarLocalPorNome) {
-        VoiceService.speak(`Procurando por ${nomeLocal}`);
-        fullContext.buscarLocalPorNome(nomeLocal);
-      } else if (nomeLocal && fullContext.locaisDestaque?.length > 0) {
-        // Busca local nos destaques
-        const localEncontrado = fullContext.locaisDestaque.find(local => 
-          local.nome?.toLowerCase().includes(nomeLocal.toLowerCase())
-        );
-        
-        if (localEncontrado) {
-          VoiceService.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
-          NavigationService.navigate('LocalDetalhes', { id: localEncontrado.id });
-        } else {
-          VoiceService.speak(`Não encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
-        }
-      } else {
-        VoiceService.speak('Diga o nome do local que deseja buscar. Por exemplo: buscar restaurante central');
-      }
-    }
-    
-    else if (text.includes('detalhes') || text.includes('mais informações') || 
-             text.includes('sobre') || text.includes('informações do local')) {
-      
-      VoiceService.speak('Toque em qualquer card de local para ver os detalhes completos');
-    }
-    
-    else if (text.includes('ajuda') || text.includes('comandos') || 
-             text.includes('o que posso dizer') || text.includes('como usar')) {
-      
-      const screen = fullContext.screen || 'Home';
-      
-      if (screen === 'Home') {
-        VoiceService.speak(
-          'Comandos disponíveis na página inicial: home, perfil, denunciar, configurações, voltar, sair, ' +
-          'estatísticas, destaques, ver todos os locais, atualizar página, ' +
-          'buscar seguido do nome do local, e ajuda. O que você deseja?'
-        );
-      } else {
-        VoiceService.speak(
-          'Comandos gerais: home para página inicial, perfil para seus dados, ' +
-          'denunciar para fazer uma denúncia, configurações para ajustes, ' +
-          'voltar para tela anterior, sair para encerrar sessão, e ajuda para ouvir os comandos novamente.'
-        );
-      }
-    }
-    
-    else if (text.includes('obrigado') || text.includes('valeu') || text.includes('obrigada')) {
-      VoiceService.speak('Por nada! Estou aqui para ajudar.');
-    }
-    
-    else if (text.includes('tudo bem') || text.includes('como você está') || text.includes('como vai')) {
-      VoiceService.speak('Estou funcionando perfeitamente! Como posso ajudar você hoje?');
-    }
-    
-    else {
-      const currentScreen = NavigationService.getCurrentRoute() || fullContext.screen || 'página atual';
-      VoiceService.speak(
-        `Comando não reconhecido. Você está na tela ${currentScreen}. ` +
-        'Diga ajuda para ver os comandos disponíveis ou tente novamente.'
-      );
+    if (this.matchAny(text, ['perfil', 'meu perfil', 'minha conta', 'dados pessoais'])) {
+      return {
+        action: 'NAVIGATE',
+        screen: 'Main',
+        params: { screen: 'Perfil' },
+        speech: 'Abrindo seu perfil'
+      };
     }
 
-    this.isProcessing = false;
+    if (this.matchAny(text, ['denunciar', 'reportar', 'fazer denúncia', 'nova denúncia'])) {
+      return {
+        action: 'NAVIGATE',
+        screen: 'Main',
+        params: { screen: 'Denuncia' },
+        speech: 'Abrindo formulário de denúncia'
+      };
+    }
+
+    if (this.matchAny(text, ['configurações', 'configuracoes', 'ajustes', 'preferências'])) {
+      return {
+        action: 'NAVIGATE',
+        screen: 'Main',
+        params: { screen: 'Configuracoes' },
+        speech: 'Abrindo configurações'
+      };
+    }
+
+    if (this.matchAny(text, ['buscar', 'pesquisar', 'procurar', 'encontrar'])) {
+     
+      const termo = this.extractSearchTerm(text);
+      if (termo) {
+        return {
+          action: 'SEARCH',
+          term: termo,
+          speech: `Buscando por ${termo}`
+        };
+      }
+      return {
+        action: 'NAVIGATE',
+        screen: 'Main',
+        params: { screen: 'Buscar' },
+        speech: 'Abrindo página de busca'
+      };
+    }
+
+    if (this.matchAny(text, ['voltar', 'retornar', 'volta'])) {
+      return {
+        action: 'GO_BACK',
+        speech: 'Voltando'
+      };
+    }
+
+    if (this.matchAny(text, ['sair', 'logout', 'deslogar', 'encerrar sessão'])) {
+      return {
+        action: 'LOGOUT',
+        speech: 'Encerrando sessão'
+      };
+    }
+
+    if (this.matchAny(text, ['ajuda', 'comandos', 'o que posso dizer', 'como usar', 'instruções'])) {
+      return this.buildHelpResponse();
+    }
+
+    if (this.matchAny(text, ['estatísticas', 'estatisticas', 'quantos locais', 'total de locais', 'total de avaliações'])) {
+      return this.buildStatisticsResponse();
+    }
+
+    if (this.matchAny(text, ['obrigado', 'valeu', 'obrigada', 'obrigado'])) {
+      return {
+        action: 'SPEAK_ONLY',
+        speech: 'Por nada! Estou aqui para ajudar.'
+      };
+    }
+
+    if (this.matchAny(text, ['tudo bem', 'como você está', 'como vai', 'como está'])) {
+      return {
+        action: 'SPEAK_ONLY',
+        speech: 'Estou funcionando perfeitamente! Como posso ajudar você hoje?'
+      };
+    }
+
+    return {
+      action: 'UNKNOWN',
+      speech: `Comando não reconhecido. Você está na tela ${this.context.screen}. Diga "ajuda" para ver os comandos disponíveis.`
+    };
+  }
+
+  static matchAny(text, patterns) {
+    return patterns.some(pattern => text.includes(pattern));
+  }
+
+  static extractSearchTerm(text) {
+    const patterns = ['buscar', 'pesquisar', 'procurar', 'encontrar', 'procure', 'busque'];
+    let term = text;
+    for (const pattern of patterns) {
+      term = term.replace(new RegExp(pattern, 'gi'), '');
+    }
+    term = term.trim();
+    return term || null;
+  }
+
+  static buildHelpResponse() {
+    const screen = this.context.screen;
+    const commands = this.getCommandsForScreen(screen);
+
+    return {
+      action: 'SPEAK_ONLY',
+      speech: `Comandos disponíveis: ${commands.join(', ')}. O que você deseja fazer?`
+    };
+  }
+
+  static getCommandsForScreen(screen) {
+    const baseCommands = ['home', 'perfil', 'denunciar', 'configurações', 'voltar', 'sair', 'ajuda'];
+    const screenCommands = {
+      Home: ['estatísticas', 'buscar', 'ver todos os locais'],
+      Buscar: ['buscar [nome do local]', 'filtrar por categoria', 'limpar filtros'],
+      LocalDetalhes: ['avaliar', 'voltar', 'compartilhar'],
+      Denuncia: ['enviar', 'cancelar'],
+    };
+
+    return [...baseCommands, ...(screenCommands[screen] || [])];
+  }
+
+  static buildStatisticsResponse() {
+    const { totalLocais = 0, totalAvaliacoes = 0 } = this.context.metadata;
+
+    if (totalLocais > 0) {
+      return {
+        action: 'SPEAK_ONLY',
+        speech: `Total de ${totalLocais} locais cadastrados e ${totalAvaliacoes} avaliações registradas.`
+      };
+    }
+
+    return {
+      action: 'SPEAK_ONLY',
+      speech: 'Carregando estatísticas. Tente novamente em alguns instantes.'
+    };
   }
 }
 
