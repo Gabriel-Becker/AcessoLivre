@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     borderRadius: 20,
-    ...Platform.Selecao({
+    ...Platform.select({
       web: {
         boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
       },

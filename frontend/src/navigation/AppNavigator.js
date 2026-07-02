@@ -18,7 +18,7 @@ import { useThemeContext } from '../context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
-function LoadingScreen() {
+function CarregamentoScreen() {
   return (
     <Recipiente center background="backgroundSecondary">
       <ActivityIndicator size="large" color={theme.colors.primary} />

@@ -2,16 +2,19 @@ import api from '../api/axios';
 
 class ServicoSobre {
   static async obterMetricasImpacto() {
-    const [locaisResult, avaliacoesResult, usuariosAtivosResult] = await Promise.allSettled([
-      api.get('/locais', { params: { page: 0, size: 1 } }),
+    const [resumoLocaisResult, avaliacoesResult] = await Promise.allSettled([
+      this.obterResumoLocaisPublico(),
       api.get('/avaliacoes', { params: { page: 0, size: 1 } }),
-      this.obterTotalUsuariosAtivosPublico(),
     ]);
 
+    const resumoLocais = resumoLocaisResult.status === 'fulfilled'
+      ? resumoLocaisResult.value
+      : { totalLocais: 0, totalUsuariosAtivos: 0 };
+
     return {
-      totalLocais: this.extrairTotalDaResposta(locaisResult, 'totalElements'),
+      totalLocais: Number.isFinite(resumoLocais.totalLocais) ? resumoLocais.totalLocais : 0,
       totalAvaliacoes: this.extrairTotalDaResposta(avaliacoesResult, 'totalElements'),
-      totalUsuariosAtivos: this.extrairTotalDireto(usuariosAtivosResult),
+      totalUsuariosAtivos: Number.isFinite(resumoLocais.totalUsuariosAtivos) ? resumoLocais.totalUsuariosAtivos : 0,
     };
   }
 
@@ -34,19 +37,34 @@ class ServicoSobre {
   }
 
   static async obterTotalUsuariosAtivosPublico() {
+    const resumo = await this.obterResumoLocaisPublico();
+    return resumo.totalUsuariosAtivos;
+  }
+
+  static async obterResumoLocaisPublico() {
     const tamanhoPagina = 100;
+    const locaisContados = new Set();
+    let locaisSemId = 0;
     const usuariosUnicos = new Set();
 
     const primeiraResposta = await api.get('/locais/todos', {
       params: { page: 0, size: tamanhoPagina, sort: 'dataCriacao', direction: 'desc' },
     });
 
-    this.acumularUsuariosDaPagina(usuariosUnicos, primeiraResposta.data?.content);
+    const resumoPrimeiraPagina = this.acumularResumoDaPagina(
+      locaisContados,
+      usuariosUnicos,
+      primeiraResposta.data?.content
+    );
+    locaisSemId += resumoPrimeiraPagina.locaisSemId;
 
     const totalPages = Number(primeiraResposta.data?.totalPages) || 1;
 
     if (totalPages <= 1) {
-      return usuariosUnicos.size;
+      return {
+        totalLocais: locaisContados.size + locaisSemId,
+        totalUsuariosAtivos: usuariosUnicos.size,
+      };
     }
 
     const paginasRestantes = Array.from({ length: totalPages - 1 }, (_, index) => index + 1);
@@ -60,24 +78,59 @@ class ServicoSobre {
 
     respostasRestantes.forEach((resultado) => {
       if (resultado.status === 'fulfilled') {
-        this.acumularUsuariosDaPagina(usuariosUnicos, resultado.value?.data?.content);
+        const resumoPagina = this.acumularResumoDaPagina(
+          locaisContados,
+          usuariosUnicos,
+          resultado.value?.data?.content
+        );
+        locaisSemId += resumoPagina.locaisSemId;
       }
     });
 
-    return usuariosUnicos.size;
+    return {
+      totalLocais: locaisContados.size + locaisSemId,
+      totalUsuariosAtivos: usuariosUnicos.size,
+    };
   }
 
-  static acumularUsuariosDaPagina(usuariosUnicos, locais = []) {
+  static acumularResumoDaPagina(locaisContados, usuariosUnicos, locais = []) {
     if (!Array.isArray(locais)) {
-      return;
+      return { locaisSemId: 0 };
     }
 
-    locais.forEach((local) => {
-      const idUsuario = local?.idUsuario;
+    let locaisSemId = 0;
+    const pilha = [...locais];
+
+    while (pilha.length > 0) {
+      const local = pilha.pop();
+      if (!local || typeof local !== 'object') {
+        continue;
+      }
+
+      const idLocal = local?.idLocal ?? local?.id;
+      const chaveLocal = idLocal !== undefined && idLocal !== null ? String(idLocal) : null;
+
+      if (chaveLocal) {
+        if (locaisContados.has(chaveLocal)) {
+          continue;
+        }
+        locaisContados.add(chaveLocal);
+      } else {
+        locaisSemId += 1;
+      }
+
+      const idUsuario = local?.idUsuario ?? local?.usuario?.idUsuario ?? local?.usuario?.id;
       if (idUsuario !== undefined && idUsuario !== null) {
         usuariosUnicos.add(String(idUsuario));
       }
-    });
+
+      const subLocais = Array.isArray(local?.subLocais) ? local.subLocais : [];
+      if (subLocais.length > 0) {
+        pilha.push(...subLocais);
+      }
+    }
+
+    return { locaisSemId };
   }
 }
 

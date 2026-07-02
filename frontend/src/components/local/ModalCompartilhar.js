@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     borderRadius: 24,
     padding: 24,
-    ...Platform.Selecao({
+    ...Platform.select({
       web: {
         boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
       },
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FFF',
-    ...Platform.Selecao({
+    ...Platform.select({
       web: {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       },

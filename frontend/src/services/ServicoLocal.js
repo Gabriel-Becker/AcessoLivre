@@ -192,12 +192,79 @@ const ServicoLocal = {
    * Busca estatásticas gerais
    */
   async obterEstatisticas() {
-    const response = await api.get('/locais', { params: { page: 0, size: 1 } });
+    const totalLocais = await this.obterTotalLocaisComSublocais();
     return { 
-      totalLocais: response.data?.totalElements || 0, 
+      totalLocais,
       totalAvaliacoes: 0, 
       totalUsuarios: 0 
     };
+  },
+
+  async obterTotalLocaisComSublocais() {
+    const tamanhoPagina = 100;
+    const locaisContados = new Set();
+    let locaisSemId = 0;
+
+    const primeiraResposta = await api.get('/locais/todos', {
+      params: { page: 0, size: tamanhoPagina, sort: 'dataCriacao', direction: 'desc' },
+    });
+
+    locaisSemId += this.acumularLocaisDaPagina(locaisContados, primeiraResposta.data?.content);
+
+    const totalPages = Number(primeiraResposta.data?.totalPages) || 1;
+    if (totalPages > 1) {
+      const paginasRestantes = Array.from({ length: totalPages - 1 }, (_, index) => index + 1);
+      const respostasRestantes = await Promise.allSettled(
+        paginasRestantes.map((page) =>
+          api.get('/locais/todos', {
+            params: { page, size: tamanhoPagina, sort: 'dataCriacao', direction: 'desc' },
+          })
+        )
+      );
+
+      respostasRestantes.forEach((resultado) => {
+        if (resultado.status === 'fulfilled') {
+          locaisSemId += this.acumularLocaisDaPagina(locaisContados, resultado.value?.data?.content);
+        }
+      });
+    }
+
+    return locaisContados.size + locaisSemId;
+  },
+
+  acumularLocaisDaPagina(locaisContados, locais = []) {
+    if (!Array.isArray(locais)) {
+      return 0;
+    }
+
+    let locaisSemId = 0;
+    const pilha = [...locais];
+
+    while (pilha.length > 0) {
+      const local = pilha.pop();
+      if (!local || typeof local !== 'object') {
+        continue;
+      }
+
+      const idLocal = local?.idLocal ?? local?.id;
+      const chaveLocal = idLocal !== undefined && idLocal !== null ? String(idLocal) : null;
+
+      if (chaveLocal) {
+        if (locaisContados.has(chaveLocal)) {
+          continue;
+        }
+        locaisContados.add(chaveLocal);
+      } else {
+        locaisSemId += 1;
+      }
+
+      const subLocais = Array.isArray(local?.subLocais) ? local.subLocais : [];
+      if (subLocais.length > 0) {
+        pilha.push(...subLocais);
+      }
+    }
+
+    return locaisSemId;
   },
 
   /**

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } 
 import {
   View,
   StyleSheet,
+  ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
   TextInput,
@@ -9,7 +10,8 @@ import {
   ScrollView,
   Platform,
   LayoutAnimation,
-  UIManager
+  UIManager,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
