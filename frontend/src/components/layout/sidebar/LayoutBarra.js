@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { breakpoints, getTheme } from '../../../config/theme';
@@ -12,9 +12,9 @@ import ItemBarra from './ItemBarra';
 import { useAuth } from '../../../context/ContextoAutenticacao';
 
 const OPCOES_FONTE = [
-  { valor: 1, rotulo: 'PadrÃ£o', subtitulo: '100%' },
+  { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
   { valor: 1.5, rotulo: 'Maior', subtitulo: '150%' },
-  { valor: 2, rotulo: 'MÃ¡xima', subtitulo: '200%' },
+  { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
 ];
 
 export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContraste = false, largura = 240, modoExpandido = false }) {
@@ -38,7 +38,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
   const corFundoOpcaoSelecionada = contrasteAtivo ? 'rgba(0, 247, 239, 0.12)' : 'rgba(74, 144, 226, 0.10)';
 
   const items = [
-    { key: 'Inicio', label: 'InÃ­cio', icon: 'home-outline' },
+    { key: 'Inicio', label: 'Início', icon: 'home-outline' },
     { key: 'Buscar', label: 'Buscar', icon: 'search-outline' },
     {
       key: 'Adicionar',
@@ -46,8 +46,8 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
       icon: 'add-outline',
       disabled: !isAuthenticated,
     },
-    { key: 'Sobre', label: 'Sobre NÃ³s', icon: 'information-circle-outline' },
-    { key: 'Configuracoes', label: 'ConfiguraÃ§Ãµes', icon: 'settings-outline' },
+    { key: 'Sobre', label: 'Sobre Nós', icon: 'information-circle-outline' },
+    { key: 'Configuracoes', label: 'Configurações', icon: 'settings-outline' },
   ];
 
   return (
@@ -67,7 +67,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
             : { borderRightColor: t.colors.borderLight, width: largura, maxWidth: largura, backgroundColor: t.colors.background },
         ]}
       >
-        <View style={[styles.header, modoExpandido ? styles.headerExpandido : null]}>
+        <View style={[styles.Cabecalho, modoExpandido ? styles.headerExpandido : null]}>
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
             <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
           </View>
@@ -79,8 +79,8 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
             style={{ marginTop: 2 }}
           >
             AcessoLivre
-          </ThemedText>
-          <TextoTematizado color={corTextoSecundario} size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</ThemedText>
+          </TextoTematizado>
+          <TextoTematizado color={corTextoSecundario} size="sm" style={{ marginTop: 2 }}>Acessibilidade para todos</TextoTematizado>
         </View>
 
         <Espacador size={modoExpandido ? 'md' : 'lg'} />
@@ -114,7 +114,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
         <View style={[styles.footer, modoExpandido ? styles.footerExpandido : null]}>
           <PainelUsuarioBarra current={current} onNavigate={onNavigate} altoContraste={contrasteAtivo} />
         </View>
-      </SafeArea>
+      </AreaSegura>
 
       <Modal
         visible={showConfigModal}
@@ -130,12 +130,12 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
 
             <Espacador size="sm" />
             <TextoTematizado variant="h3" weight="bold" align="center" altoContraste={altoContraste}>
-              ConfiguraÃ§Ãµes
-            </ThemedText>
+              Configurações
+            </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color={corTextoSecundario} align="center" altoContraste={altoContraste} style={styles.modalDescricao}>
               Ajuste a acessibilidade do aplicativo sem sair desta tela.
-            </ThemedText>
+            </TextoTematizado>
 
             <Espacador size="md" />
 
@@ -149,11 +149,11 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                   <View style={[styles.settingTextBlock, { flex: 1 }]}> 
                     <TextoTematizado variant="h4" weight="bold" altoContraste={altoContraste}>
                       Alto contraste
-                    </ThemedText>
+                    </TextoTematizado>
                     <Espacador size="xs" />
                     <TextoTematizado color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
-                      Ativa contraste mÃ¡ximo para facilitar a leitura.
-                    </ThemedText>
+                      Ativa contraste máximo para facilitar a leitura.
+                    </TextoTematizado>
                   </View>
 
                   <View style={styles.switchContainer}>
@@ -173,18 +173,18 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                           <Ionicons name="text-outline" size={18} color={t.colors.primary} />
                           <TextoTematizado variant="h4" weight="bold" altoContraste={altoContraste}>
                             Tamanho da fonte
-                          </ThemedText>
+                          </TextoTematizado>
                         </View>
                         <Espacador size="xs" />
                         <TextoTematizado color={corTextoSecundario} size="sm" altoContraste={altoContraste}>
-                          Escolha o nÃ­vel que serÃ¡ aplicado em todas as telas.
-                        </ThemedText>
+                          Escolha o nível que será aplicado em todas as telas.
+                        </TextoTematizado>
                       </View>
 
                       <View style={[styles.badgeNivelAtual, { backgroundColor: t.colors.primary }]}> 
                         <TextoTematizado weight="bold" color="textOnPrimary" align="center" altoContraste={altoContraste}>
                           {nivelAtual.subtitulo}
-                        </ThemedText>
+                        </TextoTematizado>
                       </View>
                     </View>
 
@@ -212,13 +212,13 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                             ]}
                             onPress={() => alterarTamanhoFonte(opcao.valor)}
                             activeOpacity={0.8}
-                            accessibilityRole="button"
+                            accessibilityRole="Botao"
                             accessibilityState={{ selected: selecionado }}
                           >
                             <View style={styles.opcaoTopo}>
                               <TextoTematizado weight="bold" altoContraste={altoContraste}>
                                 {opcao.subtitulo}
-                              </ThemedText>
+                              </TextoTematizado>
                               <Ionicons
                                 name={selecionado ? 'checkmark-circle' : 'ellipse-outline'}
                                 size={18}
@@ -233,14 +233,14 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                               style={{ fontSize: 15 * opcao.valor, lineHeight: 17 * opcao.valor }}
                             >
                               Aa
-                            </ThemedText>
+                            </TextoTematizado>
 
                             <TextoTematizado weight="semibold" align="center" altoContraste={altoContraste}>
                               {opcao.rotulo}
-                            </ThemedText>
+                            </TextoTematizado>
                             <TextoTematizado color={corTextoSecundario} align="center" size="sm" altoContraste={altoContraste}>
                               Texto de exemplo
-                            </ThemedText>
+                            </TextoTematizado>
                           </TouchableOpacity>
                         );
                       })}
@@ -259,7 +259,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
               altoContraste={altoContraste}
             >
               Fechar
-            </Button>
+            </Botao>
           </View>
         </View>
       </Modal>
@@ -274,7 +274,7 @@ const criarEstilos = (t, modoExpandido) => StyleSheet.create({
     paddingHorizontal: t.spacing.md,
     paddingTop: t.spacing.lg,
   },
-  header: {
+  Cabecalho: {
     alignItems: 'flex-start',
     gap: 6,
   },

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -38,21 +38,21 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const nomeLocal = local.nome || 'Local';
   const idLocal = local.id || local.idLocal;
   
-  // URL para compartilhar (aponta para a pï¿½gina com Open Graph)
+  // URL para compartilhar (aponta para a página com Open Graph)
   const baseUrl = Platform.OS === 'web' 
     ? (typeof window !== 'undefined' ? window.location.origin : 'https://acessolivre.app')
     : 'https://acessolivre.app';
   
-  // URL da pï¿½gina do local (com Open Graph para preview)
+  // URL da página do local (com Open Graph para preview)
   const urlLocalPage = `${baseUrl}/local/${idLocal}`;
   
-  // URL para fallback (quando Open Graph nï¿½o funciona)
+  // URL para fallback (quando Open Graph não funciona)
   const urlLocal = `${baseUrl}/#/local/${idLocal}`;
   
   const copiarLink = async () => {
     try {
       await Clipboard.setStringAsync(urlLocalPage);
-      toastHelper.showSuccess('Link copiado! O link jï¿½ contï¿½m preview do local.');
+      toastHelper.showSuccess('Link copiado! O link já contém preview do local.');
     } catch (error) {
       console.error('Erro ao copiar link:', error);
       toastHelper.showError('Erro ao copiar link');
@@ -65,7 +65,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     try {
       const result = await Share.share({
         title: `${nomeLocal} - Acesso Livre`,
-        message: `?? ${nomeLocal}\n\nConfira este local acessï¿½vel no Acesso Livre!\n\n${urlLocalPage}`,
+        message: `🎤 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`,
         url: Platform.OS === 'ios' ? urlLocalPage : undefined,
       });
       
@@ -84,7 +84,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
   const compartilharWhatsApp = async () => {
     setCompartilhando(true);
     try {
-      const textoEncoded = encodeURIComponent(`?? ${nomeLocal}\n\nConfira este local acessï¿½vel no Acesso Livre!\n\n${urlLocalPage}`);
+      const textoEncoded = encodeURIComponent(`🎤 ${nomeLocal}\n\nConfira este local acessível no Acesso Livre!\n\n${urlLocalPage}`);
       
       if (Platform.OS === 'web') {
         const webUrl = `https://wa.me/?text=${textoEncoded}`;
@@ -150,7 +150,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       
       if (Platform.OS === 'web') {
         window.open('https://www.instagram.com', '_blank');
-        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar. O link terï¿½ preview automï¿½tico.');
+        toastHelper.showSuccess('Link copiado! Abra o Instagram e cole para compartilhar. O link terá preview automático.');
       } else {
         const deepLink = `instagram://library?AssetPath=`;
         const canOpen = await Linking.canOpenURL(deepLink);
@@ -167,7 +167,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     } catch (error) {
       console.error('Erro no Instagram:', error);
       await Clipboard.setStringAsync(urlLocalPage);
-      toastHelper.showSuccess('Link copiado! O link contï¿½m preview do local.');
+      toastHelper.showSuccess('Link copiado! O link contém preview do local.');
       onClose();
     } finally {
       setCompartilhando(false);
@@ -178,7 +178,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
     setCompartilhando(true);
     try {
       const urlEncoded = encodeURIComponent(urlLocalPage);
-      const textoEncoded = encodeURIComponent(`?? ${nomeLocal}\n\nConfira este local acessï¿½vel!`);
+      const textoEncoded = encodeURIComponent(`🎤 ${nomeLocal}\n\nConfira este local acessível!`);
       
       if (Platform.OS === 'web') {
         const webUrl = `https://t.me/share/url?url=${urlEncoded}&text=${textoEncoded}`;
@@ -240,7 +240,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
       </View>
       <TextoTematizado variant="caption" style={styles.plataformaNome}>
         {plataforma.nome}
-      </ThemedText>
+      </TextoTematizado>
     </TouchableOpacity>
   );
 
@@ -259,10 +259,10 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
               { backgroundColor: theme.colors.surface }
             ]}>
               <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.header}>
+                <View style={styles.Cabecalho}>
                   <TextoTematizado variant="h2" weight="bold" style={styles.titulo}>
                     Compartilhar este local
-                  </ThemedText>
+                  </TextoTematizado>
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                     <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                   </TouchableOpacity>
@@ -271,18 +271,18 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                 <Espacador size="sm" />
 
                 <TextoTematizado color="textSecondary" align="center" style={styles.subtitulo}>
-                  Ajuda outras pessoas compartilhando este local acessï¿½vel.
-                </ThemedText>
+                  Ajuda outras pessoas compartilhando este local acessível.
+                </TextoTematizado>
 
                 <Espacador size="lg" />
 
-                {/* Preview do card que serï¿½ compartilhado */}
+                {/* Preview do card que será compartilhado */}
                 <View style={[styles.previewContainer, { backgroundColor: isHighContrast ? theme.colors.surfaceSecondary : '#F8F9FA' }]}>
                   <View style={styles.previewHeader}>
                     <View style={styles.previewIcon}>
                       <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
                     </View>
-                    <TextoTematizado variant="caption" color="textSecondary">WhatsApp Preview</ThemedText>
+                    <TextoTematizado variant="caption" color="textSecondary">WhatsApp Preview</TextoTematizado>
                   </View>
                   <View style={styles.previewCard}>
                     {local.imagemUrl ? (
@@ -295,13 +295,13 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                     <View style={styles.previewContent}>
                       <TextoTematizado weight="bold" numberOfLines={1} style={styles.previewTitle}>
                         {nomeLocal}
-                      </ThemedText>
+                      </TextoTematizado>
                       <TextoTematizado variant="caption" color="textSecondary" numberOfLines={2}>
-                        {local.categoria} ï¿½ ? {local.avaliacaoMedia?.toFixed(1) || 0} ({local.totalAvaliacoes || 0} avaliaï¿½ï¿½es)
-                      </ThemedText>
+                        {local.categoria} • {local.avaliacaoMedia?.toFixed(1) || 0} ({local.totalAvaliacoes || 0} avaliações)
+                      </TextoTematizado>
                       <TextoTematizado variant="caption" color="textTertiary" numberOfLines={1}>
                         {urlLocalPage}
-                      </ThemedText>
+                      </TextoTematizado>
                     </View>
                   </View>
                 </View>
@@ -312,7 +312,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                   <Ionicons name="link-outline" size={20} color={theme.colors.primary} />
                   <TextoTematizado color="textSecondary" style={styles.urlTexto} numberOfLines={1}>
                     {urlLocalPage}
-                  </ThemedText>
+                  </TextoTematizado>
                   <TouchableOpacity onPress={copiarLink} style={styles.copiarIcon}>
                     <Ionicons name="copy-outline" size={20} color={theme.colors.primary} />
                   </TouchableOpacity>
@@ -322,7 +322,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
 
                 <TextoTematizado weight="semibold" style={styles.compartilharViaLabel}>
                   Compartilhar via
-                </ThemedText>
+                </TextoTematizado>
 
                 <Espacador size="sm" />
 
@@ -337,8 +337,8 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                 <View style={[styles.footer, { borderTopColor: theme.colors.borderLight }]}>
                   <Ionicons name="information-circle-outline" size={14} color={theme.colors.textTertiary} />
                   <TextoTematizado variant="caption" color="textTertiary" align="center" style={styles.footerTexto}>
-                    O link compartilhado inclui um preview com foto e informaï¿½ï¿½es do local.
-                  </ThemedText>
+                    O link compartilhado inclui um preview com foto e informações do local.
+                  </TextoTematizado>
                 </View>
 
                 <Espacador size="md" />
@@ -346,7 +346,7 @@ export default function ModalCompartilhar({ visible, onClose, local }) {
                 <TouchableOpacity style={styles.botaoFechar} onPress={onClose}>
                   <TextoTematizado color="primary" weight="semibold" align="center">
                     Fechar
-                  </ThemedText>
+                  </TextoTematizado>
                 </TouchableOpacity>
 
                 <Espacador size="sm" />
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     maxHeight: '85%',
     borderRadius: 24,
     padding: 24,
-    ...Platform.select({
+    ...Platform.Selecao({
       web: {
         boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
       },
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  header: {
+  Cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FFF',
-    ...Platform.select({
+    ...Platform.Selecao({
       web: {
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       },

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,7 +10,7 @@ import {
   useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { breakpoints } from '../../config/theme';
 import { normalizarUrlImagem } from '../../utils/urlImagem';
@@ -110,14 +110,14 @@ export default function GaleriaLocal({ imagens = [], altoContraste = false }) {
       <View style={styles.emptyContainer}>
         <Ionicons name="camera-outline" size={48} color={t.colors.textTertiary} />
         <TextoTematizado color="textSecondary" align="center">
-          Nenhuma foto disponÃ­vel
-        </ThemedText>
+          Nenhuma foto disponível
+        </TextoTematizado>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <FlatList
         data={imagens}
         keyExtractor={thumbnailKeyExtractor}
@@ -171,7 +171,7 @@ export default function GaleriaLocal({ imagens = [], altoContraste = false }) {
           <View style={styles.counterContainer}>
             <TextoTematizado style={styles.counterText}>
               {selectedImageIndex + 1} / {imagens.length}
-            </ThemedText>
+            </TextoTematizado>
           </View>
         </View>
       </Modal>
@@ -180,7 +180,7 @@ export default function GaleriaLocal({ imagens = [], altoContraste = false }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     marginTop: 4,
     marginBottom: 8,
   },

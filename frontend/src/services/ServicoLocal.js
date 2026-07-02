@@ -1,9 +1,9 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import { normalizarUrlImagem } from '../utils/urlImagem';
 
-const LocalService = {
+const ServicoLocal = {
   /**
    * Cadastra um novo local
    */
@@ -25,7 +25,7 @@ const LocalService = {
       if (Platform.OS !== 'web') {
         const fileInfo = await FileSystem.getInfoAsync(uri);
         if (!fileInfo.exists) {
-          throw new Error(`Arquivo nï¿½o encontrado: ${uri}`);
+          throw new Error(`Arquivo não encontrado: ${uri}`);
         }
 
         return {
@@ -109,7 +109,7 @@ const LocalService = {
   },
 
   /**
-   * Envia mï¿½ltiplas imagens com controle de progresso
+   * Envia máltiplas imagens com controle de progresso
    */
   async enviarMultiplasImagens(idLocal, imagens, onProgress) {
     const resultados = [];
@@ -128,7 +128,7 @@ const LocalService = {
       } catch (erro) {
         console.error(`? Erro na imagem ${i + 1}:`, erro);
         imagensComErro++;
-        // Continua com as prï¿½ximas imagens
+        // Continua com as práximas imagens
       }
     }
 
@@ -157,14 +157,14 @@ const LocalService = {
   },
 
   /**
-   * Obtï¿½m URL completa da imagem
+   * Obtám URL completa da imagem
    */
   getImagemUrl(url) {
     return normalizarUrlImagem(url);
   },
 
   /**
-   * Lista locais com paginaï¿½ï¿½o
+   * Lista locais com paginação
    */
   async listarLocais(params = {}) {
     const { page = 0, size = 20, sort = 'nome' } = params;
@@ -189,7 +189,7 @@ const LocalService = {
   },
 
   /**
-   * Busca estatï¿½sticas gerais
+   * Busca estatásticas gerais
    */
   async obterEstatisticas() {
     const response = await api.get('/locais', { params: { page: 0, size: 1 } });
@@ -241,4 +241,4 @@ const LocalService = {
   }
 };
 
-export default LocalService;
+export default ServicoLocal;

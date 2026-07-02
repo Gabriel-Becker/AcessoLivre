@@ -1,8 +1,8 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BarraFiltroAdmin, TabelaPlanilhaAdmin } from '../../components/admin';
-import { Spacer, ThemedText } from '../../components/commons';
-import { Button } from '../../components/ui';
+import { Espacador, TextoTematizado } from '../../components/commons';
+import { Botao } from '../../components/ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import ServicoDenuncia from '../../services/ServicoDenuncia';
 import toastHelper from '../../utils/toastHelper';
@@ -39,7 +39,7 @@ export default function Denuncias() {
 
   const carregarEstatisticas = useCallback(async () => {
     try {
-      const result = await DenunciaService.getEstatisticas();
+      const result = await ServicoDenuncia.getEstatisticas();
       if (result.success && result.data && mountedRef.current) {
         setEstatisticas({
           total: result.data.TOTAL || 0,
@@ -47,7 +47,7 @@ export default function Denuncias() {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatÃ­sticas:', error);
+      console.error('Erro ao carregar estatísticas:', error);
     }
   }, []);
 
@@ -63,7 +63,7 @@ export default function Denuncias() {
       filters.size = 10;
       filters.sort = 'dataCriacao,desc';
 
-      const result = await DenunciaService.getAll(filters);
+      const result = await ServicoDenuncia.getAll(filters);
       
       if (result.success && mountedRef.current) {
         setDenuncias(result.data || []);
@@ -74,12 +74,12 @@ export default function Denuncias() {
           setPaginaAtual(Math.max(0, paginaRetornada));
         }
       } else if (!result.success && mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao carregar denÃºncias');
+        toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
     } catch (error) {
-      console.error('Erro ao carregar denÃºncias:', error);
+      console.error('Erro ao carregar denúncias:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao carregar denÃºncias');
+        toastHelper.showError('Erro ao carregar denúncias');
       }
     } finally {
       if (mountedRef.current) setCarregando(false);
@@ -131,9 +131,9 @@ export default function Denuncias() {
     const statusAntigo = denunciaSelecionada.status;
     
     try {
-      const result = await DenunciaService.updateStatus(denunciaSelecionada.id, novoStatus);
+      const result = await ServicoDenuncia.updateStatus(denunciaSelecionada.id, novoStatus);
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('Status da denÃºncia atualizado com sucesso');
+        toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
         
         setDenuncias(prev => prev.map(item =>
           item.id === denunciaSelecionada.id
@@ -165,10 +165,10 @@ export default function Denuncias() {
     const statusAntigo = denuncia.status;
     
     try {
-      const result = await DenunciaService.resolver(denuncia.id);
+      const result = await ServicoDenuncia.resolver(denuncia.id);
       
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('ConteÃºdo removido e denÃºncia resolvida com sucesso');
+        toastHelper.showSuccess('Conteúdo removido e denúncia resolvida com sucesso');
         
         setDenuncias(prev => prev.map(item =>
           item.id === denuncia.id
@@ -186,17 +186,17 @@ export default function Denuncias() {
         await carregarEstatisticas();
         
       } else if (result.alreadyResolved && mountedRef.current) {
-        toastHelper.showInfo('Esta denÃºncia jÃ¡ foi processada anteriormente');
+        toastHelper.showInfo('Esta denúncia já foi processada anteriormente');
         await carregarDenuncias();
         await carregarEstatisticas();
         setModalStatusVisivel(false);
       } else if (mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao resolver denÃºncia');
+        toastHelper.showError(result.message || 'Erro ao resolver denúncia');
       }
     } catch (error) {
-      console.error('Erro ao resolver denÃºncia:', error);
+      console.error('Erro ao resolver denúncia:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao resolver denÃºncia. Tente novamente.');
+        toastHelper.showError('Erro ao resolver denúncia. Tente novamente.');
       }
     } finally {
       if (mountedRef.current) {
@@ -217,19 +217,19 @@ export default function Denuncias() {
     
     setCarregandoAcao(true);
     try {
-      const result = await DenunciaService.delete(denunciaParaExcluir.id);
+      const result = await ServicoDenuncia.delete(denunciaParaExcluir.id);
       if (result.success && mountedRef.current) {
-        toastHelper.showSuccess('DenÃºncia excluÃ­da com sucesso');
+        toastHelper.showSuccess('Denúncia excluída com sucesso');
         setDenuncias(prev => prev.filter(item => item.id !== denunciaParaExcluir.id));
         await carregarEstatisticas();
         setModalExcluirVisivel(false);
       } else if (mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao excluir denÃºncia');
+        toastHelper.showError(result.message || 'Erro ao excluir denúncia');
       }
     } catch (error) {
-      console.error('Erro ao excluir denÃºncia:', error);
+      console.error('Erro ao excluir denúncia:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao excluir denÃºncia');
+        toastHelper.showError('Erro ao excluir denúncia');
       }
     } finally {
       if (mountedRef.current) setCarregandoAcao(false);
@@ -259,25 +259,25 @@ export default function Denuncias() {
 
   return (
     <>
-      <View style={styles.statsBanner}>
+      <View style={styles.BannerEstatisticas}>
         <View style={[styles.statCard, { backgroundColor: t.colors.warning + '20' }]}>
           <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.warning }}>
             {estatisticas.pendentes}
-          </ThemedText>
-          <TextoTematizado variant="caption" color="textSecondary">Pendentes</ThemedText>
+          </TextoTematizado>
+          <TextoTematizado variant="caption" color="textSecondary">Pendentes</TextoTematizado>
         </View>
         <View style={[styles.statCard, { backgroundColor: t.colors.primary + '10' }]}>
           <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.primary }}>
             {estatisticas.total}
-          </ThemedText>
-          <TextoTematizado variant="caption" color="textSecondary">Total</ThemedText>
+          </TextoTematizado>
+          <TextoTematizado variant="caption" color="textSecondary">Total</TextoTematizado>
         </View>
       </View>
 
       <Espacador size="md" />
 
       <BarraFiltroAdmin
-        titulo="DenÃºncias"
+        titulo="Denúncias"
         pesquisa={buscaDenuncias}
         onChangePesquisa={(valor) => {
           setBuscaDenuncias(valor);
@@ -298,9 +298,9 @@ export default function Denuncias() {
           <View style={styles.emptyContainer}>
             <TextoTematizado size="sm" color="textSecondary" align="center">
               {filtroStatusDenuncias === 'PENDING' 
-                ? 'Nenhuma denÃºncia pendente' 
-                : 'Nenhuma denÃºncia encontrada'}
-            </ThemedText>
+                ? 'Nenhuma denúncia pendente' 
+                : 'Nenhuma denúncia encontrada'}
+            </TextoTematizado>
           </View>
         }
         carregando={carregando}
@@ -319,10 +319,10 @@ export default function Denuncias() {
           altoContraste={isHighContrast}
         >
           Anterior
-        </Button>
+        </Botao>
         <TextoTematizado color="textSecondary" altoContraste={isHighContrast}>
-          PÃ¡gina {paginaAtual + 1} de {Math.max(1, totalPaginas)}
-        </ThemedText>
+          Página {paginaAtual + 1} de {Math.max(1, totalPaginas)}
+        </TextoTematizado>
         <Botao
           variant="outline"
           size="small"
@@ -330,8 +330,8 @@ export default function Denuncias() {
           disabled={carregando || paginaAtual + 1 >= Math.max(1, totalPaginas)}
           altoContraste={isHighContrast}
         >
-          PrÃ³xima
-        </Button>
+          Próxima
+        </Botao>
       </View>
 
       <ModalStatusDenuncia
@@ -365,7 +365,7 @@ export default function Denuncias() {
 }
 
 const styles = StyleSheet.create({
-  statsBanner: {
+  BannerEstatisticas: {
     flexDirection: 'row',
     marginBottom: 16,
     gap: 12,

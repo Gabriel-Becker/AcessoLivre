@@ -1,4 +1,4 @@
-﻿// Input - Campo de texto reutilizÃ¡vel com suporte a temas
+// Entrada - Campo de texto reutilizável com suporte a temas
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,12 +45,12 @@ export default function Entrada({
     if (Platform.OS === 'web' && isPassword) {
       const style = document.createElement('style');
       style.textContent = `
-        input[type="password"]::-ms-reveal,
-        input[type="password"]::-ms-clear {
+        Entrada[type="password"]::-ms-reveal,
+        Entrada[type="password"]::-ms-clear {
           display: none !important;
         }
-        input[type="password"]::-webkit-credentials-auto-fill-button,
-        input[type="password"]::-webkit-contacts-auto-fill-button {
+        Entrada[type="password"]::-webkit-credentials-auto-fill-Botao,
+        Entrada[type="password"]::-webkit-contacts-auto-fill-Botao {
           visibility: hidden !important;
           pointer-events: none !important;
         }
@@ -72,7 +72,7 @@ export default function Entrada({
   };
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[styles.Recipiente, containerStyle]}>
       {label && (
         <Text
           allowFontScaling={permitirEscalaFonte}
@@ -104,7 +104,7 @@ export default function Entrada({
         <TextInput
           allowFontScaling={permitirEscalaFonte}
           style={[
-            styles.input,
+            styles.Entrada,
             leftIcon && styles.inputWithLeftIcon,
             (effectiveRightIcon || isPassword) && styles.inputWithRightIcon,
             multiline && styles.inputMultiline,
@@ -176,7 +176,7 @@ export default function Entrada({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     marginBottom: theme.spacing.sm,
   },
   label: {
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: theme.spacing.md,
   },
-  input: {
+  Entrada: {
     flex: 1,
     fontSize: theme.typography.fontSize.lg,
     paddingVertical: theme.spacing.md,

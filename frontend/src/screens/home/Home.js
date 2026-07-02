@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 
 import {
   View,
@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { StatsBanner, LocalCard } from '../../components/ui';
-import { ThemedText, Spacer } from '../../components/commons';
+import { BannerEstatisticas, CartaoLocal } from '../../components/ui';
+import { TextoTematizado, Espacador } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
@@ -120,12 +120,12 @@ export default function Home({ onNavigate, routeParams }) {
       ? `Mostrando ${locaisDestaque.length} locais em destaque.`
       : 'Nenhum local em destaque no momento.';
 
-    ServicoVoz.speak(`Bem-vindo ï¿½ pï¿½gina inicial. ${totalLocaisMsg} ${destaqueMsg} Vocï¿½ pode pedir ajuda a qualquer momento.`);
+    ServicoVoz.speak(`Bem-vindo à página inicial. ${totalLocaisMsg} ${destaqueMsg} Você pode pedir ajuda a qualquer momento.`);
   }, [voiceEnabled, estatisticas.totalLocais, locaisDestaque.length]);
 
   const anunciarEstatisticas = useCallback(() => {
     if (!voiceEnabled) return;
-    ServicoVoz.speak(`Total de ${estatisticas.totalLocais} locais cadastrados e ${estatisticas.totalAvaliacoes} avaliaï¿½ï¿½es.`);
+    ServicoVoz.speak(`Total de ${estatisticas.totalLocais} locais cadastrados e ${estatisticas.totalAvaliacoes} avaliações.`);
   }, [voiceEnabled, estatisticas.totalLocais, estatisticas.totalAvaliacoes]);
 
   const buscarLocalPorNome = useCallback((nomeLocal) => {
@@ -141,13 +141,13 @@ export default function Home({ onNavigate, routeParams }) {
       return true;
     }
     
-    ServicoVoz.speak(`Nï¿½o encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
+    ServicoVoz.speak(`Não encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
     return false;
   }, [locaisDestaque, onNavigate]);
 
   const carregarEstatisticas = useCallback(async () => {
     try {
-      const metricas = await SobreService.obterMetricasImpacto();
+      const metricas = await ServicoSobre.obterMetricasImpacto();
       if (mountedRef.current) {
         setEstatisticas({
           totalLocais: metricas.totalLocais || 0,
@@ -155,7 +155,7 @@ export default function Home({ onNavigate, routeParams }) {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatï¿½sticas:', error);
+      console.error('Erro ao carregar estatásticas:', error);
       if (mountedRef.current) {
         setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0 });
       }
@@ -169,13 +169,13 @@ export default function Home({ onNavigate, routeParams }) {
     else setLoading(true);
 
     try {
-      if (forcarRecarga && typeof BuscarService.invalidateCache === 'function') {
-        BuscarService.invalidateCache();
+      if (forcarRecarga && typeof ServicoBusca.invalidateCache === 'function') {
+        ServicoBusca.invalidateCache();
       }
       
       await carregarEstatisticas();
 
-      const locais = await BuscarService.obterLocaisEmDestaque(12);
+      const locais = await ServicoBusca.obterLocaisEmDestaque(12);
 
       if (mountedRef.current) {
         setLocaisDestaque(locais);
@@ -223,7 +223,7 @@ export default function Home({ onNavigate, routeParams }) {
 
   const handleRefresh = () => {
     if (voiceEnabled) {
-      ServicoVoz.speak('Atualizando a pï¿½gina inicial');
+      ServicoVoz.speak('Atualizando a página inicial');
     }
     carregarDados(true, true);
   };
@@ -253,13 +253,13 @@ export default function Home({ onNavigate, routeParams }) {
       <View style={[styles.loading, { backgroundColor: t.colors.backgroundSecondary }]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Espacador size="md" />
-        <TextoTematizado>Carregando...</ThemedText>
+        <TextoTematizado>Carregando...</TextoTematizado>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.backgroundSecondary }]}>
+    <View style={[styles.Recipiente, { backgroundColor: t.colors.backgroundSecondary }]}>
       <FlatList
         data={locaisDestaque}
         key={gridConfig.numColumns}
@@ -279,16 +279,16 @@ export default function Home({ onNavigate, routeParams }) {
             <View style={styles.sectionHeader}>
               <TextoTematizado variant="h2" weight="bold">
                 Locais em Destaque
-              </ThemedText>
+              </TextoTematizado>
 
               <TouchableOpacity 
                 onPress={() => onNavigate?.('Buscar')}
                 accessibilityLabel="Ver todos os locais"
-                accessibilityRole="button"
+                accessibilityRole="Botao"
               >
                 <TextoTematizado color="primary" weight="semibold">
                   Ver todos ?
-                </ThemedText>
+                </TextoTematizado>
               </TouchableOpacity>
             </View>
           </>
@@ -306,7 +306,7 @@ export default function Home({ onNavigate, routeParams }) {
           <View style={styles.emptyContainer}>
             <TextoTematizado color="textSecondary" align="center">
               Nenhum local em destaque no momento.
-            </ThemedText>
+            </TextoTematizado>
           </View>
         }
       />
@@ -315,7 +315,7 @@ export default function Home({ onNavigate, routeParams }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flex: 1,
   },
   loading: {

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,9 +10,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText, Spacer } from '../../components/commons';
+import { TextoTematizado, Espacador } from '../../components/commons';
 import { Recipiente } from '../../components/layout';
-import { Card, Button } from '../../components/ui';
+import { Card, Botao } from '../../components/ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import ServicoReportar from '../../services/ServicoReportar';
@@ -25,9 +25,9 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
   const getTipoLabel = (tipo) => {
     const labels = {
       LOCAL: 'Local',
-      COMENTARIO: 'ComentÃ¡rio',
-      AVALIACAO: 'AvaliaÃ§Ã£o',
-      USUARIO: 'UsuÃ¡rio',
+      COMENTARIO: 'Comentário',
+      AVALIACAO: 'Avaliação',
+      USUARIO: 'Usuário',
     };
     return labels[tipo] || tipo;
   };
@@ -52,7 +52,7 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
       case 'PENDING':
         return 'Pendente';
       case 'REVIEWED':
-        return 'Em anÃ¡lise';
+        return 'Em análise';
       case 'RESOLVED':
         return 'Resolvido';
       case 'REJECTED':
@@ -63,19 +63,19 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
   };
 
   const formatarData = (data) => {
-    if (!data) return 'Data nÃ£o informada';
+    if (!data) return 'Data não informada';
     try {
       const date = new Date(data);
       return date.toLocaleDateString('pt-BR');
     } catch {
-      return 'Data invÃ¡lida';
+      return 'Data inválida';
     }
   };
 
   const handleDelete = () => {
     Alert.alert(
-      'Excluir denÃºncia',
-      'Tem certeza que deseja excluir esta denÃºncia?',
+      'Excluir denúncia',
+      'Tem certeza que deseja excluir esta denúncia?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -84,16 +84,16 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
           onPress: async () => {
             setDeleting(true);
             try {
-              const result = await ReportarService.delete(report.id);
+              const result = await ServicoReportar.delete(report.id);
               if (result.success) {
-                toastHelper.showSuccess('DenÃºncia excluÃ­da com sucesso');
+                toastHelper.showSuccess('Denúncia excluída com sucesso');
                 onRefresh();
               } else {
-                toastHelper.showError(result.message || 'Erro ao excluir denÃºncia');
+                toastHelper.showError(result.message || 'Erro ao excluir denúncia');
               }
             } catch (error) {
               console.error('Erro ao excluir:', error);
-              toastHelper.showError('Erro ao excluir denÃºncia');
+              toastHelper.showError('Erro ao excluir denúncia');
             } finally {
               setDeleting(false);
               onDelete?.();
@@ -111,12 +111,12 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
           <View style={[styles.tipoBadge, { backgroundColor: theme.colors.primary + '20' }]}>
             <TextoTematizado variant="caption" weight="bold" style={{ color: theme.colors.primary }}>
               {getTipoLabel(report.tipo)}
-            </ThemedText>
+            </TextoTematizado>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(report.status) + '20' }]}>
             <TextoTematizado variant="caption" weight="bold" style={{ color: getStatusColor(report.status) }}>
               {getStatusLabel(report.status)}
-            </ThemedText>
+            </TextoTematizado>
           </View>
         </View>
         <TouchableOpacity onPress={handleDelete} disabled={deleting} style={styles.deleteButton}>
@@ -133,37 +133,37 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
       <View style={styles.reportContent}>
         <View style={styles.reportRow}>
           <Ionicons name="flag-outline" size={16} color={theme.colors.textSecondary} />
-          <TextoTematizado weight="semibold" style={styles.reportLabel}>Motivo:</ThemedText>
-          <TextoTematizado color="textSecondary" style={styles.reportValue}>{report.motivoLabel || report.motivo}</ThemedText>
+          <TextoTematizado weight="semibold" style={styles.reportLabel}>Motivo:</TextoTematizado>
+          <TextoTematizado color="textSecondary" style={styles.reportValue}>{report.motivoLabel || report.motivo}</TextoTematizado>
         </View>
 
         {report.targetName && (
           <View style={styles.reportRow}>
             <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
-            <TextoTematizado weight="semibold" style={styles.reportLabel}>Alvo:</ThemedText>
-            <TextoTematizado color="textSecondary" style={styles.reportValue} numberOfLines={1}>{report.targetName}</ThemedText>
+            <TextoTematizado weight="semibold" style={styles.reportLabel}>Alvo:</TextoTematizado>
+            <TextoTematizado color="textSecondary" style={styles.reportValue} numberOfLines={1}>{report.targetName}</TextoTematizado>
           </View>
         )}
 
         {report.descricao && (
           <View style={styles.reportRow}>
             <Ionicons name="chatbubble-outline" size={16} color={theme.colors.textSecondary} />
-            <TextoTematizado weight="semibold" style={styles.reportLabel}>DescriÃ§Ã£o:</ThemedText>
-            <TextoTematizado color="textSecondary" style={styles.reportValue} numberOfLines={2}>{report.descricao}</ThemedText>
+            <TextoTematizado weight="semibold" style={styles.reportLabel}>Descrição:</TextoTematizado>
+            <TextoTematizado color="textSecondary" style={styles.reportValue} numberOfLines={2}>{report.descricao}</TextoTematizado>
           </View>
         )}
 
         <View style={styles.reportRow}>
           <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
-          <TextoTematizado weight="semibold" style={styles.reportLabel}>Data:</ThemedText>
-          <TextoTematizado color="textSecondary" style={styles.reportValue}>{formatarData(report.createdAt)}</ThemedText>
+          <TextoTematizado weight="semibold" style={styles.reportLabel}>Data:</TextoTematizado>
+          <TextoTematizado color="textSecondary" style={styles.reportValue}>{formatarData(report.createdAt)}</TextoTematizado>
         </View>
 
         {report.id && (
           <View style={styles.reportRow}>
             <Ionicons name="hash-outline" size={16} color={theme.colors.textSecondary} />
-            <TextoTematizado weight="semibold" style={styles.reportLabel}>ID:</ThemedText>
-            <TextoTematizado color="textSecondary" style={styles.reportValue}>#{report.id}</ThemedText>
+            <TextoTematizado weight="semibold" style={styles.reportLabel}>ID:</TextoTematizado>
+            <TextoTematizado color="textSecondary" style={styles.reportValue}>#{report.id}</TextoTematizado>
           </View>
         )}
       </View>
@@ -176,7 +176,7 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
           onPress={() => onRefresh?.()}
         >
           <Ionicons name="refresh-outline" size={16} color={theme.colors.primary} />
-          <TextoTematizado variant="caption" color="primary">Atualizar status</ThemedText>
+          <TextoTematizado variant="caption" color="primary">Atualizar status</TextoTematizado>
         </TouchableOpacity>
       </View>
     </Card>
@@ -187,14 +187,14 @@ const ReportFilters = ({ filters, onFilterChange, theme, isDesktop, isHighContra
   const tipos = [
     { id: 'ALL', label: 'Todos' },
     { id: 'LOCAL', label: 'Locais' },
-    { id: 'COMENTARIO', label: 'ComentÃ¡rios' },
-    { id: 'AVALIACAO', label: 'AvaliaÃ§Ãµes' },
+    { id: 'COMENTARIO', label: 'Comentários' },
+    { id: 'AVALIACAO', label: 'Avaliações' },
   ];
 
   const statusList = [
     { id: 'ALL', label: 'Todos' },
     { id: 'PENDING', label: 'Pendentes' },
-    { id: 'REVIEWED', label: 'Em anÃ¡lise' },
+    { id: 'REVIEWED', label: 'Em análise' },
     { id: 'RESOLVED', label: 'Resolvidos' },
     { id: 'REJECTED', label: 'Rejeitados' },
   ];
@@ -203,12 +203,12 @@ const ReportFilters = ({ filters, onFilterChange, theme, isDesktop, isHighContra
     <Card style={styles.filtersCard} altoContraste={isHighContrast}>
       <View style={styles.filtersHeader}>
         <Ionicons name="filter-outline" size={20} color={theme.colors.primary} />
-        <TextoTematizado weight="bold" style={styles.filtersTitle}>Filtros</ThemedText>
+        <TextoTematizado weight="bold" style={styles.filtersTitle}>Filtros</TextoTematizado>
       </View>
 
       <Espacador size="sm" />
 
-      <TextoTematizado variant="caption" weight="semibold" style={styles.filterLabel}>Tipo</ThemedText>
+      <TextoTematizado variant="caption" weight="semibold" style={styles.filterLabel}>Tipo</TextoTematizado>
       <View style={styles.filterButtons}>
         {tipos.map(tipo => (
           <TouchableOpacity
@@ -225,14 +225,14 @@ const ReportFilters = ({ filters, onFilterChange, theme, isDesktop, isHighContra
               style={{ color: filters.tipo === tipo.id ? '#FFF' : theme.colors.textSecondary }}
             >
               {tipo.label}
-            </ThemedText>
+            </TextoTematizado>
           </TouchableOpacity>
         ))}
       </View>
 
       <Espacador size="sm" />
 
-      <TextoTematizado variant="caption" weight="semibold" style={styles.filterLabel}>Status</ThemedText>
+      <TextoTematizado variant="caption" weight="semibold" style={styles.filterLabel}>Status</TextoTematizado>
       <View style={styles.filterButtons}>
         {statusList.map(status => (
           <TouchableOpacity
@@ -249,7 +249,7 @@ const ReportFilters = ({ filters, onFilterChange, theme, isDesktop, isHighContra
               style={{ color: filters.status === status.id ? '#FFF' : theme.colors.textSecondary }}
             >
               {status.label}
-            </ThemedText>
+            </TextoTematizado>
           </TouchableOpacity>
         ))}
       </View>
@@ -285,16 +285,16 @@ export default function Reportar({ onNavigate }) {
     else setLoading(true);
 
     try {
-      const result = await ReportarService.getAll(filters);
+      const result = await ServicoReportar.getAll(filters);
       if (result.success && mountedRef.current) {
         setReports(result.data || []);
       } else if (!result.success && mountedRef.current) {
-        toastHelper.showError(result.message || 'Erro ao carregar denÃºncias');
+        toastHelper.showError(result.message || 'Erro ao carregar denúncias');
       }
     } catch (error) {
-      console.error('Erro ao carregar denÃºncias:', error);
+      console.error('Erro ao carregar denúncias:', error);
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao carregar denÃºncias');
+        toastHelper.showError('Erro ao carregar denúncias');
       }
     } finally {
       if (mountedRef.current) {
@@ -306,13 +306,13 @@ export default function Reportar({ onNavigate }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('FaÃ§a login para acessar esta pÃ¡gina');
+      toastHelper.showInfo('Faça login para acessar esta página');
       onNavigate?.('Entrar');
       return;
     }
 
     if (!isAdmin) {
-      toastHelper.showError('Acesso negado. Ãrea restrita para administradores');
+      toastHelper.showError('Acesso negado. Área restrita para administradores');
       onNavigate?.('Inicio');
       return;
     }
@@ -347,14 +347,14 @@ export default function Reportar({ onNavigate }) {
       <Ionicons name="flag-outline" size={64} color={t.colors.textTertiary} />
       <Espacador size="md" />
       <TextoTematizado variant="h3" weight="bold" align="center">
-        Nenhuma denÃºncia encontrada
-      </ThemedText>
+        Nenhuma denúncia encontrada
+      </TextoTematizado>
       <Espacador size="sm" />
       <TextoTematizado color="textSecondary" align="center">
         {filters.tipo || filters.status
           ? 'Tente remover os filtros para ver mais resultados'
-          : 'Quando houver denÃºncias, elas aparecerÃ£o aqui'}
-      </ThemedText>
+          : 'Quando houver denúncias, elas aparecerão aqui'}
+      </TextoTematizado>
     </View>
   ), [t.colors.textTertiary, t.colors.textSecondary, filters]);
 
@@ -364,49 +364,49 @@ export default function Reportar({ onNavigate }) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={t.colors.primary} />
           <Espacador size="md" />
-          <TextoTematizado color="textSecondary">Carregando denÃºncias...</ThemedText>
+          <TextoTematizado color="textSecondary">Carregando denúncias...</TextoTematizado>
         </View>
-      </Container>
+      </Recipiente>
     );
   }
 
   return (
     <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Cabecalho */}
+      <View style={styles.Cabecalho}>
         <TouchableOpacity onPress={() => onNavigate?.('Inicio')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={t.colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <TextoTematizado variant="h1" weight="bold" style={styles.headerTitle}>
-            DenÃºncias
-          </ThemedText>
+            Denúncias
+          </TextoTematizado>
           <TextoTematizado color="textSecondary" style={styles.headerSubtitle}>
-            Gerencie as denÃºncias da comunidade
-          </ThemedText>
+            Gerencie as denúncias da comunidade
+          </TextoTematizado>
         </View>
       </View>
 
       {/* Stats Banner */}
-      <View style={styles.statsBanner}>
+      <View style={styles.BannerEstatisticas}>
         <View style={[styles.statCard, { backgroundColor: t.colors.primary + '10' }]}>
           <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.primary }}>
             {totalReports}
-          </ThemedText>
-          <TextoTematizado variant="caption" color="textSecondary">Total de denÃºncias</ThemedText>
+          </TextoTematizado>
+          <TextoTematizado variant="caption" color="textSecondary">Total de denúncias</TextoTematizado>
         </View>
         <View style={[styles.statCard, { backgroundColor: t.colors.warning + '10' }]}>
           <TextoTematizado variant="h2" weight="bold" style={{ color: t.colors.warning }}>
             {pendingCount}
-          </ThemedText>
-          <TextoTematizado variant="caption" color="textSecondary">Pendentes</ThemedText>
+          </TextoTematizado>
+          <TextoTematizado variant="caption" color="textSecondary">Pendentes</TextoTematizado>
         </View>
       </View>
 
       <Espacador size="md" />
 
       {isDesktop ? (
-        <View style={styles.desktopLayout}>
+        <View style={styles.LayoutDesktop}>
           {/* Coluna de Filtros */}
           <View style={styles.filtersColumn}>
             <ReportFilters
@@ -427,8 +427,8 @@ export default function Reportar({ onNavigate }) {
               ListHeaderComponent={
                 <View style={styles.resultsHeader}>
                   <TextoTematizado weight="semibold">
-                    Mostrando {reports.length} {reports.length === 1 ? 'denÃºncia' : 'denÃºncias'}
-                  </ThemedText>
+                    Mostrando {reports.length} {reports.length === 1 ? 'denúncia' : 'denúncias'}
+                  </TextoTematizado>
                 </View>
               }
               ListEmptyComponent={renderEmptyState}
@@ -462,8 +462,8 @@ export default function Reportar({ onNavigate }) {
               <Espacador size="md" />
               <View style={styles.resultsHeaderMobile}>
                 <TextoTematizado weight="semibold">
-                  {reports.length} {reports.length === 1 ? 'denÃºncia' : 'denÃºncias'}
-                </ThemedText>
+                  {reports.length} {reports.length === 1 ? 'denúncia' : 'denúncias'}
+                </TextoTematizado>
               </View>
               <Espacador size="sm" />
             </>
@@ -481,12 +481,12 @@ export default function Reportar({ onNavigate }) {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </Container>
+    </Recipiente>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  Cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
-  statsBanner: {
+  BannerEstatisticas: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     gap: 12,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
   },
-  desktopLayout: {
+  LayoutDesktop: {
     flex: 1,
     flexDirection: 'row',
     paddingHorizontal: 20,

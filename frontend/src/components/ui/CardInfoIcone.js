@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from './Card';
@@ -43,7 +43,7 @@ export default function CardInfoIcone({
         </View>
         <TextoTematizado weight="semibold" align={centralizado ? 'center' : 'left'}>
           {titulo}
-        </ThemedText>
+        </TextoTematizado>
       </View>
 
       <Espacador size="sm" />

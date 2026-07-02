@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream:frontend/src/components/ui/TooltipText.js
 import React, { useMemo, useState, useRef } from 'react';
-=======
-﻿import React, { useMemo, useState } from 'react';
->>>>>>> Stashed changes:frontend/src/components/ui/TextoTooltip.js
 import {
   Modal,
   Platform,
@@ -11,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { createPortal } from 'react-dom';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -37,7 +33,7 @@ export default function TextoTooltip({
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const ref = useRef(null);
 
-  const texto = text || 'ï¿½';
+  const texto = text || '';
 
   const resumido = useMemo(() => {
     if (texto.length <= maxLength) return texto;
@@ -74,7 +70,7 @@ export default function TextoTooltip({
             setShowTooltip(true);
           }
         }}
-        style={styles.container}
+        style={styles.Recipiente}
       >
         <TextoTematizado
           variant="caption"
@@ -84,31 +80,7 @@ export default function TextoTooltip({
           permitirEscalaFonte={permitirEscalaFonte}
         >
           {resumido}
-        </ThemedText>
-<<<<<<< Updated upstream:frontend/src/components/ui/TooltipText.js
-=======
-
-        {Platform.OS === 'web' &&
-          showTooltip &&
-          precisaTooltip && (
-            <View
-              style={[
-                styles.tooltip,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-            >
-              <TextoTematizado
-                color="textPrimary"
-                altoContraste={contraste}
-              >
-                {texto}
-              </ThemedText>
-            </View>
-          )}
->>>>>>> Stashed changes:frontend/src/components/ui/TextoTooltip.js
+        </TextoTematizado>
       </Pressable>
 
       {Platform.OS === 'web' &&
@@ -126,12 +98,12 @@ export default function TextoTooltip({
               },
             ]}
           >
-            <ThemedText
+            <TextoTematizado
               color="textPrimary"
               altoContraste={contraste}
             >
               {texto}
-            </ThemedText>
+            </TextoTematizado>
           </View>,
           document.body
         )}
@@ -160,15 +132,15 @@ export default function TextoTooltip({
                 style={styles.titulo}
                 altoContraste={contraste}
               >
-                Descriï¿½ï¿½o
-              </ThemedText>
+                Descricao
+              </TextoTematizado>
 
               <TextoTematizado
                 altoContraste={contraste}
                 color="textPrimary"
               >
                 {texto}
-              </ThemedText>
+              </TextoTematizado>
             </View>
           </Pressable>
         </Modal>
@@ -178,7 +150,7 @@ export default function TextoTooltip({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     position: 'relative',
     width: '100%',
   },

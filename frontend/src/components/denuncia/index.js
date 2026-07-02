@@ -1,4 +1,4 @@
-﻿// src/components/denuncia/index.js
+// src/components/denuncia/index.js
 
 export { colunasDenuncias } from './colunasDenuncias';
 export { filtrosDenuncias, statusOptions } from './filtrosDenuncias';

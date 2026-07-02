@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -17,10 +17,10 @@ export default function EtiquetaStatus({
   const corTexto = obterCorTexto(tipo, t);
 
   return (
-    <View style={[estilos.container, { backgroundColor: corFundo, borderColor: corTexto }]}>
+    <View style={[estilos.Recipiente, { backgroundColor: corFundo, borderColor: corTexto }]}>
       <TextoTematizado size="xs" weight="bold" align="center" style={{ color: corTexto }}>
         {texto}
-      </ThemedText>
+      </TextoTematizado>
     </View>
   );
 }
@@ -57,7 +57,7 @@ function obterCorTexto(tipo, t) {
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       alignSelf: 'flex-start',
       borderRadius: t.borderRadius.full,
       borderWidth: 1,

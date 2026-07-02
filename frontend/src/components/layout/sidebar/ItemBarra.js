@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { getTheme } from '../../../config/theme';
 import { useThemeContext } from '../../../context/ThemeContext';
 import { Botao } from '../../ui';
@@ -59,6 +59,6 @@ export default function ItemBarra({ icon, label, active, onPress, disabled = fal
       disabled={isDisabled}
     >
       {label}
-    </Button>
+    </Botao>
   );
 }

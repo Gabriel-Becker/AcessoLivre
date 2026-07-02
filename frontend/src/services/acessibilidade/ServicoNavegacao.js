@@ -1,37 +1,36 @@
-﻿// src/services/ServicoNavegacao.js
+// src/services/ServicoNavegacao.js
 import { navigationRef, navigate, goBack, canGoBack, getCurrentRouteName, resetToScreen } from '../../navigation/navigationRef';
 
 class ServicoNavegacao {
   
-  // Mï¿½todo para navegar para uma tela
+  // Navega para uma tela.
   static navigate(screen, params) {
     navigate(screen, params);
   }
 
-  // Mï¿½todo para voltar
+  // Volta para a tela anterior.
   static goBack() {
     goBack();
   }
 
-  // Mï¿½todo para verificar se pode voltar
+  // Verifica se é possível voltar.
   static canGoBack() {
     return canGoBack();
   }
 
-  // Mï¿½todo para obter a tela atual
+  // Retorna o nome da tela atual.
   static getCurrentRoute() {
     return getCurrentRouteName();
   }
 
-  // Mï¿½todo para resetar para uma tela (ï¿½til para comandos como "vai para home")
+  // Reseta navegação para uma tela (útil para comandos como "vai para home").
   static resetTo(screen, params = {}) {
     resetToScreen(screen, params);
   }
 
-  // Mï¿½todo para compatibilidade (se algum cï¿½digo antigo chamar setNavigator)
+  // Mantido por compatibilidade com chamadas antigas.
   static setNavigator(ref) {
-    // Nï¿½o precisa fazer nada, pois jï¿½ usamos o navigationRef diretamente
-    console.log('ServicoNavegacao: Usando navigationRef global');
+    void ref;
   }
 }
 

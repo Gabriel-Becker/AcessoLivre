@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -121,19 +121,19 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const handleEnviar = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login necessÃ¡rio', 'FaÃ§a login para avaliar um local');
+      Alert.alert('Login necessário', 'Faça login para avaliar um local');
       onClose();
       return;
     }
 
     const userId = getUsuarioId();
     if (!userId) {
-      Alert.alert('Erro', 'UsuÃ¡rio nÃ£o identificado. FaÃ§a login novamente.');
+      Alert.alert('Erro', 'Usuário não identificado. Faça login novamente.');
       return;
     }
 
     if (notaVisual === 0 || notaMotora === 0 || notaAuditiva === 0) {
-      setErro('Avalie todos os critÃ©rios');
+      setErro('Avalie todos os critérios');
       return;
     }
 
@@ -154,8 +154,8 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Erro ao enviar avaliaÃ§Ã£o:', error);
-      setErro(error.message || 'Erro ao enviar avaliaÃ§Ã£o');
+      console.error('Erro ao enviar avaliação:', error);
+      setErro(error.message || 'Erro ao enviar avaliação');
     } finally {
       setLoading(false);
     }
@@ -220,10 +220,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={styles.modalScrollContent}
                 >
-                  <View style={styles.header}>
+                  <View style={styles.Cabecalho}>
                     <TextoTematizado variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
                       Avaliar Local
-                    </ThemedText>
+                    </TextoTematizado>
                     <TouchableOpacity onPress={handleClose} style={styles.closeButton} disabled={loading}>
                       <Ionicons name="close" size={22} color={theme.colors.textSecondary} />
                     </TouchableOpacity>
@@ -234,17 +234,17 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                   <View style={styles.localInfo}>
                     <TextoTematizado variant="h3" weight="semibold" numberOfLines={1} style={styles.localNome}>
                       {local?.nome}
-                    </ThemedText>
+                    </TextoTematizado>
                     <TextoTematizado color="textSecondary" variant="caption" style={styles.localCategoria}>
                       {local?.categoria}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="sm" />
 
                   <TextoTematizado color="textSecondary" style={[styles.subtitulo, estilosZoom.subtitulo]}>
                     Avalie a acessibilidade
-                  </ThemedText>
+                  </TextoTematizado>
 
                   <Espacador size="sm" />
 
@@ -255,7 +255,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       </View>
                       <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Visual
-                      </ThemedText>
+                      </TextoTematizado>
                     </View>
                     
                     <View style={styles.starsContainer}>
@@ -264,7 +264,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     
                     <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaVisual)}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="sm" />
@@ -276,7 +276,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       </View>
                       <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Motora
-                      </ThemedText>
+                      </TextoTematizado>
                     </View>
                     
                     <View style={styles.starsContainer}>
@@ -285,7 +285,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     
                     <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaMotora)}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="sm" />
@@ -297,7 +297,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       </View>
                       <TextoTematizado weight="bold" style={styles.criterioTitulo}>
                         Auditiva
-                      </ThemedText>
+                      </TextoTematizado>
                     </View>
                     
                     <View style={styles.starsContainer}>
@@ -306,20 +306,20 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                     
                     <TextoTematizado variant="caption" color="textSecondary" style={styles.notaDescricao}>
                       {getNotaDescricao(notaAuditiva)}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="sm" />
 
                   {todasNotasSelecionadas && (
                     <View style={[styles.mediaContainer, estilosDinamicos.mediaContainer]}>
-                      <TextoTematizado weight="bold" style={styles.mediaTexto}>MÃ©dia:</ThemedText>
+                      <TextoTematizado weight="bold" style={styles.mediaTexto}>Média:</TextoTematizado>
                       <View style={styles.mediaStars}>
-                        {renderStars(parseFloat(calcularMedia()), null, null, null, 'MÃ©dia', true)}
+                        {renderStars(parseFloat(calcularMedia()), null, null, null, 'Média', true)}
                       </View>
                       <TextoTematizado weight="bold" style={styles.mediaValor}>
                         {calcularMedia()}
-                      </ThemedText>
+                      </TextoTematizado>
                     </View>
                   )}
 
@@ -327,11 +327,11 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                   <View>
                     <TextoTematizado weight="bold" style={[styles.comentarioLabel, estilosZoom.comentarioLabel]}>
-                      ComentÃ¡rio
-                    </ThemedText>
+                      Comentário
+                    </TextoTematizado>
                     <TextoTematizado color="textSecondary" variant="caption" style={[styles.comentarioHint, estilosZoom.comentarioHint]}>
                       Opcional
-                    </ThemedText>
+                    </TextoTematizado>
                     
                     <Espacador size="xs" />
 
@@ -340,7 +340,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       numberOfLines={3}
                       value={comentario}
                       onChangeText={setComentario}
-                      placeholder="Compartilhe sua experiÃªncia..."
+                      placeholder="Compartilhe sua experiência..."
                       altoContraste={isHighContrast}
                       style={[styles.comentarioInput, estilosZoom.comentarioInput]}
                       editable={!loading}
@@ -355,7 +355,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                         <Ionicons name="alert-circle" size={14} color={theme.colors.error} />
                         <TextoTematizado color="error" style={styles.erroTexto}>
                           {erro}
-                        </ThemedText>
+                        </TextoTematizado>
                       </View>
                       <Espacador size="sm" />
                     </>
@@ -371,7 +371,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       size="small"
                     >
                       Cancelar
-                    </Button>
+                    </Botao>
                     <Botao
                       variant="primary"
                       onPress={handleEnviar}
@@ -382,7 +382,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
                       size="small"
                     >
                       {loading ? 'Enviando...' : 'Enviar'}
-                    </Button>
+                    </Botao>
                   </View>
 
                   <Espacador size="xs" />
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     borderRadius: 20,
-    ...Platform.select({
+    ...Platform.Selecao({
       web: {
         boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
       },
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   modalScrollContent: {
     paddingBottom: 2,
   },
-  header: {
+  Cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

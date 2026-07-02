@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   View,
@@ -128,14 +128,14 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
 
       if (!resultado?.sucesso) {
         setSetupDados(null);
-        setErroModal(resultado?.mensagem || 'Erro ao carregar configuraÃ§Ã£o do 2FA');
+        setErroModal(resultado?.mensagem || 'Erro ao carregar configuração do 2FA');
         return;
       }
 
       setSetupDados(resultado?.dados || null);
     } catch (erro) {
       if (ultimaRequisicaoSetupRef.current !== requestId) return;
-      setErroModal(erro?.message || 'Erro ao carregar configuraÃ§Ã£o do 2FA');
+      setErroModal(erro?.message || 'Erro ao carregar configuração do 2FA');
     } finally {
       if (ultimaRequisicaoSetupRef.current === requestId) {
         setCarregandoSetup(false);
@@ -146,12 +146,12 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
   const copiarTexto = async (texto) => {
     if (!texto) return;
     await Clipboard.setStringAsync(String(texto));
-    toastHelper.showSuccess('Copiado para a Ã¡rea de transferÃªncia');
+    toastHelper.showSuccess('Copiado para a área de transferência');
   };
 
   const confirmarAtivacao = async () => {
     if (!codigo || codigo.length !== 6) {
-      setErroModal('Digite o cÃ³digo de 6 dÃ­gitos');
+      setErroModal('Digite o código de 6 dígitos');
       return;
     }
 
@@ -177,7 +177,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
 
   const confirmarDesativacao = async () => {
     if (!codigo || codigo.length < 6) {
-      setErroModal('Digite um cÃ³digo vÃ¡lido');
+      setErroModal('Digite um código válido');
       return;
     }
 
@@ -216,20 +216,20 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
             alwaysBounceVertical={false}
           >
             <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={contrasteAtivo} color={corPrincipal} style={[estilos.headerSpacing, estilos.titulo]}>
-              {enabled ? 'Desativar 2FA' : 'AutenticaÃ§Ã£o de Dois Fatores'}
-            </ThemedText>
+              {enabled ? 'Desativar 2FA' : 'Autenticação de Dois Fatores'}
+            </TextoTematizado>
             <TextoTematizado color={corSecundaria} align="center" altoContraste={contrasteAtivo} style={estilos.subtitulo}>
               {enabled
-                ? 'Digite o cÃ³digo de 6 dÃ­gitos do seu aplicativo autenticador para desativar.'
-                : 'Escaneie o QR Code e confirme com o cÃ³digo de 6 dÃ­gitos.'}
-            </ThemedText>
+                ? 'Digite o código de 6 dígitos do seu aplicativo autenticador para desativar.'
+                : 'Escaneie o QR Code e confirme com o código de 6 dígitos.'}
+            </TextoTematizado>
 
             {erroModal ? (
               <>
                 <Espacador size="sm" />
                 <TextoTematizado color="error" size="sm" align="center" altoContraste={contrasteAtivo}>
                   {erroModal}
-                </ThemedText>
+                </TextoTematizado>
               </>
             ) : null}
 
@@ -237,7 +237,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
               <>
                 <Espacador size="md" />
                 {carregandoSetup ? (
-                  <Carregamento message="Preparando configuraÃ§Ã£o..." />
+                  <Carregamento message="Preparando configuração..." />
                 ) : setupDados ? (
                   <>
                     <View style={estilos.qrContainer}>
@@ -255,19 +255,19 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
                       <View style={estilos.secretBox}>
                         <TextoTematizado align="center" weight="semibold" altoContraste={contrasteAtivo} color={corPrincipal} style={estilos.secretText}>
                           {setupDados.secretKey}
-                        </ThemedText>
+                        </TextoTematizado>
                       </View>
                     </TouchableOpacity>
                     <Espacador size="xs" />
                     <TouchableOpacity onPress={() => copiarTexto(setupDados.secretKey)} activeOpacity={0.8}>
                         <TextoTematizado color="primary" align="center" altoContraste={contrasteAtivo} style={estilos.copiedLink}>
                         Toque para copiar a chave
-                      </ThemedText>
+                      </TextoTematizado>
                     </TouchableOpacity>
 
                     <Espacador size="lg" />
                     <Entrada
-                      label="CÃ³digo de verificaÃ§Ã£o"
+                      label="Código de verificação"
                       placeholder="000000"
                       value={codigo}
                       onChangeText={(text) => setCodigo(text.replace(/[^0-9]/g, '').slice(0, 6))}
@@ -288,7 +288,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
                       altoContraste={contrasteAtivo}
                     >
                       Ativar 2FA
-                    </Button>
+                    </Botao>
                   </>
                 ) : null}
               </>
@@ -296,7 +296,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
               <>
                 <Espacador size="lg" />
                 <Entrada
-                  label="CÃ³digo de verificaÃ§Ã£o"
+                  label="Código de verificação"
                   placeholder="000000"
                   value={codigo}
                   onChangeText={(text) => setCodigo(text.replace(/[^0-9]/g, '').slice(0, 6))}
@@ -317,7 +317,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
                   altoContraste={isHighContrast}
                 >
                   Desativar 2FA
-                </Button>
+                </Botao>
               </>
             )}
 
@@ -331,7 +331,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
               altoContraste={contrasteAtivo}
             >
               Cancelar
-            </Button>
+            </Botao>
           </ScrollView>
         </Pressable>
       </Pressable>

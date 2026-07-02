@@ -1,4 +1,4 @@
-﻿export const CATEGORIAS = [
+export const CATEGORIAS = [
   'COMERCIAL',
   'PUBLICO',
   'SAUDE',

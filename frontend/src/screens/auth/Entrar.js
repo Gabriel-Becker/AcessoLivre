@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Pressable, Modal, useWindowDimensions, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Recipiente, LayoutDesktop } from '../../components/layout';
 import { Card, Botao, Entrada } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import ServicoAutenticacao from '../../services/ServicoAutenticacao';
 import AuthHeader from './components/AuthHeader';
@@ -231,10 +231,10 @@ export default function Entrar({ navigation }) {
         const erroIndicaTwoFactor =
           textoErro.includes('2fa') ||
           textoErro.includes('dois fatores') ||
-          textoErro.includes('autenticaÃ§Ã£o obrigatÃ³rio') ||
-          textoErro.includes('autenticaÃ§Ã£o obrigatÃ³ria') ||
+          textoErro.includes('autenticação obrigatório') ||
+          textoErro.includes('autenticação obrigatória') ||
           textoErro.includes('codigo de autenticacao') ||
-          textoErro.includes('cÃ³digo de autenticaÃ§Ã£o');
+          textoErro.includes('código de autenticação');
 
         if (erroIndicaTwoFactor) {
           setValue('twoFactorCode', '');
@@ -247,7 +247,7 @@ export default function Entrar({ navigation }) {
           return;
         }
 
-        toastHelper.showError(formatarErroLogin(result?.erro || authMessages.loginErrors.loginFailed), 'NÃ£o foi possÃ­vel entrar');
+        toastHelper.showError(formatarErroLogin(result?.erro || authMessages.loginErrors.loginFailed), 'Não foi possível entrar');
         return;
       }
 
@@ -255,7 +255,7 @@ export default function Entrar({ navigation }) {
       setValue('twoFactorCode', '');
       setShowTwoFactor(false);
       setPendingCredentials(null);
-      toastHelper.showSuccess('VocÃª entrou na sua conta com sucesso.', 'Login realizado');
+      toastHelper.showSuccess('Você entrou na sua conta com sucesso.', 'Login realizado');
       redirecionarAposLogin();
     } catch (erro) {
       const mensagem = formatarErroLogin(erro?.message || authMessages.loginErrors.serverError);
@@ -263,7 +263,7 @@ export default function Entrar({ navigation }) {
       if (mensagemNormalizada.includes('inativo') || mensagemNormalizada.includes('desativ')) {
         setShowAccountDisabled(true);
       } else {
-        toastHelper.showError(mensagem, 'NÃ£o foi possÃ­vel entrar');
+        toastHelper.showError(mensagem, 'Não foi possível entrar');
       }
     } finally {
       setSubmitting(false);
@@ -299,7 +299,7 @@ export default function Entrar({ navigation }) {
             <Espacador size="sm" />
             <TextoTematizado color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.helperText}>
               Entre com seu e-mail para continuar
-            </ThemedText>
+            </TextoTematizado>
 
             <Espacador size="xl" />
 
@@ -341,19 +341,19 @@ export default function Entrar({ navigation }) {
             {showTwoFactor && (
               <View style={styles.twoFactorInlineBox}>
                 <TextoTematizado weight="semibold" altoContraste={isHighContrast}>
-                  VerificaÃ§Ã£o em duas etapas
-                </ThemedText>
+                  Verificação em duas etapas
+                </TextoTematizado>
                 <Espacador size="xs" />
                 <TextoTematizado color="textSecondary" altoContraste={isHighContrast}>
-                  Digite o cÃ³digo de 6 dÃ­gitos do aplicativo autenticador.
-                </ThemedText>
+                  Digite o código de 6 dígitos do aplicativo autenticador.
+                </TextoTematizado>
                 <Espacador size="sm" />
                 <Controller
                   control={control}
                   name="twoFactorCode"
                   render={({ field: { onChange, value } }) => (
                     <Entrada
-                      label="CÃ³digo 2FA"
+                      label="Código 2FA"
                       placeholder="000000"
                       value={value}
                       onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
@@ -388,7 +388,7 @@ export default function Entrar({ navigation }) {
                     style={styles.rememberLabel}
                   >
                     Lembrar de mim neste dispositivo
-                  </ThemedText>
+                  </TextoTematizado>
                 </Pressable>
               )}
             />
@@ -396,7 +396,7 @@ export default function Entrar({ navigation }) {
             <TouchableOpacity style={styles.forgot} onPress={() => navigation?.navigate?.('EsqueciSenha')}>
               <TextoTematizado color="primary" weight="semibold" altoContraste={isHighContrast}>
                 Esqueceu a senha?
-              </ThemedText>
+              </TextoTematizado>
             </TouchableOpacity>
 
             <Botao
@@ -409,12 +409,12 @@ export default function Entrar({ navigation }) {
               altoContraste={isHighContrast}
             >
               Entrar
-            </Button>
+            </Botao>
 
             <Espacador size="md" />
 
               <AuthActions
-                text="NÃ£o possui conta?"
+                text="Não possui conta?"
                 actionLabel="Cadastre-se"
                 onPress={() => navigation?.navigate?.('Cadastro')}
                 altoContraste={isHighContrast}
@@ -437,12 +437,12 @@ export default function Entrar({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <TextoTematizado variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
-              VerificaÃ§Ã£o em duas etapas
-            </ThemedText>
+              Verificação em duas etapas
+            </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.modalSubtitulo}>
-              Digite o cÃ³digo de 6 dÃ­gitos do seu aplicativo autenticador.
-            </ThemedText>
+              Digite o código de 6 dígitos do seu aplicativo autenticador.
+            </TextoTematizado>
 
             <Espacador size="md" />
             <Controller
@@ -450,7 +450,7 @@ export default function Entrar({ navigation }) {
               name="twoFactorCode"
               render={({ field: { onChange, value } }) => (
                 <Entrada
-                  label="CÃ³digo 2FA"
+                  label="Código 2FA"
                   placeholder="000000"
                   value={value}
                   onChangeText={(text) => onChange(text.replace(/[^0-9]/g, '').slice(0, 6))}
@@ -473,8 +473,8 @@ export default function Entrar({ navigation }) {
               disabled={submitting}
               altoContraste={isHighContrast}
             >
-              Confirmar cÃ³digo
-            </Button>
+              Confirmar código
+            </Botao>
 
             <Espacador size="xs" />
             <Botao
@@ -490,7 +490,7 @@ export default function Entrar({ navigation }) {
               altoContraste={isHighContrast}
             >
               Cancelar
-            </Button>
+            </Botao>
           </View>
         </View>
       </Modal>
@@ -504,11 +504,11 @@ export default function Entrar({ navigation }) {
           <View style={styles.modalCard}>
             <TextoTematizado variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
               Conta desativada
-            </ThemedText>
+            </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
-              Sua conta foi desativada, Contate um administrador para mais informaÃ§Ãµes
-            </ThemedText>
+              Sua conta foi desativada, Contate um administrador para mais informações
+            </TextoTematizado>
 
             <Espacador size="md" />
             <Botao
@@ -519,11 +519,11 @@ export default function Entrar({ navigation }) {
               altoContraste={isHighContrast}
             >
               OK
-            </Button>
+            </Botao>
           </View>
         </View>
       </Modal>
-    </Container>
+    </Recipiente>
   );
 
   if (!isDesktop) {
@@ -533,7 +533,7 @@ export default function Entrar({ navigation }) {
   return (
     <LayoutDesktop current="Entrar" onNavigate={handleNavigate} altoContraste={isHighContrast}>
       {conteudoLogin}
-    </DesktopLayout>
+    </LayoutDesktop>
   );
 }
 

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { Botao } from '../../components/ui';
 import { Espacador, TextoTematizado } from '../../components/commons';
@@ -9,15 +9,15 @@ export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onCon
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
           <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
-            Excluir denï¿½ncia
-          </ThemedText>
+            Excluir denúncia
+          </TextoTematizado>
 
           <Espacador size="lg" />
 
           <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast}>
-            Tem certeza que deseja excluir estï¿½ denï¿½ncia #{denuncia?.id} da tabela?
-            Esta aï¿½ï¿½o nï¿½o pode ser desfeita.
-          </ThemedText>
+            Tem certeza que deseja excluir está denúncia #{denuncia?.id} da tabela?
+            Esta ação não pode ser desfeita.
+          </TextoTematizado>
 
           <Espacador size="xl" />
 
@@ -31,7 +31,7 @@ export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onCon
               disabled={carregando}
             >
               Excluir
-            </Button>
+            </Botao>
 
             <Espacador size="xs" />
 
@@ -43,7 +43,7 @@ export default function ModalExcluirDenuncia({ visible, onClose, denuncia, onCon
               disabled={carregando}
             >
               Cancelar
-            </Button>
+            </Botao>
           </View>
         </View>
       </View>

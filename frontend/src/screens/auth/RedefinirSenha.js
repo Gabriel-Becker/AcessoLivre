@@ -1,11 +1,11 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Recipiente, LayoutDesktop } from '../../components/layout';
 import { Card, Botao, Entrada } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
 import authMessages from '../../utils/authMessages';
@@ -101,7 +101,7 @@ export default function RedefinirSenha({ navigation, route }) {
 
   const onSubmit = async (values) => {
     if (!email) {
-      toastHelper.showError('NÃ£o encontramos o e-mail desta solicitaÃ§Ã£o. Volte e informe seu e-mail novamente.', 'SolicitaÃ§Ã£o incompleta');
+      toastHelper.showError('Não encontramos o e-mail desta solicitação. Volte e informe seu e-mail novamente.', 'Solicitação incompleta');
       return;
     }
 
@@ -114,11 +114,11 @@ export default function RedefinirSenha({ navigation, route }) {
       });
 
       setSenhaAtualizada(true);
-      toastHelper.showSuccess('Sua senha foi atualizada. Agora vocÃª jÃ¡ pode entrar com a nova senha.', 'Senha redefinida com sucesso');
+      toastHelper.showSuccess('Sua senha foi atualizada. Agora você já pode entrar com a nova senha.', 'Senha redefinida com sucesso');
     } catch (erro) {
       toastHelper.showError(
         formatarErroRedefinirSenha(erro?.message || 'Erro ao redefinir senha'),
-        'NÃ£o foi possÃ­vel redefinir a senha'
+        'Não foi possível redefinir a senha'
       );
     } finally {
       setSubmitting(false);
@@ -152,11 +152,11 @@ export default function RedefinirSenha({ navigation, route }) {
                   <View style={styles.headerTexto}>
                     <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} style={styles.centralizado}>
                       Senha redefinida
-                    </ThemedText>
+                    </TextoTematizado>
                     <Espacador size="sm" />
                     <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast} style={[styles.introducao, styles.centralizado]}>
-                      Sua senha foi atualizada com sucesso. FaÃ§a login com sua nova senha.
-                    </ThemedText>
+                      Sua senha foi atualizada com sucesso. Faça login com sua nova senha.
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="lg" />
@@ -168,20 +168,20 @@ export default function RedefinirSenha({ navigation, route }) {
                     altoContraste={isHighContrast}
                   >
                     Ir para Login
-                  </Button>
+                  </Botao>
                 </>
               ) : (
                 <>
                   <View style={styles.headerTexto}>
                     <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} style={styles.centralizado}>
                       Redefinir senha
-                    </ThemedText>
+                    </TextoTematizado>
 
                     <Espacador size="sm" />
 
                     <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast} style={[styles.introducao, styles.centralizado]}>
-                      Informe o cÃ³digo enviado para {email} e defina sua nova senha.
-                    </ThemedText>
+                      Informe o código enviado para {email} e defina sua nova senha.
+                    </TextoTematizado>
                   </View>
 
                   <Espacador size="lg" />
@@ -191,7 +191,7 @@ export default function RedefinirSenha({ navigation, route }) {
                     name="code"
                     render={({ field: { onChange, value } }) => (
                       <Entrada
-                        label="CÃ³digo de recuperaÃ§Ã£o"
+                        label="Código de recuperação"
                         placeholder="000000"
                         value={value}
                         onChangeText={(text) => onChange(text.replace(/\D/g, '').slice(0, 6))}
@@ -249,8 +249,8 @@ export default function RedefinirSenha({ navigation, route }) {
                     disabled={submitting}
                     altoContraste={isHighContrast}
                   >
-                    Confirmar redefiniÃ§Ã£o
-                  </Button>
+                    Confirmar redefinição
+                  </Botao>
 
                   <AuthActions
                     text="Lembrou a senha?"
@@ -264,7 +264,7 @@ export default function RedefinirSenha({ navigation, route }) {
           </Card>
         </View>
       </KeyboardAvoidingView>
-    </Container>
-    </DesktopLayout>
+    </Recipiente>
+    </LayoutDesktop>
   );
 }

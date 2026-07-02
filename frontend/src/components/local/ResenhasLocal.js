@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { CardSecao, Botao } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
@@ -31,19 +31,19 @@ const ReviewItem = ({ review, altoContraste }) => {
         <View style={styles.userInfo}>
           <Ionicons name="person-circle-outline" size={32} color={t.colors.textSecondary} />
           <View>
-            <TextoTematizado weight="semibold">{review.usuarioNome || 'Usuï¿½rio'}</ThemedText>
+            <TextoTematizado weight="semibold">{review.usuarioNome || 'Usuário'}</TextoTematizado>
             <View style={styles.starsRow}>{renderStars(review.nota || 0)}</View>
           </View>
         </View>
         <TextoTematizado variant="caption" color="textTertiary">
           {review.dataCriacao || review.data || ''}
-        </ThemedText>
+        </TextoTematizado>
       </View>
       
       {review.comentario ? (
         <TextoTematizado color="textSecondary" style={styles.comentario}>
           {review.comentario}
-        </ThemedText>
+        </TextoTematizado>
       ) : null}
     </View>
   );
@@ -66,14 +66,14 @@ export default function ResenhasLocal({
   if (avaliacoes.length === 0) {
     return (
       <CardSecao
-        titulo="Avaliaï¿½ï¿½es"
+        titulo="Avaliações"
         icone="chatbubbles-outline"
         altoContraste={altoContraste ?? isHighContrast}
       >
         <View style={styles.emptyContainer}>
           <TextoTematizado color="textSecondary" align="center">
-            Nenhuma avaliaï¿½ï¿½o ainda. Seja o primeiro a avaliar!
-          </ThemedText>
+            Nenhuma avaliação ainda. Seja o primeiro a avaliar!
+          </TextoTematizado>
           {!isAuthenticated && (
             <Botao
               variant="primary"
@@ -83,7 +83,7 @@ export default function ResenhasLocal({
               altoContraste={altoContraste ?? isHighContrast}
             >
               Fazer Login para Avaliar
-            </Button>
+            </Botao>
           )}
         </View>
       </CardSecao>
@@ -92,7 +92,7 @@ export default function ResenhasLocal({
 
   return (
     <CardSecao
-      titulo={`Avaliaï¿½ï¿½es (${total})`}
+      titulo={`Avaliações (${total})`}
       icone="star-outline"
       altoContraste={altoContraste ?? isHighContrast}
     >
@@ -114,8 +114,8 @@ export default function ResenhasLocal({
           style={styles.verMaisButton}
           altoContraste={altoContraste ?? isHighContrast}
         >
-          Ver todas as {avaliacoes.length} avaliaï¿½ï¿½es ?
-        </Button>
+          Ver todas as {avaliacoes.length} avaliações ?
+        </Botao>
       )}
     </CardSecao>
   );

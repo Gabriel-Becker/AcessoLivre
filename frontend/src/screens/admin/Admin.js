@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View, Modal, TextInput, useWindowDimensions, Platform } from 'react-native';
 import { Recipiente } from '../../components/layout';
 import { Botao, Card } from '../../components/ui';
@@ -68,10 +68,10 @@ export default function Admin() {
 
   const abas = useMemo(
     () => [
-      { key: 'usuarios', label: 'UsuÃ¡rios' },
+      { key: 'usuarios', label: 'Usuários' },
       { key: 'locais', label: 'Locais' },
-      { key: 'denuncias', label: 'DenÃºncias' },  
-      { key: 'relatorios', label: 'RelatÃ³rios' },
+      { key: 'denuncias', label: 'Denúncias' },  
+      { key: 'relatorios', label: 'Relatórios' },
     ],
     []
   );
@@ -85,7 +85,7 @@ export default function Admin() {
   const formatarRoleUsuario = (role) => {
     const roleNormalizada = String(role || 'ROLE_USER').trim().toUpperCase();
     if (roleNormalizada === 'ROLE_ADMIN') return 'Administrador';
-    return 'UsuÃ¡rio';
+    return 'Usuário';
   };
 
   const normalizarTexto = (texto) =>
@@ -97,45 +97,44 @@ export default function Admin() {
 
   const mapaCategorias = {
     COMERCIAL: 'Comercial',
-    PUBLICO: 'PÃºblico',
-    SAUDE: 'SaÃºde',
-    EDUCACAO: 'EducaÃ§Ã£o',
+    PUBLICO: 'Público',
+    SAUDE: 'Saúde',
+    EDUCACAO: 'Educação',
     LAZER: 'Lazer',
     TRANSPORTE: 'Transporte',
-    ALIMENTACAO: 'AlimentaÃ§Ã£o',
+    ALIMENTACAO: 'Alimentação',
     HOSPEDAGEM: 'Hospedagem',
-    SERVICOS: 'ServiÃ§os',
-    SEM_CATEGORIA: 'NÃ£o informado',
+    SERVICOS: 'Serviços',
+    SEM_CATEGORIA: 'Não informado',
   };
 
   const mapaStatusLocal = {
     ATIVO: 'Ativo',
     INATIVO: 'Inativo',
-    EM_ANALISE: 'Em anÃ¡lise',
+    EM_ANALISE: 'Em análise',
     REPORTADO: 'Reportado',
-    SEM_STATUS: 'NÃ£o informado',
+    SEM_STATUS: 'Não informado',
   };
 
   const mapaTiposAcessibilidade = {
     RAMPA: 'Rampa de acesso',
-    ELEVADOR: 'Elevador acessÃ­vel',
+    ELEVADOR: 'Elevador acessível',
     BANHEIRO_ADAPTADO: 'Banheiro adaptado',
-    PISO_TATIL: 'Piso tÃ¡til',
-    SINALIZACAO_BRAILLE: 'SinalizaÃ§Ã£o em braille',
-    ESTACIONAMENTO: 'Estacionamento acessÃ­vel',
-    ESPACO_AMPLO: 'EspaÃ§o amplo',
+    PISO_TATIL: 'Piso tátil',
+    SINALIZACAO_BRAILLE: 'Sinalização em Braille',
+    ESTACIONAMENTO: 'Estacionamento acessível',
+    ESPACO_AMPLO: 'Espaço amplo',
     RECURSOS_AUDIOVISUAIS: 'Recursos audiovisuais',
     ATENDIMENTO_ESPECIALIZADO: 'Atendimento especializado',
-    MOBILIARIO_ADAPTADO: 'MobiliÃ¡rio adaptado',
-    SEM_TIPO: 'NÃ£o informado',
+    MOBILIARIO_ADAPTADO: 'Mobiliário adaptado',
+    SEM_TIPO: 'Não informado',
   };
 
   const mapaPerfis = {
     ADMIN: 'Administrador',
-    USUARIO: 'UsuÃ¡rio',
-    USUÃRIO: 'UsuÃ¡rio',
+    USUARIO: 'Usuário',
     ROLE_ADMIN: 'Administrador',
-    ROLE_USER: 'UsuÃ¡rio',
+    ROLE_USER: 'Usuário',
   };
 
   const formatarLabelPadrao = (valor) => String(valor || '')
@@ -156,7 +155,7 @@ export default function Admin() {
   };
 
   const formatarDataHoraRelatorio = (valor) => {
-    if (!valor) return 'NÃ£o disponÃ­vel';
+    if (!valor) return 'Não disponível';
     const data = new Date(valor);
     if (Number.isNaN(data.getTime())) return String(valor);
     return new Intl.DateTimeFormat('pt-BR', {
@@ -177,10 +176,10 @@ export default function Admin() {
   const formatarPeriodoAplicado = () => {
     const inicio = retornoPeriodoBackend?.dataInicio;
     const fim = retornoPeriodoBackend?.dataFim;
-    if (!inicio && !fim) return 'PerÃ­odo completo (sem filtro)';
-    if (inicio && fim) return `${inicio} atÃ© ${fim}`;
+    if (!inicio && !fim) return 'Período completo (sem filtro)';
+    if (inicio && fim) return `${inicio} até ${fim}`;
     if (inicio) return `A partir de ${inicio}`;
-    return `AtÃ© ${fim}`;
+    return `Até ${fim}`;
   };
 
   const isMesAnoValido = (valor) => /^(0[1-9]|1[0-2])\/\d{4}$/.test(String(valor || '').trim());
@@ -249,7 +248,7 @@ export default function Admin() {
     setCarregando(true);
     setErro('');
     try {
-      const dados = await AdminService.listarUsuarios({
+      const dados = await ServicoAdmin.listarUsuarios({
         page: paginaUsuarios,
         size: 8,
         sort: sortField,
@@ -261,7 +260,7 @@ export default function Admin() {
       setTotalPaginasUsuarios(pagina.totalPages);
       setTotalUsuarios(pagina.totalElements);
     } catch (e) {
-      setErro('NÃ£o foi possÃ­vel carregar os usuÃ¡rios.');
+      setErro('Não foi possível carregar os usuários.');
       setUsuarios([]);
     } finally {
       setCarregando(false);
@@ -272,13 +271,13 @@ export default function Admin() {
     setCarregando(true);
     setErro('');
     try {
-      const dados = await AdminService.listarLocais({ page: paginaLocais, size: 8, sort: 'nome' });
+      const dados = await ServicoAdmin.listarLocais({ page: paginaLocais, size: 8, sort: 'nome' });
       const pagina = normalizarPaginacao(dados);
       setLocais(pagina.content);
       setTotalPaginasLocais(pagina.totalPages);
       setTotalLocais(pagina.totalElements);
     } catch (e) {
-      setErro('NÃ£o foi possÃ­vel carregar os locais.');
+      setErro('Não foi possível carregar os locais.');
       setLocais([]);
     } finally {
       setCarregando(false);
@@ -293,12 +292,12 @@ export default function Admin() {
       const dataFimApi = converterMesAnoParaDataApi(filtroDataFimAplicado, 'fim');
 
       const [dadosGerais, dadosUsuarios, dadosLocais] = await Promise.all([
-        AdminService.obterEstatisticasGerais(),
-        AdminService.obterRelatorioUsuarios({
+        ServicoAdmin.obterEstatisticasGerais(),
+        ServicoAdmin.obterRelatorioUsuarios({
           dataInicio: dataInicioApi || undefined,
           dataFim: dataFimApi || undefined,
         }),
-        AdminService.obterRelatorioLocais({
+        ServicoAdmin.obterRelatorioLocais({
           dataInicio: dataInicioApi || undefined,
           dataFim: dataFimApi || undefined,
         }),
@@ -308,7 +307,7 @@ export default function Admin() {
       setRelatorioUsuarios(dadosUsuarios || {});
       setRelatorioLocais(dadosLocais || {});
     } catch (e) {
-      setErro('NÃ£o foi possÃ­vel carregar o resumo administrativo.');
+      setErro('Não foi possível carregar o resumo administrativo.');
       setEstatisticas(null);
       setRelatorioUsuarios(null);
       setRelatorioLocais(null);
@@ -338,12 +337,12 @@ export default function Admin() {
     const fim = String(filtroDataFimInput || '').trim();
 
     if (inicio && !isMesAnoValido(inicio)) {
-      toastHelper.showError('Data inicial invÃ¡lida. Use o formato MM/AAAA.', 'Filtro invÃ¡lido');
+      toastHelper.showError('Data inicial inválida. Use o formato MM/AAAA.', 'Filtro inválido');
       return;
     }
 
     if (fim && !isMesAnoValido(fim)) {
-      toastHelper.showError('Data final invÃ¡lida. Use o formato MM/AAAA.', 'Filtro invÃ¡lido');
+      toastHelper.showError('Data final inválida. Use o formato MM/AAAA.', 'Filtro inválido');
       return;
     }
 
@@ -353,7 +352,7 @@ export default function Admin() {
     const chaveFim = fim ? Number(`${anoFim}${mesFim}`) : null;
 
     if (chaveInicio && chaveFim && chaveInicio > chaveFim) {
-      toastHelper.showError('A data inicial deve ser menor ou igual Ã  data final.', 'Filtro invÃ¡lido');
+      toastHelper.showError('A data inicial deve ser menor ou igual à data final.', 'Filtro inválido');
       return;
     }
 
@@ -381,7 +380,7 @@ export default function Admin() {
 
   const baixarArquivoRelatorio = async (blob, nomeArquivo) => {
     if (Platform.OS !== 'web') {
-      toastHelper.showInfo('No momento, o download de relatÃ³rio estÃ¡ disponÃ­vel no painel web.', 'Download indisponÃ­vel no app');
+      toastHelper.showInfo('No momento, o download de relatório está disponível no painel web.', 'Download indisponível no app');
       return;
     }
 
@@ -412,21 +411,21 @@ export default function Admin() {
 
       let resposta;
       if (tipoRelatorioExportacao === 'usuarios' && formato === 'csv') {
-        resposta = await AdminService.exportarRelatorioUsuariosCsv(params);
+        resposta = await ServicoAdmin.exportarRelatorioUsuariosCsv(params);
       } else if (tipoRelatorioExportacao === 'usuarios' && formato === 'pdf') {
-        resposta = await AdminService.exportarRelatorioUsuariosPdf(params);
+        resposta = await ServicoAdmin.exportarRelatorioUsuariosPdf(params);
       } else if (tipoRelatorioExportacao === 'locais' && formato === 'csv') {
-        resposta = await AdminService.exportarRelatorioLocaisCsv(params);
+        resposta = await ServicoAdmin.exportarRelatorioLocaisCsv(params);
       } else {
-        resposta = await AdminService.exportarRelatorioLocaisPdf(params);
+        resposta = await ServicoAdmin.exportarRelatorioLocaisPdf(params);
       }
 
       const fallback = `relatorio-${tipoRelatorioExportacao}.${formato}`;
       const nomeArquivo = extrairNomeArquivo(resposta?.headers, fallback);
       await baixarArquivoRelatorio(resposta?.data, nomeArquivo);
-      toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'RelatÃ³rio exportado');
+      toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'Relatório exportado');
     } catch (e) {
-      toastHelper.showError('NÃ£o foi possÃ­vel exportar o relatÃ³rio.', 'Erro na exportaÃ§Ã£o');
+      toastHelper.showError('Não foi possível exportar o relatório.', 'Erro na exportação');
     } finally {
       setExportandoRelatorio(false);
     }
@@ -483,8 +482,8 @@ export default function Admin() {
     setCarregandoAcao(true);
     setErro('');
     try {
-      await AdminService.deletarUsuario(usuarioItem.idUsuario);
-      toastHelper.showSuccess('UsuÃ¡rio removido com sucesso.', 'ExclusÃ£o concluÃ­da');
+      await ServicoAdmin.deletarUsuario(usuarioItem.idUsuario);
+      toastHelper.showSuccess('Usuário removido com sucesso.', 'Exclusão concluída');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
         setPaginaUsuarios((p) => Math.max(0, p - 1));
@@ -492,9 +491,9 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel apagar o usuÃ¡rio.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o usuário.';
       setErro(mensagemErro);
-      toastHelper.showError(mensagemErro, 'Falha ao excluir usuÃ¡rio');
+      toastHelper.showError(mensagemErro, 'Falha ao excluir usuário');
     } finally {
       setCarregandoAcao(false);
     }
@@ -504,8 +503,8 @@ export default function Admin() {
     setCarregandoAcao(true);
     setErro('');
     try {
-      await AdminService.reativarUsuario(usuarioItem.idUsuario);
-      toastHelper.showSuccess('UsuÃ¡rio reativado com sucesso.', 'ReativaÃ§Ã£o concluÃ­da');
+      await ServicoAdmin.reativarUsuario(usuarioItem.idUsuario);
+      toastHelper.showSuccess('Usuário reativado com sucesso.', 'Reativação concluída');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
         setPaginaUsuarios((p) => Math.max(0, p - 1));
@@ -513,9 +512,9 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel reativar o usuÃ¡rio.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível reativar o usuário.';
       setErro(mensagemErro);
-      toastHelper.showError(mensagemErro, 'Falha ao reativar usuÃ¡rio');
+      toastHelper.showError(mensagemErro, 'Falha ao reativar usuário');
     } finally {
       setCarregandoAcao(false);
     }
@@ -531,8 +530,8 @@ export default function Admin() {
     setErro('');
 
     try {
-      await LocalService.removerLocal(localItem.idLocal);
-      toastHelper.showSuccess('Local removido com sucesso.', 'ExclusÃ£o concluÃ­da');
+      await ServicoLocal.removerLocal(localItem.idLocal);
+      toastHelper.showSuccess('Local removido com sucesso.', 'Exclusão concluída');
 
       if (locais.length === 1 && paginaLocais > 0) {
         setPaginaLocais((p) => Math.max(0, p - 1));
@@ -540,7 +539,7 @@ export default function Admin() {
         await carregarLocais();
       }
     } catch (e) {
-      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'NÃ£o foi possÃ­vel apagar o local.';
+      const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o local.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao excluir local');
     } finally {
@@ -578,10 +577,10 @@ export default function Admin() {
         textStyle={{ color: isHighContrast ? t.colors.textOnPrimary : undefined }}
       >
         Anterior
-      </Button>
+      </Botao>
       <TextoTematizado color={corSecundaria} altoContraste={isHighContrast}>
-        PÃ¡gina {paginaAtual + 1} de {totalPaginas}
-      </ThemedText>
+        Página {paginaAtual + 1} de {totalPaginas}
+      </TextoTematizado>
       <Botao
         variant="outline"
         size="small"
@@ -590,8 +589,8 @@ export default function Admin() {
         altoContraste={isHighContrast}
         textStyle={{ color: isHighContrast ? t.colors.textOnPrimary : undefined }}
       >
-        PrÃ³xima
-      </Button>
+        Próxima
+      </Botao>
     </View>
   );
 
@@ -602,18 +601,18 @@ export default function Admin() {
 
   const renderLinhaMetrica = (label, valor) => (
     <View key={label} style={styles.itemMetricaLinha}>
-      <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</ThemedText>
+      <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>{label}</TextoTematizado>
       <View style={[styles.badgeValorMetrica, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}>
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</TextoTematizado>
       </View>
     </View>
   );
 
   const renderKpi = (titulo, valor) => (
     <View key={titulo} style={[styles.kpiCard, { backgroundColor: corFundoDestaque, borderColor: t.colors.border }]}> 
-      <TextoTematizado size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</ThemedText>
+      <TextoTematizado size="xs" altoContraste={isHighContrast} color={corSecundaria}>{titulo}</TextoTematizado>
       <Espacador size="xs" />
-      <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</ThemedText>
+      <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>{valor}</TextoTematizado>
     </View>
   );
 
@@ -641,7 +640,7 @@ export default function Admin() {
     return (
       <>
         <BarraFiltroAdmin
-          titulo="Planilha de usuÃ¡rios"
+          titulo="Planilha de usuários"
           pesquisa={buscaUsuarios}
           onChangePesquisa={setBuscaUsuarios}
           pesquisaPlaceholder="Pesquisar por nome ou e-mail"
@@ -657,8 +656,8 @@ export default function Admin() {
           chaveExtractor={(item) => String(item.idUsuario)}
           renderVazio={
             <TextoTematizado size="sm" color={corSecundaria} altoContraste={isHighContrast}>
-              Nenhum usuÃ¡rio encontrado com os filtros atuais.
-            </ThemedText>
+              Nenhum usuário encontrado com os filtros atuais.
+            </TextoTematizado>
           }
           carregando={carregando}
           larguraMinima={1120}
@@ -704,7 +703,7 @@ export default function Admin() {
           renderVazio={
             <TextoTematizado size="sm" color={corSecundaria} altoContraste={isHighContrast}>
               Nenhum local encontrado com os filtros atuais.
-            </ThemedText>
+            </TextoTematizado>
           }
           carregando={carregando}
           larguraMinima={1120}
@@ -726,9 +725,9 @@ export default function Admin() {
   const renderRelatorios = () => (
     <View style={styles.relatoriosContainer}>
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatÃ³rio</ThemedText>
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Filtros do relatório</TextoTematizado>
         <Espacador size="sm" />
-        <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatÃ³rio busca todos os dados.</ThemedText>
+        <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Use o formato MM/AAAA. Se deixar vazio, o relatório busca todos os dados.</TextoTematizado>
         <Espacador size="sm" />
         <View style={styles.filtrosDataContainer}>
           <TextInput
@@ -756,12 +755,12 @@ export default function Admin() {
         </View>
         <Espacador size="sm" />
         <View style={styles.filtrosDataAcoes}>
-          <Botao variant="primary" size="small" onPress={aplicarFiltrosRelatorio} disabled={!isPeriodoRelatorioValido} altoContraste={isHighContrast}>Aplicar filtros</Button>
-          <Botao variant="outline" size="small" onPress={limparFiltrosRelatorio} altoContraste={isHighContrast}>Limpar</Button>
+          <Botao variant="primary" size="small" onPress={aplicarFiltrosRelatorio} disabled={!isPeriodoRelatorioValido} altoContraste={isHighContrast}>Aplicar filtros</Botao>
+          <Botao variant="outline" size="small" onPress={limparFiltrosRelatorio} altoContraste={isHighContrast}>Limpar</Botao>
         </View>
 
         <Espacador size="sm" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Exportar relatÃ³rio (um por vez)</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Exportar relatório (um por vez)</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.filtrosDataAcoes}>
           <Botao
@@ -771,8 +770,8 @@ export default function Admin() {
             disabled={exportandoRelatorio || !isPeriodoRelatorioValido}
             altoContraste={isHighContrast}
           >
-            UsuÃ¡rios
-          </Button>
+            Usuários
+          </Botao>
           <Botao
             variant={tipoRelatorioExportacao === 'locais' ? 'primary' : 'outline'}
             size="small"
@@ -781,7 +780,7 @@ export default function Admin() {
             altoContraste={isHighContrast}
           >
             Locais
-          </Button>
+          </Botao>
         </View>
         <Espacador size="xs" />
         <View style={styles.filtrosDataAcoes}>
@@ -794,7 +793,7 @@ export default function Admin() {
             altoContraste={isHighContrast}
           >
             Exportar CSV
-          </Button>
+          </Botao>
           <Botao
             variant="primary"
             size="small"
@@ -804,45 +803,45 @@ export default function Admin() {
             altoContraste={isHighContrast}
           >
             Exportar PDF
-          </Button>
+          </Botao>
         </View>
 
         <Espacador size="sm" />
         <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-          PerÃ­odo aplicado: {formatarPeriodoAplicado()}
-        </ThemedText>
+          Período aplicado: {formatarPeriodoAplicado()}
+        </TextoTematizado>
         <Espacador size="xs" />
         <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
-          Ãšltima atualizaÃ§Ã£o: {formatarDataHoraRelatorio(retornoPeriodoBackend.geradoEm)}
-        </ThemedText>
+          Última atualização: {formatarDataHoraRelatorio(retornoPeriodoBackend.geradoEm)}
+        </TextoTematizado>
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</ThemedText>
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Resumo Geral</TextoTematizado>
         <Espacador size="md" />
         <View style={styles.gridKpis}>
-          {renderKpi('Total de usuÃ¡rios', formatarNumero(estatisticas?.totalUsuarios))}
-          {renderKpi('UsuÃ¡rios ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
-          {renderKpi('UsuÃ¡rios inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderKpi('Total de usuários', formatarNumero(estatisticas?.totalUsuarios))}
+          {renderKpi('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderKpi('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
           {renderKpi('Total de locais', formatarNumero(estatisticas?.totalLocais))}
-          {renderKpi('Total de avaliaÃ§Ãµes', formatarNumero(estatisticas?.totalAvaliacoes))}
-          {renderKpi('AvaliaÃ§Ãµes pendentes', formatarNumero(estatisticas?.avaliacoesPendentes))}
+          {renderKpi('Total de avaliações', formatarNumero(estatisticas?.totalAvaliacoes))}
+          {renderKpi('Avaliações pendentes', formatarNumero(estatisticas?.avaliacoesPendentes))}
         </View>
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>RelatÃ³rio de UsuÃ¡rios</ThemedText>
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Usuários</TextoTematizado>
         <Espacador size="md" />
         <View style={styles.listaMetricasContainer}>
-          {renderLinhaMetrica('UsuÃ¡rios ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
-          {renderLinhaMetrica('UsuÃ¡rios inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
+          {renderLinhaMetrica('Usuários ativos', formatarNumero(relatorioUsuarios?.totalAtivos))}
+          {renderLinhaMetrica('Usuários inativos', formatarNumero(relatorioUsuarios?.totalInativos))}
           {renderLinhaMetrica('Administradores', formatarNumero(relatorioUsuarios?.totalAdmins))}
-          {renderLinhaMetrica('UsuÃ¡rios comuns', formatarNumero(relatorioUsuarios?.totalUsuariosComuns))}
-          {renderLinhaMetrica('Cadastros nos Ãºltimos 30 dias', formatarNumero(relatorioUsuarios?.cadastrosUltimos30Dias))}
+          {renderLinhaMetrica('Usuários comuns', formatarNumero(relatorioUsuarios?.totalUsuariosComuns))}
+          {renderLinhaMetrica('Cadastros nos últimos 30 dias', formatarNumero(relatorioUsuarios?.cadastrosUltimos30Dias))}
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por perfil</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por perfil</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioUsuarios?.distribuicaoPorPerfil || {}).map(([perfil, total]) => (
@@ -851,7 +850,7 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Cadastros (Ãºltimos 6 meses)</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Cadastros (últimos 6 meses)</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioUsuarios?.cadastrosUltimosSeisMeses || {}).map(([mes, total]) => (
@@ -860,35 +859,35 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Ãšltimos usuÃ¡rios cadastrados</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Últimos usuários cadastrados</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {(relatorioUsuarios?.ultimosUsuarios || []).map((item) => (
             <View key={String(item?.idUsuario)} style={styles.itemListaTexto}>
               <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
                 {item?.nome || 'Sem nome'}
-              </ThemedText>
+              </TextoTematizado>
               <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
                 {item?.email || 'Sem e-mail'}
-              </ThemedText>
+              </TextoTematizado>
             </View>
           ))}
         </View>
       </Card>
 
       <Card style={styles.cardUsuario} variant={cardRelatorioVariant} altoContraste={isHighContrast}>
-        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>RelatÃ³rio de Locais</ThemedText>
+        <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Relatório de Locais</TextoTematizado>
         <Espacador size="md" />
         <View style={styles.listaMetricasContainer}>
           {renderLinhaMetrica('Total de locais', formatarNumero(relatorioLocais?.totalLocais))}
-          {renderLinhaMetrica('Locais com avaliaÃ§Ã£o', formatarNumero(relatorioLocais?.locaisComAvaliacao))}
-          {renderLinhaMetrica('Locais sem avaliaÃ§Ã£o', formatarNumero(relatorioLocais?.locaisSemAvaliacao))}
-          {renderLinhaMetrica('MÃ©dia geral', Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2))}
-          {renderLinhaMetrica('Total de avaliaÃ§Ãµes registradas', formatarNumero(relatorioLocais?.totalAvaliacoes))}
+          {renderLinhaMetrica('Locais com avaliação', formatarNumero(relatorioLocais?.locaisComAvaliacao))}
+          {renderLinhaMetrica('Locais sem avaliação', formatarNumero(relatorioLocais?.locaisSemAvaliacao))}
+          {renderLinhaMetrica('Média geral', Number(relatorioLocais?.mediaAvaliacaoGeral || 0).toFixed(2))}
+          {renderLinhaMetrica('Total de avaliações registradas', formatarNumero(relatorioLocais?.totalAvaliacoes))}
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Status dos locais</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Status dos locais</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorStatus || {}).map(([status, total]) => (
@@ -897,7 +896,7 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por categoria</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por categoria</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorCategoria || {}).map(([categoria, total]) => (
@@ -906,7 +905,7 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>DistribuiÃ§Ã£o por estado</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Distribuição por estado</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorEstado || {}).map(([estado, total]) => (
@@ -915,7 +914,7 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Recursos de acessibilidade mais usados</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Recursos de acessibilidade mais usados</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {Object.entries(relatorioLocais?.distribuicaoPorTipoAcessibilidade || {}).map(([tipo, total]) => (
@@ -924,17 +923,17 @@ export default function Admin() {
         </View>
 
         <Espacador size="md" />
-        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Locais mais bem avaliados</ThemedText>
+        <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Locais mais bem avaliados</TextoTematizado>
         <Espacador size="xs" />
         <View style={styles.listaMetricasContainer}>
           {(relatorioLocais?.locaisMaisBemAvaliados || []).map((item) => (
             <View key={String(item?.idLocal)} style={styles.itemListaTexto}>
               <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>
                 {item?.nome || 'Sem nome'} ({item?.cidade || '-'} / {item?.estado || '-'})
-              </ThemedText>
+              </TextoTematizado>
               <TextoTematizado size="sm" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>
                 Nota {Number(item?.avaliacaoMedia || 0).toFixed(2)}
-              </ThemedText>
+              </TextoTematizado>
             </View>
           ))}
         </View>
@@ -948,7 +947,7 @@ export default function Admin() {
         <View style={styles.cabecalhoPagina}>
           <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
             Painel Administrativo
-          </ThemedText>
+          </TextoTematizado>
         </View>
 
         <Espacador size="lg" />
@@ -963,7 +962,7 @@ export default function Admin() {
               style={styles.botaoAba}
             >
               {aba.label}
-            </Button>
+            </Botao>
           ))}
         </View>
 
@@ -971,13 +970,13 @@ export default function Admin() {
 
         {carregando && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</ThemedText>
+            <TextoTematizado size="sm" altoContraste={isHighContrast} color={corSecundaria}>Carregando dados...</TextoTematizado>
           </Card>
         ) : null}
 
         {erro && abaAtiva !== 'denuncias' ? (
           <Card style={[styles.cardUsuario, { padding: ehMobile ? theme.spacing.sm : theme.spacing.md }]}>
-            <TextoTematizado color="error" size="sm" altoContraste={isHighContrast}>{erro}</ThemedText>
+            <TextoTematizado color="error" size="sm" altoContraste={isHighContrast}>{erro}</TextoTematizado>
             <Espacador size="sm" />
             <Botao
               variant="outline"
@@ -986,7 +985,7 @@ export default function Admin() {
               disabled={carregando}
             >
               Tentar novamente
-            </Button>
+            </Botao>
           </Card>
         ) : null}
 
@@ -1035,8 +1034,8 @@ export default function Admin() {
             ]}
           >
             <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
-              {usuarioParaDeletar?.ativo === false ? 'Reativar usuÃ¡rio' : 'Apagar usuÃ¡rio'}
-            </ThemedText>
+              {usuarioParaDeletar?.ativo === false ? 'Reativar usuário' : 'Apagar usuário'}
+            </TextoTematizado>
 
             <Espacador size="lg" />
 
@@ -1045,9 +1044,9 @@ export default function Admin() {
                 Tem certeza que deseja {usuarioParaDeletar?.ativo === false ? 'reativar' : 'apagar'}{' '}
                 <TextoTematizado weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {usuarioParaDeletar?.nome || ''}
-                </ThemedText>
-                ? {usuarioParaDeletar?.ativo === false ? 'O usuÃ¡rio poderÃ¡ voltar a acessar a plataforma.' : 'Esta aÃ§Ã£o nÃ£o pode ser desfeita.'}
-              </ThemedText>
+                </TextoTematizado>
+                ? {usuarioParaDeletar?.ativo === false ? 'O usuário poderá voltar a acessar a plataforma.' : 'Esta ação não pode ser desfeita.'}
+              </TextoTematizado>
             </View>
 
             <Espacador size="xl" />
@@ -1069,7 +1068,7 @@ export default function Admin() {
                 disabled={carregandoAcao}
               >
                 {usuarioParaDeletar?.ativo === false ? 'Reativar' : 'Deletar'}
-              </Button>
+              </Botao>
 
               <Espacador size="xs" />
 
@@ -1083,7 +1082,7 @@ export default function Admin() {
                 disabled={carregandoAcao}
               >
                 Cancelar
-              </Button>
+              </Botao>
             </View>
           </View>
         </View>
@@ -1109,7 +1108,7 @@ export default function Admin() {
           >
             <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
               Apagar local
-            </ThemedText>
+            </TextoTematizado>
 
             <Espacador size="lg" />
 
@@ -1118,9 +1117,9 @@ export default function Admin() {
                 Tem certeza que deseja apagar{' '}
                 <TextoTematizado weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {localParaDeletar?.nome || ''}
-                </ThemedText>
-                ? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
-              </ThemedText>
+                </TextoTematizado>
+                ? Esta ação não pode ser desfeita.
+              </TextoTematizado>
             </View>
 
             <Espacador size="xl" />
@@ -1138,7 +1137,7 @@ export default function Admin() {
                 disabled={carregandoAcao}
               >
                 Deletar
-              </Button>
+              </Botao>
 
               <Espacador size="xs" />
 
@@ -1152,12 +1151,12 @@ export default function Admin() {
                 disabled={carregandoAcao}
               >
                 Cancelar
-              </Button>
+              </Botao>
             </View>
           </View>
         </View>
       </Modal>
-    </Container>
+    </Recipiente>
   );
 }
 

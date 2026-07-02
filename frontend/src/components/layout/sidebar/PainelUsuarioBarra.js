@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import theme from '../../../config/theme';
 import { Espacador, Divisor } from '../../commons';
@@ -22,7 +22,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <Divisor />
       <Espacador size="sm" />
       {!isAuthenticated ? (
@@ -45,7 +45,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
             }}
           >
             Fazer Login
-          </Button>
+          </Botao>
           <Espacador size="sm" />
           <Botao
             variant={contrasteAtivo ? 'outline' : 'ghost'}
@@ -64,7 +64,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
             } : { backgroundColor: 'transparent' }}
           >
             Criar Conta
-          </Button>
+          </Botao>
         </>
       ) : (
         <>
@@ -90,7 +90,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
           <Espacador size="xs" />
           <Botao variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline" altoContraste={contrasteAtivo}>
             Sair
-          </Button>
+          </Botao>
         </>
       )}
     </View>
@@ -98,7 +98,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     marginTop: 'auto',
     paddingBottom: theme.spacing.lg,
   },

@@ -1,6 +1,6 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 
-const AdminService = {
+const ServicoAdmin = {
   async listarUsuarios({ page = 0, size = 8, sort = 'dataCadastro', direction = 'DESC', ativo = true } = {}) {
     const response = await api.get('/admin/usuarios', {
       params: { page, size, sort, direction, ativo },
@@ -117,4 +117,4 @@ const AdminService = {
   },
 };
 
-export default AdminService;
+export default ServicoAdmin;

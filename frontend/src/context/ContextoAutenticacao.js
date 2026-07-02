@@ -1,4 +1,4 @@
-﻿import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import ServicoAutenticacao from '../services/ServicoAutenticacao';
 import { setLogoutHandler } from '../utils/GerenciadorSessao';
@@ -18,7 +18,7 @@ const obterMensagemLoginAmigavel = (erro) => {
   const mensagemNormalizada = String(mensagem).toLowerCase();
 
   if (!mensagem) {
-    return 'NÃ£o foi possÃ­vel entrar agora. Tente novamente em instantes.';
+    return 'Não foi possível entrar agora. Tente novamente em instantes.';
   }
 
   if (
@@ -26,11 +26,11 @@ const obterMensagemLoginAmigavel = (erro) => {
     mensagemNormalizada.includes('is not defined') ||
     mensagemNormalizada.includes('undefined')
   ) {
-    return 'NÃ£o foi possÃ­vel concluir o login agora. Tente novamente.';
+    return 'Não foi possível concluir o login agora. Tente novamente.';
   }
 
   if (mensagemNormalizada.includes('network') || mensagemNormalizada.includes('timeout')) {
-    return 'Falha de conexÃ£o. Verifique sua internet e tente novamente.';
+    return 'Falha de conexão. Verifique sua internet e tente novamente.';
   }
 
   return mensagem;
@@ -55,10 +55,10 @@ const detectarRequisicaoTwoFactorNoErro = (erro) => {
   return (
     textoErro.includes('2fa') ||
     textoErro.includes('dois fatores') ||
-    textoErro.includes('autenticaÃ§Ã£o obrigatÃ³rio') ||
-    textoErro.includes('autenticaÃ§Ã£o obrigatÃ³ria') ||
+    textoErro.includes('autenticação obrigatório') ||
+    textoErro.includes('autenticação obrigatória') ||
     textoErro.includes('codigo de autenticacao') ||
-    textoErro.includes('cÃ³digo de autenticaÃ§Ã£o')
+    textoErro.includes('código de autenticação')
   );
 };
 
@@ -76,12 +76,12 @@ export const AuthProvider = ({ children }) => {
       await ServicoAutenticacao.logout();
       Toast.show({
         type: 'warning',
-        text1: 'SessÃ£o expirada',
-        text2: 'FaÃ§a login novamente',
+        text1: 'Sessão expirada',
+        text2: 'Faça login novamente',
       });
       resetToAuth();
     } catch (error) {
-      console.error('[AuthContext] Erro ao fazer logout apÃ³s token invÃ¡lido:', error);
+      console.error('[AuthContext] Erro ao fazer logout após token inválido:', error);
     }
   }, []);
 
@@ -93,8 +93,8 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken);
       Toast.show({
         type: 'info',
-        text1: 'SessÃ£o renovada',
-        text2: 'Sua sessÃ£o foi atualizada automaticamente',
+        text1: 'Sessão renovada',
+        text2: 'Sua sessão foi atualizada automaticamente',
       });
     } catch (error) {
       console.error('[AuthContext] Erro ao renovar token:', error);
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
       }
     } catch (erro) {
-      console.error('[AuthContext] Erro ao carregar sessÃ£o:', erro);
+      console.error('[AuthContext] Erro ao carregar sessão:', erro);
       await ServicoAutenticacao.removeToken();
       await ServicoAutenticacao.setUserData(null);
       setIsAuthenticated(false);
@@ -193,7 +193,7 @@ export const AuthProvider = ({ children }) => {
           mensagem: result.message || 'Login realizado com sucesso'
         };
       } else {
-        throw new Error('Resposta invÃ¡lida do servidor');
+        throw new Error('Resposta inválida do servidor');
       }
     } catch (erro) {
       if (detectarRequisicaoTwoFactorNoErro(erro)) {
@@ -205,7 +205,7 @@ export const AuthProvider = ({ children }) => {
           message:
             erro?.response?.data?.mensagem ||
             erro?.response?.data?.message ||
-            'Digite o cÃ³digo de verificaÃ§Ã£o para continuar o login.',
+            'Digite o código de verificação para continuar o login.',
         };
       }
 
@@ -223,7 +223,7 @@ export const AuthProvider = ({ children }) => {
         .trim()
         .replace(/\s+/g, ' ')
         .toLowerCase()
-        .replace(/(^|\s)([a-zÃ -Ã¿])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
+        .replace(/(^|\s)([a-zà-ÿ])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
 
       const result = await ServicoAutenticacao.register({ nome: nomeFormatado, email, senha });
       return result?.success
@@ -248,7 +248,7 @@ export const AuthProvider = ({ children }) => {
       Toast.show({
         type: 'info',
         text1: 'Logout realizado',
-        text2: 'AtÃ© breve!',
+        text2: 'Até breve!',
       });
       resetToAuth();
     } catch (erro) {
@@ -262,7 +262,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ============================================
-  // HELPERS PARA OBTER DADOS DO USUÃRIO
+  // HELPERS PARA OBTER DADOS DO USUÁRIO
   // ============================================
   
   const getUsuarioId = useCallback(() => {
@@ -271,13 +271,13 @@ export const AuthProvider = ({ children }) => {
     // Tenta diferentes propriedades que podem conter o ID
     const id = usuario.idUsuario || usuario.id || usuario.userId;
     
-    // Converte para nÃºmero se for string
+    // Converte para número se for string
     return id ? Number(id) : null;
   }, [usuario]);
 
   const getUsuarioNome = useCallback(() => {
-    if (!usuario) return 'UsuÃ¡rio';
-    return usuario.nome || usuario.name || usuario.displayName || 'UsuÃ¡rio';
+    if (!usuario) return 'Usuário';
+    return usuario.nome || usuario.name || usuario.displayName || 'Usuário';
   }, [usuario]);
 
   const getUsuarioEmail = useCallback(() => {
@@ -291,7 +291,7 @@ export const AuthProvider = ({ children }) => {
     return {
       id: usuario.idUsuario || usuario.id,
       idUsuario: usuario.idUsuario || usuario.id,
-      nome: usuario.nome || usuario.name || usuario.displayName || 'UsuÃ¡rio',
+      nome: usuario.nome || usuario.name || usuario.displayName || 'Usuário',
       email: usuario.email,
       ...usuario
     };

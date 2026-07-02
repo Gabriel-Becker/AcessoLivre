@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import ModalReportar from './ModalReportar';
 import { useAuth } from '../../context/ContextoAutenticacao';
@@ -26,7 +26,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
     setMenuVisible(false);
     
     if (!isAuthenticated) {
-      toastHelper.showInfo('FaÃ§a login para reportar este comentÃ¡rio');
+      toastHelper.showInfo('Faça login para reportar este comentário');
       return;
     }
     
@@ -49,7 +49,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
       <TouchableOpacity
         onPress={() => setMenuVisible(true)}
         style={styles.menuButton}
-        accessibilityLabel="Mais opÃ§Ãµes"
+        accessibilityLabel="Mais opções"
         activeOpacity={0.7}
       >
         <Ionicons name="ellipsis-vertical" size={18} color={t.colors.textSecondary} />
@@ -86,8 +86,8 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
               >
                 <Ionicons name="flag-outline" size={isDesktop ? 18 : 20} color={t.colors.error} />
                 <TextoTematizado color="error" style={styles.menuItemText}>
-                  Reportar comentÃ¡rio
-                </ThemedText>
+                  Reportar comentário
+                </TextoTematizado>
               </TouchableOpacity>
             )}
           </View>
@@ -99,7 +99,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
         onClose={handleModalClose}
         tipo="AVALIACAO"
         targetId={getComentarioId()}
-        targetName={`ComentÃ¡rio de ${autorNome || 'usuÃ¡rio'}`}
+        targetName={`Comentário de ${autorNome || 'usuário'}`}
       />
     </>
   );

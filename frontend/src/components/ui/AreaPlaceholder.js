@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TextoTematizado, Espacador } from '../commons';
@@ -18,16 +18,16 @@ export default function AreaPlaceholder({
   const estilos = useMemo(() => criarEstilos(t), [t]);
 
   return (
-    <View style={[estilos.container, alturaMinima ? { minHeight: alturaMinima } : null, style]}>
+    <View style={[estilos.Recipiente, alturaMinima ? { minHeight: alturaMinima } : null, style]}>
       <Ionicons name={icone} size={32} color={t.colors.textTertiary} />
       <Espacador size="xs" />
       <TextoTematizado weight="semibold" align="center">
         {titulo}
-      </ThemedText>
+      </TextoTematizado>
       {subtitulo ? (
         <TextoTematizado color="textTertiary" variant="caption" align="center">
           {subtitulo}
-        </ThemedText>
+        </TextoTematizado>
       ) : null}
     </View>
   );
@@ -35,7 +35,7 @@ export default function AreaPlaceholder({
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       borderWidth: 2,
       borderColor: t.colors.borderLight,
       borderStyle: 'dashed',

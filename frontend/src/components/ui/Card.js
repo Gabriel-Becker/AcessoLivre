@@ -1,4 +1,4 @@
-﻿// Card - Container de conteÃºdo com suporte a temas
+// Card - Recipiente de conteúdo com suporte a temas
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import theme, { getTheme } from '../../config/theme';

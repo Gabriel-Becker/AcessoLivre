@@ -1,24 +1,24 @@
-﻿// Tela de configuraÃ§Ãµes do aplicativo
+// Tela de configurações do aplicativo
 import { useContext } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 
 export default function Configuracoes() {
-  const { enabled, toggle } = useContext(AccessibilityContext);
+  const { enabled, alternarAcessibilidade } = useContext(AccessibilityContext);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <View style={styles.itemConfiguracao}>
         <Text style={styles.textoConfiguracao}>Modo Acessibilidade</Text>
         <Switch
           value={enabled}
-          onValueChange={toggle}
+          onValueChange={alternarAcessibilidade}
           trackColor={{ false: '#767577', true: '#007AFF' }}
         />
       </View>
       {enabled && (
         <Text style={styles.dica}>
-          Toque no botÃ£o de voz para usar comandos de voz
+          Toque no botão de voz para usar comandos de voz
         </Text>
       )}
     </View>
@@ -26,7 +26,7 @@ export default function Configuracoes() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     padding: 20,
     flex: 1,
     backgroundColor: '#f5f5f5',

@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Recipiente } from '../../components/layout';
 import { Card, Botao } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { setup2FA, enable2FA, disable2FA, get2FAStatus } from '../../services/ServicoAutenticacao';
 import toastHelper from '../../utils/toastHelper';
@@ -53,7 +53,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
 
   const handleEnable = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
-      toastHelper.showError('Digite o cï¿½digo de 6 dï¿½gitos');
+      toastHelper.showError('Digite o código de 6 dágitos');
       return;
     }
 
@@ -78,7 +78,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
   const handleDisable = async () => {
     Alert.alert(
       'Desabilitar 2FA',
-      'Tem certeza que deseja desabilitar a autenticaï¿½ï¿½o de dois fatores? Isso reduzirï¿½ a seguranï¿½a da sua conta.',
+      'Tem certeza que deseja desabilitar a autenticação de dois fatores? Isso reduzirá a segurança da sua conta.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -86,7 +86,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             if (!verificationCode || verificationCode.length !== 6) {
-              toastHelper.showError('Digite o cï¿½digo de 6 dï¿½gitos para confirmar');
+              toastHelper.showError('Digite o código de 6 dágitos para confirmar');
               return;
             }
 
@@ -114,16 +114,16 @@ export default function ConfigurarDoisFatores({ navigation }) {
 
   const copyToClipboard = async (text) => {
     await Clipboard.setStringAsync(text);
-    toastHelper.showSuccess('Copiado para ï¿½rea de transferï¿½ncia');
+    toastHelper.showSuccess('Copiado para área de transferáncia');
   };
 
   const shareRecoveryCodes = async () => {
     if (qrData?.recoveryCodes) {
-      const text = `Cï¿½digos de Recuperaï¿½ï¿½o 2FA - AcessoLivre\n\n${qrData.recoveryCodes.join('\n')}`;
+      const text = `Códigos de Recuperação 2FA - AcessoLivre\n\n${qrData.recoveryCodes.join('\n')}`;
       try {
         await Share.share({ message: text });
       } catch (error) {
-        toastHelper.showError('Erro ao compartilhar cï¿½digos');
+        toastHelper.showError('Erro ao compartilhar códigos');
       }
     }
   };
@@ -134,25 +134,25 @@ export default function ConfigurarDoisFatores({ navigation }) {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={t.colors.primary} />
           <Espacador size="md" />
-          <TextoTematizado>Carregando...</ThemedText>
+          <TextoTematizado>Carregando...</TextoTematizado>
         </View>
-      </Container>
+      </Recipiente>
     );
   }
 
   return (
     <Recipiente>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
+        <View style={styles.Cabecalho}>
           <Ionicons name="shield-checkmark" size={48} color={t.colors.primary} />
           <Espacador size="sm" />
           <TextoTematizado size="xxl" weight="bold" align="center">
-            Autenticaï¿½ï¿½o de Dois Fatores
-          </ThemedText>
+            Autenticação de Dois Fatores
+          </TextoTematizado>
           <Espacador size="xs" />
           <TextoTematizado color="textSecondary" align="center">
-            Adicione uma camada extra de seguranï¿½a ï¿½ sua conta
-          </ThemedText>
+            Adicione uma camada extra de segurança á sua conta
+          </TextoTematizado>
         </View>
 
         <Espacador size="xl" />
@@ -160,17 +160,17 @@ export default function ConfigurarDoisFatores({ navigation }) {
         {!isEnabled && !qrData && (
           <Card style={styles.card}>
             <TextoTematizado weight="semibold" size="lg">
-              O que ï¿½ 2FA?
-            </ThemedText>
+              O que á 2FA?
+            </TextoTematizado>
             <Espacador size="sm" />
             <TextoTematizado color="textSecondary">
-              A autenticaï¿½ï¿½o de dois fatores adiciona uma camada extra de seguranï¿½a, exigindo um cï¿½digo temporï¿½rio
-              gerado pelo seu app autenticador (como Google Authenticator ou Authy) alï¿½m da sua senha.
-            </ThemedText>
+              A autenticação de dois fatores adiciona uma camada extra de segurança, exigindo um código temporário
+              gerado pelo seu app autenticador (como Google Authenticator ou Authy) além da sua senha.
+            </TextoTematizado>
             <Espacador size="lg" />
             <Botao variant="primary" onPress={handleSetup}>
               Configurar 2FA
-            </Button>
+            </Botao>
           </Card>
         )}
 
@@ -179,7 +179,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
             <Card style={styles.card}>
               <TextoTematizado weight="semibold" size="lg" align="center">
                 1. Escaneie o QR Code
-              </ThemedText>
+              </TextoTematizado>
               <Espacador size="md" />
               
               {qrData.qrCode && (
@@ -194,15 +194,15 @@ export default function ConfigurarDoisFatores({ navigation }) {
 
               <Espacador size="md" />
               <TextoTematizado color="textSecondary" align="center" size="sm">
-                Ou copie o cï¿½digo manualmente:
-              </ThemedText>
+                Ou copie o código manualmente:
+              </TextoTematizado>
               <Espacador size="xs" />
               
               <TouchableOpacity 
                 style={styles.secretContainer}
                 onPress={() => copyToClipboard(qrData.secretKey)}
               >
-                <TextoTematizado weight="mono" size="sm">{qrData.secretKey}</ThemedText>
+                <TextoTematizado weight="mono" size="sm">{qrData.secretKey}</TextoTematizado>
                 <Ionicons name="copy-outline" size={20} color={t.colors.primary} />
               </TouchableOpacity>
             </Card>
@@ -211,12 +211,12 @@ export default function ConfigurarDoisFatores({ navigation }) {
 
             <Card style={styles.card}>
               <TextoTematizado weight="semibold" size="lg" align="center">
-                2. Cï¿½digos de Recuperaï¿½ï¿½o
-              </ThemedText>
+                2. Códigos de Recuperação
+              </TextoTematizado>
               <Espacador size="sm" />
               <TextoTematizado color="textSecondary" align="center" size="sm">
-                Guarde esses cï¿½digos em local seguro. Use-os caso perca acesso ao app autenticador.
-              </ThemedText>
+                Guarde esses códigos em local seguro. Use-os caso perca acesso ao app autenticador.
+              </TextoTematizado>
               <Espacador size="md" />
 
               <View style={styles.codesGrid}>
@@ -226,27 +226,27 @@ export default function ConfigurarDoisFatores({ navigation }) {
                     style={styles.codeItem}
                     onPress={() => copyToClipboard(code)}
                   >
-                    <TextoTematizado weight="mono" size="sm">{code}</ThemedText>
+                    <TextoTematizado weight="mono" size="sm">{code}</TextoTematizado>
                   </TouchableOpacity>
                 ))}
               </View>
 
               <Espacador size="md" />
               <Botao variant="outline" onPress={shareRecoveryCodes} size="small">
-                <Ionicons name="share-outline" size={16} /> Compartilhar Cï¿½digos
-              </Button>
+                <Ionicons name="share-outline" size={16} /> Compartilhar Códigos
+              </Botao>
             </Card>
 
             <Espacador size="md" />
 
             <Card style={styles.card}>
               <TextoTematizado weight="semibold" size="lg" align="center">
-                3. Digite o Cï¿½digo de Verificaï¿½ï¿½o
-              </ThemedText>
+                3. Digite o Código de Verificação
+              </TextoTematizado>
               <Espacador size="md" />
 
               <View style={styles.inputContainer}>
-                <Text style={styles.input}>
+                <Text style={styles.Entrada}>
                   <Entrada
                     type="text"
                     placeholder="000000"
@@ -274,7 +274,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
                 disabled={processingEnable || verificationCode.length !== 6}
               >
                 Habilitar 2FA
-              </Button>
+              </Botao>
             </Card>
           </>
         )}
@@ -286,26 +286,26 @@ export default function ConfigurarDoisFatores({ navigation }) {
               <Espacador size="md" />
               <TextoTematizado weight="bold" size="xl" align="center">
                 2FA Ativado
-              </ThemedText>
+              </TextoTematizado>
               <Espacador size="xs" />
               <TextoTematizado color="textSecondary" align="center">
-                Sua conta estï¿½ protegida com autenticaï¿½ï¿½o de dois fatores
-              </ThemedText>
+                Sua conta está protegida com autenticação de dois fatores
+              </TextoTematizado>
             </View>
 
             <Espacador size="xl" />
 
             <TextoTematizado weight="semibold" size="md">
               Para desabilitar o 2FA:
-            </ThemedText>
+            </TextoTematizado>
             <Espacador size="sm" />
             <TextoTematizado color="textSecondary" size="sm">
-              Digite o cï¿½digo atual do seu app autenticador
-            </ThemedText>
+              Digite o código atual do seu app autenticador
+            </TextoTematizado>
             <Espacador size="md" />
 
             <View style={styles.inputContainer}>
-              <Text style={styles.input}>
+              <Text style={styles.Entrada}>
                 <Entrada
                   type="text"
                   placeholder="000000"
@@ -333,13 +333,13 @@ export default function ConfigurarDoisFatores({ navigation }) {
               disabled={processingDisable || verificationCode.length !== 6}
             >
               Desabilitar 2FA
-            </Button>
+            </Botao>
           </Card>
         )}
 
         <Espacador size="xl" />
       </ScrollView>
-    </Container>
+    </Recipiente>
   );
 }
 
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
+  Cabecalho: {
     alignItems: 'center',
     paddingVertical: 16,
   },
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: '100%',
   },
-  input: {
+  Entrada: {
     width: '100%',
   },
   statusContainer: {

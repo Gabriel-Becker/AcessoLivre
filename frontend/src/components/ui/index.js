@@ -1,4 +1,4 @@
-﻿export { default as Botao } from './Botao';
+export { default as Botao } from './Botao';
 export { default as Entrada } from './Entrada';
 export { default as Card } from './Card';
 export { default as BannerEstatisticas } from './BannerEstatisticas';

@@ -1,7 +1,7 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 import LocalMapper from './LocalMapper';
 
-class BuscarService {
+class ServicoBusca {
   static cache = null;
   static cacheTimestamp = null;
   static CACHE_DURATION = 5 * 60 * 1000; 
@@ -155,10 +155,10 @@ class BuscarService {
       const locais = await this.carregarTodosLocais();
       return LocalMapper.calcularEstatisticas(locais);
     } catch (error) {
-      console.error('Erro ao buscar estatÃ­sticas:', error);
+      console.error('Erro ao buscar estatísticas:', error);
       return { totalLocais: 0, totalAvaliacoes: 0, mediaGeral: 0 };
     }
   }
 }
 
-export default BuscarService;
+export default ServicoBusca;

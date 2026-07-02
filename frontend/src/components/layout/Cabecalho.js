@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
@@ -14,7 +14,7 @@ export default function Cabecalho({
   const t = altoContraste ? getTheme(true) : theme;
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }, style]}>
+    <View style={[styles.Recipiente, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }, style]}>
       <View style={styles.left}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.back}>
@@ -35,7 +35,7 @@ export default function Cabecalho({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',

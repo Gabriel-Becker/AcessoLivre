@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -73,7 +73,7 @@ export default function Selecao({
   };
 
   return (
-    <View style={[estilos.container, containerStyle]}>
+    <View style={[estilos.Recipiente, containerStyle]}>
       {label ? (
         <TextoTematizado
           variant="caption"
@@ -82,18 +82,18 @@ export default function Selecao({
           permitirEscalaFonte={permitirEscalaFonte}
         >
           {label}
-        </ThemedText>
+        </TextoTematizado>
       ) : null}
 
       <Pressable
         onPress={abrirDropdown}
         style={[
-          estilos.input,
+          estilos.Entrada,
           hasError && estilos.inputError,
           disabled && estilos.inputDisabled,
           style,
         ]}
-        accessibilityRole="button"
+        accessibilityRole="Botao"
         ref={inputRef}
       >
         <View style={estilos.valorContainer}>
@@ -108,7 +108,7 @@ export default function Selecao({
             numberOfLines={1}
           >
             {selecionado?.label || placeholder}
-          </ThemedText>
+          </TextoTematizado>
         </View>
         <Ionicons name="chevron-down" size={18} color={t.colors.textSecondary} />
       </Pressable>
@@ -156,7 +156,7 @@ export default function Selecao({
                           numberOfLines={1}
                         >
                           {item.label}
-                        </ThemedText>
+                        </TextoTematizado>
                       </View>
                     </TouchableOpacity>
                   );
@@ -178,7 +178,7 @@ export default function Selecao({
             permitirEscalaFonte={permitirEscalaFonte}
           >
             {error}
-          </ThemedText>
+          </TextoTematizado>
         </View>
       ) : null}
     </View>
@@ -189,7 +189,7 @@ function criarEstilos(t, contraste) {
   const isWeb = Platform.OS === 'web';
 
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       marginBottom: t.spacing.sm,
     },
     label: {
@@ -199,7 +199,7 @@ function criarEstilos(t, contraste) {
       marginBottom: t.spacing.xs,
       marginTop: 2,
     },
-    input: {
+    Entrada: {
       minHeight: 48,
       height: 48,
       borderWidth: 2,

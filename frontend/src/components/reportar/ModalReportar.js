@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Botao } from '../ui';
@@ -9,10 +9,10 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 
 const MOTIVOS = [
-  { value: 'CONTEUDO_IMPROPRIO', label: 'Conteï¿½do imprï¿½prio' },
+  { value: 'CONTEUDO_IMPROPRIO', label: 'Conteúdo impráprio' },
   { value: 'SPAM', label: 'Spam' },
-  { value: 'OFENSIVO', label: 'Conteï¿½do ofensivo' },
-  { value: 'FAKE_NEWS', label: 'Informaï¿½ï¿½o falsa' },
+  { value: 'OFENSIVO', label: 'Conteúdo ofensivo' },
+  { value: 'FAKE_NEWS', label: 'Informação falsa' },
   { value: 'DADOS_PESSOAIS', label: 'Dados pessoais expostos' },
   { value: 'OUTROS', label: 'Outros' },
 ];
@@ -48,13 +48,13 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
 
   const getTipoLabel = () => {
     if (tipo === 'LOCAL') return 'local';
-    if (tipo === 'AVALIACAO' || tipo === 'COMENTARIO') return 'avaliaï¿½ï¿½o';
-    return 'conteï¿½do';
+    if (tipo === 'AVALIACAO' || tipo === 'COMENTARIO') return 'avaliação';
+    return 'conteúdo';
   };
 
   const handleSubmit = async () => {
     if (!selectedMotivo) {
-      toastHelper.showError('Selecione um motivo para a denï¿½ncia');
+      toastHelper.showError('Selecione um motivo para a denúncia');
       return;
     }
 
@@ -69,19 +69,19 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
         descricao: descricao.trim() || null,
       };
 
-      const result = await ReportarService.create(payload);
+      const result = await ServicoReportar.create(payload);
       
       if (result.success) {
-        toastHelper.showSuccess('Denï¿½ncia enviada com sucesso');
+        toastHelper.showSuccess('Denúncia enviada com sucesso');
         onClose();
         setSelectedMotivo(null);
         setDescricao('');
       } else {
-        toastHelper.showError(result.message || 'Erro ao enviar denï¿½ncia');
+        toastHelper.showError(result.message || 'Erro ao enviar denúncia');
       }
     } catch (error) {
       console.error('Erro ao denunciar:', error);
-      toastHelper.showError('Erro ao enviar denï¿½ncia');
+      toastHelper.showError('Erro ao enviar denúncia');
     } finally {
       setCarregando(false);
     }
@@ -98,10 +98,10 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
             borderColor: theme.colors.border,
           }
         ]}>
-          <View style={styles.header}>
+          <View style={styles.Cabecalho}>
             <TextoTematizado variant="h2" weight="bold" style={[styles.titulo, estilosZoom.titulo]}>
               Denunciar {getTipoLabel()}
-            </ThemedText>
+            </TextoTematizado>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
@@ -110,8 +110,8 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
           <Espacador size="md" />
 
           <TextoTematizado weight="semibold" style={[styles.textoLabel, estilosZoom.texto]}>
-            Motivo da denï¿½ncia
-          </ThemedText>
+            Motivo da denúncia
+          </TextoTematizado>
           <Espacador size="xs" />
           
           <ScrollView style={styles.motivosContainer} nestedScrollEnabled>
@@ -146,7 +146,7 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
                     ]} />
                   )}
                 </View>
-                <TextoTematizado style={estilosZoom.texto}>{motivo.label}</ThemedText>
+                <TextoTematizado style={estilosZoom.texto}>{motivo.label}</TextoTematizado>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -154,8 +154,8 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
           <Espacador size="md" />
 
           <TextoTematizado weight="semibold" style={[styles.textoLabel, estilosZoom.texto]}>
-            Descriï¿½ï¿½o (opcional)
-          </ThemedText>
+            Descrição (opcional)
+          </TextoTematizado>
           <Espacador size="xs" />
           <TextInput
             style={[
@@ -189,7 +189,7 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
               altoContraste={isHighContrast}
             >
               Cancelar
-            </Button>
+            </Botao>
             <Botao
               variant="danger"
               size="medium"
@@ -199,8 +199,8 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
               style={styles.botaoEnviar}
               altoContraste={isHighContrast}
             >
-              Enviar Denï¿½ncia
-            </Button>
+              Enviar Denúncia
+            </Botao>
           </View>
         </View>
       </View>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     maxWidth: 450,
     maxHeight: '80%',
   },
-  header: {
+  Cabecalho: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

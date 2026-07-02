@@ -1,4 +1,4 @@
-﻿import React, { memo } from 'react';
+import React, { memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,7 +6,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
 
 const ReportarItem = memo(({
@@ -22,7 +22,7 @@ const ReportarItem = memo(({
   return (
     <TouchableOpacity
       style={[
-        styles.container,
+        styles.Recipiente,
         {
           backgroundColor: selected 
             ? isHighContrast ? '#1A1A1A' : '#E8F0FF'
@@ -64,7 +64,7 @@ const ReportarItem = memo(({
             ]}
           >
             {motivo.label}
-          </ThemedText>
+          </TextoTematizado>
           
           {showDescription && motivo.description && (
             <TextoTematizado 
@@ -73,7 +73,7 @@ const ReportarItem = memo(({
               style={[styles.description, { fontSize: isDesktop ? 11 : 12 }]}
             >
               {motivo.description}
-            </ThemedText>
+            </TextoTematizado>
           )}
         </View>
 
@@ -92,7 +92,7 @@ const ReportarItem = memo(({
 ReportarItem.displayName = 'ReportarItem';
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 14,

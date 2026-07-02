@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { TouchableOpacity, View, StyleSheet, Animated } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
 
@@ -11,7 +11,7 @@ export default function Alternador({ value = false, onValueChange = () => {}, al
       onPress={() => onValueChange(!value)}
       accessibilityRole="switch"
       accessibilityState={{ checked: !!value }}
-      style={[styles.container]}
+      style={[styles.Recipiente]}
     >
       <View style={[styles.track, { backgroundColor: value ? t.colors.primary : t.colors.backgroundTertiary, borderColor: t.colors.borderLight }]}>
         <Animated.View
@@ -29,7 +29,7 @@ export default function Alternador({ value = false, onValueChange = () => {}, al
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     padding: 6,
   },
   track: {

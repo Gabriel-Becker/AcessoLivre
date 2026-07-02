@@ -1,4 +1,4 @@
-﻿
+
 import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { View, Text, Switch, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
 
 export default function BotaoAlternadorVoz() {
-  const { enabled, toggle, isListening, startListening, lastCommand } = useContext(AccessibilityContext);
+  const { enabled, alternarAcessibilidade, isListening, startListening, lastCommand } = useContext(AccessibilityContext);
   const { fontSizeMultiplier, isHighContrast, theme } = useThemeContext();
   const escala = Math.max(1, Number(fontSizeMultiplier) || 1);
   const [pulseAnim] = useState(new Animated.Value(1));
@@ -70,9 +70,9 @@ export default function BotaoAlternadorVoz() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header com ï¿½cone animado */}
-      <View style={styles.header}>
+    <View style={styles.Recipiente}>
+      {/* Cabecalho com ácone animado */}
+      <View style={styles.Cabecalho}>
         <View style={styles.headerLeft}>
           <Animated.View style={[
             styles.iconContainer,
@@ -95,7 +95,7 @@ export default function BotaoAlternadorVoz() {
         </View>
         <Switch
           value={enabled}
-          onValueChange={toggle}
+          onValueChange={alternarAcessibilidade}
           trackColor={{ false: paleta.switchOff, true: paleta.primaria }}
           thumbColor={enabled ? paleta.thumbOn : paleta.thumbOff}
           ios_backgroundColor={paleta.fundoIOS}
@@ -132,14 +132,14 @@ export default function BotaoAlternadorVoz() {
             <View style={styles.lastCommandCard}>
               <Ionicons name="chatbubble-ellipses-outline" size={Math.round(16 * escala)} color={paleta.textoSecundario} />
               <Text style={styles.lastCommandText}>
-                ï¿½ltimo comando: {lastCommand}
+                último comando: {lastCommand}
               </Text>
             </View>
           )}
         </View>
       )}
 
-      {/* Botï¿½o de aï¿½ï¿½o rï¿½pida */}
+      {/* Botão de ação rápida */}
       {enabled && (
         <TouchableOpacity 
           style={[styles.actionButton, isListening && styles.actionButtonListening]}
@@ -158,18 +158,18 @@ export default function BotaoAlternadorVoz() {
         </TouchableOpacity>
       )}
 
-      {/* Lista de comandos disponï¿½veis */}
+      {/* Lista de comandos disponíveis */}
       {enabled && (
         <View style={styles.commandsCard}>
           <Text style={styles.commandsTitle}>
             <Ionicons name="bulb-outline" size={Math.round(16 * escala)} color={paleta.primaria} /> 
-            {' '}Comandos disponï¿½veis
+            {' '}Comandos disponíveis
           </Text>
           <View style={styles.commandsGrid}>
             {[
-              { icon: 'home-outline', command: 'home', desc: 'Pï¿½gina inicial' },
+              { icon: 'home-outline', command: 'home', desc: 'Página inicial' },
               { icon: 'person-outline', command: 'perfil', desc: 'Meu perfil' },
-              { icon: 'alert-circle-outline', command: 'denunciar', desc: 'Fazer denï¿½ncia' },
+              { icon: 'alert-circle-outline', command: 'denunciar', desc: 'Fazer denúncia' },
               { icon: 'arrow-back-outline', command: 'voltar', desc: 'Voltar tela' },
               { icon: 'help-circle-outline', command: 'ajuda', desc: 'Mostrar comandos' },
               { icon: 'log-out-outline', command: 'sair', desc: 'Sair do app' },
@@ -190,10 +190,10 @@ export default function BotaoAlternadorVoz() {
 function criarEstilos(e, paleta, isHighContrast) {
   const s = (v) => Math.round(v * e);
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       marginBottom: s(20),
     },
-    header: {
+    Cabecalho: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',

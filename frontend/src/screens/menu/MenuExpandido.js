@@ -1,17 +1,17 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
-import { Button, CardSecao } from '../../components/ui';
-import { ThemedText } from '../../components/commons';
+import { Botao, CardSecao } from '../../components/ui';
+import { TextoTematizado } from '../../components/commons';
 import ItemBarra from '../../components/layout/sidebar/ItemBarra';
 import { useAuth } from '../../context/ContextoAutenticacao';
 
 const OPCOES_FONTE = [
-  { valor: 1, rotulo: 'PadrÃ£o', subtitulo: '100%' },
+  { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
   { valor: 1.5, rotulo: 'Maior', subtitulo: '150%' },
-  { valor: 2, rotulo: 'MÃ¡xima', subtitulo: '200%' },
+  { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
 ];
 
 export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar, altoContraste = false }) {
@@ -22,12 +22,12 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
   const { isAuthenticated } = useAuth();
 
   const menuItens = [
-    { key: 'Inicio', label: 'InÃ­cio', icon: 'home-outline' },
+    { key: 'Inicio', label: 'Início', icon: 'home-outline' },
     { key: 'Buscar', label: 'Buscar', icon: 'search-outline' },
     { key: 'Adicionar', label: 'Adicionar Local', icon: 'add-outline', disabled: !isAuthenticated },
-    { key: 'Sobre', label: 'Sobre NÃ³s', icon: 'information-circle-outline' },
+    { key: 'Sobre', label: 'Sobre Nós', icon: 'information-circle-outline' },
     { key: 'Perfil', label: 'Perfil', icon: 'person-outline', disabled: !isAuthenticated },
-    { key: 'Configuracoes', label: 'ConfiguraÃ§Ãµes', icon: 'settings-outline' },
+    { key: 'Configuracoes', label: 'Configurações', icon: 'settings-outline' },
   ];
 
   const totalColunas = fontSizeMultiplier >= 2 ? 1 : 2;
@@ -42,13 +42,13 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: t.colors.background }]}> 
+    <View style={[styles.Recipiente, { backgroundColor: t.colors.background }]}> 
       <View style={[styles.cabecalho, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }]}> 
         <View style={styles.cabecalhoEspaco} />
 
         <TextoTematizado variant="h3" weight="bold" altoContraste={contrasteAtivo}>
           Menu
-        </ThemedText>
+        </TextoTematizado>
 
         <View style={styles.cabecalhoEspaco} />
       </View>
@@ -59,7 +59,7 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
         showsVerticalScrollIndicator={false}
       >
         <CardSecao
-          titulo="NavegaÃ§Ã£o"
+          titulo="Navegação"
           icone="menu-outline"
           altoContraste={contrasteAtivo}
         >
@@ -100,7 +100,7 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
               style={styles.botaoAuth}
             >
               Fazer Login
-            </Button>
+            </Botao>
 
             <Botao
               variant={contrasteAtivo ? 'outline' : 'ghost'}
@@ -124,7 +124,7 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
               iconColor={contrasteAtivo ? t.colors.primary : t.colors.textSecondary}
             >
               Criar Conta
-            </Button>
+            </Botao>
           </View>
         ) : null}
       </ScrollView>
@@ -134,7 +134,7 @@ export default function MenuExpandido({ current = 'Inicio', onNavigate, onFechar
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       flex: 1,
     },
     cabecalho: {

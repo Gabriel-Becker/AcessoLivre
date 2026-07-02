@@ -1,4 +1,4 @@
-﻿import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/axios';
 import { jwtDecode } from 'jwt-decode';
 
@@ -73,11 +73,11 @@ const detectarFluxoTwoFactor = (responseData, mensagem, twoFactorCodeInformado) 
   const mensagemIndicaTwoFactor =
     mensagemNormalizada.includes('dois fatores') ||
     mensagemNormalizada.includes('2fa') ||
-    mensagemNormalizada.includes('autenticaÃ§Ã£o obrigatÃ³rio') ||
+    mensagemNormalizada.includes('autenticação obrigatório') ||
     mensagemNormalizada.includes('autenticacao obrigatorio') ||
-    mensagemNormalizada.includes('autenticaÃ§Ã£o obrigatÃ³ria') ||
+    mensagemNormalizada.includes('autenticação obrigatória') ||
     mensagemNormalizada.includes('autenticacao obrigatoria') ||
-    mensagemNormalizada.includes('cÃ³digo de autenticaÃ§Ã£o obrigatÃ³rio') ||
+    mensagemNormalizada.includes('código de autenticação obrigatório') ||
     mensagemNormalizada.includes('codigo de autenticacao obrigatorio');
 
   const possuiIndicadorEmailDestino = Boolean(payload?.emailDestino);
@@ -96,13 +96,13 @@ const mensagemIndicaCredenciaisInvalidasOuBloqueio = (mensagem) => {
   if (!texto) return false;
 
   return (
-    texto.includes('credenciais invÃ¡lidas') ||
+    texto.includes('credenciais inválidas') ||
     texto.includes('credenciais invalidas') ||
     texto.includes('tentativas restantes') ||
     texto.includes('conta bloqueada') ||
-    texto.includes('email nÃ£o verificado') ||
+    texto.includes('email não verificado') ||
     texto.includes('email nao verificado') ||
-    texto.includes('senha invÃ¡lida') ||
+    texto.includes('senha inválida') ||
     texto.includes('senha invalida')
   );
 };
@@ -252,7 +252,7 @@ const ServicoAutenticacao = {
 
       return false;
     } catch (error) {
-      console.error('[AuthService] Erro ao recuperar preferÃªncia remember me:', error);
+      console.error('[AuthService] Erro ao recuperar preferência remember me:', error);
       return false;
     }
   },
@@ -269,7 +269,7 @@ const ServicoAutenticacao = {
         document.cookie = `${REMEMBER_ME_KEY}=${valorNormalizado}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Strict`;
       }
     } catch (error) {
-      console.error('[AuthService] Erro ao salvar preferÃªncia remember me:', error);
+      console.error('[AuthService] Erro ao salvar preferência remember me:', error);
       throw error;
     }
   },
@@ -303,19 +303,19 @@ const ServicoAutenticacao = {
 
   /**
    * Decodifica o token JWT usando a biblioteca profissional jwt-decode
-  * Elimina toda a implementaÃ§Ã£o manual de Base64 que causava problemas
+  * Elimina toda a implementação manual de Base64 que causava problemas
    * entre Web, Android e iOS
    */
   parseJwt(token) {
     try {
       if (!token || typeof token !== 'string') {
-        console.error('[AuthService] Token invÃ¡lido: nÃ£o Ã© uma string vÃ¡lida');
+        console.error('[AuthService] Token inválido: não é uma string válida');
         return null;
       }
       
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.error('[AuthService] Token invÃ¡lido: nÃ£o possui 3 partes separadas por ponto');
+        console.error('[AuthService] Token inválido: não possui 3 partes separadas por ponto');
         return null;
       }
       
@@ -323,7 +323,7 @@ const ServicoAutenticacao = {
       const decoded = jwtDecode(token);
       
       if (!decoded || typeof decoded !== 'object') {
-        console.error('[AuthService] Token invÃ¡lido: payload nÃ£o Ã© um objeto vÃ¡lido');
+        console.error('[AuthService] Token inválido: payload não é um objeto válido');
         return null;
       }
       
@@ -340,7 +340,7 @@ const ServicoAutenticacao = {
       return response.data;
     } catch (error) {
       console.error('[AuthService] Erro ao validar token no servidor:', error);
-      return { valid: false, reason: 'Erro na validaÃ§Ã£o' };
+      return { valid: false, reason: 'Erro na validação' };
     }
   },
 
@@ -364,7 +364,7 @@ const ServicoAutenticacao = {
         return false;
       }
       
-      // Valida o token no servidor para garantir que nÃ£o foi revogado
+      // Valida o token no servidor para garantir que não foi revogado
       const validation = await this.validateToken(token);
       if (!validation.valid) {
         await this.logout();
@@ -373,7 +373,7 @@ const ServicoAutenticacao = {
       
       return true;
     } catch (error) {
-      console.error('[AuthService] Erro ao verificar autenticaÃ§Ã£o:', error);
+      console.error('[AuthService] Erro ao verificar autenticação:', error);
       await this.logout();
       return false;
     }
@@ -403,13 +403,13 @@ const ServicoAutenticacao = {
       
       const tokenData = this.parseJwt(token);
       if (!tokenData) {
-        throw new Error('Token invÃ¡lido retornado pelo servidor');
+        throw new Error('Token inválido retornado pelo servidor');
       }
       
       await this.setToken(token, { persistir: rememberMe });
       const storedToken = await this.getToken();
       if (!storedToken) {
-        throw new Error('Falha ao armazenar token de autenticaÃ§Ã£o');
+        throw new Error('Falha ao armazenar token de autenticação');
       }
       
       if (usuario) {
@@ -435,7 +435,7 @@ const ServicoAutenticacao = {
           return montarRespostaTwoFactor(
             responseData,
             email,
-            'Digite o cÃ³digo de verificaÃ§Ã£o para continuar o login.'
+            'Digite o código de verificação para continuar o login.'
           );
         }
 
@@ -443,11 +443,11 @@ const ServicoAutenticacao = {
           return montarRespostaTwoFactor(
             responseData,
             email,
-            'Confirme o cÃ³digo de autenticaÃ§Ã£o de dois fatores para continuar.'
+            'Confirme o código de autenticação de dois fatores para continuar.'
           );
         }
 
-        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais invÃ¡lidas');
+        throw new Error(responseData?.mensagem || responseData?.message || responseData?.erro || responseData?.error || 'Credenciais inválidas');
       }
       
       if (error.response && error.response.data) {
@@ -459,7 +459,7 @@ const ServicoAutenticacao = {
           error.message?.toLowerCase().includes('network') ||
           error.message?.toLowerCase().includes('timeout') ||
           error.message?.toLowerCase().includes('connection')) {
-        throw new Error('Falha ao realizar login. Verifique sua conexÃ£o com a internet e tente novamente.');
+        throw new Error('Falha ao realizar login. Verifique sua conexão com a internet e tente novamente.');
       }
       
       throw error;
@@ -499,7 +499,7 @@ const ServicoAutenticacao = {
       return response.data;
     } catch (error) {
       throw new Error(
-        extrairMensagemErro(error, 'Erro ao enviar solicitaÃ§Ã£o de recuperaÃ§Ã£o de senha')
+        extrairMensagemErro(error, 'Erro ao enviar solicitação de recuperação de senha')
       );
     }
   },
@@ -551,7 +551,7 @@ const ServicoAutenticacao = {
       await this.setUserData(usuario);
       return { autenticado: !!usuario, usuario };
     } catch (e) {
-      console.error('[AuthService] Erro ao carregar sessÃ£o:', e);
+      console.error('[AuthService] Erro ao carregar sessão:', e);
       await this.removeToken();
       await this.setUserData(null);
       return { autenticado: false, usuario: null };
@@ -568,7 +568,7 @@ const ServicoAutenticacao = {
         return newToken;
       }
       
-      throw new Error('Token invÃ¡lido recebido');
+      throw new Error('Token inválido recebido');
     } catch (error) {
       console.error('[AuthService] Erro ao reautenticar:', error);
       throw error;
@@ -639,7 +639,7 @@ const ServicoAutenticacao = {
       if (!token) {
         return {
           sucesso: false,
-          mensagem: 'Sua sessÃ£o expirou. FaÃ§a login novamente para trocar a senha.',
+          mensagem: 'Sua sessão expirou. Faça login novamente para trocar a senha.',
         };
       }
 
@@ -668,7 +668,7 @@ const ServicoAutenticacao = {
       if (mensagemNormalizada.includes('senha atual incorreta')) {
         return {
           sucesso: false,
-          mensagem: 'A senha atual informada estÃ¡ incorreta.',
+          mensagem: 'A senha atual informada está incorreta.',
         };
       }
 

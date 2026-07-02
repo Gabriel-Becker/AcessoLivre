@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Input, Select } from '../ui';
+import { Entrada, Selecao } from '../ui';
 import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -22,17 +22,17 @@ export default function BarraFiltroAdmin({
   const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <View>
         <TextoTematizado variant="h3" weight="bold" altoContraste={contrasteAtivo} color={corPrincipal}>
           {titulo}
-        </ThemedText>
+        </TextoTematizado>
         {subtitulo ? (
           <>
             <Espacador size="xs" />
             <TextoTematizado color={corSecundaria} size="sm" altoContraste={contrasteAtivo}>
               {subtitulo}
-            </ThemedText>
+            </TextoTematizado>
           </>
         ) : null}
       </View>
@@ -78,7 +78,7 @@ export default function BarraFiltroAdmin({
             altoContraste={contrasteAtivo}
           >
             Limpar filtros
-          </ThemedText>
+          </TextoTematizado>
         </>
       ) : null}
     </View>
@@ -86,7 +86,7 @@ export default function BarraFiltroAdmin({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     width: '100%',
   },
   linhaPrincipal: {

@@ -1,18 +1,18 @@
-﻿// src/screens/Configuracoes.js (atualizado)
+// src/screens/Configuracoes.js (atualizado)
 import React from 'react';
 import { View, StyleSheet, Switch, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Recipiente } from '../../components/layout';
 import { CabecalhoPagina, CardSecao } from '../../components/ui';
-import { ThemedText } from '../../components/commons';
+import { TextoTematizado } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { breakpoints } from '../../config/theme';
 import BotaoAlternadorVoz from '../../components/acessibilidade/BotaoAlternadorVoz'; 
 
 const OPCOES_FONTE = [
-  { valor: 1, rotulo: 'Padrï¿½o', subtitulo: '100%' },
+  { valor: 1, rotulo: 'Padrão', subtitulo: '100%' },
   { valor: 1.5, rotulo: 'Maior', subtitulo: '150%' },
-  { valor: 2, rotulo: 'Mï¿½xima', subtitulo: '200%' },
+  { valor: 2, rotulo: 'Máxima', subtitulo: '200%' },
 ];
 
 export default function Configuracoes({ onNavigate }) {
@@ -35,19 +35,19 @@ export default function Configuracoes({ onNavigate }) {
   return (
     <Recipiente scroll background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <CabecalhoPagina
-        {...(!isMobile ? { titulo: 'Configuraï¿½ï¿½es' } : {})}
+        {...(!isMobile ? { titulo: 'Configurações' } : {})}
         altoContraste={isHighContrast}
       />
 
       <View style={styles.conteudo}>
-        {/* NOVO: Seï¿½ï¿½o do Assistente por Voz */}
+        {/* NOVO: Seção do Assistente por Voz */}
         <CardSecao titulo="Assistente por Voz" icone="mic-outline" altoContraste={isHighContrast}>
           <BotaoAlternadorVoz />
         </CardSecao>
 
         <CardSecao titulo="Acessibilidade" icone="accessibility-outline" altoContraste={isHighContrast}>
           <View style={[styles.linha, { paddingVertical: Math.round(8 * escala) }]}>
-            <TextoTematizado weight="medium" style={{ fontSize: Math.round(14 * escala) }}>Alto contraste</ThemedText>
+            <TextoTematizado weight="medium" style={{ fontSize: Math.round(14 * escala) }}>Alto contraste</TextoTematizado>
             <Switch
               value={isHighContrast}
               onValueChange={toggleTheme}
@@ -64,18 +64,18 @@ export default function Configuracoes({ onNavigate }) {
               <View style={styles.cabecalhoFonte}>
                 <View style={styles.tituloFonte}>
                   <Ionicons name="text-outline" size={18} color={theme.colors.primary} />
-                  <TextoTematizado weight="semibold">Tamanho da fonte</ThemedText>
+                  <TextoTematizado weight="semibold">Tamanho da fonte</TextoTematizado>
                 </View>
                 <View style={styles.badgeAtual}>
                   <TextoTematizado weight="semibold" color="textOnPrimary" align="center">
                     {nivelAtual.subtitulo}
-                  </ThemedText>
+                  </TextoTematizado>
                 </View>
               </View>
 
               <TextoTematizado color="textSecondary">
-                Escolha um dos trï¿½s nï¿½veis para aplicar em todas as telas.
-              </ThemedText>
+                Escolha um dos três náveis para aplicar em todas as telas.
+              </TextoTematizado>
 
               <View style={styles.grupoOpcoes}>
                 {OPCOES_FONTE.map((opcao) => {
@@ -96,13 +96,13 @@ export default function Configuracoes({ onNavigate }) {
                       ]}
                       onPress={() => selecionarFonte(opcao.valor)}
                       activeOpacity={0.8}
-                      accessibilityRole="button"
+                      accessibilityRole="Botao"
                       accessibilityState={{ selected: selecionado }}
                     >
                       <View style={styles.opcaoTopo}>
                         <TextoTematizado weight="bold" align="center">
                           {opcao.subtitulo}
-                        </ThemedText>
+                        </TextoTematizado>
                         {selecionado ? (
                           <Ionicons name="checkmark-circle" size={18} color={corBordaOpcaoSelecionada} />
                         ) : (
@@ -116,14 +116,14 @@ export default function Configuracoes({ onNavigate }) {
                         style={{ fontSize: 16 * opcao.valor, lineHeight: 18 * opcao.valor }}
                       >
                         Aa
-                      </ThemedText>
+                      </TextoTematizado>
 
                       <TextoTematizado weight="semibold" align="center">
                         {opcao.rotulo}
-                      </ThemedText>
+                      </TextoTematizado>
                       <TextoTematizado color="textSecondary" align="center">
                         Texto de exemplo
-                      </ThemedText>
+                      </TextoTematizado>
                     </TouchableOpacity>
                   );
                 })}
@@ -132,7 +132,7 @@ export default function Configuracoes({ onNavigate }) {
           ) : null}
         </CardSecao>
       </View>
-    </Container>
+    </Recipiente>
   );
 }
 

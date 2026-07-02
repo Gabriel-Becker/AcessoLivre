@@ -1,4 +1,4 @@
-﻿import * as Speech from 'expo-speech';
+import * as Speech from 'expo-speech';
 import Constants from 'expo-constants';
 
 let moduloReconhecimentoCache;
@@ -12,7 +12,7 @@ function obterModuloReconhecimento() {
     const modulo = require('expo-speech-recognition');
     moduloReconhecimentoCache = modulo?.ExpoSpeechRecognitionModule ?? null;
   } catch (error) {
-    console.warn('Reconhecimento de voz indisponivel neste runtime:', error?.message ?? error);
+    console.warn('Reconhecimento de voz indisponível neste runtime:', error?.message ?? error);
     moduloReconhecimentoCache = null;
   }
 
@@ -34,26 +34,25 @@ class ServicoVoz {
   static recognitionSubscription = null;
   static currentTimeout = null;
 
-  // Inicializaï¿½ï¿½o (expo-speech nï¿½o precisa de configuraï¿½ï¿½o global)
+  // Inicialização (expo-speech não precisa de configuração global).
   static init() {
-    // O expo-speech nï¿½o tem setDefaultLanguage
-    // O idioma ï¿½ definido em cada chamada de speak()
+    // O expo-speech não tem setDefaultLanguage.
+    // O idioma é definido em cada chamada de speak().
     if (!reconhecimentoDisponivel()) {
       console.warn('Reconhecimento de voz requer development build ou app nativo compilado.');
     }
-    console.log('ServicoVoz inicializado');
   }
 
   static canRecognizeSpeech() {
     return reconhecimentoDisponivel();
   }
 
-  // ?? Texto para Fala (app fala)
+  // Texto para fala (app fala)
   static speak(text, options = {}) {
-    // Para qualquer fala anterior
+    // Para qualquer fala anterior.
     Speech.stop();
     
-    // Limpar timeout anterior se existir
+    // Limpa timeout anterior se existir.
     if (this.currentTimeout) {
       clearTimeout(this.currentTimeout);
     }
@@ -64,16 +63,16 @@ class ServicoVoz {
       rate: 0.9, // Velocidade da fala (0.5 a 2.0)
     };
 
-    // Falar o texto
+    // Fala o texto.
     Speech.speak(text, { ...defaultOptions, ...options });
   }
 
-  // ?? Fala para Texto (escuta o usuï¿½rio)
+  // Fala para texto (escuta o usuário).
   static async listen(onResult, onError) {
     try {
       if (!reconhecimentoDisponivel()) {
         const erro = {
-          message: 'Reconhecimento de voz indisponivel neste runtime. Use um development build ou app nativo compilado.',
+          message: 'Reconhecimento de voz indisponível neste runtime. Use um development build ou app nativo compilado.',
         };
         console.warn(erro.message);
         if (onError) onError(erro);
@@ -84,59 +83,58 @@ class ServicoVoz {
 
       if (!moduloReconhecimento) {
         const erro = {
-          message: 'Reconhecimento de voz indisponivel neste app. Gere um development build para usar este recurso.',
+          message: 'Reconhecimento de voz indisponível neste app. Gere um development build para usar este recurso.',
         };
         console.warn(erro.message);
         if (onError) onError(erro);
         return;
       }
 
-      // Verificar permissï¿½es primeiro
+      // Verifica permissões primeiro.
       const permission = await moduloReconhecimento.requestPermissionsAsync();
       
       if (!permission.granted) {
-        this.speak("Preciso de permissï¿½o para usar o microfone");
-        if (onError) onError({ message: "Permissï¿½o negada" });
+        this.speak('Preciso de permissão para usar o microfone');
+        if (onError) onError({ message: 'Permissão negada' });
         return;
       }
 
-      // Limpar listener anterior se existir
+      // Limpa listener anterior se existir.
       if (this.recognitionSubscription) {
         this.recognitionSubscription.remove();
       }
 
-      // Registrar evento de resultado
+      // Registra evento de resultado.
       this.recognitionSubscription = moduloReconhecimento.addListener('result', (event) => {
         const text = event.results[0]?.transcript?.toLowerCase();
         if (text && this.isListening) {
-          this.stop(); // Para de escutar apï¿½s receber comando
+          this.stop(); // Para de escutar após receber comando.
           onResult(text);
         }
       });
 
-      // Registrar evento de erro
+      // Registra evento de erro.
       const errorSubscription = moduloReconhecimento.addListener('error', (event) => {
         console.error('Erro no reconhecimento:', event);
         this.stop();
         if (onError) onError(event);
       });
 
-      // Registrar fim da escuta
+      // Registra fim da escuta.
       const endSubscription = moduloReconhecimento.addListener('end', () => {
-        console.log('Reconhecimento finalizado');
         this.isListening = false;
       });
 
-      // Iniciar escuta
+      // Inicia escuta.
       this.isListening = true;
       await moduloReconhecimento.start({
         lang: 'pt-BR',
-        interimResults: true,  // Resultados parciais (enquanto fala)
-        continuous: false,     // Para apï¿½s uma pausa
+        interimResults: true,  // Resultados parciais (enquanto fala).
+        continuous: false,     // Para após uma pausa.
         maxAlternatives: 1,
       });
 
-      // Armazenar subscriptions para limpeza
+      // Armazena subscriptions para limpeza.
       this.errorSubscription = errorSubscription;
       this.endSubscription = endSubscription;
       
@@ -147,7 +145,7 @@ class ServicoVoz {
     }
   }
 
-  // Parar de escutar
+  // Para de escutar.
   static stop() {
     if (this.isListening) {
       try {
@@ -162,7 +160,7 @@ class ServicoVoz {
       this.isListening = false;
     }
     
-    // Remover todos os listeners
+    // Remove todos os listeners.
     if (this.recognitionSubscription) {
       this.recognitionSubscription.remove();
       this.recognitionSubscription = null;
@@ -179,17 +177,17 @@ class ServicoVoz {
     }
   }
 
-  // Verificar se estï¿½ ouvindo
+  // Verifica se está ouvindo.
   static getIsListening() {
     return this.isListening;
   }
 
-  // Verificar se o TTS estï¿½ falando
+  // Verifica se o TTS está falando.
   static async isSpeaking() {
     return await Speech.isSpeakingAsync();
   }
 
-  // Parar de falar imediatamente
+  // Para de falar imediatamente.
   static stopSpeaking() {
     Speech.stop();
   }

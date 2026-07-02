@@ -1,8 +1,8 @@
-﻿import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
+import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
 
 export const navigationRef = createNavigationContainerRef();
 
-// FunÃ§Ã£o auxiliar para navegar (mantendo a existente)
+// Função auxiliar para navegar (mantendo a existente)
 export function navigate(name, params) {
   if (navigationRef.isReady()) {
     navigationRef.navigate(name, params);
@@ -46,10 +46,10 @@ export function resetToHome() {
 }
 
 // ============================================
-// NOVAS FUNÃ‡Ã•ES PARA O ASSISTENTE DE ACESSIBILIDADE
+// NOVAS FUNÇÕES PARA O ASSISTENTE DE ACESSIBILIDADE
 // ============================================
 
-// FunÃ§Ã£o para obter o nome da tela atual
+// Função para obter o nome da tela atual
 export function getCurrentRouteName() {
   if (!navigationRef.isReady()) return null;
 
@@ -57,19 +57,19 @@ export function getCurrentRouteName() {
   return currentRoute?.name || null;
 }
 
-// FunÃ§Ã£o para obter o estado completo da navegaÃ§Ã£o
+// Função para obter o estado completo da navegação
 export function getRootState() {
   if (!navigationRef.isReady()) return null;
   return navigationRef.getRootState();
 }
 
-// FunÃ§Ã£o para verificar se pode voltar
+// Função para verificar se pode voltar
 export function canGoBack() {
   if (!navigationRef.isReady()) return false;
   return navigationRef.canGoBack();
 }
 
-// FunÃ§Ã£o para voltar (compatÃ­vel com ServicoNavegacao)
+// Função para voltar (compatível com ServicoNavegacao)
 export function goBack() {
   if (!navigationRef.isReady()) return;
   if (navigationRef.canGoBack()) {
@@ -77,7 +77,7 @@ export function goBack() {
   }
 }
 
-// FunÃ§Ã£o para resetar para uma tela especÃ­fica (Ãºtil para comandos de voz)
+// Função para resetar para uma tela específica (útil para comandos de voz)
 export function resetToScreen(screenName, params = {}) {
   if (!navigationRef.isReady()) return;
 

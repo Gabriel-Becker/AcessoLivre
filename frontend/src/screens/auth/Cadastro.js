@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -25,17 +25,17 @@ const REQUISITOS_SENHA = [
   },
   {
     chave: 'letraMaiuscula',
-    texto: 'Pelo menos 1 letra maiÃºscula',
+    texto: 'Pelo menos 1 letra maiúscula',
     validar: (senha) => /[A-Z]/.test(senha),
   },
   {
     chave: 'letraMinuscula',
-    texto: 'Pelo menos 1 letra minÃºscula',
+    texto: 'Pelo menos 1 letra minúscula',
     validar: (senha) => /[a-z]/.test(senha),
   },
   {
     chave: 'numero',
-    texto: 'Pelo menos 1 nÃºmero',
+    texto: 'Pelo menos 1 número',
     validar: (senha) => /[0-9]/.test(senha),
   },
   {
@@ -55,10 +55,10 @@ const schema = z
     email: z.string().trim().email(authMessages.validation.invalidEmail),
     password: z
       .string()
-      .min(8, 'Senha deve ter no mÃ­nimo 8 caracteres')
-      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiÃºscula')
-      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minÃºscula')
-      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um nÃºmero')
+      .min(8, 'Senha deve ter no mínimo 8 caracteres')
+      .refine((pwd) => /[A-Z]/.test(pwd), 'Senha deve conter ao menos uma letra maiúscula')
+      .refine((pwd) => /[a-z]/.test(pwd), 'Senha deve conter ao menos uma letra minúscula')
+      .refine((pwd) => /[0-9]/.test(pwd), 'Senha deve conter ao menos um número')
       .refine((pwd) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd), 'Senha deve conter ao menos um caractere especial (!@#$%^&*(),.?":{}|<>)'),
     confirmPassword: z.string().min(8, authMessages.validation.passwordTooShort),
     terms: z.boolean().refine((val) => val === true, {
@@ -206,7 +206,7 @@ export default function Cadastro({ navigation }) {
         .trim()
         .replace(/\s+/g, ' ')
         .toLowerCase()
-        .replace(/(^|\s)([a-zÃ -Ã¿])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
+        .replace(/(^|\s)([a-zà-ÿ])/g, (match, espaco, letra) => `${espaco}${letra.toUpperCase()}`);
 
       const resultado = await registerUser({
         nome: nomeFormatado,
@@ -222,7 +222,7 @@ export default function Cadastro({ navigation }) {
         });
         
         if (loginResult?.sucesso) {
-          toastHelper.showSuccess('Cadastro concluÃ­do e login realizado automaticamente.', 'Conta criada com sucesso');
+          toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
 
           if (typeof navigation?.replace === 'function') {
             navigation.replace('Main');
@@ -233,7 +233,7 @@ export default function Cadastro({ navigation }) {
           return;
         } else {
           toastHelper.showInfo(
-            `Cadastro concluÃ­do. FaÃ§a login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
+            `Cadastro concluído. Faça login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
             'Conta criada'
           );
           navigation?.navigate?.('Entrar');
@@ -241,14 +241,14 @@ export default function Cadastro({ navigation }) {
         return;
       }
 
-      toastHelper.showError(formatarErroCadastro(resultado?.erro || authMessages.registerErrors.serverError), 'NÃ£o foi possÃ­vel concluir o cadastro');
+      toastHelper.showError(formatarErroCadastro(resultado?.erro || authMessages.registerErrors.serverError), 'Não foi possível concluir o cadastro');
     } catch (erro) {
       const mensagemErro = erro?.message || authMessages.registerErrors.serverError;
       const mensagemTratada =
         mensagemErro === authMessages.loginErrors.serverError
           ? formatarErroLogin(mensagemErro)
           : formatarErroCadastro(mensagemErro);
-      toastHelper.showError(mensagemTratada, 'NÃ£o foi possÃ­vel concluir o cadastro');
+      toastHelper.showError(mensagemTratada, 'Não foi possível concluir o cadastro');
     } finally {
       setSubmitting(false);
     }
@@ -349,7 +349,7 @@ export default function Cadastro({ navigation }) {
                       altoContraste={isHighContrast}
                     >
                       {requisito.texto}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
                 ))}
               </View>
@@ -386,8 +386,8 @@ export default function Cadastro({ navigation }) {
                     style={styles.passwordHintText}
                     altoContraste={isHighContrast}
                   >
-                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas nÃ£o coincidem'}
-                  </ThemedText>
+                    {senhasCoincidem ? 'As senhas coincidem' : 'As senhas não coincidem'}
+                  </TextoTematizado>
                 </View>
               </View>
             ) : null}
@@ -409,20 +409,20 @@ export default function Cadastro({ navigation }) {
                   <TextoTematizado color="textSecondary" altoContraste={isHighContrast} style={[styles.checkboxLabel, styles.checkboxTexto, { flexShrink: 1 }]}> 
                     Aceito os {' '}
                     <Pressable onPress={() => { setModalType('terms'); setShowTermsModal(true); }} accessibilityRole="link">
-                      <TextoTematizado color="primary" weight="semibold" style={styles.checkboxLink}>termos de uso</ThemedText>
+                      <TextoTematizado color="primary" weight="semibold" style={styles.checkboxLink}>termos de uso</TextoTematizado>
                     </Pressable>
                     {' '}e{' '}
                     <Pressable onPress={() => { setModalType('privacy'); setShowTermsModal(true); }} accessibilityRole="link">
-                      <TextoTematizado color="primary" weight="semibold" style={styles.checkboxLink}>polÃ­tica de privacidade</ThemedText>
+                      <TextoTematizado color="primary" weight="semibold" style={styles.checkboxLink}>política de privacidade</TextoTematizado>
                     </Pressable>
-                  </ThemedText>
+                  </TextoTematizado>
                 </View>
               )}
             />
             {errors.terms?.message ? (
               <TextoTematizado color="error" style={styles.errorText} altoContraste={isHighContrast}>
                 {errors.terms.message}
-              </ThemedText>
+              </TextoTematizado>
             ) : null}
 
             <Espacador size="sm" />
@@ -437,10 +437,10 @@ export default function Cadastro({ navigation }) {
               altoContraste={isHighContrast}
             >
               Cadastrar
-            </Button>
+            </Botao>
 
             <AuthActions
-              text="JÃ¡ possui conta?"
+              text="Já possui conta?"
               actionLabel="Entrar"
               onPress={() => navigation?.navigate?.('Entrar')}
               altoContraste={isHighContrast}
@@ -451,7 +451,7 @@ export default function Cadastro({ navigation }) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      </Container>
+      </Recipiente>
   );
 
   if (!isDesktop) {
@@ -461,7 +461,7 @@ export default function Cadastro({ navigation }) {
   return (
     <LayoutDesktop current="Cadastro" onNavigate={handleNavigate} altoContraste={isHighContrast}>
       {conteudoCadastro}
-    </DesktopLayout>
+    </LayoutDesktop>
   );
 }
 

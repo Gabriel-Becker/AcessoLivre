@@ -1,8 +1,8 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 import LocalMapper from './LocalMapper';
 import { normalizarUrlImagem } from '../utils/urlImagem';
 
-const HomeService = {
+const ServicoHome = {
 
   async obterEstatisticas() {
     try {
@@ -13,7 +13,7 @@ const HomeService = {
       const totalLocais = response.data?.totalElements || 0;
       return { totalLocais, totalAvaliacoes: 0, totalUsuarios: 0 };
     } catch (erro) {
-      console.error('Erro ao buscar estatï¿½sticas:', erro);
+      console.error('Erro ao buscar estatásticas:', erro);
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },
@@ -51,7 +51,7 @@ const HomeService = {
 
       return { totalLocais, totalAvaliacoes, totalUsuarios };
     } catch (erro) {
-      console.error('Erro ao buscar estatï¿½sticas reais:', erro);
+      console.error('Erro ao buscar estatásticas reais:', erro);
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },
@@ -134,7 +134,7 @@ const HomeService = {
 
   async buscarLocalPorId(id) {
     if (!id) {
-      console.error('ID nï¿½o informado para buscarLocalPorId');
+      console.error('ID não informado para buscarLocalPorId');
       return null;
     }
     
@@ -212,4 +212,4 @@ const HomeService = {
   }
 };
 
-export default HomeService;
+export default ServicoHome;

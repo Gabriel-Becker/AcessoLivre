@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';

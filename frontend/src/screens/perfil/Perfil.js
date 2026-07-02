@@ -1,20 +1,20 @@
-﻿import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Container } from '../../components/layout';
-import { Card, Button } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
-import { TrocarSenhaModal, TwoFactorModal } from '../../components/feedback';
+import { Recipiente } from '../../components/layout';
+import { Card, Botao } from '../../components/ui';
+import { Espacador, TextoTematizado } from '../../components/commons';
+import { TrocarSenhaModal, ModalDoisFatores } from '../../components/feedback';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import { useThemeContext } from '../../context/ThemeContext';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
-import MotoAssistente from '../../services/acessibilidade/MotoAssistente';
+import AssistenteVoz from '../../services/acessibilidade/AssistenteVoz';
 import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
 import ServicoAutenticacao from '../../services/ServicoAutenticacao';
 import { resetToHome, navigate } from '../../navigation/navigationRef';
 import toastHelper from '../../utils/toastHelper';
-import LocalService from '../../services/LocalService';
+import ServicoLocal from '../../services/ServicoLocal';
 
 export default function Perfil() {
   const { usuario, logout } = useAuth();
@@ -45,14 +45,14 @@ export default function Perfil() {
   const anunciarPerfil = useCallback(() => {
     if (!voiceEnabled) return;
     
-    const nome = usuario?.nome || 'usuÃ¡rio';
+    const nome = usuario?.nome || 'usuário';
     const email = usuario?.email || '';
     const locaisCount = meusLocais.length;
     
     ServicoVoz.speak(
-      `Bem-vindo ao seu perfil, ${nome}. ${email ? `Seu e-mail Ã© ${email}. ` : ''}` +
-      `VocÃª tem ${locaisCount} ${locaisCount === 1 ? 'local cadastrado' : 'locais cadastrados'}. ` +
-      `Aqui vocÃª pode trocar sua senha, gerenciar autenticaÃ§Ã£o de dois fatores, ver seus locais e sair da conta.`
+      `Bem-vindo ao seu perfil, ${nome}. ${email ? `Seu e-mail é ${email}. ` : ''}` +
+      `Você tem ${locaisCount} ${locaisCount === 1 ? 'local cadastrado' : 'locais cadastrados'}. ` +
+      `Aqui você pode trocar sua senha, gerenciar autenticação de dois fatores, ver seus locais e sair da conta.`
     );
   }, [voiceEnabled, usuario, meusLocais.length]);
 
@@ -60,9 +60,9 @@ export default function Perfil() {
     if (!voiceEnabled) return;
     
     ServicoVoz.speak(
-      `Nome: ${usuario?.nome || 'nÃ£o informado'}. ` +
-      `E-mail: ${usuario?.email || 'nÃ£o informado'}. ` +
-      `AutenticaÃ§Ã£o em dois fatores estÃ¡ ${twoFactorAtivo ? 'ativada' : 'desativada'}.`
+      `Nome: ${usuario?.nome || 'não informado'}. ` +
+      `E-mail: ${usuario?.email || 'não informado'}. ` +
+      `Autenticação em dois fatores está ${twoFactorAtivo ? 'ativada' : 'desativada'}.`
     );
   }, [voiceEnabled, usuario, twoFactorAtivo]);
 
@@ -70,19 +70,19 @@ export default function Perfil() {
     if (!voiceEnabled) return;
     
     if (meusLocais.length === 0) {
-      ServicoVoz.speak('VocÃª ainda nÃ£o cadastrou nenhum local. Toque no botÃ£o Adicionar Local para comeÃ§ar.');
+      ServicoVoz.speak('Você ainda não cadastrou nenhum local. Toque no botão Adicionar Local para começar.');
     } else {
       const nomesLocais = meusLocais.map(local => local.nome).join(', ');
       ServicoVoz.speak(
-        `VocÃª tem ${meusLocais.length} ${meusLocais.length === 1 ? 'local cadastrado' : 'locais cadastrados'}. ` +
-        `SÃ£o eles: ${nomesLocais}. Para editar ou excluir um local, toque sobre ele.`
+        `Você tem ${meusLocais.length} ${meusLocais.length === 1 ? 'local cadastrado' : 'locais cadastrados'}. ` +
+        `São eles: ${nomesLocais}. Para editar ou excluir um local, toque sobre ele.`
       );
     }
   }, [voiceEnabled, meusLocais]);
 
   const buscarLocalPorNome = useCallback((nomeLocal) => {
     if (!nomeLocal || meusLocais.length === 0) {
-      ServicoVoz.speak('VocÃª ainda nÃ£o tem locais cadastrados.');
+      ServicoVoz.speak('Você ainda não tem locais cadastrados.');
       return false;
     }
     
@@ -96,13 +96,13 @@ export default function Perfil() {
       return true;
     }
     
-    ServicoVoz.speak(`NÃ£o encontrei nenhum local chamado ${nomeLocal} na sua lista.`);
+    ServicoVoz.speak(`Não encontrei nenhum local chamado ${nomeLocal} na sua lista.`);
     return false;
   }, [meusLocais]);
 
   useEffect(() => {
     if (voiceEnabled) {
-      MotoAssistente.updateContext({
+      AssistenteVoz.updateContext({
         screen: 'Perfil',
         usuario: {
           nome: usuario?.nome,
@@ -114,19 +114,19 @@ export default function Perfil() {
         meusLocais: meusLocais,
         buscarLocalPorNome: buscarLocalPorNome,
         onAdicionarLocal: () => {
-          ServicoVoz.speak('Abrindo formulÃ¡rio para adicionar novo local');
+          ServicoVoz.speak('Abrindo formulário para adicionar novo local');
           navigate('Main', { screen: 'Adicionar' });
         },
         onTrocarSenha: () => {
-          ServicoVoz.speak('Abrindo formulÃ¡rio para trocar senha');
+          ServicoVoz.speak('Abrindo formulário para trocar senha');
           setShowChangePassword(true);
         },
         onGerenciar2FA: () => {
-          ServicoVoz.speak(twoFactorAtivo ? 'Abrindo gerenciamento de autenticaÃ§Ã£o' : 'Abrindo ativaÃ§Ã£o de autenticaÃ§Ã£o em dois fatores');
+          ServicoVoz.speak(twoFactorAtivo ? 'Abrindo gerenciamento de autenticação' : 'Abrindo ativação de autenticação em dois fatores');
           setShowTwoFactorModal(true);
         },
         onSair: () => {
-          ServicoVoz.speak('Confirmando saÃ­da da conta');
+          ServicoVoz.speak('Confirmando saída da conta');
           executarLogout();
         }
       });
@@ -154,10 +154,10 @@ export default function Perfil() {
       const status = await ServicoAutenticacao.get2FAStatus();
       setTwoFactorAtivo(Boolean(status?.enabled ?? status?.ativo ?? status));
       if (voiceEnabled) {
-        ServicoVoz.speak(`AutenticaÃ§Ã£o em dois fatores ${status?.enabled ? 'ativada' : 'desativada'}`);
+        ServicoVoz.speak(`Autenticação em dois fatores ${status?.enabled ? 'ativada' : 'desativada'}`);
       }
     } catch (erro) {
-      toastHelper.showError('NÃ£o foi possÃ­vel carregar o status da autenticaÃ§Ã£o em dois fatores.', 'Falha ao carregar seguranÃ§a');
+      toastHelper.showError('Não foi possível carregar o status da autenticação em dois fatores.', 'Falha ao carregar segurança');
     } finally {
       setCarregandoTwoFactor(false);
     }
@@ -175,14 +175,14 @@ export default function Perfil() {
     if (!usuario?.idUsuario) return;
     try {
       setCarregandoMeusLocais(true);
-      const locais = await LocalService.obterMeusLocais(usuario.idUsuario);
+      const locais = await ServicoLocal.obterMeusLocais(usuario.idUsuario);
       setMeusLocais(Array.isArray(locais) ? locais : []);
       if (voiceEnabled && locais.length > 0) {
         ServicoVoz.speak(`${locais.length} locais carregados`);
       }
     } catch (erro) {
       console.error('Erro ao carregar meus locais:', erro);
-      toastHelper.showError('NÃ£o foi possÃ­vel carregar seus locais.');
+      toastHelper.showError('Não foi possível carregar seus locais.');
     } finally {
       setCarregandoMeusLocais(false);
     }
@@ -201,9 +201,9 @@ export default function Perfil() {
 
   const handleExcluirLocal = async (idLocal) => {
     try {
-      await LocalService.removerLocal(idLocal);
-      toastHelper.showSuccess('Local excluÃ­do com sucesso.');
-      if (voiceEnabled) ServicoVoz.speak('Local excluÃ­do com sucesso');
+      await ServicoLocal.removerLocal(idLocal);
+      toastHelper.showSuccess('Local excluído com sucesso.');
+      if (voiceEnabled) ServicoVoz.speak('Local excluído com sucesso');
       carregarMeusLocais();
       return true;
     } catch (erro) {
@@ -240,14 +240,14 @@ export default function Perfil() {
     setLocalParaExcluir(null);
 
     if (voiceEnabled) {
-      ServicoVoz.speak('ExclusÃ£o cancelada');
+      ServicoVoz.speak('Exclusão cancelada');
     }
   };
 
   const handleEditarLocal = (idLocal) => {
     if (voiceEnabled) {
       const local = meusLocais.find(l => l.idLocal === idLocal);
-      ServicoVoz.speak(`Abrindo ediÃ§Ã£o de ${local?.nome || 'local'}`);
+      ServicoVoz.speak(`Abrindo edição de ${local?.nome || 'local'}`);
     }
     navigate('Main', { screen: 'Adicionar', localId: idLocal });
   };
@@ -276,15 +276,15 @@ export default function Perfil() {
       style={[styles.infoItem, isHighContrast && { borderBottomColor: t.colors.primary }]}
       onPress={onPress}
       disabled={!onPress}
-      accessibilityRole="button"
+      accessibilityRole="Botao"
       accessibilityLabel={`${label}: ${value}`}
     >
       <View style={styles.infoIcon}>
         <Ionicons name={icon} size={24} color={t.colors.primary} />
       </View>
       <View style={styles.infoContent}>
-        <TextoTematizado color={corSecundaria} size="sm" altoContraste={isHighContrast}>{label}</ThemedText>
-        <TextoTematizado weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>{value || 'NÃ£o informado'}</ThemedText>
+        <TextoTematizado color={corSecundaria} size="sm" altoContraste={isHighContrast}>{label}</TextoTematizado>
+        <TextoTematizado weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>{value || 'Não informado'}</TextoTematizado>
       </View>
       {onPress && (
         <Ionicons name="chevron-forward" size={18} color={t.colors.textSecondary} />
@@ -295,25 +295,25 @@ export default function Perfil() {
   return (
     <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: paddingInferiorScroll }}>
-        <TextoTematizado variant="h1" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meu Perfil</ThemedText>
+        <TextoTematizado variant="h1" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meu Perfil</TextoTematizado>
         <Espacador size="md" />
 
         <Card altoContraste={isHighContrast} variant={isHighContrast ? 'outlined' : 'default'} style={{ padding: t.spacing.xl }}>
-          <View style={styles.header}>
+          <View style={styles.Cabecalho}>
             <View style={[styles.avatar, { backgroundColor: t.colors.primary }]}>
               <TextoTematizado variant="h1" color="textOnPrimary" weight="bold" altoContraste={isHighContrast}>
                 {usuario?.nome?.charAt(0)?.toUpperCase() || 'U'}
-              </ThemedText>
+              </TextoTematizado>
             </View>
             <Espacador size="md" />
             <TouchableOpacity 
               onPress={() => voiceEnabled && anunciarInformacoesPerfil()}
-              accessibilityLabel="Toque para ouvir informaÃ§Ãµes do perfil"
+              accessibilityLabel="Toque para ouvir informações do perfil"
             >
               <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
                 {usuario?.nome}
                 {voiceEnabled && <Ionicons name="volume-medium-outline" size={18} color={t.colors.primary} style={{ marginLeft: 8 }} />}
-              </ThemedText>
+              </TextoTematizado>
             </TouchableOpacity>
           </View>
 
@@ -334,10 +334,10 @@ export default function Perfil() {
                 <Ionicons name="shield-checkmark-outline" size={22} color={t.colors.primary} />
               </View>
               <View style={styles.segurancaTexto}>
-                <TextoTematizado weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>AutenticaÃ§Ã£o em dois fatores</ThemedText>
+                <TextoTematizado weight="semibold" altoContraste={isHighContrast} color={corPrincipal}>Autenticação em dois fatores</TextoTematizado>
                 <TextoTematizado color={corSecundaria} size="sm" altoContraste={isHighContrast}>
                   {twoFactorAtivo ? 'Ativada para sua conta' : 'Desativada no momento'}
-                </ThemedText>
+                </TextoTematizado>
               </View>
             </TouchableOpacity>
 
@@ -354,7 +354,7 @@ export default function Perfil() {
               altoContraste={isHighContrast}
             >
               {twoFactorAtivo ? 'Gerenciar 2FA' : 'Ativar 2FA'}
-            </Button>
+            </Botao>
           </View>
 
           <Espacador size="xl" />
@@ -371,7 +371,7 @@ export default function Perfil() {
             altoContraste={isHighContrast}
           >
             Trocar Senha
-          </Button>
+          </Botao>
 
           {isMobile ? (
             <>
@@ -387,7 +387,7 @@ export default function Perfil() {
                 altoContraste={isHighContrast}
               >
                 Sair da conta
-              </Button>
+              </Botao>
             </>
           ) : null}
         </Card>
@@ -396,7 +396,7 @@ export default function Perfil() {
         
         <Card altoContraste={isHighContrast} variant={isHighContrast ? 'outlined' : 'default'} style={{ padding: t.spacing.xl }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <TextoTematizado variant="h2" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meus Locais</ThemedText>
+            <TextoTematizado variant="h2" weight="bold" altoContraste={isHighContrast} color={corPrincipal}>Meus Locais</TextoTematizado>
             {voiceEnabled && (
               <TouchableOpacity onPress={anunciarMeusLocais}>
                 <Ionicons name="volume-medium-outline" size={20} color={t.colors.primary} />
@@ -406,21 +406,21 @@ export default function Perfil() {
           <Espacador size="sm" />
           
           {carregandoMeusLocais ? (
-            <TextoTematizado color={corSecundaria}>Carregando seus locais...</ThemedText>
+            <TextoTematizado color={corSecundaria}>Carregando seus locais...</TextoTematizado>
           ) : meusLocais.length === 0 ? (
             <>
-              <TextoTematizado color={corSecundaria}>VocÃª ainda nÃ£o cadastrou nenhum local.</ThemedText>
+              <TextoTematizado color={corSecundaria}>Você ainda não cadastrou nenhum local.</TextoTematizado>
               <Espacador size="sm" />
               <Botao 
                 variant="primary" 
                 onPress={() => {
-                  if (voiceEnabled) ServicoVoz.speak('Abrindo formulÃ¡rio para adicionar local');
+                  if (voiceEnabled) ServicoVoz.speak('Abrindo formulário para adicionar local');
                   navigate('Main', { screen: 'Adicionar' });
                 }} 
                 altoContraste={isHighContrast}
               >
                 Adicionar Local
-              </Button>
+              </Botao>
             </>
           ) : (
             meusLocais.map((local) => (
@@ -439,11 +439,11 @@ export default function Perfil() {
                   onPress={() => handleAbrirDetalhesLocal(local.idLocal)}
                   style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                   accessibilityLabel={`Local ${local.nome}, categoria ${local.categoria}`}
-                  accessibilityRole="button"
+                  accessibilityRole="Botao"
                 >
                   <View style={{ flex: 1 }}>
-                    <TextoTematizado weight="semibold" altoContraste={isHighContrast}>{local.nome}</ThemedText>
-                    <TextoTematizado color="textSecondary" size="sm">{local.categoria}</ThemedText>
+                    <TextoTematizado weight="semibold" altoContraste={isHighContrast}>{local.nome}</TextoTematizado>
+                    <TextoTematizado color="textSecondary" size="sm">{local.categoria}</TextoTematizado>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={t.colors.textSecondary} />
                 </TouchableOpacity>
@@ -457,7 +457,7 @@ export default function Perfil() {
                       altoContraste={isHighContrast}
                     >
                       Editar
-                    </Button>
+                    </Botao>
                     <Botao 
                       variant="danger" 
                       size="small" 
@@ -465,7 +465,7 @@ export default function Perfil() {
                       altoContraste={isHighContrast}
                     >
                       Excluir
-                    </Button>
+                    </Botao>
                   </View>
                 )}
               </View>
@@ -498,7 +498,7 @@ export default function Perfil() {
           >
             <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
               Excluir local
-            </ThemedText>
+            </TextoTematizado>
 
             <Espacador size="lg" />
 
@@ -507,9 +507,9 @@ export default function Perfil() {
                 Tem certeza que deseja inativar o local{' '}
                 <TextoTematizado weight="bold" color={corSecundaria} altoContraste={isHighContrast}>
                   {localParaExcluir?.nome || ''}
-                </ThemedText>
+                </TextoTematizado>
                 ?
-              </ThemedText>
+              </TextoTematizado>
             </View>
 
             <Espacador size="xl" />
@@ -524,8 +524,8 @@ export default function Perfil() {
                 disabled={carregandoExclusao}
                 altoContraste={isHighContrast}
               >
-                Confirmar exclusÃ£o
-              </Button>
+                Confirmar exclusão
+              </Botao>
 
               <Espacador size="xs" />
 
@@ -538,7 +538,7 @@ export default function Perfil() {
                 altoContraste={isHighContrast}
               >
                 Cancelar
-              </Button>
+              </Botao>
             </View>
           </View>
         </View>
@@ -551,12 +551,12 @@ export default function Perfil() {
         onSuccess={carregarStatusTwoFactor}
         altoContraste={isHighContrast}
       />
-    </Container>
+    </Recipiente>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  Cabecalho: {
     alignItems: 'center',
   },
   avatar: {

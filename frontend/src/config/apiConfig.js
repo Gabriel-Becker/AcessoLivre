@@ -1,4 +1,4 @@
-﻿import { Platform } from 'react-native';
+import { Platform } from 'react-native';
 import {
   ENVIRONMENT,
   WEB_API_URL,
@@ -30,7 +30,6 @@ function getApiUrl() {
 }
 
 const resolvedUrl = getApiUrl();
-console.log('[apiConfig] URL do backend:', resolvedUrl);
 
 export const API_CONFIG = {
   BASE_URL: resolvedUrl,

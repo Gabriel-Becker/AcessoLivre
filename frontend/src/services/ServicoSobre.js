@@ -1,6 +1,6 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 
-class SobreService {
+class ServicoSobre {
   static async obterMetricasImpacto() {
     const [locaisResult, avaliacoesResult, usuariosAtivosResult] = await Promise.allSettled([
       api.get('/locais', { params: { page: 0, size: 1 } }),
@@ -81,4 +81,4 @@ class SobreService {
   }
 }
 
-export default SobreService;
+export default ServicoSobre;

@@ -1,4 +1,4 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 
 const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
   const status = error?.response?.status;
@@ -8,7 +8,7 @@ const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
   return status === 401 && metodo === 'get' && caminho.startsWith('/avaliacoes/local/');
 };
 
-class AvaliacaoService {
+class ServicoAvaliacao {
   static async buscarAvaliacoesPorLocal(idLocal) {
     try {
       const response = await api.get(`/avaliacoes/local/${idLocal}`);
@@ -26,7 +26,7 @@ class AvaliacaoService {
             notaGeral: avaliacao.notaGeral || 0,
             nota: avaliacao.notaGeral || 0,
             comentario: avaliacao.comentario || '',
-            usuarioNome: usuario.nome || avaliacao.nomeUsuario || 'Usuï¿½rio',
+            usuarioNome: usuario.nome || avaliacao.nomeUsuario || 'Usuário',
             usuarioId: usuario.idUsuario || avaliacao.idUsuario,
             usuarioEmail: usuario.email || '',
             dataAvaliacao: avaliacao.dataAvaliacao,
@@ -50,14 +50,14 @@ class AvaliacaoService {
       
     } catch (error) {
       if (!eh401EmLeituraPublicaDeAvaliacoes(error)) {
-        console.error('Erro ao buscar avaliaï¿½ï¿½es:', error);
+        console.error('Erro ao buscar avaliações:', error);
       }
       
       return {
         success: false,
         data: [],
         total: 0,
-        message: error.response?.data?.message || 'Erro ao buscar avaliaï¿½ï¿½es'
+        message: error.response?.data?.message || 'Erro ao buscar avaliações'
       };
     }
   }
@@ -79,7 +79,7 @@ class AvaliacaoService {
       return { success: true, data: [], total: 0 };
       
     } catch (error) {
-      console.error('Erro ao buscar avaliaï¿½ï¿½es do usuï¿½rio:', error);
+      console.error('Erro ao buscar avaliações do usuário:', error);
       return { success: false, data: [], total: 0, message: error.message };
     }
   }
@@ -89,7 +89,7 @@ class AvaliacaoService {
       const response = await api.get(`/avaliacoes/local/${localId}/count`);
       return response.data?.count || 0;
     } catch (error) {
-      console.error('Erro ao buscar total de avaliaï¿½ï¿½es:', error);
+      console.error('Erro ao buscar total de avaliações:', error);
       return 0;
     }
   }
@@ -97,7 +97,7 @@ class AvaliacaoService {
   static async criarAvaliacao(dados) {
     try {
       if (!dados.idLocal || !dados.idUsuario) {
-        throw new Error('ID do local e usuï¿½rio sï¿½o obrigatï¿½rios');
+        throw new Error('ID do local e usuário são obrigatórios');
       }
 
       const payload = {
@@ -115,30 +115,30 @@ class AvaliacaoService {
         return {
           success: true,
           data: response.data,
-          message: 'Avaliaï¿½ï¿½o enviada com sucesso!'
+          message: 'Avaliação enviada com sucesso!'
         };
       }
       
-      return { success: false, message: 'Resposta invï¿½lida do servidor' };
+      return { success: false, message: 'Resposta inválida do servidor' };
 
     } catch (error) {
-      console.error('Erro ao criar avaliaï¿½ï¿½o:', error);
+      console.error('Erro ao criar avaliação:', error);
       
-      let errorMessage = 'Erro ao enviar avaliaï¿½ï¿½o';
+      let errorMessage = 'Erro ao enviar avaliação';
       
       if (error.response) {
         if (error.response.status === 400) {
-          errorMessage = error.response.data?.message || 'Dados invï¿½lidos';
-          if (errorMessage.includes('jï¿½ avaliou')) {
-            errorMessage = 'Vocï¿½ jï¿½ avaliou este local anteriormente';
+          errorMessage = error.response.data?.message || 'Dados inválidos';
+          if (errorMessage.includes('já avaliou')) {
+            errorMessage = 'Você já avaliou este local anteriormente';
           }
         } else if (error.response.status === 401) {
-          errorMessage = 'Vocï¿½ precisa estar logado para avaliar';
+          errorMessage = 'Você precisa estar logado para avaliar';
         } else if (error.response.status === 404) {
-          errorMessage = 'Local ou usuï¿½rio nï¿½o encontrado';
+          errorMessage = 'Local ou usuário não encontrado';
         }
       } else if (error.request) {
-        errorMessage = 'Servidor nï¿½o estï¿½ respondendo';
+        errorMessage = 'Servidor não está respondendo';
       }
       
       return { success: false, message: errorMessage };
@@ -148,10 +148,10 @@ class AvaliacaoService {
   static async deletarAvaliacao(id) {
     try {
       await api.delete(`/avaliacoes/${id}`);
-      return { success: true, message: 'Avaliaï¿½ï¿½o excluï¿½da com sucesso' };
+      return { success: true, message: 'Avaliação excluáda com sucesso' };
     } catch (error) {
-      console.error('Erro ao deletar avaliaï¿½ï¿½o:', error);
-      return { success: false, message: error.response?.data?.message || 'Erro ao excluir avaliaï¿½ï¿½o' };
+      console.error('Erro ao deletar avaliação:', error);
+      return { success: false, message: error.response?.data?.message || 'Erro ao excluir avaliação' };
     }
   }
 
@@ -169,7 +169,7 @@ class AvaliacaoService {
       notaGeral: avaliacao.notaGeral || 0,
       nota: avaliacao.notaGeral || 0,
       comentario: avaliacao.comentario || '',
-      usuarioNome: usuario.nome || 'Usuï¿½rio',
+      usuarioNome: usuario.nome || 'Usuário',
       usuarioId: usuario.idUsuario,
       usuarioEmail: usuario.email,
       dataAvaliacao: avaliacao.dataAvaliacao,
@@ -188,4 +188,4 @@ class AvaliacaoService {
   }
 }
 
-export default AvaliacaoService;
+export default ServicoAvaliacao;

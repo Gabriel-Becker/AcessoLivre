@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet, Share, Alert } from 'react-native';
 import { Botao } from '../ui';
 import toastHelper from '../../utils/toastHelper';
@@ -14,7 +14,7 @@ export default function AcoesLocal({
   const handleCompartilhar = async () => {
     try {
       await Share.share({
-        message: `Confira o local ${local.nome} - um lugar acessÃ­vel!`,
+        message: `Confira o local ${local.nome} - um lugar acessível!`,
         title: `Compartilhar ${local.nome}`,
       });
     } catch (error) {
@@ -25,7 +25,7 @@ export default function AcoesLocal({
   const handleReportar = () => {
     Alert.alert(
       'Reportar problema',
-      'VocÃª quer reportar um problema com este local?',
+      'Você quer reportar um problema com este local?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
@@ -40,8 +40,8 @@ export default function AcoesLocal({
   const handleAvaliar = () => {
     if (!isAuthenticated) {
       Alert.alert(
-        'Login necessÃ¡rio',
-        'VocÃª precisa estar logado para avaliar um local.',
+        'Login necessário',
+        'Você precisa estar logado para avaliar um local.',
         [
           { text: 'Cancelar', style: 'cancel' },
           { text: 'Fazer Login', onPress: () => onAvaliar?.('Entrar') }
@@ -53,17 +53,17 @@ export default function AcoesLocal({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <Botao
         variant="outline"
         size="small"
         iconLeft="star-outline"
         onPress={handleAvaliar}
         altoContraste={altoContraste}
-        style={styles.button}
+        style={styles.Botao}
       >
         Avaliar
-      </Button>
+      </Botao>
       
       <Botao
         variant="outline"
@@ -71,10 +71,10 @@ export default function AcoesLocal({
         iconLeft="share-social-outline"
         onPress={handleCompartilhar}
         altoContraste={altoContraste}
-        style={styles.button}
+        style={styles.Botao}
       >
         Compartilhar
-      </Button>
+      </Botao>
       
       <Botao
         variant="outline"
@@ -82,23 +82,23 @@ export default function AcoesLocal({
         iconLeft="flag-outline"
         onPress={handleReportar}
         altoContraste={altoContraste}
-        style={styles.button}
+        style={styles.Botao}
       >
         Reportar
-      </Button>
+      </Botao>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     gap: 12,
     marginVertical: 16,
     paddingHorizontal: 16,
   },
-  button: {
+  Botao: {
     flex: 1,
   },
 });

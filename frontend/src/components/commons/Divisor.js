@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
 
@@ -9,7 +9,7 @@ export default function Divisor({ style, altoContraste = false, color, height = 
   return (
     <View
       style={[
-        styles.divider,
+        styles.Divisor,
         { backgroundColor: dividerColor, height },
         style,
       ]}
@@ -18,7 +18,7 @@ export default function Divisor({ style, altoContraste = false, color, height = 
 }
 
 const styles = StyleSheet.create({
-  divider: {
+  Divisor: {
     width: '100%',
     marginVertical: theme.spacing.sm,
   },

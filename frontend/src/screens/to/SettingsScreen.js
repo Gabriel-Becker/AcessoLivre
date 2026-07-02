@@ -1,27 +1,23 @@
-<<<<<<< Updated upstream
-=======
-﻿// Em algum lugar no seu cï¿½digo (ex: SettingsScreen.js)
->>>>>>> Stashed changes
 import { useContext } from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 
 export default function SettingsScreen() {
-  const { enabled, toggle } = useContext(AccessibilityContext);
+  const { enabled, alternarAcessibilidade } = useContext(AccessibilityContext);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <View style={styles.settingItem}>
         <Text style={styles.settingText}>Modo Acessibilidade</Text>
         <Switch
           value={enabled}
-          onValueChange={toggle}
+          onValueChange={alternarAcessibilidade}
           trackColor={{ false: '#767577', true: '#007AFF' }}
         />
       </View>
       {enabled && (
         <Text style={styles.hint}>
-          Toque no botï¿½o ?? para usar comandos de voz
+          Toque no boto ?? para usar comandos de voz
         </Text>
       )}
     </View>
@@ -29,7 +25,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     padding: 20,
   },
   settingItem: {

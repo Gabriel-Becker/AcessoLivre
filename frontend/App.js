@@ -8,7 +8,6 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { AccessibilityProvider } from './src/context/AccessibilityContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
-import NavigationService from './src/services/acessibilidade/ServicoNavegacao';
 import BotaoVoz from './src/components/acessibilidade/BotaoVoz';
 
 const linking = {
@@ -48,7 +47,7 @@ export default function App() {
               <AppNavigator />
             </NavigationContainer>
             <Toast config={toastConfig} />
-            <VoiceButton />
+            <BotaoVoz />
           </AccessibilityProvider>
         </AuthProvider>
       </ThemeProvider>

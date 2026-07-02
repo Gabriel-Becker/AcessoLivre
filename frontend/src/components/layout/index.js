@@ -1,4 +1,4 @@
-﻿export { default as Recipiente } from './Recipiente';
+export { default as Recipiente } from './Recipiente';
 export { default as Cabecalho } from './Cabecalho';
 export { default as AreaSegura } from './AreaSegura';
 export { default as LayoutDesktop } from './LayoutDesktop';

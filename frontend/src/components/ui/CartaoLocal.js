@@ -1,7 +1,7 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 import { normalizarUrlImagem } from '../../utils/urlImagem';
@@ -44,7 +44,7 @@ const staticStyles = StyleSheet.create({
   },
 });
 
-export default function LocalCard({ local, onPress, altoContraste = false, compact = false }) {
+export default function CartaoLocal({ local, onPress, altoContraste = false, compact = false }) {
   const [imageError, setImageError] = useState(false);
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { width } = useWindowDimensions();
@@ -132,14 +132,14 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
   const getCategoriaLabel = (cat) => {
     const labels = {
       COMERCIAL: 'Comercial',
-      PUBLICO: 'Pï¿½blico',
-      SAUDE: 'Saï¿½de',
-      EDUCACAO: 'Educaï¿½ï¿½o',
+      PUBLICO: 'Público',
+      SAUDE: 'Saúde',
+      EDUCACAO: 'Educação',
       LAZER: 'Lazer',
       TRANSPORTE: 'Transporte',
-      ALIMENTACAO: 'Alimentaï¿½ï¿½o',
+      ALIMENTACAO: 'Alimentação',
       HOSPEDAGEM: 'Hospedagem',
-      SERVICOS: 'Serviï¿½os'
+      SERVICOS: 'Serviços'
     };
     return labels[cat] || cat;
   };
@@ -153,7 +153,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
   return (
     <TouchableOpacity
-      style={estilos.container}
+      style={estilos.Recipiente}
       onPress={onPress}
       activeOpacity={0.9}
     >
@@ -174,7 +174,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
         {isNew && (
           <View style={estilos.newBadge}>
             <Ionicons name="sparkles" size={isDesktop ? 10 : 12} color="#FFF" />
-            <TextoTematizado weight="bold" style={estilos.newBadgeText}>Novo</ThemedText>
+            <TextoTematizado weight="bold" style={estilos.newBadgeText}>Novo</TextoTematizado>
           </View>
         )}
 
@@ -182,7 +182,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
           <View style={estilos.imagemBadge}>
             <TextoTematizado weight="bold" style={estilos.imagemBadgeTexto}>
               1/{totalImagens}
-            </ThemedText>
+            </TextoTematizado>
           </View>
         )}
       </View>
@@ -192,19 +192,19 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
           <View style={estilos.nomeContainer}>
             <TextoTematizado weight="bold" style={estilos.nomeLocal} numberOfLines={1}>
               {nome}
-            </ThemedText>
+            </TextoTematizado>
 
             <View style={estilos.subtituloContainer}>
               {temLocalPrincipal ? (
                 <TextoTematizado numberOfLines={1} style={estilos.nomeLocalPrincipal}>
                   Dentro de {nomeLocalPrincipal}
-                </ThemedText>
+                </TextoTematizado>
               ) : null}
             </View>
           </View>
 
           <View style={estilos.categoriaBadge}>
-            <TextoTematizado style={estilos.categoriaTexto}>{categoriaLabel}</ThemedText>
+            <TextoTematizado style={estilos.categoriaTexto}>{categoriaLabel}</TextoTematizado>
           </View>
         </View>
 
@@ -212,11 +212,11 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
           <View style={staticStyles.starsContainer}>{renderStars(avaliacaoMedia)}</View>
           <TextoTematizado weight="bold" style={estilos.ratingNumber}>
             {avaliacaoMedia.toFixed(1)}
-          </ThemedText>
+          </TextoTematizado>
           {totalAvaliacoes > 0 ? (
             <TextoTematizado style={estilos.ratingCount}>
               ({totalAvaliacoes})
-            </ThemedText>
+            </TextoTematizado>
           ) : null}
         </View>
 
@@ -227,12 +227,12 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
               {enderecoLinha1 ? (
                 <TextoTematizado style={estilos.enderecoLinha1} numberOfLines={1}>
                   {enderecoLinha1}
-                </ThemedText>
+                </TextoTematizado>
               ) : null}
               {enderecoLinha2 ? (
                 <TextoTematizado style={estilos.enderecoLinha2} numberOfLines={1}>
                   {enderecoLinha2}
-                </ThemedText>
+                </TextoTematizado>
               ) : null}
             </View>
           </View>
@@ -244,7 +244,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
               <Ionicons name="checkmark-circle" size={isDesktop ? 14 : 16} color="#4CAF50" />
               <TextoTematizado weight="semibold" style={estilos.recomendadoTexto}>
                 Recomendado
-              </ThemedText>
+              </TextoTematizado>
             </View>
           )}
 
@@ -253,10 +253,10 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
             <View style={estilos.recursosBadge}>
               <TextoTematizado weight="bold" style={estilos.recursosNumero}>
                 +{totalRecursos}
-              </ThemedText>
+              </TextoTematizado>
               <TextoTematizado style={estilos.recursosLabel}>
                 recursos
-              </ThemedText>
+              </TextoTematizado>
             </View>
           </View>
         </View>
@@ -267,7 +267,7 @@ export default function LocalCard({ local, onPress, altoContraste = false, compa
 
 function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDesktop) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       backgroundColor: t.colors.surface,
       borderRadius: spacing.borderRadius,
       overflow: 'hidden',

@@ -1,4 +1,4 @@
-﻿// Button - Componente de botï¿½o reutilizï¿½vel com suporte a temas
+// Botao - Componente de botão reutilizável com suporte a temas
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,7 +36,7 @@ export default function Botao({
     switch (variant) {
       case 'primary':
         return {
-          container: {
+          Recipiente: {
             backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.primary,
             borderWidth: 0,
           },
@@ -44,7 +44,7 @@ export default function Botao({
         };
       case 'secondary':
         return {
-          container: {
+          Recipiente: {
             backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.secondary,
             borderWidth: 0,
           },
@@ -52,7 +52,7 @@ export default function Botao({
         };
       case 'outline':
         return {
-          container: {
+          Recipiente: {
             backgroundColor: 'transparent',
             borderWidth: 2,
             borderColor: isDisabled ? t.colors.borderLight : t.colors.primary,
@@ -61,7 +61,7 @@ export default function Botao({
         };
       case 'danger':
         return {
-          container: {
+          Recipiente: {
             backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.error,
             borderWidth: 0,
           },
@@ -69,7 +69,7 @@ export default function Botao({
         };
       case 'ghost':
         return {
-          container: {
+          Recipiente: {
             backgroundColor: 'transparent',
             borderWidth: 0,
           },
@@ -77,7 +77,7 @@ export default function Botao({
         };
       default:
         return {
-          container: { backgroundColor: t.colors.primary, borderWidth: 0 },
+          Recipiente: { backgroundColor: t.colors.primary, borderWidth: 0 },
           text: { color: t.colors.textOnPrimary },
         };
     }
@@ -88,18 +88,18 @@ export default function Botao({
     switch (size) {
       case 'small':
         return {
-          container: { minHeight: minTouchHeight, paddingVertical: t.spacing.xs, paddingHorizontal: t.spacing.md },
+          Recipiente: { minHeight: minTouchHeight, paddingVertical: t.spacing.xs, paddingHorizontal: t.spacing.md },
           text: { fontSize: t.typography.fontSize.sm },
         };
       case 'large':
         return {
-          container: { minHeight: minTouchHeight + 10, paddingVertical: t.spacing.md, paddingHorizontal: t.spacing.lg },
+          Recipiente: { minHeight: minTouchHeight + 10, paddingVertical: t.spacing.md, paddingHorizontal: t.spacing.lg },
           text: { fontSize: t.typography.fontSize.lg },
         };
       case 'medium':
       default:
         return {
-          container: { minHeight: minTouchHeight, paddingVertical: t.spacing.sm, paddingHorizontal: t.spacing.md },
+          Recipiente: { minHeight: minTouchHeight, paddingVertical: t.spacing.sm, paddingHorizontal: t.spacing.md },
           text: { fontSize: t.typography.fontSize.md },
         };
     }
@@ -113,9 +113,9 @@ export default function Botao({
   return (
     <TouchableOpacity
       style={[
-        styles.container,
-        variantStyles.container,
-        sizeStyles.container,
+        styles.Recipiente,
+        variantStyles.Recipiente,
+        sizeStyles.Recipiente,
         contentAlign,
         fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
@@ -159,7 +159,7 @@ export default function Botao({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',

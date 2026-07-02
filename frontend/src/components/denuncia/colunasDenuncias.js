@@ -1,13 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import { Botao } from '../../components/ui';
-import { ThemedText } from '../../components/commons';
+import { TextoTematizado } from '../../components/commons';
 import TextoTooltip from '../../components/ui/TextoTooltip';
 
-<<<<<<< Updated upstream
-=======
-// Estilos especï¿½ficos para a tabela
->>>>>>> Stashed changes
+// Estilos especificos para a tabela
 const styles = StyleSheet.create({
   tipoBadge: {
     paddingHorizontal: 8,
@@ -41,9 +38,9 @@ const styles = StyleSheet.create({
 export const getTipoLabel = (tipo) => {
   const labels = {
     LOCAL: 'Local',
-    COMENTARIO: 'Comentï¿½rio',
-    AVALIACAO: 'Avaliaï¿½ï¿½o',
-    USUARIO: 'Usuï¿½rio',
+    COMENTARIO: 'Comentário',
+    AVALIACAO: 'Avaliação',
+    USUARIO: 'Usuário',
   };
   return labels[tipo] || tipo;
 };
@@ -60,7 +57,7 @@ export const getTipoColor = (tipo) => {
 export const getStatusLabel = (status) => {
   const labels = {
     PENDING: 'Pendente',
-    REVIEWED: 'Em anï¿½lise',
+    REVIEWED: 'Em análise',
     RESOLVED: 'Resolvido',
     REJECTED: 'Rejeitado',
   };
@@ -78,13 +75,13 @@ export const getStatusColor = (status) => {
 };
 
 export const formatarData = (data) => {
-  if (!data) return 'ï¿½';
+  if (!data) return 'á';
   try {
     const date = new Date(data);
-    if (Number.isNaN(date.getTime())) return 'ï¿½';
+    if (Number.isNaN(date.getTime())) return 'á';
     return date.toLocaleDateString('pt-BR');
   } catch {
-    return 'ï¿½';
+    return 'á';
   }
 };
 
@@ -103,7 +100,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
         <View style={[styles.tipoBadge, { backgroundColor: getTipoColor(item.tipo) + '20' }]}>
           <TextoTematizado variant="caption" weight="bold" style={{ color: getTipoColor(item.tipo) }}>
             {getTipoLabel(item.tipo)}
-          </ThemedText>
+          </TextoTematizado>
         </View>
       ),
     },
@@ -116,8 +113,8 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       sortKey: 'motivo',
       render: (item) => (
         <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
-          {item.motivoLabel || item.motivo || 'Nï¿½o informado'}
-        </ThemedText>
+          {item.motivoLabel || item.motivo || 'Não informado'}
+        </TextoTematizado>
       ),
     },
     {
@@ -130,13 +127,13 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       render: (item) => (
         <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
           {item.targetName || `ID: ${item.targetId}`}
-        </ThemedText>
+        </TextoTematizado>
       ),
     },
     {
       key: 'descricao',
       chave: 'descricao',
-      titulo: 'DESCRIï¿½ï¿½O',
+      titulo: 'DESCRIÇÃO',
       minWidth: 250,
       flex: 2,
       sortKey: false,
@@ -160,7 +157,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
           <TextoTematizado variant="caption" weight="bold" style={{ color: getStatusColor(item.status) }}>
             {getStatusLabel(item.status)}
-          </ThemedText>
+          </TextoTematizado>
         </View>
       ),
     },
@@ -174,13 +171,13 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       render: (item) => (
         <TextoTematizado variant="caption" color="textSecondary" altoContraste={isHighContrast}>
           {formatarData(item.dataCriacao || item.createdAt)}
-        </ThemedText>
+        </TextoTematizado>
       ),
     },
     {
       key: 'acoes',
       chave: 'acoes',
-      titulo: 'Aï¿½ï¿½ES',
+      titulo: 'AÇÕES',
       minWidth: 150,
       flex: 1,
       alinhamento: 'center',
@@ -195,7 +192,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
             style={styles.botaoStatus}
           >
             Status
-          </Button>
+          </Botao>
           <Botao
             variant="danger"
             size="small"
@@ -205,7 +202,7 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
             style={styles.botaoExcluir}
           >
             Excluir
-          </Button>
+          </Botao>
         </View>
       ),
     },

@@ -1,6 +1,6 @@
-﻿import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import ServicoVoz from '../services/acessibilidade/ServicoVoz';
-import MotoAssistente from '../services/acessibilidade/MotoAssistente';
+import AssistenteVoz from '../services/acessibilidade/AssistenteVoz';
 export const AccessibilityContext = createContext();
 
 export function AccessibilityProvider({ children }) {
@@ -17,19 +17,19 @@ export function AccessibilityProvider({ children }) {
     }
   }, [enabled]);
 
-  const toggle = () => {
+  const alternarAcessibilidade = () => {
     setEnabled(!enabled);
   };
 
   const startListening = async () => {
     if (!enabled) {
-      ServicoVoz.speak("Ative o modo acessibilidade primeiro");
+      ServicoVoz.speak('Ative o modo de acessibilidade primeiro.');
       return;
     }
 
     if (!ServicoVoz.canRecognizeSpeech()) {
       setIsListening(false);
-      ServicoVoz.speak("Reconhecimento de voz indisponÃ­vel neste aplicativo. Use um development build para falar comandos.");
+      ServicoVoz.speak('Reconhecimento de voz indisponível neste aplicativo. Use um development build para falar comandos.');
       return;
     }
 
@@ -46,7 +46,7 @@ export function AccessibilityProvider({ children }) {
       (text) => {
         setLastCommand(text);
         setIsListening(false);
-        MotoAssistente.handle(text);
+        AssistenteVoz.handle(text);
       },
       (error) => {
         console.error("Erro:", error);
@@ -59,7 +59,8 @@ export function AccessibilityProvider({ children }) {
   return (
     <AccessibilityContext.Provider value={{
       enabled,
-      toggle,
+      alternarAcessibilidade,
+      toggle: alternarAcessibilidade,
       isListening,
       startListening,
       lastCommand

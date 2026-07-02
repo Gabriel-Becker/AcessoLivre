@@ -1,6 +1,6 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -16,7 +16,7 @@ export default function ListaMarcadores({
   const estilos = useMemo(() => criarEstilos(t), [t]);
 
   return (
-    <View style={[estilos.container, style]}>
+    <View style={[estilos.Recipiente, style]}>
       {itens.map((texto) => (
         <View key={texto} style={estilos.item}>
           <View style={estilos.marcadorWrapper}>
@@ -24,7 +24,7 @@ export default function ListaMarcadores({
           </View>
           <TextoTematizado color={corTexto} style={estilos.texto}>
             {texto}
-          </ThemedText>
+          </TextoTematizado>
         </View>
       ))}
     </View>
@@ -33,7 +33,7 @@ export default function ListaMarcadores({
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       gap: t.spacing.sm,
     },
     item: {

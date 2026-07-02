@@ -1,4 +1,4 @@
-﻿import React, { memo } from 'react';
+import React, { memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -24,7 +24,7 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
     >
       <View style={styles.overlay}>
         <View style={[
-          styles.container,
+          styles.Recipiente,
           {
             width: isDesktop ? 400 : '85%',
             maxWidth: 500,
@@ -33,7 +33,7 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
             borderColor: isHighContrast ? '#333' : 'transparent',
           },
         ]}>
-          {/* Ãcone de sucesso */}
+          {/* Ícone de sucesso */}
           <View style={[
             styles.iconContainer,
             { backgroundColor: t.colors.success + '15' },
@@ -49,8 +49,8 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
             align="center"
             style={styles.title}
           >
-            DenÃºncia enviada!
-          </ThemedText>
+            Denúncia enviada!
+          </TextoTematizado>
 
           <Espacador size="sm" />
 
@@ -59,14 +59,14 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
             align="center"
             style={styles.message}
           >
-            Obrigado por colaborar com a comunidade. Sua denÃºncia serÃ¡ analisada pela nossa equipe.
-          </ThemedText>
+            Obrigado por colaborar com a comunidade. Sua denúncia será analisada pela nossa equipe.
+          </TextoTematizado>
 
           <Espacador size="lg" />
 
           <TouchableOpacity
             style={[
-              styles.button,
+              styles.Botao,
               { backgroundColor: t.colors.primary },
             ]}
             onPress={onClose}
@@ -76,7 +76,7 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
               style={[styles.buttonText, { color: '#FFFFFF' }]}
             >
               OK
-            </ThemedText>
+            </TextoTematizado>
           </TouchableOpacity>
         </View>
       </View>
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  container: {
+  Recipiente: {
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  button: {
+  Botao: {
     width: '100%',
     paddingVertical: 14,
     borderRadius: 12,

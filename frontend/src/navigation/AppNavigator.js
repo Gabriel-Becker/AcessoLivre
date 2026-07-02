@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/ContextoAutenticacao';
@@ -23,8 +23,8 @@ function LoadingScreen() {
     <Recipiente center background="backgroundSecondary">
       <ActivityIndicator size="large" color={theme.colors.primary} />
       <Espacador size="md" />
-      <TextoTematizado color="textSecondary">Carregando...</ThemedText>
-    </Container>
+      <TextoTematizado color="textSecondary">Carregando...</TextoTematizado>
+    </Recipiente>
   );
 }
 
@@ -144,14 +144,14 @@ function MainApp({ navigation, route }) {
     return (
       <LayoutDesktop current={currentScreen} onNavigate={handleNavigate} screenAnterior={screenAnterior}>
         {renderScreen()}
-      </DesktopLayout>
+      </LayoutDesktop>
     );
   }
 
   return (
     <LayoutMobile current={currentScreen} onNavigate={handleNavigate}>
       {renderScreen()}
-    </MobileLayout>
+    </LayoutMobile>
   );
 }
 

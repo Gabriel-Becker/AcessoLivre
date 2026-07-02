@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import ServicoReportar from '../services/ServicoReportar';
 import toastHelper from '../utils/toastHelper';
 
@@ -20,19 +20,19 @@ const useReportar = () => {
 
     try {
       // Chamada real para a API
-      const response = await ReportarService.create(data);
+      const response = await ServicoReportar.create(data);
       
       if (response.success) {
         setSuccess(true);
-        toastHelper.showSuccess(response.message || 'DenÃºncia enviada com sucesso!');
+        toastHelper.showSuccess(response.message || 'Denúncia enviada com sucesso!');
         return true;
       } else {
         setError(response.message);
-        toastHelper.showError(response.message || 'Erro ao enviar denÃºncia');
+        toastHelper.showError(response.message || 'Erro ao enviar denúncia');
         return false;
       }
     } catch (err) {
-      const message = err.message || 'Erro ao enviar denÃºncia';
+      const message = err.message || 'Erro ao enviar denúncia';
       setError(message);
       toastHelper.showError(message);
       return false;
@@ -43,9 +43,9 @@ const useReportar = () => {
 
   const hasUserReported = useCallback(async (tipo, targetId) => {
     try {
-      return await ReportarService.hasUserReported(tipo, targetId);
+      return await ServicoReportar.hasUserReported(tipo, targetId);
     } catch (err) {
-      console.error('Erro ao verificar denÃºncia:', err);
+      console.error('Erro ao verificar denúncia:', err);
       return false;
     }
   }, []);

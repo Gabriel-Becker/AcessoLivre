@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme, { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import Sidebar from './sidebar/LayoutBarra';
 import MenuExpandido from '../../screens/menu/MenuExpandido';
 
@@ -22,7 +22,7 @@ export default function LayoutDesktop({
 
   if (layoutExpandido && current === 'MenuLateral') {
     return (
-      <View style={[styles.container, styles.containerExpandido, { backgroundColor: t.colors.background }, style]}>
+      <View style={[styles.Recipiente, styles.containerExpandido, { backgroundColor: t.colors.background }, style]}>
         <MenuExpandido
           current={screenAnterior || 'Inicio'}
           onNavigate={onNavigate}
@@ -36,7 +36,7 @@ export default function LayoutDesktop({
   return (
     <View
       style={[
-        styles.container,
+        styles.Recipiente,
         layoutExpandido ? styles.containerExpandido : styles.containerPadrao,
         { backgroundColor: t.colors.background },
         style,
@@ -47,18 +47,18 @@ export default function LayoutDesktop({
           <TouchableOpacity
             style={[styles.botaoMenu, { borderColor: t.colors.borderLight, backgroundColor: t.colors.backgroundSecondary }]}
             onPress={() => onNavigate?.('MenuLateral')}
-            accessibilityRole="button"
+            accessibilityRole="Botao"
             accessibilityLabel="Abrir menu lateral"
           >
             <Ionicons name="menu-outline" size={22} color={t.colors.primary} />
             <TextoTematizado weight="semibold" color="primary" altoContraste={contrasteAtivo}>
               Menu
-            </ThemedText>
+            </TextoTematizado>
           </TouchableOpacity>
 
           <TextoTematizado weight="bold" color="textPrimary" altoContraste={contrasteAtivo}>
             AcessoLivre
-          </ThemedText>
+          </TextoTematizado>
 
           <View style={styles.headerSpacer} />
         </View>
@@ -78,7 +78,7 @@ export default function LayoutDesktop({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flex: 1,
   },
   containerPadrao: {

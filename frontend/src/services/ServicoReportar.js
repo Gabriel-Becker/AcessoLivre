@@ -1,7 +1,7 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 import ServicoAutenticacao from './ServicoAutenticacao';
 
-class ReportarService {
+class ServicoReportar {
   static baseURL = '/denuncias';
 
   static _capitalizarPrimeiraLetra(texto) {
@@ -21,7 +21,7 @@ class ReportarService {
       if (!token) {
         return { 
           success: false, 
-          message: 'VocÃª precisa estar logado para fazer uma denÃºncia' 
+          message: 'Você precisa estar logado para fazer uma denúncia' 
         };
       }
 
@@ -44,33 +44,33 @@ class ReportarService {
       return {
         success: true,
         data: response.data,
-        message: 'DenÃºncia enviada com sucesso!',
+        message: 'Denúncia enviada com sucesso!',
       };
     } catch (error) {
       if (error.response?.status === 401) {
         return { 
           success: false, 
-          message: 'Sua sessÃ£o expirou. FaÃ§a login novamente.' 
+          message: 'Sua sessão expirou. Faça login novamente.' 
         };
       }
       
       if (error.response?.status === 403) {
         return { 
           success: false, 
-          message: 'VocÃª nÃ£o tem permissÃ£o para fazer esta denÃºncia.' 
+          message: 'Você não tem permissão para fazer esta denúncia.' 
         };
       }
       
       if (error.response?.status === 409) {
         return { 
           success: false, 
-          message: 'VocÃª jÃ¡ denunciou este item anteriormente.' 
+          message: 'Você já denunciou este item anteriormente.' 
         };
       }
       
       return { 
         success: false, 
-        message: error.response?.data?.message || error.response?.data?.mensagem || 'Erro ao enviar denÃºncia' 
+        message: error.response?.data?.message || error.response?.data?.mensagem || 'Erro ao enviar denúncia' 
       };
     }
   }
@@ -80,7 +80,7 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, data: [], message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, data: [], message: 'Sessão expirada. Faça login novamente.' };
       }
       
       const params = {};
@@ -103,7 +103,7 @@ class ReportarService {
         total: response.data?.totalElements || denuncias.length 
       };
     } catch (error) {
-      return this._handleError(error, 'Erro ao carregar denÃºncias');
+      return this._handleError(error, 'Erro ao carregar denúncias');
     }
   }
 
@@ -112,7 +112,7 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, message: 'Sessão expirada. Faça login novamente.' };
       }
       
       const response = await api.get(`${this.baseURL}/${id}`, {
@@ -121,7 +121,7 @@ class ReportarService {
       
       return { success: true, data: response.data };
     } catch (error) {
-      return this._handleError(error, 'DenÃºncia nÃ£o encontrada');
+      return this._handleError(error, 'Denúncia não encontrada');
     }
   }
 
@@ -148,7 +148,7 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, message: 'Sessão expirada. Faça login novamente.' };
       }
       
       const payload = { status };
@@ -173,16 +173,16 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, message: 'Sessão expirada. Faça login novamente.' };
       }
       
       await api.delete(`${this.baseURL}/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      return { success: true, message: 'DenÃºncia excluÃ­da com sucesso!' };
+      return { success: true, message: 'Denúncia excluída com sucesso!' };
     } catch (error) {
-      return this._handleError(error, 'Erro ao excluir denÃºncia');
+      return this._handleError(error, 'Erro ao excluir denúncia');
     }
   }
 
@@ -191,7 +191,7 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, message: 'Sessão expirada. Faça login novamente.' };
       }
       
       await api.delete(`${this.baseURL}/massa`, {
@@ -204,10 +204,10 @@ class ReportarService {
       
       return { 
         success: true, 
-        message: `${ids.length} denÃºncia${ids.length !== 1 ? 's' : ''} excluÃ­da${ids.length !== 1 ? 's' : ''} com sucesso!` 
+        message: `${ids.length} denúncia${ids.length !== 1 ? 's' : ''} excluída${ids.length !== 1 ? 's' : ''} com sucesso!` 
       };
     } catch (error) {
-      return this._handleError(error, 'Erro ao excluir denÃºncias');
+      return this._handleError(error, 'Erro ao excluir denúncias');
     }
   }
 
@@ -235,23 +235,23 @@ class ReportarService {
       const token = await this._getToken();
       
       if (!token) {
-        return { success: false, message: 'SessÃ£o expirada. FaÃ§a login novamente.' };
+        return { success: false, message: 'Sessão expirada. Faça login novamente.' };
       }
       
       const response = await api.post(`${this.baseURL}/${id}/resolver`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      return { success: true, data: response.data, message: 'DenÃºncia resolvida com sucesso!' };
+      return { success: true, data: response.data, message: 'Denúncia resolvida com sucesso!' };
     } catch (error) {
       if (error.response?.status === 409) {
         return { 
           success: false, 
-          message: 'Esta denÃºncia jÃ¡ foi processada',
+          message: 'Esta denúncia já foi processada',
           alreadyResolved: true 
         };
       }
-      return this._handleError(error, 'Erro ao resolver denÃºncia');
+      return this._handleError(error, 'Erro ao resolver denúncia');
     }
   }
 
@@ -262,7 +262,7 @@ class ReportarService {
     if (status === 401) {
       return { 
         success: false, 
-        message: 'Sua sessÃ£o expirou. FaÃ§a login novamente.',
+        message: 'Sua sessão expirou. Faça login novamente.',
         code: 'UNAUTHORIZED'
       };
     }
@@ -270,7 +270,7 @@ class ReportarService {
     if (status === 403) {
       return { 
         success: false, 
-        message: 'Acesso negado. VocÃª nÃ£o tem permissÃ£o para esta aÃ§Ã£o.',
+        message: 'Acesso negado. Você não tem permissão para esta ação.',
         code: 'FORBIDDEN'
       };
     }
@@ -278,7 +278,7 @@ class ReportarService {
     if (status === 404) {
       return { 
         success: false, 
-        message: 'Recurso nÃ£o encontrado.',
+        message: 'Recurso não encontrado.',
         code: 'NOT_FOUND'
       };
     }
@@ -301,4 +301,4 @@ class ReportarService {
   }
 }
 
-export default ReportarService;
+export default ServicoReportar;

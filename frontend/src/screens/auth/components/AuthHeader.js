@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Spacer, ThemedText } from '../../../components/commons';
+import { Espacador, TextoTematizado } from '../../../components/commons';
 import theme, { getTheme } from '../../../config/theme';
 
 export default function AuthHeader({ title, subtitle, altoContraste = false }) {
@@ -15,16 +15,16 @@ export default function AuthHeader({ title, subtitle, altoContraste = false }) {
       <Espacador size="sm" />
       <TextoTematizado variant="h2" align="center" weight="bold" altoContraste={altoContraste} color={corPrincipal} style={styles.tituloPrincipal}>
         AcessoLivre
-      </ThemedText>
+      </TextoTematizado>
       <TextoTematizado color={corSecundaria} align="center" altoContraste={altoContraste} style={styles.subtitulo}>
         {subtitle || 'Acessibilidade para todos'}
-      </ThemedText>
+      </TextoTematizado>
       {title ? (
         <>
           <Espacador size="lg" />
           <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={altoContraste} color={corPrincipal} style={styles.tituloPagina}>
             {title}
-          </ThemedText>
+          </TextoTematizado>
         </>
       ) : null}
     </View>

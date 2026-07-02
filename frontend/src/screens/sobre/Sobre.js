@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { Card, CardInfoIcone } from '../../components/ui';
 import { Recipiente } from '../../components/layout';
-import { ThemedText, Spacer } from '../../components/commons';
+import { TextoTematizado, Espacador } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import ServicoSobre from '../../services/ServicoSobre';
 
@@ -26,7 +26,7 @@ export default function Sobre() {
     let ativo = true;
 
     const carregarMetricas = async () => {
-      const dados = await SobreService.obterMetricasImpacto();
+      const dados = await ServicoSobre.obterMetricasImpacto();
       if (ativo) {
         setMetricas({
           totalLocais: dados.totalLocais || 0,
@@ -48,25 +48,25 @@ export default function Sobre() {
   const valores = [
     {
       icone: 'heart-outline',
-      titulo: 'Inclusï¿½o',
-      descricao: 'Acreditamos que todos merecem acesso igual aos espaï¿½os pï¿½blicos e privados.',
+      titulo: 'Inclusão',
+      descricao: 'Acreditamos que todos merecem acesso igual aos espaços públicos e privados.',
     },
     {
       icone: 'people-outline',
       titulo: 'Comunidade',
-      descricao: 'Construï¿½mos uma rede colaborativa de pessoas comprometidas com a acessibilidade.',
+      descricao: 'Construímos uma rede colaborativa de pessoas comprometidas com a acessibilidade.',
     },
     {
       icone: 'locate-outline',
       titulo: 'Impacto',
-      descricao: 'Focamos em criar mudanï¿½as reais e mensurï¿½veis na vida das pessoas.',
+      descricao: 'Focamos em criar mudanças reais e mensuráveis na vida das pessoas.',
     },
   ];
 
   const colunasImpacto = [
     { valor: formatarNumero(metricas.totalLocais), legenda: 'Locais Cadastrados' },
-    { valor: formatarNumero(metricas.totalAvaliacoes), legenda: 'Avaliaï¿½ï¿½es' },
-    { valor: formatarNumero(metricas.totalUsuariosAtivos), legenda: 'Usuï¿½rios Ativos' },
+    { valor: formatarNumero(metricas.totalAvaliacoes), legenda: 'Avaliações' },
+    { valor: formatarNumero(metricas.totalUsuariosAtivos), legenda: 'Usuários Ativos' },
   ];
 
   return (
@@ -74,12 +74,12 @@ export default function Sobre() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.blocoBranco}>
           <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
-            Nossa Missï¿½o
-          </ThemedText>
+            Nossa Missão
+          </TextoTematizado>
           <Espacador size="sm" />
           <TextoTematizado align="center" altoContraste={isHighContrast} color={corSecundaria}>
-            Criar um mundo mais acessï¿½vel atravï¿½s da tecnologia e colaboraï¿½ï¿½o comunitï¿½ria
-          </ThemedText>
+            Criar um mundo mais acessível através da tecnologia e colaboração comunitária
+          </TextoTematizado>
         </View>
 
         <Espacador size="lg" />
@@ -91,14 +91,14 @@ export default function Sobre() {
         >
           <TextoTematizado variant="h3" weight="bold" align="center" style={styles.textoPropositoTitulo}>
             Por que o AcessoLivre existe?
-          </ThemedText>
+          </TextoTematizado>
           <Espacador size="md" />
           <TextoTematizado align="center" style={styles.textoPropositoDescricao}>
-            Milhï¿½es de pessoas enfrentam barreiras diï¿½rias para acessar locais pï¿½blicos e privados.
+            Milhões de pessoas enfrentam barreiras diárias para acessar locais públicos e privados.
             O AcessoLivre nasceu da necessidade de criar uma plataforma colaborativa onde a comunidade
-            pode compartilhar informaï¿½ï¿½es sobre acessibilidade, ajudando a construir um mundo mais
+            pode compartilhar informações sobre acessibilidade, ajudando a construir um mundo mais
             inclusivo para todos.
-          </ThemedText>
+          </TextoTematizado>
         </Card>
 
         <Espacador size="xl" />
@@ -106,7 +106,7 @@ export default function Sobre() {
         <View style={styles.blocoBranco}>
           <TextoTematizado variant="h1" weight="bold" align="center" altoContraste={isHighContrast} color={corPrincipal}>
             Nossos Valores
-          </ThemedText>
+          </TextoTematizado>
         </View>
 
         <Espacador size="lg" />
@@ -128,7 +128,7 @@ export default function Sobre() {
             >
               <TextoTematizado align="center" color={corSecundaria}>
                 {item.descricao}
-              </ThemedText>
+              </TextoTematizado>
             </CardInfoIcone>
           ))}
         </View>
@@ -138,7 +138,7 @@ export default function Sobre() {
         <View style={styles.bannerImpacto}>
           <TextoTematizado variant="h2" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
             Nosso Impacto
-          </ThemedText>
+          </TextoTematizado>
           <Espacador size="lg" />
 
           <View style={styles.gradeImpacto}>
@@ -146,11 +146,11 @@ export default function Sobre() {
               <View key={coluna.legenda} style={styles.colunaImpacto}>
                 <TextoTematizado variant="h1" weight="bold" align="center" color="textOnPrimary" altoContraste={isHighContrast}>
                   {coluna.valor}
-                </ThemedText>
+                </TextoTematizado>
                 <Espacador size="xs" />
                 <TextoTematizado align="center" color="textOnPrimary" altoContraste={isHighContrast}>
                   {coluna.legenda}
-                </ThemedText>
+                </TextoTematizado>
               </View>
             ))}
           </View>
@@ -158,7 +158,7 @@ export default function Sobre() {
 
         <Espacador size="sm" />
       </ScrollView>
-    </Container>
+    </Recipiente>
   );
 }
 

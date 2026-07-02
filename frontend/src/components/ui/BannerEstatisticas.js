@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import theme from '../../config/theme';
 
 export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 0 }) {
@@ -12,31 +12,31 @@ export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.Recipiente}>
       <TextoTematizado variant="h1" color="textOnPrimary" weight="bold" align="center">
-        Descubra Locais AcessÃ­veis
-      </ThemedText>
+        Descubra Locais Acessíveis
+      </TextoTematizado>
       <TextoTematizado color="textOnPrimary" align="center" style={styles.subtitle}>
         Juntos construindo um mundo mais inclusivo para todos
-      </ThemedText>
+      </TextoTematizado>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <TextoTematizado variant="h1" color="textOnPrimary" weight="bold">
             {formatNumber(totalLocais)}
-          </ThemedText>
+          </TextoTematizado>
           <TextoTematizado color="textOnPrimary" weight="medium">
             Locais Cadastrados
-          </ThemedText>
+          </TextoTematizado>
         </View>
 
         <View style={styles.statCard}>
           <TextoTematizado variant="h1" color="textOnPrimary" weight="bold">
             {formatNumber(totalAvaliacoes)}
-          </ThemedText>
+          </TextoTematizado>
           <TextoTematizado color="textOnPrimary" weight="medium">
-            AvaliaÃ§Ãµes
-          </ThemedText>
+            Avaliações
+          </TextoTematizado>
         </View>
       </View>
     </View>
@@ -44,7 +44,7 @@ export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius?.lg || 16,
     padding: theme.spacing?.xl || 24,

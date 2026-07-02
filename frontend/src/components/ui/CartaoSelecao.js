@@ -1,7 +1,7 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -25,7 +25,7 @@ export default function CartaoSelecao({
     <Pressable
       onPress={onPress}
       style={[
-        estilos.container,
+        estilos.Recipiente,
         selecionado && { borderColor: corDestaque, backgroundColor: fundoSelecionado },
         style,
       ]}
@@ -43,11 +43,11 @@ export default function CartaoSelecao({
           <Ionicons name={icone} size={18} color={corDestaque} />
           <TextoTematizado weight="semibold" style={estilos.titulo} permitirEscalaFonte={permitirEscalaFonte}>
             {titulo}
-          </ThemedText>
+          </TextoTematizado>
         </View>
         <TextoTematizado color="textSecondary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
           {descricao}
-        </ThemedText>
+        </TextoTematizado>
       </View>
     </Pressable>
   );
@@ -55,7 +55,7 @@ export default function CartaoSelecao({
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       borderWidth: 1,

@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import ServicoAdmin from '../services/ServicoAdmin';
 import toastHelper from '../utils/toastHelper';
 
@@ -32,7 +32,7 @@ export default function useEditarUsuarioAdmin() {
 
     setCarregandoDados(true);
     try {
-      const dados = await AdminService.buscarUsuario(usuarioBase.idUsuario);
+      const dados = await ServicoAdmin.buscarUsuario(usuarioBase.idUsuario);
       return {
         nome: dados?.nome || usuarioBase?.nome || '',
         email: dados?.email || usuarioBase?.email || '',
@@ -40,7 +40,7 @@ export default function useEditarUsuarioAdmin() {
         imagemPerfil: dados?.imagemPerfil,
       };
     } catch (erro) {
-      toastHelper.showError('Nï¿½o foi possï¿½vel carregar todos os dados do usuï¿½rio');
+      toastHelper.showError('Não foi possível carregar todos os dados do usuário');
       return {
         nome: usuarioBase?.nome || '',
         email: usuarioBase?.email || '',
@@ -59,7 +59,7 @@ export default function useEditarUsuarioAdmin() {
     imagemPerfil,
   }) => {
     if (!usuarioId) {
-      return { sucesso: false, mensagem: 'Usuï¿½rio invï¿½lido para ediï¿½ï¿½o.' };
+      return { sucesso: false, mensagem: 'Usuário inválido para edição.' };
     }
 
     setSubmitting(true);
@@ -74,24 +74,24 @@ export default function useEditarUsuarioAdmin() {
         payload.imagemPerfil = imagemPerfil;
       }
 
-      await AdminService.atualizarUsuarioBasico(usuarioId, payload);
+      await ServicoAdmin.atualizarUsuarioBasico(usuarioId, payload);
 
       const roleOriginalNormalizada = normalizarRole(roleOriginal);
       const roleNovaNormalizada = normalizarRole(values.role || roleOriginal);
 
       if (roleNovaNormalizada !== roleOriginalNormalizada) {
-        await AdminService.alterarRoleUsuario(usuarioId, roleNovaNormalizada);
+        await ServicoAdmin.alterarRoleUsuario(usuarioId, roleNovaNormalizada);
       }
 
       const novaSenha = typeof values?.senha === 'string' ? values.senha.trim() : '';
       if (novaSenha) {
-        await AdminService.alterarSenhaUsuario(usuarioId, novaSenha);
+        await ServicoAdmin.alterarSenhaUsuario(usuarioId, novaSenha);
       }
 
-      toastHelper.showSuccess('Usuï¿½rio atualizado com sucesso');
+      toastHelper.showSuccess('Usuário atualizado com sucesso');
       return { sucesso: true };
     } catch (erro) {
-      const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuï¿½rio');
+      const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuário');
       return { sucesso: false, mensagem };
     } finally {
       setSubmitting(false);

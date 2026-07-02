@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -18,17 +18,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Recipiente } from '../../components/layout';
 import {
-  Button,
+  Botao,
   CabecalhoPagina,
   CardInfoIcone,
   CardSecao,
   CartaoMetricas,
   CartaoSelecao,
-  Input,
+  Entrada,
   ListaMarcadores,
-  Select,
+  Selecao,
 } from '../../components/ui';
-import { ThemedText, Spacer } from '../../components/commons';
+import { TextoTematizado, Espacador } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import ServicoLocal from '../../services/ServicoLocal';
@@ -42,15 +42,15 @@ import { breakpoints, getTheme } from '../../config/theme';
 
 const RECURSOS_ACESSIBILIDADE = [
   { id: 'rampa', titulo: 'Rampa de acesso', descricao: 'Rampa para cadeira de rodas na entrada', icon: 'walk-outline', cor: 'rampa', enumValue: 'RAMPA' },
-  { id: 'banheiro', titulo: 'Banheiro adaptado', descricao: 'Banheiro com acessibilidade para PcD', icon: 'man-outline', cor: 'banheiro', enumValue: 'BANHEIRO_ADAPTADO' },
-  { id: 'elevador', titulo: 'Elevador acessÃ­vel', descricao: 'Elevador funcionando com botÃµes em braille', icon: 'business-outline', cor: 'elevador', enumValue: 'ELEVADOR' },
-  { id: 'piso', titulo: 'Piso tÃ¡til', descricao: 'Piso com textura para orientaÃ§Ã£o', icon: 'trail-sign-outline', cor: 'audiovisual', enumValue: 'PISO_TATIL' },
-  { id: 'braille', titulo: 'SinalizaÃ§Ã£o em braille', descricao: 'Placas e informaÃ§Ãµes em braille', icon: 'eye-outline', cor: 'braile', enumValue: 'SINALIZACAO_BRAILLE' },
-  { id: 'estacionamento', titulo: 'Estacionamento acessÃ­vel', descricao: 'Vagas reservadas para PcD', icon: 'car-outline', cor: 'estacionamento', enumValue: 'ESTACIONAMENTO' },
-  { id: 'espaco', titulo: 'EspaÃ§o amplo', descricao: 'Corredores largos para circulaÃ§Ã£o', icon: 'resize-outline', cor: 'secondary', enumValue: 'ESPACO_AMPLO' },
-  { id: 'audiovisual', titulo: 'Recursos audiovisuais', descricao: 'Sistemas de som e sinalizaÃ§Ã£o visual', icon: 'volume-high-outline', cor: 'audiovisual', enumValue: 'RECURSOS_AUDIOVISUAIS' },
-  { id: 'atendimento', titulo: 'Atendimento especializado', descricao: 'Staff treinado para atender PcD', icon: 'heart-outline', cor: 'secondary', enumValue: 'ATENDIMENTO_ESPECIALIZADO' },
-  { id: 'mobiliario', titulo: 'MobiliÃ¡rio adaptado', descricao: 'Mesas, balcÃµes e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
+  { id: 'banheiro', titulo: 'Banheiro adaptado', descricao: 'Banheiro com acessibilidade para pessoa com deficiência', icon: 'man-outline', cor: 'banheiro', enumValue: 'BANHEIRO_ADAPTADO' },
+  { id: 'elevador', titulo: 'Elevador acessível', descricao: 'Elevador funcionando com botões em Braille', icon: 'business-outline', cor: 'elevador', enumValue: 'ELEVADOR' },
+  { id: 'piso', titulo: 'Piso tátil', descricao: 'Piso com textura para orientação', icon: 'trail-sign-outline', cor: 'audiovisual', enumValue: 'PISO_TATIL' },
+  { id: 'braille', titulo: 'Sinalização em Braille', descricao: 'Placas e informações em Braille', icon: 'eye-outline', cor: 'braile', enumValue: 'SINALIZACAO_BRAILLE' },
+  { id: 'estacionamento', titulo: 'Estacionamento acessível', descricao: 'Vagas reservadas para pessoa com deficiência', icon: 'car-outline', cor: 'estacionamento', enumValue: 'ESTACIONAMENTO' },
+  { id: 'espaco', titulo: 'Espaço amplo', descricao: 'Corredores largos para circulação', icon: 'resize-outline', cor: 'secondary', enumValue: 'ESPACO_AMPLO' },
+  { id: 'audiovisual', titulo: 'Recursos audiovisuais', descricao: 'Sistemas de som e sinalização visual', icon: 'volume-high-outline', cor: 'audiovisual', enumValue: 'RECURSOS_AUDIOVISUAIS' },
+  { id: 'atendimento', titulo: 'Atendimento especializado', descricao: 'Equipe treinada para atender pessoa com deficiência', icon: 'heart-outline', cor: 'secondary', enumValue: 'ATENDIMENTO_ESPECIALIZADO' },
+  { id: 'mobiliario', titulo: 'Mobiliário adaptado', descricao: 'Mesas, balcões e assentos adaptados', icon: 'grid-outline', cor: 'primary', enumValue: 'MOBILIARIO_ADAPTADO' },
 ];
 
 const LIMITES_CAMPOS_LOCAL = {
@@ -97,12 +97,12 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
   };
 
   const handleSelectFilesWeb = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = 'image/jpeg,image/png,image/webp';
+    const inputArquivo = document.createElement('input');
+    inputArquivo.type = 'file';
+    inputArquivo.multiple = true;
+    inputArquivo.accept = 'image/jpeg,image/png,image/webp';
 
-    input.onchange = (e) => {
+    inputArquivo.onchange = (e) => {
       const files = Array.from(e.target.files || []);
       const imageFiles = files.filter((file) => file.type.startsWith('image/'));
 
@@ -118,13 +118,13 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
       }
     };
 
-    input.click();
+    inputArquivo.click();
   };
 
   const handleSelectFilesMobile = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      toastHelper.showError('PermissÃ£o de galeria negada');
+      toastHelper.showError('Permissão de galeria negada');
       return;
     }
 
@@ -149,7 +149,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
   const handleTakePhotoMobile = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      toastHelper.showError('PermissÃ£o de cÃ¢mera negada');
+      toastHelper.showError('Permissão de câmera negada');
       return;
     }
 
@@ -183,7 +183,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     if (Platform.OS !== 'web') {
       handleTakePhotoMobile();
     } else {
-      toastHelper.showInfo('CÃ¢mera disponÃ­vel apenas no aplicativo mobile');
+      toastHelper.showInfo('Câmera disponível apenas no aplicativo mobile');
     }
   };
 
@@ -236,16 +236,16 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
           <Ionicons name="cloud-upload-outline" size={48} color={isHighContrast ? theme.colors.textPrimary : theme.colors.textSecondary} />
           <TextoTematizado align="center" permitirEscalaFonte={permitirEscalaFonte}>
             {isDragging ? 'Solte as imagens aqui' : 'Arraste e solte imagens ou clique para selecionar'}
-          </ThemedText>
+          </TextoTematizado>
           <TextoTematizado color="textTertiary" variant="caption" align="center" permitirEscalaFonte={permitirEscalaFonte}>
-            PNG, JPG atÃ© 10MB cada (mÃ¡x. 5 imagens)
-          </ThemedText>
+            PNG, JPG até 10MB cada (máx. 5 imagens)
+          </TextoTematizado>
         </div>
         {renderPreview()}
         <View style={localStyles.actionButtons}>
           <Botao variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline" altoContraste={isHighContrast}>
             Galeria
-          </Button>
+          </Botao>
         </View>
       </View>
     );
@@ -268,19 +268,19 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
         <Ionicons name="cloud-upload-outline" size={48} color={isHighContrast ? theme.colors.textPrimary : theme.colors.textSecondary} />
         <TextoTematizado align="center" permitirEscalaFonte={permitirEscalaFonte}>
           Clique para selecionar imagens
-        </ThemedText>
+        </TextoTematizado>
         <TextoTematizado color="textTertiary" variant="caption" align="center" permitirEscalaFonte={permitirEscalaFonte}>
-          PNG, JPG atÃ© 10MB cada (mÃ¡x. 5 imagens)
-        </ThemedText>
+          PNG, JPG até 10MB cada (máx. 5 imagens)
+        </TextoTematizado>
       </TouchableOpacity>
       {renderPreview()}
       <View style={localStyles.actionButtons}>
         <Botao variant="outline" size="small" onPress={handleSelectFiles} iconLeft="images-outline" altoContraste={isHighContrast}>
           Galeria
-        </Button>
+        </Botao>
         <Botao variant="outline" size="small" onPress={handleTakePhoto} iconLeft="camera-outline" altoContraste={isHighContrast}>
-          CÃ¢mera
-        </Button>
+          Câmera
+        </Botao>
       </View>
     </View>
   );
@@ -440,7 +440,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
           <View style={modalStyles.modalHeader}>
             <TextoTematizado variant="h3" weight="bold" permitirEscalaFonte={permitirEscalaFonte}>
               Vincular a um local principal?
-            </ThemedText>
+            </TextoTematizado>
             <TouchableOpacity onPress={onClose} style={modalStyles.modalClose}>
               <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
@@ -448,7 +448,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
           <Espacador size="sm" />
           <TextoTematizado color="textSecondary" permitirEscalaFonte={permitirEscalaFonte}>
             Este local faz parte de um local maior? Ex: loja dentro de um shopping
-          </ThemedText>
+          </TextoTematizado>
           <Espacador size="md" />
           <Entrada
             placeholder="Buscar local principal..."
@@ -463,7 +463,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
           {carregando ? (
             <View style={modalStyles.modalLoading}>
               <ActivityIndicator size="small" color={theme.colors.primary} />
-              <TextoTematizado variant="caption" permitirEscalaFonte={permitirEscalaFonte}>Buscando locais...</ThemedText>
+              <TextoTematizado variant="caption" permitirEscalaFonte={permitirEscalaFonte}>Buscando locais...</TextoTematizado>
             </View>
           ) : (
             <ScrollView style={modalStyles.modalLista} nestedScrollEnabled keyboardShouldPersistTaps="handled">
@@ -492,10 +492,10 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
                     <View style={modalStyles.modalItemInfo}>
                       <TextoTematizado weight="medium" permitirEscalaFonte={permitirEscalaFonte}>
                         {local.nome}
-                      </ThemedText>
+                      </TextoTematizado>
                       <TextoTematizado variant="caption" color="textTertiary" permitirEscalaFonte={permitirEscalaFonte}>
-                        <Ionicons name="location-outline" size={12} color={theme.colors.textTertiary} /> {local.endereco?.cidade || 'Cidade nÃ£o informada'}, {local.endereco?.estado || 'Estado nÃ£o informado'}
-                      </ThemedText>
+                        <Ionicons name="location-outline" size={12} color={theme.colors.textTertiary} /> {local.endereco?.cidade || 'Cidade não informada'}, {local.endereco?.estado || 'Estado não informado'}
+                      </TextoTematizado>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -505,7 +505,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
                   <Ionicons name="search-outline" size={48} color={theme.colors.textTertiary} />
                   <TextoTematizado color="textSecondary" align="center" permitirEscalaFonte={permitirEscalaFonte}>
                     Nenhum local principal encontrado
-                  </ThemedText>
+                  </TextoTematizado>
                   <TouchableOpacity
                     style={modalStyles.modalCriarButton}
                     onPress={handleCriarLocalPrincipal}
@@ -513,7 +513,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
                     <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
                     <TextoTematizado color="primary" weight="semibold" permitirEscalaFonte={permitirEscalaFonte}>
                       Criar Local Principal
-                    </ThemedText>
+                    </TextoTematizado>
                   </TouchableOpacity>
                 </View>
               )}
@@ -529,8 +529,8 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
               altoContraste={isHighContrast}
               permitirEscalaFonte={permitirEscalaFonte}
             >
-              Pular (sem vÃ­nculo)
-            </Button>
+              Pular (sem vínculo)
+            </Botao>
             <Botao
               variant="primary"
               size="medium"
@@ -541,7 +541,7 @@ const ModalVinculoLocal = ({ visible, onClose, onSelect, onCriarLocalPrincipal, 
               permitirEscalaFonte={permitirEscalaFonte}
             >
               Vincular
-            </Button>
+            </Botao>
           </View>
         </View>
       </View>
@@ -727,7 +727,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
 
     const carregarEstatisticas = async () => {
       try {
-        const dados = await LocalService.obterEstatisticas();
+        const dados = await ServicoLocal.obterEstatisticas();
         if (ativo) {
           setEstatisticas({
             totalLocais: dados?.totalLocais || 0,
@@ -736,7 +736,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           });
         }
       } catch (erro) {
-        console.error('[AdicionarLocal] Erro ao carregar estatÃ­sticas:', erro);
+        console.error('[AdicionarLocal] Erro ao carregar estatísticas:', erro);
       }
     };
 
@@ -755,7 +755,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     const carregarLocalParaEdicao = async () => {
       try {
         setEnviando(true);
-        const data = await LocalService.obterLocal(localId);
+        const data = await ServicoLocal.obterLocal(localId);
         if (data) {
           setFormulario((prev) => ({
             ...prev,
@@ -780,8 +780,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           }
         }
       } catch (_erro) {
-        console.error('[AdicionarLocal] Erro ao carregar local para ediÃ§Ã£o:', _erro);
-        toastHelper.showError('NÃ£o foi possÃ­vel carregar o local para ediÃ§Ã£o.');
+        console.error('[AdicionarLocal] Erro ao carregar local para edição:', _erro);
+        toastHelper.showError('Não foi possível carregar o local para edição.');
       } finally {
         setEnviando(false);
       }
@@ -803,7 +803,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     });
 
     if (imagens.length + validImages.length > MAX_IMAGES) {
-      toastHelper.showError(`MÃ¡ximo de ${MAX_IMAGES} imagens por local`);
+      toastHelper.showError(`Máximo de ${MAX_IMAGES} imagens por local`);
       return;
     }
 
@@ -838,10 +838,10 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           estado: endereco.uf || '',
         }));
       } else {
-        toastHelper.showError('CEP nÃ£o encontrado');
+        toastHelper.showError('CEP não encontrado');
       }
     } catch (_erro) {
-      toastHelper.showError('Erro ao consultar CEP. Verifique sua conexÃ£o.');
+      toastHelper.showError('Erro ao consultar CEP. Verifique sua conexão.');
     }
   };
 
@@ -879,53 +879,53 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
 
   const validarFormulario = () => {
     if (!usuario?.idUsuario) {
-      toastHelper.showError('FaÃ§a login para adicionar um local.');
+      toastHelper.showError('Faça login para adicionar um local.');
       return false;
     }
 
     if (!formulario.nome?.trim()) {
-      toastHelper.showError('Nome do local Ã© obrigatÃ³rio.');
+      toastHelper.showError('Nome do local é obrigatório.');
       return false;
     }
 
     if (!formulario.categoria) {
-      toastHelper.showError('Categoria Ã© obrigatÃ³ria.');
+      toastHelper.showError('Categoria é obrigatória.');
       return false;
     }
 
     if (!formulario.descricao?.trim()) {
-      toastHelper.showError('DescriÃ§Ã£o Ã© obrigatÃ³ria.');
+      toastHelper.showError('Descrição é obrigatória.');
       return false;
     }
 
     const cepLimpo = formulario.cep.replace(/\D/g, '');
     if (cepLimpo.length !== 8) {
-      toastHelper.showError('CEP invÃ¡lido. Deve conter 8 dÃ­gitos.');
+      toastHelper.showError('CEP inválido. Deve conter 8 dígitos.');
       return false;
     }
 
     if (!formulario.logradouro?.trim()) {
-      toastHelper.showError('Logradouro Ã© obrigatÃ³rio.');
+      toastHelper.showError('Logradouro é obrigatório.');
       return false;
     }
 
     if (!formulario.numero?.trim()) {
-      toastHelper.showError('NÃºmero Ã© obrigatÃ³rio.');
+      toastHelper.showError('Número é obrigatório.');
       return false;
     }
 
     if (!formulario.bairro?.trim()) {
-      toastHelper.showError('Bairro Ã© obrigatÃ³rio.');
+      toastHelper.showError('Bairro é obrigatório.');
       return false;
     }
 
     if (!formulario.cidade?.trim()) {
-      toastHelper.showError('Cidade Ã© obrigatÃ³ria.');
+      toastHelper.showError('Cidade é obrigatória.');
       return false;
     }
 
     if (!formulario.estado?.trim()) {
-      toastHelper.showError('Estado Ã© obrigatÃ³rio.');
+      toastHelper.showError('Estado é obrigatório.');
       return false;
     }
 
@@ -969,8 +969,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       };
 
       const localResponse = editingLocalId
-        ? await LocalService.atualizarLocal(editingLocalId, payloadLocal)
-        : await LocalService.cadastrarLocal(payloadLocal);
+        ? await ServicoLocal.atualizarLocal(editingLocalId, payloadLocal)
+        : await ServicoLocal.cadastrarLocal(payloadLocal);
 
       const localId = localResponse?.idLocal || localResponse?.id || editingLocalId;
 
@@ -1032,8 +1032,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
       toastHelper.showSuccess(editingLocalId ? 'Local atualizado com sucesso!' : 'Local adicionado com sucesso!');
       limparFormularioCompleto();
 
-      if (typeof BuscarService.invalidateCache === 'function') {
-        BuscarService.invalidateCache();
+      if (typeof ServicoBusca.invalidateCache === 'function') {
+        ServicoBusca.invalidateCache();
       }
 
       if (onNavigate) {
@@ -1045,7 +1045,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           try {
             navigation.navigate?.('Main', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
           } catch (_erroFallback) {
-            console.error('[AdicionarLocal] Falha na navegaÃ§Ã£o de retorno:', _erroFallback);
+            console.error('[AdicionarLocal] Falha na navegação de retorno:', _erroFallback);
           }
         }
       }
@@ -1083,7 +1083,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     if (imagens.length > 0) {
       Alert.alert(
         'Descartar imagens?',
-        'VocÃª tem imagens nÃ£o salvas. Deseja realmente voltar?',
+        'Você tem imagens não salvas. Deseja realmente voltar?',
         [
           { text: 'Cancelar', style: 'cancel' },
           {
@@ -1120,17 +1120,17 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
     >
       <CabecalhoPagina
         titulo="Adicionar Local"
-        subtitulo="Cadastre um novo local acessÃ­vel para a comunidade"
+        subtitulo="Cadastre um novo local acessível para a comunidade"
         onVoltar={handleVoltar}
         textoVoltar="Voltar"
         altoContraste={isHighContrast}
         permitirEscalaFonte={permitirEscalaFonte}
-        style={estilos.header}
+        style={estilos.Cabecalho}
       />
       <View style={estilos.conteudo}>
         <View style={estilos.colunaPrincipal}>
           <CardSecao
-            titulo="InformaÃ§Ãµes BÃ¡sicas"
+            titulo="Informações Básicas"
             icone="document-text-outline"
             corIcone={t.colors.primary}
             altoContraste={isHighContrast}
@@ -1213,7 +1213,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             <View style={estilos.linhaCampos}>
               <View style={estilos.colunaCampo}>
                 <Entrada
-                  label="NÃºmero *"
+                  label="Número *"
                   labelStyle={estilos.campoLabel}
                   placeholder="Ex: 1230"
                   value={formulario.numero}
@@ -1260,7 +1260,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
                 <Entrada
                   label="Cidade *"
                   labelStyle={estilos.campoLabel}
-                  placeholder="Ex: FlorianÃ³polis"
+                  placeholder="Ex: Florianópolis"
                   value={formulario.cidade}
                   onChangeText={atualizarCampo('cidade', LIMITES_CAMPOS_LOCAL.cidade)}
                   maxLength={LIMITES_CAMPOS_LOCAL.cidade}
@@ -1273,14 +1273,14 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             </View>
             <View style={estilos.campoDescricaoHeader}>
               <TextoTematizado color="textPrimary" weight="medium" style={estilos.campoLabel} permitirEscalaFonte={permitirEscalaFonte}>
-                DescriÃ§Ã£o *
-              </ThemedText>
+                Descrição *
+              </TextoTematizado>
               <TextoTematizado color="textTertiary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
                 {contadorDescricao}
-              </ThemedText>
+              </TextoTematizado>
             </View>
             <Entrada
-              placeholder="Descreva brevemente o local, suas caracterÃ­sticas principais e informaÃ§Ãµes Ãºteis..."
+              placeholder="Descreva brevemente o local, suas características principais e informações úteis..."
               value={formulario.descricao}
               onChangeText={atualizarCampo('descricao', LIMITES_CAMPOS_LOCAL.descricao)}
               multiline
@@ -1294,7 +1294,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           </CardSecao>
           <CardSecao
             titulo="Recursos de Acessibilidade"
-            descricao="Marque TODOS os recursos de acessibilidade disponÃ­veis no local (pode marcar vÃ¡rios)"
+            descricao="Marque TODOS os recursos de acessibilidade disponíveis no local (pode marcar vários)"
             icone="accessibility-outline"
             corIcone={t.colors.secondary}
             altoContraste={isHighContrast}
@@ -1319,12 +1319,12 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.colors.borderLight }}>
               <TextoTematizado color="textSecondary" variant="caption" permitirEscalaFonte={permitirEscalaFonte}>
                 {Object.values(recursosSelecionados).filter(Boolean).length} recurso(s) selecionado(s)
-              </ThemedText>
+              </TextoTematizado>
             </View>
           </CardSecao>
           <CardSecao
             titulo="Fotos do Local"
-            descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (mÃ¡x. 5 fotos)"
+            descricao="Adicione fotos que mostrem os recursos de acessibilidade do local (máx. 5 fotos)"
             icone="camera-outline"
             corIcone={t.colors.primary}
             altoContraste={isHighContrast}
@@ -1342,7 +1342,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
               <View style={{ marginTop: 16 }}>
                 <TextoTematizado variant="caption" align="center" permitirEscalaFonte={permitirEscalaFonte}>
                   Enviando imagens: {progressoImagens.atual} de {progressoImagens.total}
-                </ThemedText>
+                </TextoTematizado>
                 <View
                   style={{
                     height: 4,
@@ -1375,14 +1375,14 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
               altoContraste={isHighContrast}
               permitirEscalaFonte={permitirEscalaFonte}
             >
-              {enviando ? 'Salvando...' : (editingLocalId ? 'Salvar AlteraÃ§Ãµes' : 'Adicionar Local')}
-            </Button>
+              {enviando ? 'Salvando...' : (editingLocalId ? 'Salvar Alterações' : 'Adicionar Local')}
+            </Botao>
           </View>
         </View>
         {mostrarCardsLaterais && (
           <View style={estilos.colunaLateral}>
             <CardInfoIcone
-              titulo="PrÃ³ximos passos"
+              titulo="Próximos passos"
               icone="navigate-outline"
               corIcone={t.colors.primary}
               corFundoIcone={isHighContrast ? t.colors.surfaceSecondary : '#E8F0FF'}
@@ -1391,7 +1391,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
             >
               <ListaMarcadores
                 itens={[
-                  'ApÃ³s adicionar, vocÃª poderÃ¡ avaliar o local',
+                  'Após adicionar, você poderá avaliar o local',
                   'Adicione fotos dos recursos de acessibilidade',
                   'Compartilhe com a comunidade',
                 ]}
@@ -1409,8 +1409,8 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
               permitirEscalaFonte={permitirEscalaFonte}
             >
               <TextoTematizado color="textSecondary" permitirEscalaFonte={permitirEscalaFonte}>
-                Seja especÃ­fico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com diferentes necessidades a encontrar locais adequados para elas.
-              </ThemedText>
+                Seja específico ao marcar os recursos de acessibilidade. Isso ajuda pessoas com diferentes necessidades a encontrar locais adequados para elas.
+              </TextoTematizado>
             </CardInfoIcone>
             <CardInfoIcone
               titulo="Contribua com a Comunidade"
@@ -1424,15 +1424,15 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
               permitirEscalaFonte={permitirEscalaFonte}
             >
               <TextoTematizado color="textSecondary" align="center" permitirEscalaFonte={permitirEscalaFonte}>
-                Cada local adicionado com informaÃ§Ãµes precisas de acessibilidade ajuda a tornar o mundo mais inclusivo para todos.
-              </ThemedText>
+                Cada local adicionado com informações precisas de acessibilidade ajuda a tornar o mundo mais inclusivo para todos.
+              </TextoTematizado>
             </CardInfoIcone>
             <CartaoMetricas
               titulo="Impacto da Comunidade"
               metricas={[
                 { valor: formatarNumero(estatisticas.totalLocais), legenda: 'Locais Cadastrados' },
-                { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'AvaliaÃ§Ãµes' },
-                { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'UsuÃ¡rios Ativos' },
+                { valor: formatarNumero(estatisticas.totalAvaliacoes), legenda: 'Avaliações' },
+                { valor: formatarNumero(estatisticas.totalUsuarios), legenda: 'Usuários Ativos' },
               ]}
               altoContraste={isHighContrast}
             />
@@ -1451,7 +1451,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         localIdAtual={editingLocalId}
         buscaAtual={buscaModal}
       />
-    </Container>
+    </Recipiente>
   );
 }
 
@@ -1479,7 +1479,7 @@ function criarEstilos(t, usarDuasColunas, mostrarCardsLaterais, fontSizeMultipli
       paddingBottom: fonteGrande ? t.spacing.xxxl + t.spacing.sm : t.spacing.xxxl,
       paddingHorizontal: paddingHorizontalPagina,
     },
-    header: {
+    Cabecalho: {
       alignItems: 'flex-start',
       marginBottom: fonteGrande ? t.spacing.lg : t.spacing.xl,
     },

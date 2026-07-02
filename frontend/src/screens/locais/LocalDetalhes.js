@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -48,7 +48,7 @@ const useCurrentTime = () => {
 };
 
 const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
-  if (!dataOriginal) return 'Data nÃ£o informada';
+  if (!dataOriginal) return 'Data não informada';
   
   try {
     let data;
@@ -60,11 +60,11 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
     } else if (dataOriginal instanceof Date) {
       data = dataOriginal;
     } else {
-      return 'Data invÃ¡lida';
+      return 'Data inválida';
     }
     
     if (isNaN(data.getTime())) {
-      return 'Data invÃ¡lida';
+      return 'Data inválida';
     }
     
     const agora = new Date(agoraTimestamp);
@@ -74,23 +74,23 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins === 1) return 'HÃ¡ 1 minuto';
-    if (diffMins < 60) return `HÃ¡ ${diffMins} minutos`;
-    if (diffHours === 1) return 'HÃ¡ 1 hora';
-    if (diffHours < 24) return `HÃ¡ ${diffHours} horas`;
+    if (diffMins === 1) return 'Há 1 minuto';
+    if (diffMins < 60) return `Há ${diffMins} minutos`;
+    if (diffHours === 1) return 'Há 1 hora';
+    if (diffHours < 24) return `Há ${diffHours} horas`;
     if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `HÃ¡ ${diffDays} dias`;
-    if (diffDays < 30) return `HÃ¡ ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
-    if (diffDays < 365) return `HÃ¡ ${Math.floor(diffDays / 30)} mÃªs${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
-    return `HÃ¡ ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
+    if (diffDays < 7) return `Há ${diffDays} dias`;
+    if (diffDays < 30) return `Há ${Math.floor(diffDays / 7)} semana${Math.floor(diffDays / 7) === 1 ? '' : 's'}`;
+    if (diffDays < 365) return `Há ${Math.floor(diffDays / 30)} mês${Math.floor(diffDays / 30) === 1 ? '' : 'es'}`;
+    return `Há ${Math.floor(diffDays / 365)} ano${Math.floor(diffDays / 365) === 1 ? '' : 's'}`;
     
   } catch (error) {
     console.error('Erro ao formatar data:', error);
-    return 'Data invÃ¡lida';
+    return 'Data inválida';
   }
 };
 
-// Componente de AvaliaÃ§Ã£o com Menu de Reportar
+// Componente de Avaliação com Menu de Reportar
 const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
@@ -112,7 +112,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
   const nomeUsuario = avaliacao.usuario?.nome || 
                       avaliacao.usuarioNome || 
                       avaliacao.nomeUsuario || 
-                      'UsuÃ¡rio';
+                      'Usuário';
   
   const primeiraLetra = nomeUsuario.charAt(0).toUpperCase();
   
@@ -135,13 +135,13 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
           <View style={[styles.avatar, estilosDinamicos.avatar, { backgroundColor: theme.colors.primary }]}>
             <TextoTematizado color="textOnPrimary" weight="bold" style={[styles.avatarTexto, estilosDinamicos.avatarTexto]}>
               {primeiraLetra}
-            </ThemedText>
+            </TextoTematizado>
           </View>
           
           <View style={styles.usuarioDetails}>
             <TextoTematizado weight="semibold" style={[styles.usuarioNome, estilosDinamicos.usuarioNome]} numberOfLines={1}>
               {nomeUsuario}
-            </ThemedText>
+            </TextoTematizado>
             <View style={styles.estrelasRow}>
               <View style={styles.starsContainer}>
                 {renderStars(mediaGeral)}
@@ -149,7 +149,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
               <View style={styles.dataContainer}>
                 <TextoTematizado variant="caption" color="textTertiary" style={[styles.dataAvaliacao, estilosDinamicos.dataAvaliacao]}>
                   {dataFormatada}
-                </ThemedText>
+                </TextoTematizado>
               </View>
             </View>
           </View>
@@ -165,7 +165,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
       {comentarioReal ? (
         <TextoTematizado color="textSecondary" style={[styles.comentario, estilosDinamicos.comentario]} numberOfLines={3}>
           {comentarioReal}
-        </ThemedText>
+        </TextoTematizado>
       ) : null}
     </View>
   );
@@ -233,7 +233,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const carregar = useCallback(async (refresh = false) => {
     if (!id) {
-      setError('ID do local nÃ£o informado');
+      setError('ID do local não informado');
       setLoading(false);
       return;
     }
@@ -243,18 +243,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
     setError(null);
 
     try {
-      const dados = await HomeService.buscarLocalPorId(id);
+      const dados = await ServicoHome.buscarLocalPorId(id);
       
       if (!dados) {
-        throw new Error('Local nÃ£o encontrado');
+        throw new Error('Local não encontrado');
       }
       
-      const imagensList = HomeService.extrairTodasImagens(dados);
+      const imagensList = ServicoHome.extrairTodasImagens(dados);
       const idLocalAtual = dados?.idLocal || dados?.id;
 
       let avaliacoes = [];
       try {
-        const result = await AvaliacaoService.buscarAvaliacoesPorLocal(id);
+        const result = await ServicoAvaliacao.buscarAvaliacoesPorLocal(id);
         
         if (result.success && result.data && Array.isArray(result.data)) {
           avaliacoes = result.data;
@@ -281,7 +281,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
             if (!idSubLocal) return null;
 
             try {
-              return await HomeService.buscarLocalPorId(idSubLocal);
+              return await ServicoHome.buscarLocalPorId(idSubLocal);
             } catch {
               return null;
             }
@@ -310,7 +310,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       setMostrarTodasAvaliacoes(false);
     } catch (err) {
       console.error('Erro ao carregar local:', err);
-      setError('NÃ£o foi possÃ­vel carregar os detalhes do local');
+      setError('Não foi possível carregar os detalhes do local');
       toastHelper.showError('Erro ao carregar detalhes');
     } finally {
       setLoading(false);
@@ -334,7 +334,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleAvaliar = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('FaÃ§a login para avaliar este local');
+      toastHelper.showInfo('Faça login para avaliar este local');
       onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
       return;
     }
@@ -347,7 +347,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleReportarLocal = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('FaÃ§a login para reportar este local');
+      toastHelper.showInfo('Faça login para reportar este local');
       onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
       return;
     }
@@ -365,18 +365,18 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleEnviarAvaliacao = async (avaliacaoData) => {
     try {
-      const result = await AvaliacaoService.criarAvaliacao(avaliacaoData);
+      const result = await ServicoAvaliacao.criarAvaliacao(avaliacaoData);
       
       if (result.success) {
-        toastHelper.showSuccess('AvaliaÃ§Ã£o enviada com sucesso!');
+        toastHelper.showSuccess('Avaliação enviada com sucesso!');
         setModalAvaliacaoVisible(false);
         await carregar(true);
       } else {
-        toastHelper.showError(result.message || 'Erro ao enviar avaliaÃ§Ã£o');
+        toastHelper.showError(result.message || 'Erro ao enviar avaliação');
       }
     } catch (error) {
-      console.error('Erro ao enviar avaliaÃ§Ã£o:', error);
-      toastHelper.showError('Erro ao enviar avaliaÃ§Ã£o');
+      console.error('Erro ao enviar avaliação:', error);
+      toastHelper.showError('Erro ao enviar avaliação');
     }
   };
 
@@ -398,7 +398,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   };
 
   const formatEnderecoCompleto = (end) => {
-    if (!end) return 'EndereÃ§o nÃ£o informado';
+    if (!end) return 'Endereço não informado';
     const partes = [];
     if (end.logradouro) partes.push(end.logradouro);
     if (end.numero) partes.push(end.numero);
@@ -421,21 +421,21 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <Ionicons name="document-text-outline" size={estilosZoom.descricaoIcone} color={t.colors.primary} />
           <TextoTematizado weight="bold" style={[styles.descricaoTitulo, estilosZoom.descricaoTitulo]}>
             Sobre o local
-          </ThemedText>
+          </TextoTematizado>
         </View>
         <Espacador size="sm" />
         <TextoTematizado color="textSecondary" style={[styles.descricaoTexto, estilosZoom.descricaoTexto]}>
           {descricaoExibida}
           {shouldTruncate && !descricaoExpandida && '...'}
-        </ThemedText>
+        </TextoTematizado>
         {shouldTruncate && (
           <TouchableOpacity 
             onPress={() => setDescricaoExpandida(!descricaoExpandida)} 
             style={styles.verMaisButtonDescricao}
           >
             <TextoTematizado color="primary" weight="semibold" variant="caption">
-              {descricaoExpandida ? 'Ver menos â–²' : 'Ver mais â–¼'}
-            </ThemedText>
+              {descricaoExpandida ? 'Ver menos' : 'Ver mais'}
+            </TextoTematizado>
           </TouchableOpacity>
         )}
       </View>
@@ -471,11 +471,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
       <View style={[styles.hierarquiaContainer, { borderColor: t.colors.borderLight, backgroundColor: isHighContrast ? t.colors.surfaceSecondary : '#F8F9FA' }]}>
         <TextoTematizado weight="bold" style={styles.hierarquiaTitulo}>
           {tituloSecao}
-        </ThemedText>
+        </TextoTematizado>
 
         {mostrarLocalPrincipal ? (
           <View style={styles.hierarquiaBloco}>
-            <TextoTematizado variant="caption" color="textSecondary">Local principal</ThemedText>
+            <TextoTematizado variant="caption" color="textSecondary">Local principal</TextoTematizado>
             <TouchableOpacity
               disabled={!idLocalPrincipal}
               onPress={() => handleAbrirOutroLocal(idLocalPrincipal)}
@@ -483,7 +483,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
             >
               <TextoTematizado weight="semibold" color={idLocalPrincipal ? 'primary' : 'textPrimary'} numberOfLines={1}>
                 {nomeLocalPrincipal || `ID ${idLocalPrincipal}`}
-              </ThemedText>
+              </TextoTematizado>
               {idLocalPrincipal ? <Ionicons name="chevron-forward" size={14} color={t.colors.primary} /> : null}
             </TouchableOpacity>
           </View>
@@ -524,10 +524,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
       return (
         <View style={styles.semAvaliacoes}>
           <Ionicons name="chatbubble-outline" size={48} color={t.colors.textTertiary} />
-          <TextoTematizado color="textSecondary" align="center">Nenhuma avaliaÃ§Ã£o ainda.</ThemedText>
+          <TextoTematizado color="textSecondary" align="center">Nenhuma avaliação ainda.</TextoTematizado>
           <TextoTematizado variant="caption" color="textTertiary" align="center">
             Seja o primeiro a avaliar este local!
-          </ThemedText>
+          </TextoTematizado>
         </View>
       );
     }
@@ -563,12 +563,12 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <View style={styles.headerAvaliacoesLeft}>
             <Ionicons name="chatbubbles-outline" size={22} color={t.colors.primary} />
             <TextoTematizado variant="h3" weight="bold" style={[styles.tituloAvaliacoes, estilosZoom.tituloAvaliacoes]}>
-              AvaliaÃ§Ãµes Recentes
-            </ThemedText>
+              Avaliações Recentes
+            </TextoTematizado>
             <View style={styles.totalBadge}>
               <TextoTematizado variant="caption" weight="bold" style={styles.totalBadgeTexto}>
                 {local.avaliacoes.length}
-              </ThemedText>
+              </TextoTematizado>
             </View>
           </View>
         </View>
@@ -595,8 +595,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             onPress={() => setMostrarTodasAvaliacoes(true)}
           >
             <TextoTematizado color="primary" weight="semibold">
-              Ver mais comentÃ¡rios
-            </ThemedText>
+              Ver mais comentários
+            </TextoTematizado>
           </TouchableOpacity>
         )}
 
@@ -607,7 +607,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
           >
             <TextoTematizado color="primary" weight="semibold">
               Mostrar menos
-            </ThemedText>
+            </TextoTematizado>
           </TouchableOpacity>
         )}
 
@@ -617,8 +617,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
             onPress={handleVerTodasAvaliacoes}
           >
             <TextoTematizado color="textSecondary" variant="caption">
-              Ver todas em nova pÃ¡gina â†’
-            </ThemedText>
+              Ver todas em nova página
+            </TextoTematizado>
           </TouchableOpacity>
         )}
       </>
@@ -630,7 +630,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
       <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
         <ActivityIndicator size="large" color={t.colors.primary} />
         <Espacador size="md" />
-        <TextoTematizado color="textSecondary">Carregando detalhes...</ThemedText>
+        <TextoTematizado color="textSecondary">Carregando detalhes...</TextoTematizado>
       </View>
     );
   }
@@ -638,29 +638,29 @@ export default function LocalDetalhes({ onNavigate, route }) {
   if (error || !local) {
     return (
       <View style={[styles.centerContainer, estilosDinamicos.centerContainer]}>
-        <TextoTematizado color="error" align="center">{error || 'Local nÃ£o encontrado'}</ThemedText>
+        <TextoTematizado color="error" align="center">{error || 'Local não encontrado'}</TextoTematizado>
         <Espacador size="md" />
         <Botao variant="primary" onPress={handleRefresh} iconLeft="refresh-outline">
           Tentar novamente
-        </Button>
+        </Botao>
         <Espacador size="sm" />
         <Botao variant="outline" onPress={handleVoltar}>
           Voltar
-        </Button>
+        </Botao>
       </View>
     );
   }
 
   return (
-    <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={estilosZoom.container}>
+    <Recipiente background={isHighContrast ? 'background' : 'backgroundSecondary'} altoContraste={isHighContrast} style={estilosZoom.Recipiente}>
       <View style={estilosZoom.cabecalho}>
         <TouchableOpacity
           onPress={handleVoltar}
           style={[styles.botaoVoltarTopo, { borderColor: t.colors.borderLight, backgroundColor: t.colors.surface }]}
-          accessibilityRole="button"
+          accessibilityRole="Botao"
         >
           <Ionicons name="arrow-back" size={20} color={t.colors.textPrimary} />
-          <TextoTematizado weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</ThemedText>
+          <TextoTematizado weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</TextoTematizado>
         </TouchableOpacity>
       </View>
 
@@ -682,27 +682,27 @@ export default function LocalDetalhes({ onNavigate, route }) {
             <View style={styles.infoLocal}>
               <TextoTematizado variant="h2" weight="bold" style={[styles.nomeLocal, estilosZoom.nomeLocal]}>
                 {local.nome}
-              </ThemedText>
+              </TextoTematizado>
               <View style={[styles.categoriaBadge, estilosDinamicos.categoriaBadge]}>
                 <TextoTematizado variant="caption" weight="semibold" style={{ color: t.colors.primary }}>
                   {local.categoria}
-                </ThemedText>
+                </TextoTematizado>
               </View>
               <View style={[styles.enderecoRow, estilosZoom.enderecoRow]}>
                 <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
                 <TextoTematizado color="textSecondary" style={[styles.endereco, estilosZoom.endereco]}>
                   {formatEnderecoCompleto(local.endereco)}
-                </ThemedText>
+                </TextoTematizado>
               </View>
             </View>
             <View style={[styles.ratingBox, estilosZoom.ratingBox]}>
               <View style={styles.starsRow}>{renderMediaStars(local.avaliacaoMedia)}</View>
               <TextoTematizado variant="h2" weight="bold" style={[styles.notaMedia, estilosZoom.notaMedia]}>
                 {(local.avaliacaoMedia || 0).toFixed(1)}
-              </ThemedText>
+              </TextoTematizado>
               <TextoTematizado variant="caption" color="textSecondary">
-                {local.totalAvaliacoes || 0} avaliaÃ§Ãµes
-              </ThemedText>
+                {local.totalAvaliacoes || 0} avaliações
+              </TextoTematizado>
             </View>
           </View>
 
@@ -716,27 +716,27 @@ export default function LocalDetalhes({ onNavigate, route }) {
           <View style={[styles.botoesContainer, estilosZoom.botoesContainer]}>
             <Botao variant="primary" size="large" iconLeft="star-outline" onPress={handleAvaliar} style={[styles.botaoAvaliar, estilosZoom.botao, estilosDinamicos.botaoAvaliar]}>
               Avaliar
-            </Button>
+            </Botao>
             <Botao variant="outline" size="medium" iconLeft="share-social-outline" onPress={handleCompartilhar} style={[styles.botaoAcao, estilosZoom.botao]}>
               Compartilhar
-            </Button>
+            </Botao>
             <Botao variant="outline" size="medium" iconLeft="flag-outline" onPress={handleReportarLocal} style={[styles.botaoAcao, estilosZoom.botao]}>
               Reportar
-            </Button>
+            </Botao>
           </View>
         </Card>
 
         <Espacador size="lg" />
 
-        {/* CORRIGIDO: Card de Fotos com verificaÃ§Ã£o de imagens */}
+        {/* CORRIGIDO: Card de Fotos com verificação de imagens */}
         <Card style={[styles.cardFotos, estilosZoom.cardFotos]} altoContraste={isHighContrast}>
           <View style={[styles.headerFotos, estilosZoom.headerFotos]}>
             <Ionicons name="images-outline" size={22} color={t.colors.primary} />
-            <TextoTematizado variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</ThemedText>
+            <TextoTematizado variant="h3" weight="bold" style={[styles.tituloFotos, estilosZoom.tituloFotos]}>Fotos do Local</TextoTematizado>
             {local.imagens && local.imagens.length > 0 && (
               <TextoTematizado variant="caption" color="textSecondary">
                 ({local.imagens.length} {local.imagens.length === 1 ? 'foto' : 'fotos'})
-              </ThemedText>
+              </TextoTematizado>
             )}
           </View>
           <Espacador size="sm" />
@@ -781,7 +781,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         targetId={local.id}
         targetName={local.nome}
       />
-    </Container>
+    </Recipiente>
   );
 }
 
@@ -1062,7 +1062,7 @@ function criarEstilosDinamicos({ t, width, layoutEmpilhado, fontSizeMultiplier, 
   const paddingInferiorConteudo = isDesktop ? t.spacing.xxxl : 28 + Math.max(insetsBottom, t.spacing.sm);
 
   return {
-    container: {
+    Recipiente: {
       padding: 0,
     },
     cabecalho: {

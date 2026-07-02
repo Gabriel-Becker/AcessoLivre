@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Botao } from '../../components/ui';
@@ -31,7 +31,7 @@ export default function ModalStatusDenuncia({
       case 'LOCAL':
         return 'Local';
       case 'AVALIACAO':
-        return 'Avaliaï¿½ï¿½o';
+        return 'Avaliação';
       default:
         return tipo || 'Desconhecido';
     }
@@ -69,8 +69,8 @@ export default function ModalStatusDenuncia({
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
           <TextoTematizado variant="h2" weight="bold" align="center" altoContraste={isHighContrast}>
-            Gerenciar Denï¿½ncia
-          </ThemedText>
+            Gerenciar Denúncia
+          </TextoTematizado>
 
           <Espacador size="md" />
 
@@ -83,30 +83,30 @@ export default function ModalStatusDenuncia({
               />
               <TextoTematizado variant="h3" weight="bold" altoContraste={isHighContrast}>
                 {getTipoLabel(denuncia?.tipo)}
-              </ThemedText>
+              </TextoTematizado>
             </View>
             
             <Espacador size="xs" />
             
             <View style={styles.infoRow}>
-              <TextoTematizado variant="caption" color="textSecondary">Denï¿½ncia</ThemedText>
-              <TextoTematizado weight="medium">#{denuncia?.id}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Denúncia</TextoTematizado>
+              <TextoTematizado weight="medium">#{denuncia?.id}</TextoTematizado>
             </View>
             
             <View style={styles.infoRow}>
-              <TextoTematizado variant="caption" color="textSecondary">Alvo</ThemedText>
-              <TextoTematizado weight="medium" numberOfLines={2}>{denuncia?.targetName || 'Nï¿½o informado'}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Alvo</TextoTematizado>
+              <TextoTematizado weight="medium" numberOfLines={2}>{denuncia?.targetName || 'Não informado'}</TextoTematizado>
             </View>
             
             <View style={styles.infoRow}>
-              <TextoTematizado variant="caption" color="textSecondary">Motivo</ThemedText>
-              <TextoTematizado weight="medium">{denuncia?.motivoLabel || denuncia?.motivo}</ThemedText>
+              <TextoTematizado variant="caption" color="textSecondary">Motivo</TextoTematizado>
+              <TextoTematizado weight="medium">{denuncia?.motivoLabel || denuncia?.motivo}</TextoTematizado>
             </View>
             
             {denuncia?.descricao && (
               <View style={styles.infoRow}>
-                <TextoTematizado variant="caption" color="textSecondary">Descriï¿½ï¿½o</ThemedText>
-                <TextoTematizado size="sm" numberOfLines={3}>{denuncia.descricao}</ThemedText>
+                <TextoTematizado variant="caption" color="textSecondary">Descrição</TextoTematizado>
+                <TextoTematizado size="sm" numberOfLines={3}>{denuncia.descricao}</TextoTematizado>
               </View>
             )}
           </View>
@@ -115,7 +115,7 @@ export default function ModalStatusDenuncia({
 
           <TextoTematizado weight="bold" altoContraste={isHighContrast}>
             Alterar status manualmente
-          </ThemedText>
+          </TextoTematizado>
 
           <Espacador size="sm" />
 
@@ -135,7 +135,7 @@ export default function ModalStatusDenuncia({
                 <View style={[styles.statusDot, { backgroundColor: option.color }]} />
                 <TextoTematizado weight={selectedStatus === option.value ? 'bold' : 'regular'} altoContraste={isHighContrast}>
                   {option.label}
-                </ThemedText>
+                </TextoTematizado>
                 {selectedStatus === option.value && (
                   <Ionicons name="checkmark-circle" size={20} color={option.color} />
                 )}
@@ -154,8 +154,8 @@ export default function ModalStatusDenuncia({
               loading={carregando}
               disabled={carregando || !denuncia}
             >
-              Resolver e Remover Conteï¿½do
-            </Button>
+              Resolver e Remover Conteúdo
+            </Botao>
 
             <Espacador size="xs" />
 
@@ -168,7 +168,7 @@ export default function ModalStatusDenuncia({
               disabled={carregando || !denuncia}
             >
               Atualizar Status
-            </Button>
+            </Botao>
 
             <Espacador size="xs" />
 
@@ -180,7 +180,7 @@ export default function ModalStatusDenuncia({
               disabled={carregando}
             >
               Cancelar
-            </Button>
+            </Botao>
           </View>
         </View>
       </View>

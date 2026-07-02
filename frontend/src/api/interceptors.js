@@ -1,4 +1,4 @@
-﻿import api from './axios';
+import api from './axios';
 import ServicoAutenticacao from '../services/ServicoAutenticacao';
 import { triggerLogout } from '../utils/GerenciadorSessao';
 import { resetToAuth } from '../navigation/navigationRef';
@@ -170,7 +170,7 @@ api.interceptors.response.use(
             const newToken = await reautenticacaoEmAndamento;
             if (newToken) {
               await ServicoAutenticacao.setToken(newToken);
-              // update header and retry original request
+              // update Cabecalho and retry original request
               if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
                 originalRequest.headers.set('Authorization', `Bearer ${newToken}`);
               } else {

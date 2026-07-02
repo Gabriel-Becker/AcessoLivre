@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Card } from '../ui';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -65,7 +65,7 @@ export default function TabelaPlanilhaAdmin({
                         altoContraste={contrasteAtivo}
                       >
                         {coluna.titulo} {indicator}
-                      </ThemedText>
+                      </TextoTematizado>
                     </TouchableOpacity>
                   ) : (
                     <TextoTematizado
@@ -77,7 +77,7 @@ export default function TabelaPlanilhaAdmin({
                       altoContraste={contrasteAtivo}
                     >
                       {coluna.titulo}
-                    </ThemedText>
+                    </TextoTematizado>
                   )}
                 </View>
               );
@@ -89,14 +89,14 @@ export default function TabelaPlanilhaAdmin({
               <View style={styles.estadoVazio}>
                 <TextoTematizado size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                   Carregando dados...
-                </ThemedText>
+                </TextoTematizado>
               </View>
             ) : dados.length === 0 ? (
               <View style={styles.estadoVazio}>
                 {renderVazio || (
                   <TextoTematizado size="sm" color={corTexto} altoContraste={contrasteAtivo}>
                     Nenhum registro encontrado.
-                  </ThemedText>
+                  </TextoTematizado>
                 )}
               </View>
             ) : (

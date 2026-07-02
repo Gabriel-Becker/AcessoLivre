@@ -1,9 +1,9 @@
-﻿import React, { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import theme, { getTheme } from '../../config/theme';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import AreaSegura from './AreaSegura';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -35,7 +35,7 @@ export default function LayoutMobile({
   );
 
   const tabs = [
-    { key: 'Inicio', label: 'InÃ­cio', icon: 'home-outline', iconAtivo: 'home' },
+    { key: 'Inicio', label: 'Início', icon: 'home-outline', iconAtivo: 'home' },
     { key: 'Buscar', label: 'Buscar', icon: 'search-outline', iconAtivo: 'search' },
     { key: 'Adicionar', label: 'Adicionar', icon: 'add-outline', iconAtivo: 'add' },
     { key: 'Sobre', label: 'Sobre', icon: 'information-circle-outline', iconAtivo: 'information-circle' },
@@ -52,9 +52,9 @@ export default function LayoutMobile({
     <AreaSegura
       background="background"
       edges={['top', 'left', 'right']}
-      style={[styles.container, { backgroundColor: t.colors.background }, style]}
+      style={[styles.Recipiente, { backgroundColor: t.colors.background }, style]}
     >
-      <View style={[styles.header, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }]}>
+      <View style={[styles.Cabecalho, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.borderLight }]}>
         <View style={styles.headerAction} />
 
         <View style={styles.brandContainer}>
@@ -66,8 +66,8 @@ export default function LayoutMobile({
         <TouchableOpacity
           style={styles.headerAction}
           onPress={() => navegar('Configuracoes')}
-          accessibilityRole="button"
-          accessibilityLabel="Ir para configuraÃ§Ãµes"
+          accessibilityRole="Botao"
+          accessibilityLabel="Ir para configurações"
         >
           <Ionicons name="settings-outline" size={22} color={t.colors.textSecondary} />
         </TouchableOpacity>
@@ -97,14 +97,14 @@ export default function LayoutMobile({
                 key={tab.key}
                 style={styles.tabItem}
                 onPress={() => navegar(tab.key)}
-                accessibilityRole="button"
+                accessibilityRole="Botao"
                 accessibilityLabel={`Ir para ${tab.label}`}
               >
                 <View style={[styles.tabInner, ativo && [styles.tabInnerAtivo, { backgroundColor: t.colors.backgroundSecondary }]]}>
                   <Ionicons name={ativo ? tab.iconAtivo : tab.icon} size={20} color={ativo ? t.colors.primary : t.colors.textSecondary} />
                   <TextoTematizado style={[styles.tabLabel, { color: ativo ? t.colors.primary : t.colors.textSecondary }]} weight={ativo ? 'semibold' : 'regular'}>
                     {tab.label}
-                  </ThemedText>
+                  </TextoTematizado>
                   {ativo ? <View style={[styles.tabIndicator, { backgroundColor: t.colors.primary }]} /> : null}
                 </View>
               </TouchableOpacity>
@@ -112,15 +112,15 @@ export default function LayoutMobile({
           })}
         </View>
       </View>
-    </SafeArea>
+    </AreaSegura>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flex: 1,
   },
-  header: {
+  Cabecalho: {
     height: 56,
     paddingHorizontal: theme.spacing.md,
     borderBottomWidth: 1,

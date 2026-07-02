@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TextoTematizado, Espacador } from '../commons';
@@ -27,12 +27,12 @@ export default function CabecalhoPagina({
   const hasRight = Boolean(acaoDireita);
 
   return (
-    <View style={[estilos.container, style]}>
+    <View style={[estilos.Recipiente, style]}>
       {onVoltar ? (
         <Pressable
           onPress={onVoltar}
           style={estilos.botaoVoltar}
-          accessibilityRole="button"
+          accessibilityRole="Botao"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
           <TextoTematizado
@@ -43,7 +43,7 @@ export default function CabecalhoPagina({
             permitirEscalaFonte={permitirEscalaFonte}
           >
             {textoVoltar}
-          </ThemedText>
+          </TextoTematizado>
         </Pressable>
       ) : (
         <View style={estilos.espacoVoltar} />
@@ -63,7 +63,7 @@ export default function CabecalhoPagina({
           style={estilos.titulo}
         >
           {titulo}
-        </ThemedText>
+        </TextoTematizado>
         {subtitulo ? (
           <>
             <Espacador size="xs" />
@@ -73,7 +73,7 @@ export default function CabecalhoPagina({
               permitirEscalaFonte={permitirEscalaFonte}
             >
               {subtitulo}
-            </ThemedText>
+            </TextoTematizado>
           </>
         ) : null}
       </View>
@@ -85,7 +85,7 @@ export default function CabecalhoPagina({
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: t.spacing.md,

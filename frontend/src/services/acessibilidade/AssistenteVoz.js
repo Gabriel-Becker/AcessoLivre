@@ -1,10 +1,10 @@
-﻿import ServicoVoz from './ServicoVoz';
+import ServicoVoz from './ServicoVoz';
 import ServicoNavegacao from './ServicoNavegacao';
 
-class MotoAssistente {
+class AssistenteVoz {
   static isProcessing = false;
   
-  // Armazenar contexto da tela atual
+  // Armazena contexto da tela atual.
   static currentContext = {
     screen: 'Home',
     totalLocais: 0,
@@ -14,13 +14,12 @@ class MotoAssistente {
     locaisDestaque: []
   };
 
-  // MÃ©todo para atualizar o contexto da tela atual
+  // Atualiza o contexto da tela atual.
   static updateContext(context) {
     this.currentContext = { ...this.currentContext, ...context };
-    console.log('ðŸ“¢ Contexto do assistente atualizado:', this.currentContext);
   }
 
-  // MÃ©todo para obter o contexto atual
+  // Retorna o contexto atual.
   static getContext() {
     return this.currentContext;
   }
@@ -36,8 +35,8 @@ class MotoAssistente {
  
     const fullContext = { ...this.currentContext, ...context };
 
-    if (text.includes('home') || text.includes('inÃ­cio') || text.includes('inicio') || text.includes('principal')) {
-      ServicoVoz.speak('Indo para a pÃ¡gina inicial');
+    if (text.includes('home') || text.includes('inicio') || text.includes('principal')) {
+      ServicoVoz.speak('Indo para a página inicial');
       ServicoNavegacao.resetTo('Main', { screen: 'Inicio' });
     }
     
@@ -46,13 +45,13 @@ class MotoAssistente {
       ServicoNavegacao.navigate('Main', { screen: 'Perfil' });
     }
     
-    else if (text.includes('denunciar') || text.includes('reportar') || text.includes('fazer denÃºncia')) {
-      ServicoVoz.speak('Abrindo formulÃ¡rio de denÃºncia');
+    else if (text.includes('denunciar') || text.includes('reportar') || text.includes('fazer denuncia')) {
+      ServicoVoz.speak('Abrindo formulário de denúncia');
       ServicoNavegacao.navigate('Main', { screen: 'Denuncia' });
     }
     
-    else if (text.includes('configuraÃ§Ãµes') || text.includes('configuracoes') || text.includes('ajustes')) {
-      ServicoVoz.speak('Abrindo configuraÃ§Ãµes');
+    else if (text.includes('configuracoes') || text.includes('ajustes')) {
+      ServicoVoz.speak('Abrindo configurações');
       ServicoNavegacao.navigate('Main', { screen: 'Configuracoes' });
     }
     
@@ -61,7 +60,7 @@ class MotoAssistente {
         ServicoVoz.speak('Voltando');
         ServicoNavegacao.goBack();
       } else {
-        ServicoVoz.speak('NÃ£o Ã© possÃ­vel voltar, vocÃª jÃ¡ estÃ¡ na tela inicial');
+        ServicoVoz.speak('Não é possível voltar, você já está na tela inicial');
       }
     }
     
@@ -70,17 +69,17 @@ class MotoAssistente {
       ServicoNavegacao.resetTo('Entrar');
     }
     
-    else if (text.includes('estatÃ­sticas') || text.includes('estatisticas') || 
+    else if (text.includes('estatisticas') || 
              text.includes('quantos locais') || text.includes('total de locais') ||
-             text.includes('quantas avaliaÃ§Ãµes') || text.includes('total de avaliaÃ§Ãµes')) {
+         text.includes('quantas avaliacoes') || text.includes('total de avaliacoes')) {
       
       const totalLocais = fullContext.totalLocais || 0;
       const totalAvaliacoes = fullContext.totalAvaliacoes || 0;
       
       if (totalLocais > 0) {
-        ServicoVoz.speak(`Total de ${totalLocais} locais cadastrados e ${totalAvaliacoes} avaliaÃ§Ãµes registradas.`);
+        ServicoVoz.speak(`Total de ${totalLocais} locais cadastrados e ${totalAvaliacoes} avaliações registradas.`);
       } else {
-        ServicoVoz.speak('Carregando estatÃ­sticas. Tente novamente em alguns instantes.');
+        ServicoVoz.speak('Carregando estatísticas. Tente novamente em alguns instantes.');
       }
     }
     
@@ -90,7 +89,7 @@ class MotoAssistente {
       const count = fullContext.locaisDestaqueCount || 0;
       
       if (count > 0) {
-        ServicoVoz.speak(`Mostrando ${count} locais em destaque na pÃ¡gina inicial.`);
+        ServicoVoz.speak(`Mostrando ${count} locais em destaque na página inicial.`);
       } else {
         ServicoVoz.speak('Nenhum local em destaque no momento.');
       }
@@ -98,18 +97,18 @@ class MotoAssistente {
     
     else if (text.includes('ver todos') || text.includes('todos os locais') || 
              text.includes('lista completa') || text.includes('mais locais')) {
-      ServicoVoz.speak('Abrindo pÃ¡gina de busca com todos os locais cadastrados');
+      ServicoVoz.speak('Abrindo página de busca com todos os locais cadastrados');
       ServicoNavegacao.navigate('Main', { screen: 'Buscar' });
     }
     
     else if (text.includes('atualizar') || text.includes('recarregar') || 
-             text.includes('refresh') || text.includes('atualizar pÃ¡gina')) {
-      ServicoVoz.speak('Atualizando a pÃ¡gina inicial');
-      // Disparar evento de refresh (serÃ¡ capturado pela Home)
+             text.includes('refresh') || text.includes('atualizar pagina')) {
+      ServicoVoz.speak('Atualizando a página inicial');
+      // Dispara evento de refresh (capturado pela Home).
       if (fullContext.onRefresh) {
         fullContext.onRefresh();
       } else {
-        ServicoVoz.speak('NÃ£o foi possÃ­vel atualizar automaticamente. Tente puxar a tela para baixo.');
+        ServicoVoz.speak('Não foi possível atualizar automaticamente. Tente puxar a tela para baixo.');
       }
     }
     
@@ -117,7 +116,7 @@ class MotoAssistente {
              text.includes('encontre') || text.includes('onde fica') ||
              text.match(/^buscar\s+\w+/i) || text.match(/^procure\s+\w+/i)) {
       
-      // Extrair nome do local (remove palavras de comando)
+                // Extrai nome do local removendo palavras de comando.
       let nomeLocal = text
         .replace(/buscar|procure|encontre|onde fica|o local|local|chamado|chamada/g, '')
         .trim();
@@ -126,7 +125,7 @@ class MotoAssistente {
         ServicoVoz.speak(`Procurando por ${nomeLocal}`);
         fullContext.buscarLocalPorNome(nomeLocal);
       } else if (nomeLocal && fullContext.locaisDestaque?.length > 0) {
-        // Busca local nos destaques
+        // Busca local na lista de destaques.
         const localEncontrado = fullContext.locaisDestaque.find(local => 
           local.nome?.toLowerCase().includes(nomeLocal.toLowerCase())
         );
@@ -135,15 +134,15 @@ class MotoAssistente {
           ServicoVoz.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
           ServicoNavegacao.navigate('LocalDetalhes', { id: localEncontrado.id });
         } else {
-          ServicoVoz.speak(`NÃ£o encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
+          ServicoVoz.speak(`Não encontrei nenhum local chamado ${nomeLocal} nos destaques.`);
         }
       } else {
         ServicoVoz.speak('Diga o nome do local que deseja buscar. Por exemplo: buscar restaurante central');
       }
     }
     
-    else if (text.includes('detalhes') || text.includes('mais informaÃ§Ãµes') || 
-             text.includes('sobre') || text.includes('informaÃ§Ãµes do local')) {
+        else if (text.includes('detalhes') || text.includes('mais informacoes') || 
+          text.includes('sobre') || text.includes('informacoes do local')) {
       
       ServicoVoz.speak('Toque em qualquer card de local para ver os detalhes completos');
     }
@@ -155,15 +154,15 @@ class MotoAssistente {
       
       if (screen === 'Home') {
         ServicoVoz.speak(
-          'Comandos disponÃ­veis na pÃ¡gina inicial: home, perfil, denunciar, configuraÃ§Ãµes, voltar, sair, ' +
-          'estatÃ­sticas, destaques, ver todos os locais, atualizar pÃ¡gina, ' +
-          'buscar seguido do nome do local, e ajuda. O que vocÃª deseja?'
+          'Comandos disponíveis na página inicial: home, perfil, denunciar, configurações, voltar, sair, ' +
+          'estatísticas, destaques, ver todos os locais, atualizar página, ' +
+          'buscar seguido do nome do local e ajuda. O que você deseja?'
         );
       } else {
         ServicoVoz.speak(
-          'Comandos gerais: home para pÃ¡gina inicial, perfil para seus dados, ' +
-          'denunciar para fazer uma denÃºncia, configuraÃ§Ãµes para ajustes, ' +
-          'voltar para tela anterior, sair para encerrar sessÃ£o, e ajuda para ouvir os comandos novamente.'
+          'Comandos gerais: home para página inicial, perfil para seus dados, ' +
+          'denunciar para fazer uma denúncia, configurações para ajustes, ' +
+          'voltar para a tela anterior, sair para encerrar sessão e ajuda para ouvir os comandos novamente.'
         );
       }
     }
@@ -172,15 +171,15 @@ class MotoAssistente {
       ServicoVoz.speak('Por nada! Estou aqui para ajudar.');
     }
     
-    else if (text.includes('tudo bem') || text.includes('como vocÃª estÃ¡') || text.includes('como vai')) {
-      ServicoVoz.speak('Estou funcionando perfeitamente! Como posso ajudar vocÃª hoje?');
+    else if (text.includes('tudo bem') || text.includes('como voce esta') || text.includes('como vai')) {
+      ServicoVoz.speak('Estou funcionando perfeitamente! Como posso ajudar você hoje?');
     }
     
     else {
-      const currentScreen = ServicoNavegacao.getCurrentRoute() || fullContext.screen || 'pÃ¡gina atual';
+      const currentScreen = ServicoNavegacao.getCurrentRoute() || fullContext.screen || 'página atual';
       ServicoVoz.speak(
-        `Comando nÃ£o reconhecido. VocÃª estÃ¡ na tela ${currentScreen}. ` +
-        'Diga ajuda para ver os comandos disponÃ­veis ou tente novamente.'
+        `Comando não reconhecido. Você está na tela ${currentScreen}. ` +
+        'Diga ajuda para ver os comandos disponíveis ou tente novamente.'
       );
     }
 
@@ -188,4 +187,4 @@ class MotoAssistente {
   }
 }
 
-export default MotoAssistente;
+export default AssistenteVoz;

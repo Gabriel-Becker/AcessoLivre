@@ -1,4 +1,4 @@
-﻿
+
 import React, { useContext } from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
@@ -11,7 +11,7 @@ export default function BotaoVoz() {
   return (
     <TouchableOpacity 
       onPress={startListening}
-      style={[styles.button, isListening && styles.buttonListening]}
+      style={[styles.Botao, isListening && styles.buttonListening]}
       disabled={isListening}
     >
       {isListening ? (
@@ -21,7 +21,7 @@ export default function BotaoVoz() {
         </>
       ) : (
         <>
-          <Text style={styles.text}>ðŸŽ¤</Text>
+          <Text style={styles.text}>🎤</Text>
           <Text style={styles.text}>Assistente</Text>
         </>
       )}
@@ -29,7 +29,7 @@ export default function BotaoVoz() {
       {lastCommand && !isListening && (
         <View style={styles.lastCommand}>
           <Text style={styles.commandText}>
-            Ãšltimo: {lastCommand}
+            Último: {lastCommand}
           </Text>
         </View>
       )}
@@ -38,7 +38,7 @@ export default function BotaoVoz() {
 }
 
 const styles = StyleSheet.create({
-  button: {
+  Botao: {
     position: 'absolute',
     bottom: 30,
     right: 20,

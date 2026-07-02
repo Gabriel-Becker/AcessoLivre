@@ -1,6 +1,6 @@
-﻿import api from '../api/axios';
+import api from '../api/axios';
 
-class DenunciaService {
+class ServicoDenuncia {
   static baseURL = '/denuncias';
 
   static async getAll(filters = {}) {
@@ -43,7 +43,7 @@ class DenunciaService {
 
       return { success: true, data: denuncias, pagination };
     } catch (error) {
-      console.error('Erro ao listar denÃºncias:', error);
+      console.error('Erro ao listar denúncias:', error);
       return {
         success: false,
         data: [],
@@ -58,7 +58,7 @@ class DenunciaService {
       const response = await api.get(`${this.baseURL}/estatisticas`);
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('Erro ao buscar estatÃ­sticas:', error);
+      console.error('Erro ao buscar estatísticas:', error);
       return { success: false, data: { TOTAL: 0, PENDING: 0 } };
     }
   }
@@ -78,7 +78,7 @@ class DenunciaService {
       await api.delete(`${this.baseURL}/${id}`);
       return { success: true };
     } catch (error) {
-      console.error('Erro ao deletar denÃºncia:', error);
+      console.error('Erro ao deletar denúncia:', error);
       return { success: false, message: error.response?.data?.message };
     }
   }
@@ -86,18 +86,18 @@ class DenunciaService {
   static async resolver(id) {
     try {
       const response = await api.post(`${this.baseURL}/${id}/resolver`);
-      return { success: true, data: response.data, message: 'DenÃºncia resolvida com sucesso' };
+      return { success: true, data: response.data, message: 'Denúncia resolvida com sucesso' };
     } catch (error) {
       if (error.response?.status === 409) {
         return { 
           success: false, 
-          message: 'Esta denÃºncia jÃ¡ foi processada',
+          message: 'Esta denúncia já foi processada',
           alreadyResolved: true 
         };
       }
-      return { success: false, message: error.response?.data?.message || 'Erro ao resolver denÃºncia' };
+      return { success: false, message: error.response?.data?.message || 'Erro ao resolver denúncia' };
     }
   }
 }
 
-export default DenunciaService;
+export default ServicoDenuncia;

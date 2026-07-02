@@ -1,23 +1,23 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../commons';
+import { TextoTematizado } from '../commons';
 import { CardSecao } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 
-// Mapeamento de ï¿½cones e labels
+// Mapeamento de ícones e labels
 const ACCESSIBILITY_CONFIG = {
-  RAMPA: { icon: 'logo-usd', label: 'Rampa' },
+  RAMPA: { icon: 'walk-outline', label: 'Rampa' },
   ELEVADOR: { icon: 'arrow-up-outline', label: 'Elevador' },
-  BANHEIRO_ADAPTADO: { icon: 'body-outline', label: 'Sanitï¿½rio Adaptado' },
+  BANHEIRO_ADAPTADO: { icon: 'body-outline', label: 'Sanitário Adaptado' },
   ESTACIONAMENTO: { icon: 'car-outline', label: 'Estacionamento' },
-  PISO_TATIL: { icon: 'eye-outline', label: 'Piso Tï¿½til' },
+  PISO_TATIL: { icon: 'eye-outline', label: 'Piso Tátil' },
   ATENDIMENTO_ESPECIALIZADO: { icon: 'hand-left-outline', label: 'Atendimento Especializado' },
   RECURSOS_AUDIOVISUAIS: { icon: 'mic-outline', label: 'Recursos Audiovisuais' },
-  SINALIZACAO_BRAILLE: { icon: 'braille-outline', label: 'Sinalizaï¿½ï¿½o em Braile' },
-  ESPACO_AMPLO: { icon: 'resize-outline', label: 'Espaï¿½o Amplo' },
-  MOBILIARIO_ADAPTADO: { icon: 'grid-outline', label: 'Mobiliï¿½rio Adaptado' },
+  SINALIZACAO_BRAILLE: { icon: 'braille-outline', label: 'Sinalização em Braille' },
+  ESPACO_AMPLO: { icon: 'resize-outline', label: 'Espaço Amplo' },
+  MOBILIARIO_ADAPTADO: { icon: 'grid-outline', label: 'Mobiliário Adaptado' },
 };
 
 export default function AcessibilidadeLocal({ tiposAcessibilidade = [], altoContraste }) {
@@ -42,15 +42,15 @@ export default function AcessibilidadeLocal({ tiposAcessibilidade = [], altoCont
       titulo="Recursos de Acessibilidade"
       icone="accessibility-outline"
       altoContraste={altoContraste ?? isHighContrast}
-      style={{ elevation: 0, shadowOpacity: 0, shadowRadius: 0 }} // ? Remove todas as sombras
+      style={{ elevation: 0, shadowOpacity: 0, shadowRadius: 0 }} // Remove todas as sombras.
     >
-      <View style={styles.container}>
+      <View style={styles.Recipiente}>
         {recursos.map((recurso, index) => (
           <View key={index} style={estilos.recursoItem}>
             <View style={[estilos.iconWrapper, { backgroundColor: t.colors.backgroundSecondary }]}>
               <Ionicons name={recurso.icon} size={estilos.tamanhoIcone} color={t.colors.primary} />
             </View>
-            <TextoTematizado style={estilos.recursoLabel}>{recurso.label}</ThemedText>
+            <TextoTematizado style={estilos.recursoLabel}>{recurso.label}</TextoTematizado>
           </View>
         ))}
       </View>
@@ -59,7 +59,7 @@ export default function AcessibilidadeLocal({ tiposAcessibilidade = [], altoCont
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,

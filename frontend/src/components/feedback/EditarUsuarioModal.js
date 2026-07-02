@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,17 +17,17 @@ const REQUISITOS_SENHA = [
   },
   {
     chave: 'letraMaiuscula',
-    texto: 'Pelo menos 1 letra maiï¿½scula',
+    texto: 'Pelo menos 1 letra maiúscula',
     validar: (senha) => /[A-Z]/.test(senha),
   },
   {
     chave: 'letraMinuscula',
-    texto: 'Pelo menos 1 letra minï¿½scula',
+    texto: 'Pelo menos 1 letra minúscula',
     validar: (senha) => /[a-z]/.test(senha),
   },
   {
     chave: 'numero',
-    texto: 'Pelo menos 1 nï¿½mero',
+    texto: 'Pelo menos 1 número',
     validar: (senha) => /[0-9]/.test(senha),
   },
   {
@@ -38,18 +38,18 @@ const REQUISITOS_SENHA = [
 ];
 
 const schema = z.object({
-  nome: z.string().min(3, 'Nome deve ter no mï¿½nimo 3 caracteres'),
-  email: z.string().email('Email invï¿½lido'),
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('Email inválido'),
   role: z.enum(['ROLE_ADMIN', 'ROLE_USER'], {
-    errorMap: () => ({ message: 'Selecione uma role vï¿½lida' }),
+    errorMap: () => ({ message: 'Selecione uma role válida' }),
   }),
   senha: z
     .string()
     .optional()
-    .refine((valor) => !valor || valor.length >= 8, 'A nova senha deve ter no mï¿½nimo 8 caracteres')
-    .refine((valor) => !valor || /[A-Z]/.test(valor), 'A nova senha deve conter ao menos uma letra maiï¿½scula')
-    .refine((valor) => !valor || /[a-z]/.test(valor), 'A nova senha deve conter ao menos uma letra minï¿½scula')
-    .refine((valor) => !valor || /[0-9]/.test(valor), 'A nova senha deve conter ao menos um nï¿½mero')
+    .refine((valor) => !valor || valor.length >= 8, 'A nova senha deve ter no mínimo 8 caracteres')
+    .refine((valor) => !valor || /[A-Z]/.test(valor), 'A nova senha deve conter ao menos uma letra maiúscula')
+    .refine((valor) => !valor || /[a-z]/.test(valor), 'A nova senha deve conter ao menos uma letra minúscula')
+    .refine((valor) => !valor || /[0-9]/.test(valor), 'A nova senha deve conter ao menos um número')
     .refine((valor) => !valor || /[!@#$%^&*(),.?":{}|<>]/.test(valor), 'A nova senha deve conter ao menos um caractere especial'),
 });
 
@@ -128,7 +128,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     if (!podeSalvar) {
       setError('root', {
         type: 'manual',
-        message: 'Nenhuma alteraï¿½ï¿½o detectada. Edite algum campo para salvar.',
+        message: 'Nenhuma alteração detectada. Edite algum campo para salvar.',
       });
       return;
     }
@@ -150,18 +150,18 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
 
     const mensagemErro = String(resultado?.mensagem || '').toLowerCase();
     const erroEmailDuplicado =
-      mensagemErro.includes('email jï¿½') ||
-      mensagemErro.includes('e-mail jï¿½') ||
+      mensagemErro.includes('email já') ||
+      mensagemErro.includes('e-mail já') ||
       mensagemErro.includes('already exists') ||
       mensagemErro.includes('duplicado');
 
     if (erroEmailDuplicado) {
       setError('email', {
         type: 'server',
-        message: 'Este e-mail jï¿½ estï¿½ em uso. Informe outro e-mail.',
+        message: 'Este e-mail já está em uso. Informe outro e-mail.',
       });
     } else {
-      const mensagem = resultado?.mensagem || 'Nï¿½o foi possï¿½vel atualizar o usuï¿½rio.';
+      const mensagem = resultado?.mensagem || 'Não foi possível atualizar o usuário.';
       setError('root', {
         type: 'server',
         message: mensagem,
@@ -195,8 +195,8 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
         <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: larguraModal }]}> 
           <ScrollView showsVerticalScrollIndicator={false}>
             <TextoTematizado variant="h2" weight="bold" align="center" style={styles.titulo}>
-              Editar Usuï¿½rio
-            </ThemedText>
+              Editar Usuário
+            </TextoTematizado>
             <Espacador size="sm" />
 
             <Controller
@@ -205,7 +205,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               render={({ field: { onChange, onBlur, value } }) => (
                 <Entrada
                   label="Nome"
-                  placeholder="Digite o nome do usuï¿½rio"
+                  placeholder="Digite o nome do usuário"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -222,7 +222,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               render={({ field: { onChange, onBlur, value } }) => (
                 <Entrada
                   label="Email"
-                  placeholder="Digite o email do usuï¿½rio"
+                  placeholder="Digite o email do usuário"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -245,7 +245,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   error={errors.role?.message}
                   options={[
                     { label: 'Administrador', value: 'ROLE_ADMIN' },
-                    { label: 'Usuï¿½rio', value: 'ROLE_USER' },
+                    { label: 'Usuário', value: 'ROLE_USER' },
                   ]}
                   altoContraste={altoContraste}
                 />
@@ -281,7 +281,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                       altoContraste={altoContraste}
                     >
                       {requisito.texto}
-                    </ThemedText>
+                    </TextoTematizado>
                   </View>
                 ))}
               </View>
@@ -290,7 +290,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
             {errors.root?.message ? (
               <TextoTematizado color="error" variant="caption" align="center" style={styles.formError}>
                 {errors.root.message}
-              </ThemedText>
+              </TextoTematizado>
             ) : null}
 
             <Espacador size="sm" />
@@ -304,15 +304,15 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               disabled={!podeSalvar}
               altoContraste={altoContraste}
             >
-              Salvar Alteraï¿½ï¿½es
-            </Button>
+              Salvar Alterações
+            </Botao>
 
             {!podeSalvar ? (
               <>
                 <Espacador size="xs" />
                 <TextoTematizado color="textSecondary" variant="caption" align="center">
-                  Faï¿½a uma alteraï¿½ï¿½o para habilitar o salvamento.
-                </ThemedText>
+                  Faça uma alteração para habilitar o salvamento.
+                </TextoTematizado>
               </>
             ) : null}
 
@@ -327,7 +327,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
               altoContraste={altoContraste}
             >
               Cancelar
-            </Button>
+            </Botao>
           </ScrollView>
         </View>
       </View>

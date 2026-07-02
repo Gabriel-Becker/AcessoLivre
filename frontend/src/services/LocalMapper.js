@@ -1,4 +1,4 @@
-﻿import { normalizarUrlImagem } from '../utils/urlImagem';
+import { normalizarUrlImagem } from '../utils/urlImagem';
 
 class LocalMapper {
   static _resolverIdLocalPrincipal(local) {
@@ -23,7 +23,7 @@ class LocalMapper {
     if (!local) return null;
 
     return {
-      // ===== IDENTIFICAï¿½ï¿½O =====
+      // ===== IDENTIFICAÇÃO =====
       id: local.idLocal || local.id,
       idLocal: local.idLocal || local.id,
       nome: local.nome || 'Sem nome',
@@ -39,7 +39,7 @@ class LocalMapper {
       isRaiz: local.isRaiz || false,
       isFolha: local.isFolha || false,
 
-      // ===== AVALIAï¿½ï¿½ES =====
+      // ===== AVALIAÇÕES =====
       avaliacaoMedia: local.avaliacaoMedia || 0,
       totalAvaliacoes: local.totalAvaliacoes || 0,
 
@@ -55,7 +55,7 @@ class LocalMapper {
       
       imagensUrls: this._getAllImageUrls(local),
 
-      // ===== ENDEREï¿½O =====
+      // ===== ENDEREáO =====
       endereco: local.endereco ? {
         logradouro: local.endereco.logradouro,
         numero: local.endereco.numero,
@@ -71,7 +71,7 @@ class LocalMapper {
       // ===== ACESSIBILIDADE =====
       tiposAcessibilidade: local.tiposAcessibilidade || [],
 
-      // ===== USUï¿½RIO =====
+      // ===== USUáRIO =====
       idUsuario: local.idUsuario || local.usuario?.idUsuario || null,
       nomeUsuario: local.nomeUsuario || local.usuario?.nome || null,
 
@@ -81,7 +81,7 @@ class LocalMapper {
       horarioFuncionamento: local.horarioFuncionamento || null,
 
       // ===== FLAGS PARA UI =====
-      isMaisRecente: false, // Serï¿½ setado posteriormente pelo serviï¿½o
+      isMaisRecente: false, // Será setado posteriormente pelo serviáo
     };
   }
 

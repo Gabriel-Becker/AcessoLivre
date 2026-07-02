@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextoTematizado, Espacador } from '../commons';
 import { getTheme } from '../../config/theme';
@@ -17,10 +17,10 @@ export default function CartaoMetricas({
   const estilos = useMemo(() => criarEstilos(t), [t]);
 
   return (
-    <View style={[estilos.container, { backgroundColor: corFundo || t.colors.primary }, style]}>
+    <View style={[estilos.Recipiente, { backgroundColor: corFundo || t.colors.primary }, style]}>
       <TextoTematizado color={corTexto} weight="semibold" align="center">
         {titulo}
-      </ThemedText>
+      </TextoTematizado>
 
       <Espacador size="md" />
 
@@ -28,10 +28,10 @@ export default function CartaoMetricas({
         <View key={metrica.legenda} style={estilos.item}>
           <TextoTematizado variant="h1" color={corTexto} weight="bold" align="center">
             {metrica.valor}
-          </ThemedText>
+          </TextoTematizado>
           <TextoTematizado color={corTexto} align="center">
             {metrica.legenda}
-          </ThemedText>
+          </TextoTematizado>
           <Espacador size="md" />
         </View>
       ))}
@@ -41,7 +41,7 @@ export default function CartaoMetricas({
 
 function criarEstilos(t) {
   return StyleSheet.create({
-    container: {
+    Recipiente: {
       borderRadius: t.borderRadius.lg,
       padding: t.spacing.lg,
       alignItems: 'center',

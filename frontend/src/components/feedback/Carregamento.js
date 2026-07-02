@@ -1,4 +1,4 @@
-﻿// Loading - Indicador de carregamento com suporte a temas
+// Loading - Indicador de carregamento com suporte a temas
 import React from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import theme from '../../config/theme';
@@ -13,7 +13,7 @@ export default function Carregamento({
   const spinnerColor = color || theme.colors.primary;
 
   const content = (
-    <View style={[styles.container, fullScreen && styles.fullScreen, style]}>
+    <View style={[styles.Recipiente, fullScreen && styles.fullScreen, style]}>
       <ActivityIndicator size={size} color={spinnerColor} />
       {message && <Text style={styles.message}>{message}</Text>}
     </View>
@@ -31,7 +31,7 @@ export default function Carregamento({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.lg,

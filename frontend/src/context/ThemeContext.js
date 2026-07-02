@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTheme } from '../config/theme';
 
@@ -69,7 +69,7 @@ export const ThemeProvider = ({ children }) => {
         setIsHighContrast(valor === 'true');
       }
     } catch (e) {
-      console.error('Erro ao carregar preferÃªncia de tema:', e);
+      console.error('Erro ao carregar preferência de tema:', e);
     }
   };
 
@@ -77,7 +77,7 @@ export const ThemeProvider = ({ children }) => {
     try {
       const novoValor = !isHighContrast;
       setIsHighContrast(novoValor);
-      // Persiste em AsyncStorage e localStorage (se disponÃ­vel) e cookie para web
+      // Persiste em AsyncStorage e localStorage (se disponível) e cookie para web
       await AsyncStorage.setItem(THEME_PREF_KEY, novoValor ? 'true' : 'false');
       try {
         if (isBrowser) {
@@ -88,7 +88,7 @@ export const ThemeProvider = ({ children }) => {
         // ignore
       }
     } catch (e) {
-      console.error('Erro ao salvar preferÃªncia de tema:', e);
+      console.error('Erro ao salvar preferência de tema:', e);
     }
   };
 
@@ -113,7 +113,7 @@ export const ThemeProvider = ({ children }) => {
         setFontSizeMultiplier(normalizarEscalaFonte(valor));
       }
     } catch (e) {
-      console.error('Erro ao carregar preferÃªncia de tamanho de fonte:', e);
+      console.error('Erro ao carregar preferência de tamanho de fonte:', e);
     }
   };
 
@@ -133,7 +133,7 @@ export const ThemeProvider = ({ children }) => {
         // ignore
       }
     } catch (e) {
-      console.error('Erro ao salvar preferÃªncia de tamanho de fonte:', e);
+      console.error('Erro ao salvar preferência de tamanho de fonte:', e);
     }
   };
 

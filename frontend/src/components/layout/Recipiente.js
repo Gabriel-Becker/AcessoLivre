@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import theme, { getTheme } from '../../config/theme';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -17,7 +17,7 @@ export default function Recipiente({
   const t = typeof altoContraste === 'boolean' ? getTheme(altoContraste) : (ctxTheme || theme);
 
   const baseStyle = [
-    styles.container,
+    styles.Recipiente,
     { backgroundColor: t.colors[background] || t.colors.background, padding: t.spacing.md },
     center && styles.center,
     style,
@@ -43,7 +43,7 @@ export default function Recipiente({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  Recipiente: {
     flex: 1,
     padding: theme.spacing.md,
   },

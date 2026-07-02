@@ -1,11 +1,11 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Modal, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Recipiente, LayoutDesktop } from '../../components/layout';
 import { Card, Botao, Entrada } from '../../components/ui';
-import { Spacer, ThemedText } from '../../components/commons';
+import { Espacador, TextoTematizado } from '../../components/commons';
 import AuthHeader from './components/AuthHeader';
 import AuthActions from './components/AuthActions';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -101,8 +101,8 @@ export default function EsqueciSenha({ navigation }) {
       await ServicoAutenticacao.forgotPassword(emailNormalizado);
 
       toastHelper.showSuccess(
-        `Enviamos um cÃ³digo para ${emailNormalizado}. Verifique sua caixa de entrada e spam.`,
-        'CÃ³digo enviado'
+        `Enviamos um código para ${emailNormalizado}. Verifique sua caixa de entrada e spam.`,
+        'Código enviado'
       );
       navigation?.navigate?.('RedefinirSenha', { email: emailNormalizado });
     } catch (erro) {
@@ -121,7 +121,7 @@ export default function EsqueciSenha({ navigation }) {
       } else {
         toastHelper.showError(
           formatarErroEsqueciSenha(erro),
-          'NÃ£o foi possÃ­vel enviar o cÃ³digo'
+          'Não foi possível enviar o código'
         );
       }
     } finally {
@@ -160,8 +160,8 @@ export default function EsqueciSenha({ navigation }) {
               />
               <Espacador size="sm" />
               <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast} style={styles.introducao}>
-                Digite seu e-mail e enviaremos um cÃ³digo para redefinir sua senha
-              </ThemedText>
+                Digite seu e-mail e enviaremos um código para redefinir sua senha
+              </TextoTematizado>
 
               <Espacador size="xl" />
 
@@ -194,8 +194,8 @@ export default function EsqueciSenha({ navigation }) {
                 disabled={submitting}
                 altoContraste={isHighContrast}
               >
-                Enviar cÃ³digo de recuperaÃ§Ã£o
-              </Button>
+                Enviar código de recuperação
+              </Botao>
 
               <Espacador size="md" />
 
@@ -218,11 +218,11 @@ export default function EsqueciSenha({ navigation }) {
           <View style={styles.modalCard}>
             <TextoTematizado variant="h3" weight="bold" align="center" altoContraste={isHighContrast} style={styles.modalTitulo}>
               Conta desativada
-            </ThemedText>
+            </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
-              Sua conta foi desativada, Contate um administrador para mais informaÃ§Ãµes
-            </ThemedText>
+              Sua conta foi desativada, Contate um administrador para mais informações
+            </TextoTematizado>
 
             <Espacador size="md" />
             <Botao
@@ -233,17 +233,17 @@ export default function EsqueciSenha({ navigation }) {
               altoContraste={isHighContrast}
             >
               OK
-            </Button>
+            </Botao>
           </View>
         </View>
       </Modal>
-    </Container>
+    </Recipiente>
   );
 
   return isDesktop ? (
     <LayoutDesktop current="EsqueciSenha" onNavigate={handleNavigate} altoContraste={isHighContrast}>
       {conteudoTela}
-    </DesktopLayout>
+    </LayoutDesktop>
   ) : conteudoTela;
 }
 
