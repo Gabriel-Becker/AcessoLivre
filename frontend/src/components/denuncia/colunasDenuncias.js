@@ -85,6 +85,19 @@ export const formatarData = (data) => {
   }
 };
 
+const truncarComReticencias = (texto, limite = 32) => {
+  const valor = String(texto || '').trim();
+  if (!valor) return '';
+  if (valor.length <= limite) return valor;
+  return `${valor.slice(0, Math.max(0, limite - 3))}...`;
+};
+
+const renderTextoComTooltipWeb = (textoCompleto, children) => (
+  <View {...(Platform.OS === 'web' ? { title: textoCompleto } : {})}>
+    {children}
+  </View>
+);
+
 export const colunasDenuncias = (handlers, isHighContrast, theme) => {
   const { onAtualizarStatus, onExcluir, carregandoAcao } = handlers;
 
@@ -112,9 +125,12 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       flex: 1.2,
       sortKey: 'motivo',
       render: (item) => (
-        <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
-          {item.motivoLabel || item.motivo || 'Não informado'}
-        </TextoTematizado>
+        renderTextoComTooltipWeb(
+          item.motivoLabel || item.motivo || 'Não informado',
+          <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
+            {truncarComReticencias(item.motivoLabel || item.motivo || 'Não informado', 32)}
+          </TextoTematizado>
+        )
       ),
     },
     {
@@ -125,9 +141,12 @@ export const colunasDenuncias = (handlers, isHighContrast, theme) => {
       flex: 1.5,
       sortKey: 'targetName',
       render: (item) => (
-        <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
-          {item.targetName || `ID: ${item.targetId}`}
-        </TextoTematizado>
+        renderTextoComTooltipWeb(
+          item.targetName || `ID: ${item.targetId}`,
+          <TextoTematizado variant="caption" color="textSecondary" numberOfLines={1} altoContraste={isHighContrast}>
+            {truncarComReticencias(item.targetName || `ID: ${item.targetId}`, 38)}
+          </TextoTematizado>
+        )
       ),
     },
     {

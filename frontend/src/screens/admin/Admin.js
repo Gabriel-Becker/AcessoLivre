@@ -31,6 +31,7 @@ export default function Admin() {
   const [totalUsuarios, setTotalUsuarios] = useState(0);
   const [sortField, setSortField] = useState('dataCadastro');
   const [sortDirection, setSortDirection] = useState('DESC');
+  const [mostrarIndicadorOrdenacaoUsuarios, setMostrarIndicadorOrdenacaoUsuarios] = useState(false);
 
   const [locais, setLocais] = useState([]);
   const [paginaLocais, setPaginaLocais] = useState(0);
@@ -432,6 +433,8 @@ export default function Admin() {
   };
 
   const handleSortChange = (novaChave) => {
+    setMostrarIndicadorOrdenacaoUsuarios(true);
+
     if (sortField === novaChave) {
       setSortDirection((d) => (String(d).toUpperCase() === 'ASC' ? 'DESC' : 'ASC'));
     } else {
@@ -664,6 +667,7 @@ export default function Admin() {
           sortField={sortField}
           sortDirection={sortDirection}
           onChangeSort={handleSortChange}
+          mostrarIndicadorOrdenacao={mostrarIndicadorOrdenacaoUsuarios}
           altoContraste={isHighContrast}
         />
 
@@ -1009,6 +1013,7 @@ export default function Admin() {
         visible={modalEditarLocalVisivel}
         onClose={() => setModalEditarLocalVisivel(false)}
         local={localSelecionado}
+        altoContraste={isHighContrast}
         onSucesso={() => {
           setLocalSelecionado(null);
           carregarLocais();

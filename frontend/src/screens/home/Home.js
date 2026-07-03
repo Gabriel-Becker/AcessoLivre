@@ -287,7 +287,7 @@ export default function Home({ onNavigate, routeParams }) {
                 accessibilityRole="Botao"
               >
                 <TextoTematizado color="primary" weight="semibold">
-                  Ver todos ?
+                  Ver todos
                 </TextoTematizado>
               </TouchableOpacity>
             </View>

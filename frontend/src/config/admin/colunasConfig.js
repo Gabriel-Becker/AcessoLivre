@@ -11,6 +11,13 @@ const renderTextoTruncadoComTooltipWeb = (textoCompleto, children) => (
   </View>
 );
 
+const truncarComReticencias = (texto, limite = 32) => {
+  const valor = String(texto || '').trim();
+  if (!valor) return '';
+  if (valor.length <= limite) return valor;
+  return `${valor.slice(0, Math.max(0, limite - 3))}...`;
+};
+
 export const renderNomeUsuario = (item, altoContraste = false) => (
   renderTextoTruncadoComTooltipWeb(
     item.nome || 'Usuário sem nome',
@@ -21,15 +28,18 @@ export const renderNomeUsuario = (item, altoContraste = false) => (
       altoContraste={altoContraste}
       color={altoContraste ? 'textOnPrimary' : 'textPrimary'}
     >
-      {item.nome || 'Usuário sem nome'}
+      {truncarComReticencias(item.nome || 'Usuário sem nome', 36)}
     </TextoTematizado>
   )
 );
 
 export const renderEmailUsuario = (item, altoContraste = false) => (
-  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
-    {item.email || 'E-mail não informado'}
-  </TextoTematizado>
+  renderTextoTruncadoComTooltipWeb(
+    item.email || 'E-mail não informado',
+    <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste} numberOfLines={1}>
+      {truncarComReticencias(item.email || 'E-mail não informado', 42)}
+    </TextoTematizado>
+  )
 );
 
 export const renderRoleUsuario = (item, formatarRoleUsuario) => (
@@ -142,7 +152,7 @@ export const renderNomeLocal = (item, altoContraste = false) => (
       altoContraste={altoContraste}
       color={altoContraste ? 'textOnPrimary' : 'textPrimary'}
     >
-      {item.nome || 'Local sem nome'}
+      {truncarComReticencias(item.nome || 'Local sem nome', 48)}
     </TextoTematizado>
   )
 );
@@ -152,9 +162,12 @@ export const renderCategoriaLocal = (item, altoContraste = false) => (
 );
 
 export const renderCidadeLocal = (item, altoContraste = false) => (
-  <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste}>
-    {item?.endereco?.cidade || 'N/I'} - {item?.endereco?.estado || 'N/I'}
-  </TextoTematizado>
+  renderTextoTruncadoComTooltipWeb(
+    `${item?.endereco?.cidade || 'N/I'} - ${item?.endereco?.estado || 'N/I'}`,
+    <TextoTematizado color={altoContraste ? 'textOnPrimary' : 'textSecondary'} size="sm" altoContraste={altoContraste} numberOfLines={1}>
+      {truncarComReticencias(`${item?.endereco?.cidade || 'N/I'} - ${item?.endereco?.estado || 'N/I'}`, 30)}
+    </TextoTematizado>
+  )
 );
 
 export const renderStatusLocal = (item, altoContraste = false) => (
@@ -168,7 +181,17 @@ export const renderStatusLocal = (item, altoContraste = false) => (
 const formatarDataHora = (valor) => {
   if (!valor) return 'Sem data';
 
-  const data = new Date(valor);
+  const texto = String(valor).trim();
+
+  // Backend pode enviar em "dd/MM/yyyy HH:mm:ss"; nesse caso
+  // montamos o texto diretamente para evitar parse inconsistente no JS.
+  const matchFormatoBr = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})(?::\d{2})?$/);
+  if (matchFormatoBr) {
+    const [, dia, mes, ano, hora, minuto] = matchFormatoBr;
+    return `${dia}/${mes}/${ano} - ${hora}:${minuto}`;
+  }
+
+  const data = new Date(texto);
   if (Number.isNaN(data.getTime())) return 'Sem data';
 
   const partes = new Intl.DateTimeFormat('pt-BR', {

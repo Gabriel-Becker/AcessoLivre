@@ -15,6 +15,7 @@ export default function TabelaPlanilhaAdmin({
   sortField,
   sortDirection,
   onChangeSort,
+  mostrarIndicadorOrdenacao = true,
   altoContraste = false,
 }) {
   const { isHighContrast } = useThemeContext();
@@ -34,7 +35,9 @@ export default function TabelaPlanilhaAdmin({
             {colunas.map((coluna, colIndex) => {
               const isSortable = Boolean(coluna.sortKey);
               const isActive = isSortable && sortField && (coluna.sortKey === sortField || coluna.chave === sortField);
-              const indicator = isActive ? (String(sortDirection).toUpperCase() === 'ASC' ? 'â–²' : 'â–¼') : '';
+              const indicator = mostrarIndicadorOrdenacao && isActive
+                ? (String(sortDirection).toUpperCase() === 'ASC' ? 'ASC' : 'DESC')
+                : '';
               const isCenter = coluna.alinhamento === 'center';
               const paddingHorizontal = isCenter ? 0 : 6;
               const isLast = colIndex === colunas.length - 1;
@@ -128,7 +131,9 @@ export default function TabelaPlanilhaAdmin({
                           },
                         ]}
                       >
-                        {coluna.render(item, indice, contrasteAtivo)}
+                        <View style={styles.conteudoCelula}>
+                          {coluna.render(item, indice, contrasteAtivo)}
+                        </View>
                       </View>
                     ))}
                   </View>
@@ -177,6 +182,12 @@ const styles = StyleSheet.create({
   celula: {
     justifyContent: 'center',
     paddingRight: 6,
+  },
+  conteudoCelula: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   tituloColuna: {
     textTransform: 'uppercase',
