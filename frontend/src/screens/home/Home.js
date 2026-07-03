@@ -284,7 +284,7 @@ export default function Home({ onNavigate, routeParams }) {
               <TouchableOpacity 
                 onPress={() => onNavigate?.('Buscar')}
                 accessibilityLabel="Ver todos os locais"
-                accessibilityRole="Botao"
+                accessibilityRole="button"
               >
                 <TextoTematizado color="primary" weight="semibold">
                   Ver todos

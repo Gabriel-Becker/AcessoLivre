@@ -155,7 +155,7 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
           </View>
         </View>
 
-        <ComentarioMenu 
+        <MenuComentario 
           comentario={avaliacao}
           autorNome={nomeUsuario}
           showReportar={true}
@@ -657,7 +657,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
         <TouchableOpacity
           onPress={handleVoltar}
           style={[styles.botaoVoltarTopo, { borderColor: t.colors.borderLight, backgroundColor: t.colors.surface }]}
-          accessibilityRole="Botao"
+          accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={20} color={t.colors.textPrimary} />
           <TextoTematizado weight="medium" style={[styles.textoVoltarTopo, estilosZoom.textoVoltarTopo]}>Voltar</TextoTematizado>

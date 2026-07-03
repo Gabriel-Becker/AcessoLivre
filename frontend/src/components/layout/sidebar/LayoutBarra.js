@@ -212,7 +212,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                             ]}
                             onPress={() => alterarTamanhoFonte(opcao.valor)}
                             activeOpacity={0.8}
-                            accessibilityRole="Botao"
+                            accessibilityRole="button"
                             accessibilityState={{ selected: selecionado }}
                           >
                             <View style={styles.opcaoTopo}>

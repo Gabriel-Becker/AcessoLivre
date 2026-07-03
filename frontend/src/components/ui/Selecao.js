@@ -93,7 +93,7 @@ export default function Selecao({
           disabled && estilos.inputDisabled,
           style,
         ]}
-        accessibilityRole="Botao"
+        accessibilityRole="button"
         ref={inputRef}
       >
         <View style={estilos.valorContainer}>

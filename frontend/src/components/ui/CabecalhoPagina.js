@@ -32,7 +32,7 @@ export default function CabecalhoPagina({
         <Pressable
           onPress={onVoltar}
           style={estilos.botaoVoltar}
-          accessibilityRole="Botao"
+          accessibilityRole="button"
         >
           <Ionicons name="arrow-back" size={18} color={t.colors.textPrimary} />
           <TextoTematizado

@@ -46,7 +46,7 @@ export default function ModalTermos({ visible, onClose, type = 'terms', altoCont
             <TextoTematizado weight="bold" altoContraste={contrasteAtivo} color={corPrincipal} style={styles.title}>
               {titulo}
             </TextoTematizado>
-            <Pressable onPress={onClose} accessibilityRole="Botao" style={styles.closeButton}>
+            <Pressable onPress={onClose} accessibilityRole="button" style={styles.closeButton}>
               <Ionicons name="close" size={24} color={contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary} />
             </Pressable>
           </View>

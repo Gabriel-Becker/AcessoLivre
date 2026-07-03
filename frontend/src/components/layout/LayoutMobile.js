@@ -66,7 +66,7 @@ export default function LayoutMobile({
         <TouchableOpacity
           style={styles.headerAction}
           onPress={() => navegar('Configuracoes')}
-          accessibilityRole="Botao"
+          accessibilityRole="button"
           accessibilityLabel="Ir para configurações"
         >
           <Ionicons name="settings-outline" size={22} color={t.colors.textSecondary} />
@@ -97,7 +97,7 @@ export default function LayoutMobile({
                 key={tab.key}
                 style={styles.tabItem}
                 onPress={() => navegar(tab.key)}
-                accessibilityRole="Botao"
+                accessibilityRole="button"
                 accessibilityLabel={`Ir para ${tab.label}`}
               >
                 <View style={[styles.tabInner, ativo && [styles.tabInnerAtivo, { backgroundColor: t.colors.backgroundSecondary }]]}>

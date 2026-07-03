@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 import {
-  ENVIRONMENT,
   WEB_API_URL,
   ANDROID_API_URL,
   IOS_API_URL,
@@ -8,7 +7,13 @@ import {
 } from '@env';
 
 function getApiUrl() {
-  if (ENVIRONMENT === 'prod' && PROD_API_URL) {
+  // No web, prioriza URL local para desenvolvimento e evita CORS em dominio externo.
+  if (Platform.OS === 'web' && WEB_API_URL) {
+    return WEB_API_URL;
+  }
+
+  // Em mobile, usa URL fixa para reduzir necessidade de rebuild.
+  if (Platform.OS !== 'web' && PROD_API_URL) {
     return PROD_API_URL;
   }
 
@@ -24,7 +29,7 @@ function getApiUrl() {
     return WEB_API_URL;
   }
 
-  return __DEV__ 
+  return Platform.OS === 'web'
     ? 'http://localhost:8080/api'
     : 'https://api.acessolivre.com/api';
 }

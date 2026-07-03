@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Recipiente } from '../../components/layout';
-import { Card, Botao } from '../../components/ui';
+import { Card, Botao, Entrada } from '../../components/ui';
 import { Espacador, TextoTematizado } from '../../components/commons';
 import { useThemeContext } from '../../context/ThemeContext';
 import { setup2FA, enable2FA, disable2FA, get2FAStatus } from '../../services/ServicoAutenticacao';
@@ -18,11 +18,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
   const [processingEnable, setProcessingEnable] = useState(false);
   const [processingDisable, setProcessingDisable] = useState(false);
 
-  useEffect(() => {
-    checkStatus();
-  }, []);
-
-  const checkStatus = async () => {
+  async function checkStatus() {
     setLoading(true);
     try {
       const status = await get2FAStatus();
@@ -32,7 +28,11 @@ export default function ConfigurarDoisFatores({ navigation }) {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    void checkStatus();
+  }, []);
 
   const handleSetup = async () => {
     setLoading(true);

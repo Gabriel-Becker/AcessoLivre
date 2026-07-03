@@ -31,7 +31,7 @@ import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
 import ServicoBusca from '../../services/ServicoBusca';
 import { getTheme } from '../../config/theme';
 import { CATEGORIAS } from '../../constants/enums';
-import { obterCategoriaIcone, obterCategoriaLabel } from '../../config/categoriasConfig';
+import { CATEGORIAS_LABELS, obterCategoriaIcone, obterCategoriaLabel } from '../../config/categoriasConfig';
 import toastHelper from '../../utils/toastHelper';
 
 const RECURSOS_ACESSIBILIDADE = [
@@ -165,7 +165,7 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
         <TouchableOpacity 
           onPress={handleClear}
           accessibilityLabel="Limpar busca"
-          accessibilityRole="Botao"
+          accessibilityRole="button"
         >
           <Ionicons name="close-circle" size={Math.round(18 * escalaFiltro)} color={theme.colors.textSecondary} />
         </TouchableOpacity>
@@ -213,7 +213,7 @@ const FiltroCategoria = React.memo(({ categoriasSelecionadas, onToggleCategoria,
         onPress={toggleExpand} 
         activeOpacity={0.7}
         accessibilityLabel="Filtro por categoria"
-        accessibilityRole="Botao"
+        accessibilityRole="button"
         accessibilityHint={expanded ? 'Recolher categorias' : 'Expandir categorias'}
       >
         <Ionicons name="grid-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
@@ -310,7 +310,7 @@ const FiltroAcessibilidade = React.memo(({ recursosSelecionados, onToggleRecurso
         onPress={toggleExpand} 
         activeOpacity={0.7}
         accessibilityLabel="Filtro por recursos de acessibilidade"
-        accessibilityRole="Botao"
+        accessibilityRole="button"
       >
         <Ionicons name="accessibility-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.primary} />
         <TextoTematizado weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Acessibilidade</TextoTematizado>
@@ -512,7 +512,7 @@ const FiltrosCard = React.memo(({
           onPress={onToggleFiltros}
           activeOpacity={0.75}
           style={styles.filtrosHeaderToggle}
-          accessibilityRole="Botao"
+          accessibilityRole="button"
           accessibilityLabel={filtrosVisiveis ? 'Recolher painel de filtros' : 'Expandir painel de filtros'}
         >
           <Ionicons name="options-outline" size={tamanhoIconeHeader} color={theme.colors.primary} />
@@ -540,7 +540,7 @@ const FiltrosCard = React.memo(({
             }} 
             style={styles.limparButton}
             accessibilityLabel="Limpar todos os filtros"
-            accessibilityRole="Botao"
+            accessibilityRole="button"
           >
             <Ionicons name="close-circle-outline" size={Math.round(18 * escalaFiltro)} color={theme.colors.error} />
             <TextoTematizado color="error" variant="caption" style={{ fontSize: Math.round(12 * escalaFiltro) }}>Limpar</TextoTematizado>

@@ -47,7 +47,7 @@ export default function LayoutDesktop({
           <TouchableOpacity
             style={[styles.botaoMenu, { borderColor: t.colors.borderLight, backgroundColor: t.colors.backgroundSecondary }]}
             onPress={() => onNavigate?.('MenuLateral')}
-            accessibilityRole="Botao"
+            accessibilityRole="button"
             accessibilityLabel="Abrir menu lateral"
           >
             <Ionicons name="menu-outline" size={22} color={t.colors.primary} />

@@ -92,13 +92,64 @@ export default function Perfil() {
     
     if (localEncontrado) {
       ServicoVoz.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
-      handleAbrirDetalhesLocal(localEncontrado.idLocal);
+      navigate('Main', { screen: 'LocalDetalhes', id: localEncontrado.idLocal });
       return true;
     }
     
     ServicoVoz.speak(`Não encontrei nenhum local chamado ${nomeLocal} na sua lista.`);
     return false;
   }, [meusLocais]);
+
+  async function carregarStatusTwoFactor() {
+    try {
+      setCarregandoTwoFactor(true);
+      const status = await ServicoAutenticacao.get2FAStatus();
+      setTwoFactorAtivo(Boolean(status?.enabled ?? status?.ativo ?? status));
+      if (voiceEnabled) {
+        ServicoVoz.speak(`Autenticação em dois fatores ${status?.enabled ? 'ativada' : 'desativada'}`);
+      }
+    } catch (erro) {
+      toastHelper.showError('Não foi possível carregar o status da autenticação em dois fatores.', 'Falha ao carregar segurança');
+    } finally {
+      setCarregandoTwoFactor(false);
+    }
+  }
+
+  async function carregarMeusLocais() {
+    if (!usuario?.idUsuario) return;
+    try {
+      setCarregandoMeusLocais(true);
+      const locais = await ServicoLocal.obterMeusLocais(usuario.idUsuario);
+      setMeusLocais(Array.isArray(locais) ? locais : []);
+      if (voiceEnabled && locais.length > 0) {
+        ServicoVoz.speak(`${locais.length} locais carregados`);
+      }
+    } catch (erro) {
+      console.error('Erro ao carregar meus locais:', erro);
+      toastHelper.showError('Não foi possível carregar seus locais.');
+    } finally {
+      setCarregandoMeusLocais(false);
+    }
+  }
+
+  async function executarLogout() {
+    try {
+      setCarregandoLogout(true);
+      if (voiceEnabled) ServicoVoz.speak('Saindo da sua conta');
+      await logout();
+      resetToHome();
+    } finally {
+      setCarregandoLogout(false);
+    }
+  }
+
+  function handleAbrirDetalhesLocal(idLocal) {
+    const local = meusLocais.find(l => l.idLocal === idLocal);
+    if (voiceEnabled && local) {
+      ServicoVoz.speak(`Abrindo detalhes de ${local.nome}`);
+    }
+    navigate('Main', { screen: 'LocalDetalhes', id: idLocal });
+  }
 
   useEffect(() => {
     if (voiceEnabled) {
@@ -148,45 +199,13 @@ export default function Perfil() {
     }
   }, [voiceEnabled]);
   
-  const carregarStatusTwoFactor = async () => {
-    try {
-      setCarregandoTwoFactor(true);
-      const status = await ServicoAutenticacao.get2FAStatus();
-      setTwoFactorAtivo(Boolean(status?.enabled ?? status?.ativo ?? status));
-      if (voiceEnabled) {
-        ServicoVoz.speak(`Autenticação em dois fatores ${status?.enabled ? 'ativada' : 'desativada'}`);
-      }
-    } catch (erro) {
-      toastHelper.showError('Não foi possível carregar o status da autenticação em dois fatores.', 'Falha ao carregar segurança');
-    } finally {
-      setCarregandoTwoFactor(false);
-    }
-  };
-
   useEffect(() => {
-    carregarStatusTwoFactor();
+    void carregarStatusTwoFactor();
   }, []);
 
   useEffect(() => {
-    carregarMeusLocais();
+    void carregarMeusLocais();
   }, [usuario]);
-
-  const carregarMeusLocais = async () => {
-    if (!usuario?.idUsuario) return;
-    try {
-      setCarregandoMeusLocais(true);
-      const locais = await ServicoLocal.obterMeusLocais(usuario.idUsuario);
-      setMeusLocais(Array.isArray(locais) ? locais : []);
-      if (voiceEnabled && locais.length > 0) {
-        ServicoVoz.speak(`${locais.length} locais carregados`);
-      }
-    } catch (erro) {
-      console.error('Erro ao carregar meus locais:', erro);
-      toastHelper.showError('Não foi possível carregar seus locais.');
-    } finally {
-      setCarregandoMeusLocais(false);
-    }
-  };
 
   const confirmarExcluirLocal = (local) => {
     if (!local?.idLocal) return;
@@ -252,31 +271,12 @@ export default function Perfil() {
     navigate('Main', { screen: 'Adicionar', localId: idLocal });
   };
 
-  const handleAbrirDetalhesLocal = (idLocal) => {
-    const local = meusLocais.find(l => l.idLocal === idLocal);
-    if (voiceEnabled && local) {
-      ServicoVoz.speak(`Abrindo detalhes de ${local.nome}`);
-    }
-    navigate('Main', { screen: 'LocalDetalhes', id: idLocal });
-  };
-
-  const executarLogout = async () => {
-    try {
-      setCarregandoLogout(true);
-      if (voiceEnabled) ServicoVoz.speak('Saindo da sua conta');
-      await logout();
-      resetToHome();
-    } finally {
-      setCarregandoLogout(false);
-    }
-  };
-  
   const InfoItem = ({ icon, label, value, onPress }) => (
     <TouchableOpacity 
       style={[styles.infoItem, isHighContrast && { borderBottomColor: t.colors.primary }]}
       onPress={onPress}
       disabled={!onPress}
-      accessibilityRole="Botao"
+      accessibilityRole="button"
       accessibilityLabel={`${label}: ${value}`}
     >
       <View style={styles.infoIcon}>
@@ -439,7 +439,7 @@ export default function Perfil() {
                   onPress={() => handleAbrirDetalhesLocal(local.idLocal)}
                   style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                   accessibilityLabel={`Local ${local.nome}, categoria ${local.categoria}`}
-                  accessibilityRole="Botao"
+                  accessibilityRole="button"
                 >
                   <View style={{ flex: 1 }}>
                     <TextoTematizado weight="semibold" altoContraste={isHighContrast}>{local.nome}</TextoTematizado>

@@ -84,7 +84,7 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
   );
 });
 
-ReportarSucessoModal.displayName = 'ReportarSucessoModal';
+ModalReportarSucesso.displayName = 'ModalReportarSucesso';
 
 const styles = StyleSheet.create({
   overlay: {
@@ -128,4 +128,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ReportarSucessoModal;
+export default ModalReportarSucesso;
