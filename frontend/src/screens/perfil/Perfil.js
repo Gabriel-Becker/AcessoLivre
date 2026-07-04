@@ -92,7 +92,7 @@ export default function Perfil() {
     
     if (localEncontrado) {
       ServicoVoz.speak(`Encontrei ${localEncontrado.nome}. Abrindo detalhes.`);
-      navigate('Main', { screen: 'LocalDetalhes', id: localEncontrado.idLocal });
+      navigate('AcessoLivre', { screen: 'LocalDetalhes', id: localEncontrado.idLocal });
       return true;
     }
     
@@ -148,7 +148,7 @@ export default function Perfil() {
     if (voiceEnabled && local) {
       ServicoVoz.speak(`Abrindo detalhes de ${local.nome}`);
     }
-    navigate('Main', { screen: 'LocalDetalhes', id: idLocal });
+    navigate('AcessoLivre', { screen: 'LocalDetalhes', id: idLocal });
   }
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function Perfil() {
         buscarLocalPorNome: buscarLocalPorNome,
         onAdicionarLocal: () => {
           ServicoVoz.speak('Abrindo formulário para adicionar novo local');
-          navigate('Main', { screen: 'Adicionar' });
+          navigate('AcessoLivre', { screen: 'Adicionar' });
         },
         onTrocarSenha: () => {
           ServicoVoz.speak('Abrindo formulário para trocar senha');
@@ -268,7 +268,7 @@ export default function Perfil() {
       const local = meusLocais.find(l => l.idLocal === idLocal);
       ServicoVoz.speak(`Abrindo edição de ${local?.nome || 'local'}`);
     }
-    navigate('Main', { screen: 'Adicionar', localId: idLocal });
+    navigate('AcessoLivre', { screen: 'Adicionar', localId: idLocal });
   };
 
   const InfoItem = ({ icon, label, value, onPress }) => (
@@ -415,7 +415,7 @@ export default function Perfil() {
                 variant="primary" 
                 onPress={() => {
                   if (voiceEnabled) ServicoVoz.speak('Abrindo formulário para adicionar local');
-                  navigate('Main', { screen: 'Adicionar' });
+                  navigate('AcessoLivre', { screen: 'Adicionar' });
                 }} 
                 altoContraste={isHighContrast}
               >

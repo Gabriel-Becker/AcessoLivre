@@ -33,14 +33,14 @@ export function resetToHome() {
   const state = navigationRef.getRootState();
   const routeNames = state?.routeNames || [];
 
-  if (!routeNames.includes('Main')) {
+  if (!routeNames.includes('AcessoLivre')) {
     return;
   }
 
   navigationRef.dispatch(
     CommonActions.reset({
       index: 0,
-      routes: [{ name: 'Main', params: { screen: 'Inicio' } }],
+      routes: [{ name: 'AcessoLivre', params: { screen: 'Inicio' } }],
     })
   );
 }

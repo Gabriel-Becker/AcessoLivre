@@ -39,14 +39,14 @@ export default function Entrar({ navigation }) {
     if (!navigation) return;
 
     if (typeof navigation.replace === 'function') {
-      navigation.replace('Main');
+      navigation.replace('AcessoLivre');
       return;
     }
 
     if (typeof navigation.reset === 'function') {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Main' }],
+        routes: [{ name: 'AcessoLivre' }],
       });
       return;
     }
@@ -278,7 +278,7 @@ export default function Entrar({ navigation }) {
       return;
     }
 
-    navigation.navigate('Main', { screen: screenName });
+    navigation.navigate('AcessoLivre', { screen: screenName });
   };
 
   const conteudoLogin = (

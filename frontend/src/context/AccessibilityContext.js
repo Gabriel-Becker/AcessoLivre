@@ -40,20 +40,27 @@ export function AccessibilityProvider({ children }) {
     }
 
     setIsListening(true);
-    ServicoVoz.speak("Pode falar");
 
-    await ServicoVoz.listen(
-      (text) => {
-        setLastCommand(text);
-        setIsListening(false);
-        AssistenteVoz.handle(text);
-      },
-      (error) => {
-        console.error("Erro:", error);
-        setIsListening(false);
-        ServicoVoz.speak("Erro no reconhecimento. Tente novamente.");
-      }
-    );
+    try {
+      await ServicoVoz.speakAsync('Pode falar');
+
+      await ServicoVoz.listen(
+        (text) => {
+          setLastCommand(text);
+          setIsListening(false);
+          AssistenteVoz.handle(text);
+        },
+        (error) => {
+          console.error('Erro:', error);
+          setIsListening(false);
+          ServicoVoz.speak('Erro no reconhecimento. Tente novamente.');
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao iniciar o assistente de voz:', error);
+      setIsListening(false);
+      ServicoVoz.speak('Não foi possível iniciar o assistente de voz.');
+    }
   };
 
   return (

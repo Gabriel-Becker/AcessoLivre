@@ -21,8 +21,11 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     
-    @Value("${spring.mail.properties.mail.from:noreply@acessolivre.com.br}")
+    @Value("${spring.mail.properties.mail.from:}")
     private String emailFrom;
+
+    @Value("${spring.mail.username:}")
+    private String emailUsername;
 
     public void enviarCodigoRecuperacaoSenha(String email, String nome, String code) {
         try {
@@ -35,7 +38,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
-            helper.setFrom(emailFrom);
+            helper.setFrom(resolverRemetente());
             helper.setTo(email);
             helper.setSubject("Código de Recuperação de Senha - AcessoLivre");
             helper.setText(htmlContent, true);
@@ -58,7 +61,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
-            helper.setFrom(emailFrom);
+            helper.setFrom(resolverRemetente());
             helper.setTo(email);
             helper.setSubject("Senha Redefinida com Sucesso - AcessoLivre");
             helper.setText(htmlContent, true);
@@ -69,5 +72,17 @@ public class EmailService {
             log.error("Erro ao enviar confirmação de reset para {}: {}", email, e.getMessage());
             throw new RuntimeException("Erro ao enviar confirmação de reset", e);
         }
+    }
+
+    private String resolverRemetente() {
+        if (emailFrom != null && !emailFrom.isBlank()) {
+            return emailFrom.trim();
+        }
+
+        if (emailUsername != null && !emailUsername.isBlank()) {
+            return emailUsername.trim();
+        }
+
+        return "noreply@acessolivre.com.br";
     }
 }

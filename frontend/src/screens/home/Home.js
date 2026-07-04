@@ -26,7 +26,7 @@ const BREAKPOINTS = {
   DESKTOP: 1400,
 };
 
-export default function Home({ onNavigate, routeParams }) {
+export default function Inicio({ onNavigate, routeParams }) {
   const { isHighContrast, theme: t, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
@@ -109,7 +109,7 @@ export default function Home({ onNavigate, routeParams }) {
     [insets.bottom, width]
   );
 
-  const anunciarHome = useCallback(() => {
+  const anunciarInicio = useCallback(() => {
     if (!voiceEnabled) return;
 
     const totalLocaisMsg = estatisticas.totalLocais > 0 
@@ -183,7 +183,7 @@ export default function Home({ onNavigate, routeParams }) {
       
     } catch (e) {
       if (mountedRef.current) {
-        toastHelper.showError('Erro ao carregar dados da home');
+        toastHelper.showError('Erro ao carregar dados da página inicial');
       }
     } finally {
       if (mountedRef.current) {
@@ -209,10 +209,10 @@ export default function Home({ onNavigate, routeParams }) {
 
   useEffect(() => {
     if (!loading && voiceEnabled && !voiceFeedbackGiven && locaisDestaque.length > 0) {
-      anunciarHome();
+      anunciarInicio();
       setVoiceFeedbackGiven(true);
     }
-  }, [loading, voiceEnabled, locaisDestaque.length, anunciarHome, voiceFeedbackGiven]);
+  }, [loading, voiceEnabled, locaisDestaque.length, anunciarInicio, voiceFeedbackGiven]);
 
   
   useEffect(() => {

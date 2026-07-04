@@ -225,11 +225,11 @@ export default function Cadastro({ navigation }) {
           toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
 
           if (typeof navigation?.replace === 'function') {
-            navigation.replace('Main');
+            navigation.replace('AcessoLivre');
             return;
           }
 
-          navigation?.navigate?.('Main');
+          navigation?.navigate?.('AcessoLivre');
           return;
         } else {
           toastHelper.showInfo(
@@ -262,7 +262,7 @@ export default function Cadastro({ navigation }) {
       return;
     }
 
-    navigation.navigate('Main', { screen: screenName });
+    navigation.navigate('AcessoLivre', { screen: screenName });
   };
 
   const conteudoCadastro = (

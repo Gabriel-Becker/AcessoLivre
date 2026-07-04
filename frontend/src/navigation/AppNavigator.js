@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/ContextoAutenticacao';
+import AssistenteVoz from '../services/acessibilidade/AssistenteVoz';
 import { Recipiente, LayoutDesktop, LayoutMobile } from '../components/layout';
 import { TextoTematizado, Espacador } from '../components/commons';
 import { Entrar, Cadastro, EsqueciSenha, RedefinirSenha } from '../screens/auth';
-import Home from '../screens/home/Home';
+import Inicio from '../screens/home/Home';
 import Buscar from '../screens/buscar/Buscar';
 import AdicionarLocal from '../screens/locais/AdicionarLocal';
 import LocalDetalhes from '../screens/locais/LocalDetalhes';
@@ -104,6 +105,10 @@ function MainApp({ navigation, route }) {
   }, [isAuthenticated, currentScreen]);
 
   useEffect(() => {
+    AssistenteVoz.updateContext({ screen: currentScreen });
+  }, [currentScreen]);
+
+  useEffect(() => {
     if ((!isAdmin || !isDesktop) && currentScreen === 'Admin') {
       setCurrentScreen('Inicio');
     }
@@ -118,7 +123,7 @@ function MainApp({ navigation, route }) {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'Inicio':
-        return <Home onNavigate={handleNavigate} routeParams={route?.params} />;
+        return <Inicio onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'Buscar':
         return <Buscar onNavigate={handleNavigate} />;
       case 'Adicionar':
@@ -128,15 +133,15 @@ function MainApp({ navigation, route }) {
       case 'Sobre':
         return <Sobre onNavigate={handleNavigate} />;
       case 'Perfil':
-        return isAuthenticated ? <Perfil /> : <Home />;
+        return isAuthenticated ? <Perfil /> : <Inicio />;
       case 'Configuracoes':
         return <Configuracoes onNavigate={handleNavigate} />;
       case 'MenuLateral':
         return <View />;
       case 'Admin':
-        return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Home onNavigate={handleNavigate} />;
+        return isAdmin ? <Admin onNavigate={handleNavigate} /> : <Inicio onNavigate={handleNavigate} />;
       default:
-        return <Home onNavigate={handleNavigate} />;
+        return <Inicio onNavigate={handleNavigate} />;
     }
   };
 
@@ -170,8 +175,8 @@ export default function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Main" component={MainApp} />
+    <Stack.Navigator initialRouteName="AcessoLivre" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="AcessoLivre" component={MainApp} />
       <Stack.Screen name="Entrar" component={Entrar} />
       <Stack.Screen name="Cadastro" component={Cadastro} />
       <Stack.Screen name="EsqueciSenha" component={EsqueciSenha} />

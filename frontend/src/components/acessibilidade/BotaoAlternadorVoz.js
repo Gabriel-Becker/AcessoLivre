@@ -1,6 +1,6 @@
 
 import React, { useContext, useState, useEffect, useMemo } from 'react';
-import { View, Text, Switch, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, Text, Switch, StyleSheet, TouchableOpacity, Animated, Easing, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AccessibilityContext } from '../../context/AccessibilityContext';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -9,7 +9,9 @@ import ServicoVoz from '../../services/acessibilidade/ServicoVoz';
 export default function BotaoAlternadorVoz() {
   const { enabled, alternarAcessibilidade, isListening, startListening, lastCommand } = useContext(AccessibilityContext);
   const { fontSizeMultiplier, isHighContrast, theme } = useThemeContext();
+  const { width } = useWindowDimensions();
   const escala = Math.max(1, Number(fontSizeMultiplier) || 1);
+  const isMobileCompacto = width < 420;
   const [pulseAnim] = useState(new Animated.Value(1));
   const [isTesting, setIsTesting] = useState(false);
   const paleta = useMemo(
@@ -33,7 +35,7 @@ export default function BotaoAlternadorVoz() {
     [theme, isHighContrast]
   );
 
-  const styles = useMemo(() => criarEstilos(escala, paleta, isHighContrast), [escala, paleta, isHighContrast]);
+  const styles = useMemo(() => criarEstilos(escala, paleta, isHighContrast, isMobileCompacto), [escala, paleta, isHighContrast, isMobileCompacto]);
 
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function BotaoAlternadorVoz() {
               color={enabled ? paleta.primaria : paleta.textoTerciario} 
             />
           </Animated.View>
-          <View>
+          <View style={styles.headerTextBlock}>
             <Text style={styles.title}>Assistente por Voz</Text>
             <Text style={styles.subtitle}>
               {enabled 
@@ -93,14 +95,16 @@ export default function BotaoAlternadorVoz() {
             </Text>
           </View>
         </View>
-        <Switch
-          value={enabled}
-          onValueChange={alternarAcessibilidade}
-          trackColor={{ false: paleta.switchOff, true: paleta.primaria }}
-          thumbColor={enabled ? paleta.thumbOn : paleta.thumbOff}
-          ios_backgroundColor={paleta.fundoIOS}
-          style={{ transform: [{ scale: escala }], marginLeft: Math.round((escala - 1) * 20) }}
-        />
+        <View style={styles.switchContainer}>
+          <Switch
+            value={enabled}
+            onValueChange={alternarAcessibilidade}
+            trackColor={{ false: paleta.switchOff, true: paleta.primaria }}
+            thumbColor={enabled ? paleta.thumbOn : paleta.thumbOff}
+            ios_backgroundColor={paleta.fundoIOS}
+            style={{ transform: [{ scale: escala }] }}
+          />
+        </View>
       </View>
 
       {/* Status atual */}
@@ -167,7 +171,7 @@ export default function BotaoAlternadorVoz() {
           </Text>
           <View style={styles.commandsGrid}>
             {[
-              { icon: 'home-outline', command: 'home', desc: 'Página inicial' },
+              { icon: 'home-outline', command: 'inicio', desc: 'Página inicial' },
               { icon: 'person-outline', command: 'perfil', desc: 'Meu perfil' },
               { icon: 'alert-circle-outline', command: 'denunciar', desc: 'Fazer denúncia' },
               { icon: 'arrow-back-outline', command: 'voltar', desc: 'Voltar tela' },
@@ -187,15 +191,15 @@ export default function BotaoAlternadorVoz() {
   );
 }
 
-function criarEstilos(e, paleta, isHighContrast) {
+function criarEstilos(e, paleta, isHighContrast, isMobileCompacto) {
   const s = (v) => Math.round(v * e);
   return StyleSheet.create({
     Recipiente: {
       marginBottom: s(20),
     },
     Cabecalho: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: isMobileCompacto ? 'column' : 'row',
+      alignItems: isMobileCompacto ? 'stretch' : 'center',
       justifyContent: 'space-between',
       paddingVertical: s(12),
       paddingHorizontal: s(16),
@@ -203,12 +207,18 @@ function criarEstilos(e, paleta, isHighContrast) {
       borderRadius: s(12),
       borderWidth: 1,
       borderColor: paleta.borda,
+      gap: isMobileCompacto ? s(10) : 0,
     },
     headerLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: s(12),
       flex: 1,
+      minWidth: 0,
+    },
+    headerTextBlock: {
+      flex: 1,
+      minWidth: 0,
     },
     iconContainer: {
       width: s(44),
@@ -227,6 +237,11 @@ function criarEstilos(e, paleta, isHighContrast) {
       fontSize: s(12),
       color: paleta.textoSecundario,
       marginTop: s(2),
+      flexWrap: 'wrap',
+    },
+    switchContainer: {
+      alignSelf: isMobileCompacto ? 'flex-start' : 'center',
+      marginTop: isMobileCompacto ? s(2) : 0,
     },
     statusCard: {
       marginTop: s(12),

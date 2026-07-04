@@ -1043,7 +1043,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
           navigation.goBack();
         } catch (_erroNavegacao) {
           try {
-            navigation.navigate?.('Main', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
+            navigation.navigate?.('AcessoLivre', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
           } catch (_erroFallback) {
             console.error('[AdicionarLocal] Falha na navegação de retorno:', _erroFallback);
           }

@@ -133,7 +133,7 @@ export default function RedefinirSenha({ navigation, route }) {
       return;
     }
 
-    navigation.navigate('Main', { screen: screenName });
+    navigation.navigate('AcessoLivre', { screen: screenName });
   };
 
   return (

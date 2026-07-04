@@ -23,7 +23,7 @@ class ServicoNavegacao {
     return getCurrentRouteName();
   }
 
-  // Reseta navegação para uma tela (útil para comandos como "vai para home").
+  // Reseta navegação para uma tela (útil para comandos como "vai para início").
   static resetTo(screen, params = {}) {
     resetToScreen(screen, params);
   }

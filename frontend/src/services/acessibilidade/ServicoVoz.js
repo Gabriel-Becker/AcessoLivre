@@ -67,6 +67,32 @@ class ServicoVoz {
     Speech.speak(text, { ...defaultOptions, ...options });
   }
 
+  // Fala o texto e aguarda a conclusão antes de continuar.
+  static async speakAsync(text, options = {}) {
+    Speech.stop();
+
+    if (this.currentTimeout) {
+      clearTimeout(this.currentTimeout);
+      this.currentTimeout = null;
+    }
+
+    const defaultOptions = {
+      language: 'pt-BR',
+      pitch: 1.0,
+      rate: 0.9,
+    };
+
+    return new Promise((resolve) => {
+      Speech.speak(text, {
+        ...defaultOptions,
+        ...options,
+        onDone: resolve,
+        onStopped: resolve,
+        onError: resolve,
+      });
+    });
+  }
+
   // Fala para texto (escuta o usuário).
   static async listen(onResult, onError) {
     try {

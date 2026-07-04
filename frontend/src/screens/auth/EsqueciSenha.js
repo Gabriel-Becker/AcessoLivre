@@ -137,7 +137,7 @@ export default function EsqueciSenha({ navigation }) {
       return;
     }
 
-    navigation.navigate('Main', { screen: screenName });
+    navigation.navigate('AcessoLivre', { screen: screenName });
   };
 
   const conteudoTela = (
