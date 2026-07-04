@@ -2,6 +2,9 @@ package com.acessolivre.controller;
 
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +46,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final ZoneId ZONA_BRASIL = ZoneId.of("America/Sao_Paulo");
 
     /**
      * Lista todos os usuários com paginação
@@ -216,7 +220,15 @@ public class AdminController {
         .role(usuario.getRole() != null ? usuario.getRole().name() : null)
             .ativo(usuario.getAtivo())
                 .dataCadastro(usuario.getDataCadastro() != null ? 
-                        usuario.getDataCadastro().format(FORMATTER) : null)
+                        formatarDataCadastroBrasil(usuario.getDataCadastro()) : null)
                 .build();
+    }
+
+    private String formatarDataCadastroBrasil(LocalDateTime dataCadastro) {
+        return dataCadastro
+                .atZone(ZoneOffset.UTC)
+                .withZoneSameInstant(ZONA_BRASIL)
+                .toLocalDateTime()
+                .format(FORMATTER);
     }
 }

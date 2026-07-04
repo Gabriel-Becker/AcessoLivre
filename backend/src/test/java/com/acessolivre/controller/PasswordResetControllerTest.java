@@ -36,7 +36,7 @@ class PasswordResetControllerTest {
         when(passwordResetService.gerarCodigoRecuperacaoComValidacao("user@acessolivre.com"))
             .thenReturn(mensagem);
 
-        ResponseEntity<String> resultado = passwordResetController.forgotPassword(request);
+        ResponseEntity<String> resultado = passwordResetController.esqueceuSenha(request);
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(mensagem, resultado.getBody());
@@ -54,7 +54,7 @@ class PasswordResetControllerTest {
         when(passwordResetService.redefinirSenhaComValidacao("user@acessolivre.com", "123456", "NovaSenha@123"))
             .thenReturn(mensagem);
 
-        ResponseEntity<String> resultado = passwordResetController.resetPassword(request);
+        ResponseEntity<String> resultado = passwordResetController.redefinirSenha(request);
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
         assertEquals(mensagem, resultado.getBody());
@@ -70,7 +70,7 @@ class PasswordResetControllerTest {
         when(passwordResetService.gerarCodigoRecuperacaoComValidacao(anyString()))
             .thenReturn(mensagem);
 
-        ResponseEntity<String> resultado = passwordResetController.forgotPassword(request);
+        ResponseEntity<String> resultado = passwordResetController.esqueceuSenha(request);
 
         assertEquals(HttpStatus.OK, resultado.getStatusCode());
     }

@@ -157,7 +157,27 @@ export default function Admin() {
 
   const formatarDataHoraRelatorio = (valor) => {
     if (!valor) return 'Não disponível';
-    const data = new Date(valor);
+
+    const texto = String(valor).trim();
+    const matchIsoSemTimezone = texto.match(
+      /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?$/
+    );
+
+    let data;
+    if (matchIsoSemTimezone) {
+      const [, ano, mes, dia, hora, minuto, segundo = '00'] = matchIsoSemTimezone;
+      data = new Date(Date.UTC(
+        Number(ano),
+        Number(mes) - 1,
+        Number(dia),
+        Number(hora),
+        Number(minuto),
+        Number(segundo)
+      ));
+    } else {
+      data = new Date(texto);
+    }
+
     if (Number.isNaN(data.getTime())) return String(valor);
     return new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Sao_Paulo',
@@ -1003,6 +1023,7 @@ export default function Admin() {
         visible={modalEditarVisivel}
         onClose={() => setModalEditarVisivel(false)}
         usuario={usuarioSelecionado}
+        altoContraste={isHighContrast}
         onSucesso={() => {
           setUsuarioSelecionado(null);
           carregarUsuarios();

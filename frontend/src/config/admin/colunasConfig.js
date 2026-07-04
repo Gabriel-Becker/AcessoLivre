@@ -191,7 +191,27 @@ const formatarDataHora = (valor) => {
     return `${dia}/${mes}/${ano} - ${hora}:${minuto}`;
   }
 
-  const data = new Date(texto);
+  // Quando vier ISO sem timezone (ex.: 2026-07-04T17:20:00),
+  // tratamos como UTC para converter corretamente para horário de Brasília.
+  const matchIsoSemTimezone = texto.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?$/
+  );
+
+  let data;
+  if (matchIsoSemTimezone) {
+    const [, ano, mes, dia, hora, minuto, segundo = '00'] = matchIsoSemTimezone;
+    data = new Date(Date.UTC(
+      Number(ano),
+      Number(mes) - 1,
+      Number(dia),
+      Number(hora),
+      Number(minuto),
+      Number(segundo)
+    ));
+  } else {
+    data = new Date(texto);
+  }
+
   if (Number.isNaN(data.getTime())) return 'Sem data';
 
   const partes = new Intl.DateTimeFormat('pt-BR', {

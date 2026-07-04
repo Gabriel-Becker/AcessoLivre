@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Botao, Entrada, Selecao } from '../ui';
 import { Espacador, TextoTematizado } from '../commons';
 import { useThemeContext } from '../../context/ThemeContext';
+import { getTheme } from '../../config/theme';
 import useEditarUsuarioAdmin from '../../hooks/useEditarUsuarioAdmin';
 
 const REQUISITOS_SENHA = [
@@ -54,7 +55,9 @@ const schema = z.object({
 });
 
 export default function EditarUsuarioModal({ visible, onClose, usuario, onSucesso, altoContraste = false }) {
-  const { theme: t } = useThemeContext();
+  const { isHighContrast, fontSizeMultiplier } = useThemeContext();
+  const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
+  const t = useMemo(() => getTheme(contrasteAtivo, fontSizeMultiplier), [contrasteAtivo, fontSizeMultiplier]);
   const { width } = useWindowDimensions();
   const [imagemPerfilAtual, setImagemPerfilAtual] = useState(undefined);
   const [roleOriginal, setRoleOriginal] = useState('ROLE_USER');
@@ -184,6 +187,10 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
 
   const larguraModal = width < 768 ? '96%' : width < 1200 ? '44%' : '38%';
 
+  const estilos = useMemo(() => criarEstilos(t, contrasteAtivo), [t, contrasteAtivo]);
+  const corTitulo = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
+  const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
+
   return (
     <Modal
       visible={visible}
@@ -191,10 +198,17 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: t.colors.surface, width: larguraModal }]}> 
+      <View style={estilos.modalOverlay}>
+        <View style={[estilos.modalContainer, { backgroundColor: t.colors.surface, width: larguraModal }]}> 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <TextoTematizado variant="h2" weight="bold" align="center" style={styles.titulo}>
+            <TextoTematizado
+              variant="h2"
+              weight="bold"
+              align="center"
+              style={estilos.titulo}
+              altoContraste={contrasteAtivo}
+              color={corTitulo}
+            >
               Editar Usuário
             </TextoTematizado>
             <Espacador size="sm" />
@@ -211,7 +225,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   onBlur={onBlur}
                   leftIcon="person-outline"
                   error={touchedFields.nome ? errors.nome?.message : undefined}
-                  altoContraste={altoContraste}
+                  altoContraste={contrasteAtivo}
                 />
               )}
             />
@@ -228,7 +242,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   onBlur={onBlur}
                   leftIcon="mail-outline"
                   error={errors.email?.message}
-                  altoContraste={altoContraste}
+                  altoContraste={contrasteAtivo}
                 />
               )}
             />
@@ -247,7 +261,7 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                     { label: 'Administrador', value: 'ROLE_ADMIN' },
                     { label: 'Usuário', value: 'ROLE_USER' },
                   ]}
-                  altoContraste={altoContraste}
+                  altoContraste={contrasteAtivo}
                 />
               )}
             />
@@ -264,21 +278,21 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   secureTextEntry
                   leftIcon="key-outline"
                   error={errors.senha ? 'Revise os requisitos abaixo.' : undefined}
-                  altoContraste={altoContraste}
+                  altoContraste={contrasteAtivo}
                 />
               )}
             />
 
             {senhaFoiDigitada && requisitosPendentesSenha.length > 0 ? (
-              <View style={styles.passwordHintContainer}>
+              <View style={estilos.passwordHintContainer}>
                 {requisitosPendentesSenha.map((requisito) => (
-                  <View key={requisito.chave} style={styles.passwordHintRow}>
+                  <View key={requisito.chave} style={estilos.passwordHintRow}>
                     <Ionicons name="close-circle" size={16} color={t.colors.error} />
                     <TextoTematizado
                       variant="caption"
                       color="error"
-                      style={styles.passwordHintText}
-                      altoContraste={altoContraste}
+                      style={estilos.passwordHintText}
+                      altoContraste={contrasteAtivo}
                     >
                       {requisito.texto}
                     </TextoTematizado>
@@ -288,46 +302,46 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
             ) : null}
 
             {errors.root?.message ? (
-              <TextoTematizado color="error" variant="caption" align="center" style={styles.formError}>
+              <TextoTematizado color="error" variant="caption" align="center" style={estilos.formError} altoContraste={contrasteAtivo}>
                 {errors.root.message}
               </TextoTematizado>
             ) : null}
 
             <Espacador size="sm" />
 
-            <Botao
-              variant="primary"
-              size="medium"
-              fullWidth
-              onPress={handleSubmit(handleAtualizarUsuario)}
-              loading={submitting || carregandoDados}
-              disabled={!podeSalvar}
-              altoContraste={altoContraste}
-            >
-              Salvar Alterações
-            </Botao>
+            <View style={estilos.botoesContainer}>
+              <Botao
+                variant="primary"
+                size="medium"
+                fullWidth
+                onPress={handleSubmit(handleAtualizarUsuario)}
+                loading={submitting || carregandoDados}
+                disabled={!podeSalvar}
+                altoContraste={contrasteAtivo}
+              >
+                Salvar Alterações
+              </Botao>
+
+              <Botao
+                variant="outline"
+                size="medium"
+                fullWidth
+                onPress={handleClose}
+                disabled={submitting || carregandoDados}
+                altoContraste={contrasteAtivo}
+              >
+                Cancelar
+              </Botao>
+            </View>
 
             {!podeSalvar ? (
               <>
                 <Espacador size="xs" />
-                <TextoTematizado color="textSecondary" variant="caption" align="center">
+                <TextoTematizado color={corSecundaria} variant="caption" align="center" altoContraste={contrasteAtivo}>
                   Faça uma alteração para habilitar o salvamento.
                 </TextoTematizado>
               </>
             ) : null}
-
-            <Espacador size="xs" />
-
-            <Botao
-              variant="outline"
-              size="medium"
-              fullWidth
-              onPress={handleClose}
-              disabled={submitting || carregandoDados}
-              altoContraste={altoContraste}
-            >
-              Cancelar
-            </Botao>
           </ScrollView>
         </View>
       </View>
@@ -335,43 +349,51 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   );
 }
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    maxHeight: '86%',
-    borderRadius: 18,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  passwordHintContainer: {
-    marginTop: 4,
-    marginBottom: 10,
-    paddingHorizontal: 4,
-  },
-  passwordHintRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  passwordHintText: {
-    marginLeft: 6,
-    flexShrink: 1,
-  },
-  formError: {
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  titulo: {
-    fontSize: 24,
-    lineHeight: 30,
-  },
-});
+function criarEstilos(t, altoContraste) {
+  return StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: altoContraste ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: t.spacing.md,
+    },
+    modalContainer: {
+      maxHeight: '86%',
+      borderRadius: t.borderRadius.xl,
+      padding: t.spacing.xl,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      borderWidth: altoContraste ? 2 : 0,
+      borderColor: altoContraste ? t.colors.border : 'transparent',
+    },
+    passwordHintContainer: {
+      marginTop: 4,
+      marginBottom: 10,
+      paddingHorizontal: 4,
+    },
+    passwordHintRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    passwordHintText: {
+      marginLeft: 6,
+      flexShrink: 1,
+    },
+    formError: {
+      marginTop: 2,
+      marginBottom: 10,
+    },
+    titulo: {
+      fontSize: 24,
+      lineHeight: 30,
+    },
+    botoesContainer: {
+      gap: t.spacing.sm,
+    },
+  });
+}

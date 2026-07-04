@@ -268,7 +268,7 @@ class LocalServiceTest {
 
     @Test
     void obterEstatisticasGerais_DeveRetornarTotais() {
-        when(usuarioRepository.count()).thenReturn(12L);
+        when(usuarioRepository.countByAtivoTrue()).thenReturn(12L);
         when(localRepository.count()).thenReturn(30L);
         when(avaliacaoRepository.count()).thenReturn(90L);
 

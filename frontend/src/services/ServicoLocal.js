@@ -192,12 +192,69 @@ const ServicoLocal = {
    * Busca estatásticas gerais
    */
   async obterEstatisticas() {
-    const totalLocais = await this.obterTotalLocaisComSublocais();
-    return { 
-      totalLocais,
-      totalAvaliacoes: 0, 
-      totalUsuarios: 0 
-    };
+    try {
+      const response = await api.get('/locais/estatisticas');
+      const data = response?.data || {};
+
+      return {
+        totalLocais: this.normalizarNumero(data?.totalLocais),
+        totalAvaliacoes: this.normalizarNumero(data?.totalAvaliacoes),
+        totalUsuarios: this.normalizarNumero(data?.totalUsuarios),
+      };
+    } catch (erro) {
+      console.warn('Falha ao buscar /locais/estatisticas. Aplicando fallback local.', erro?.message || erro);
+
+      const [totalLocaisResult, totalAvaliacoesResult, totalUsuariosResult] = await Promise.allSettled([
+        this.obterTotalLocaisComSublocais(),
+        this.obterTotalAvaliacoes(),
+        this.obterTotalUsuariosAtivosComBaseNosLocais(),
+      ]);
+
+      return {
+        totalLocais: totalLocaisResult.status === 'fulfilled' ? this.normalizarNumero(totalLocaisResult.value) : 0,
+        totalAvaliacoes: totalAvaliacoesResult.status === 'fulfilled' ? this.normalizarNumero(totalAvaliacoesResult.value) : 0,
+        totalUsuarios: totalUsuariosResult.status === 'fulfilled' ? this.normalizarNumero(totalUsuariosResult.value) : 0,
+      };
+    }
+  },
+
+  async obterTotalAvaliacoes() {
+    const response = await api.get('/avaliacoes', {
+      params: { page: 0, size: 1 },
+    });
+
+    return this.normalizarNumero(response?.data?.totalElements);
+  },
+
+  async obterTotalUsuariosAtivosComBaseNosLocais() {
+    const tamanhoPagina = 100;
+    const usuariosUnicos = new Set();
+
+    const primeiraResposta = await api.get('/locais/todos', {
+      params: { page: 0, size: tamanhoPagina, sort: 'dataCriacao', direction: 'desc' },
+    });
+
+    this.acumularUsuariosDaPagina(usuariosUnicos, primeiraResposta.data?.content);
+
+    const totalPages = Number(primeiraResposta.data?.totalPages) || 1;
+    if (totalPages > 1) {
+      const paginasRestantes = Array.from({ length: totalPages - 1 }, (_, index) => index + 1);
+      const respostasRestantes = await Promise.allSettled(
+        paginasRestantes.map((page) =>
+          api.get('/locais/todos', {
+            params: { page, size: tamanhoPagina, sort: 'dataCriacao', direction: 'desc' },
+          })
+        )
+      );
+
+      respostasRestantes.forEach((resultado) => {
+        if (resultado.status === 'fulfilled') {
+          this.acumularUsuariosDaPagina(usuariosUnicos, resultado.value?.data?.content);
+        }
+      });
+    }
+
+    return usuariosUnicos.size;
   },
 
   async obterTotalLocaisComSublocais() {
@@ -265,6 +322,36 @@ const ServicoLocal = {
     }
 
     return locaisSemId;
+  },
+
+  acumularUsuariosDaPagina(usuariosUnicos, locais = []) {
+    if (!Array.isArray(locais)) {
+      return;
+    }
+
+    const pilha = [...locais];
+
+    while (pilha.length > 0) {
+      const local = pilha.pop();
+      if (!local || typeof local !== 'object') {
+        continue;
+      }
+
+      const idUsuario = local?.idUsuario ?? local?.usuario?.idUsuario ?? local?.usuario?.id;
+      if (idUsuario !== undefined && idUsuario !== null) {
+        usuariosUnicos.add(String(idUsuario));
+      }
+
+      const subLocais = Array.isArray(local?.subLocais) ? local.subLocais : [];
+      if (subLocais.length > 0) {
+        pilha.push(...subLocais);
+      }
+    }
+  },
+
+  normalizarNumero(valor) {
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : 0;
   },
 
   /**

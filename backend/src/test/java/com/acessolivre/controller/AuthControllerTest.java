@@ -97,7 +97,7 @@ class AuthControllerTest {
 
         when(registroPendenteService.registrarUsuarioDireto("Maria", "maria@teste.com", "Senha@123")).thenReturn(responseDto);
 
-        ResponseEntity<?> response = authController.register(request);
+        ResponseEntity<?> response = authController.cadastrar(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(responseDto, response.getBody());
@@ -114,7 +114,7 @@ class AuthControllerTest {
         when(registroPendenteService.registrarUsuarioDireto(any(), any(), any()))
             .thenThrow(new IllegalArgumentException("Email já cadastrado"));
 
-        ResponseEntity<?> response = authController.register(request);
+        ResponseEntity<?> response = authController.cadastrar(request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         @SuppressWarnings("unchecked")
@@ -134,7 +134,7 @@ class AuthControllerTest {
         when(registroPendenteService.registrarUsuarioDireto(any(), any(), any()))
             .thenThrow(new RuntimeException("falha inesperada"));
 
-        ResponseEntity<?> response = authController.register(request);
+        ResponseEntity<?> response = authController.cadastrar(request);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
@@ -416,7 +416,7 @@ class AuthControllerTest {
     void setupTwoFactor_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
-        ResponseEntity<?> response = authController.setupTwoFactor(request);
+        ResponseEntity<?> response = authController.prepararDoisFatores(request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -428,7 +428,7 @@ class AuthControllerTest {
 
         when(jwtService.obterIdUsuarioDoToken("token-sem-id")).thenReturn(null);
 
-        ResponseEntity<?> response = authController.setupTwoFactor(request);
+        ResponseEntity<?> response = authController.prepararDoisFatores(request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -448,7 +448,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(55L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.prepararConfiguracao(55L)).thenReturn(setup);
 
-        ResponseEntity<?> response = authController.setupTwoFactor(request);
+        ResponseEntity<?> response = authController.prepararDoisFatores(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(setup, response.getBody());
@@ -465,7 +465,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(55L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.prepararConfiguracao(55L)).thenThrow(new IllegalArgumentException("já configurado"));
 
-        ResponseEntity<?> response = authController.setupTwoFactor(request);
+        ResponseEntity<?> response = authController.prepararDoisFatores(request);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -478,7 +478,7 @@ class AuthControllerTest {
         when(jwtService.obterIdUsuarioDoToken("token-2fa")).thenReturn(55L);
         when(usuarioRepository.findById(55L)).thenThrow(new RuntimeException("falha"));
 
-        ResponseEntity<?> response = authController.setupTwoFactor(request);
+        ResponseEntity<?> response = authController.prepararDoisFatores(request);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
@@ -489,7 +489,7 @@ class AuthControllerTest {
         HabilitarDoisFatoresRequestDTO body = new HabilitarDoisFatoresRequestDTO();
         body.setVerificationCode("123456");
 
-        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.habilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -507,7 +507,7 @@ class AuthControllerTest {
         when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(77L);
         when(usuarioRepository.findById(77L)).thenReturn(Optional.of(usuario));
 
-        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.habilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(twoFactorService).habilitar(77L, "123456");
@@ -522,7 +522,7 @@ class AuthControllerTest {
 
         when(jwtService.obterIdUsuarioDoToken("token-enable")).thenReturn(null);
 
-        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.habilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -541,7 +541,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(77L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.habilitar(77L, "123456")).thenThrow(new IllegalArgumentException("código inválido"));
 
-        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.habilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -560,7 +560,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(77L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.habilitar(77L, "123456")).thenThrow(new RuntimeException("falha"));
 
-        ResponseEntity<?> response = authController.enableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.habilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
@@ -578,7 +578,7 @@ class AuthControllerTest {
         when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(78L);
         when(usuarioRepository.findById(78L)).thenReturn(Optional.of(usuario));
 
-        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.desabilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(twoFactorService).desabilitar(78L, "654321");
@@ -594,7 +594,7 @@ class AuthControllerTest {
 
         when(jwtService.obterIdUsuarioDoToken("token-disable")).thenReturn(null);
 
-        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.desabilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -613,7 +613,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(78L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.desabilitar(78L, "654321")).thenThrow(new IllegalArgumentException("código inválido"));
 
-        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.desabilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -632,7 +632,7 @@ class AuthControllerTest {
         when(usuarioRepository.findById(78L)).thenReturn(Optional.of(usuario));
         when(twoFactorService.desabilitar(78L, "654321")).thenThrow(new RuntimeException("falha"));
 
-        ResponseEntity<?> response = authController.disableTwoFactor(request, body);
+        ResponseEntity<?> response = authController.desabilitarDoisFatores(request, body);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
@@ -644,7 +644,7 @@ class AuthControllerTest {
 
         when(jwtService.obterIdUsuarioDoToken("token-status")).thenReturn(null);
 
-        ResponseEntity<?> response = authController.twoFactorStatus(request);
+        ResponseEntity<?> response = authController.statusDoisFatores(request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -653,7 +653,7 @@ class AuthControllerTest {
     void twoFactorStatus_DeveRetornarUnauthorizedSemToken() {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
-        ResponseEntity<?> response = authController.twoFactorStatus(request);
+        ResponseEntity<?> response = authController.statusDoisFatores(request);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
@@ -669,7 +669,7 @@ class AuthControllerTest {
         when(jwtService.obterIdUsuarioDoToken("token-status-ok")).thenReturn(90L);
         when(usuarioRepository.findById(90L)).thenReturn(Optional.of(usuario));
 
-        ResponseEntity<?> response = authController.twoFactorStatus(request);
+        ResponseEntity<?> response = authController.statusDoisFatores(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(true, response.getBody());
@@ -683,7 +683,7 @@ class AuthControllerTest {
         when(jwtService.obterIdUsuarioDoToken("token-status-ok")).thenReturn(90L);
         when(usuarioRepository.findById(90L)).thenThrow(new RuntimeException("falha"));
 
-        ResponseEntity<?> response = authController.twoFactorStatus(request);
+        ResponseEntity<?> response = authController.statusDoisFatores(request);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }

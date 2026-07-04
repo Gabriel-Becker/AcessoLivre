@@ -428,7 +428,7 @@ public class LocalService {
     public Map<String, Object> obterEstatisticasGerais() {
         log.info("Obtendo estatísticas gerais para locais");
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalUsuarios", usuarioRepository.count());
+        stats.put("totalUsuarios", usuarioRepository.countByAtivoTrue());
         stats.put("totalLocais", localRepository.count());
         stats.put("totalAvaliacoes", avaliacaoRepository.count());
         return stats;

@@ -31,7 +31,7 @@ const obterCandidatosIniciais = () => {
     candidatos.push(
       Platform.OS === 'web'
         ? 'http://localhost:8080/api'
-        : 'http://10.26.9.60:8080/api'
+        : 'http://18.226.60.23:8080/api'
     );
   }
 
@@ -44,7 +44,7 @@ const getApiUrl = () => {
   }
 
   if (Platform.OS !== 'web') {
-    return normalizarBaseUrl(PROD_API_URL || ANDROID_API_URL || IOS_API_URL || 'http://10.26.9.60:8080/api');
+    return normalizarBaseUrl(PROD_API_URL || ANDROID_API_URL || IOS_API_URL || 'http://18.226.60.23:8080/api');
   }
 
   return normalizarBaseUrl(WEB_API_URL || 'http://localhost:8080/api');

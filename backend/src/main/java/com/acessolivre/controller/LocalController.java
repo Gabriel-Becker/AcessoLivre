@@ -92,6 +92,12 @@ public class LocalController {
         return ResponseEntity.ok(responseDTOs);
     }
 
+    @GetMapping("/estatisticas")
+    public ResponseEntity<java.util.Map<String, Object>> obterEstatisticasGerais() {
+        log.info("GET /api/locais/estatisticas - Obtendo estatísticas gerais de locais");
+        return ResponseEntity.ok(localService.obterEstatisticasGerais());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LocalResponseDTO> buscarPorId(@PathVariable Long id) {
         log.info("GET /api/locais/{} - Buscando local com imagens", id);
