@@ -73,7 +73,7 @@ const ModalReportarSucesso = memo(({ visible, onClose }) => {
           >
             <TextoTematizado 
               weight="bold" 
-              style={[styles.buttonText, { color: '#FFFFFF' }]}
+              style={[styles.buttonText, { color: isHighContrast ? (t.colors.textOnAccent || '#000000') : '#FFFFFF' }]}
             >
               OK
             </TextoTematizado>

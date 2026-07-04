@@ -24,6 +24,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
   const corPrincipal = contrasteAtivo ? 'textOnPrimary' : 'textPrimary';
   const corSecundaria = contrasteAtivo ? 'textOnPrimary' : 'textSecondary';
   const isMobile = width < 600;
+  const qrLado = Math.round(Math.min(isMobile ? width * 0.78 : width * 0.5, 320));
   const [carregandoSetup, setCarregandoSetup] = useState(false);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [setupDados, setSetupDados] = useState(null);
@@ -72,15 +73,20 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
         qrContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          padding: isMobile ? t.spacing.sm : t.spacing.md,
+          padding: isMobile ? t.spacing.md : t.spacing.lg,
           backgroundColor: contrasteAtivo ? t.colors.backgroundSecondary : t.colors.surface,
           borderRadius: t.borderRadius.lg,
           borderWidth: 1,
           borderColor: t.colors.borderLight,
         },
+        qrInner: {
+          padding: isMobile ? 10 : 12,
+          backgroundColor: '#FFFFFF',
+          borderRadius: t.borderRadius.md,
+        },
         qrImage: {
-          width: isMobile ? 176 : 210,
-          height: isMobile ? 176 : 210,
+          width: qrLado,
+          height: qrLado,
           maxWidth: '100%',
         },
         secretBox: {
@@ -99,7 +105,7 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
           alignSelf: 'center',
         },
       }),
-    [height, contrasteAtivo, isMobile, t]
+    [height, contrasteAtivo, isMobile, qrLado, t]
   );
 
   useEffect(() => {
@@ -242,11 +248,13 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
                   <>
                     <View style={estilos.qrContainer}>
                       {setupDados.qrCode ? (
-                        <Image
-                          source={{ uri: setupDados.qrCode }}
-                          style={estilos.qrImage}
-                          resizeMode="contain"
-                        />
+                        <View style={estilos.qrInner}>
+                          <Image
+                            source={{ uri: setupDados.qrCode }}
+                            style={estilos.qrImage}
+                            resizeMode="contain"
+                          />
+                        </View>
                       ) : null}
                     </View>
 

@@ -31,6 +31,7 @@ export const defaultTheme = {
     textSecondary: '#6C757D',
     textTertiary: '#ADB5BD',
     textOnPrimary: '#FFFFFF',
+    textOnAccent: '#FFFFFF',
     textOnSecondary: '#FFFFFF',
     
     // Bordas
@@ -191,6 +192,7 @@ export const highContrastTheme = {
     textSecondary: '#E0E0E0',
     textTertiary: '#B0B0B0',
     textOnPrimary: '#FFFFFF',
+    textOnAccent: '#000000',
     textOnSecondary: '#FFFFFF',
     
     // Bordas (contraste aumentado) - usar acento ciano para elementos interativos

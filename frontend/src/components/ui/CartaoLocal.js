@@ -316,7 +316,7 @@ function criarEstilos(t, contrasteAtivo, imageHeight, fontSize, spacing, isDeskt
     },
     newBadgeText: {
       fontSize: fontSize.badgeNovo,
-      color: '#FFFFFF',
+      color: contrasteAtivo ? (t.colors.textOnAccent || '#000000') : '#FFFFFF',
       fontWeight: 'bold',
       letterSpacing: 0.5,
     },

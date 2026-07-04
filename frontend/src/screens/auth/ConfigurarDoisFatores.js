@@ -187,7 +187,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
                   <img 
                     src={qrData.qrCode} 
                     alt="QR Code 2FA" 
-                    style={{ width: 200, height: 200 }}
+                    style={{ width: 320, height: 320, maxWidth: '100%', imageRendering: 'pixelated' }}
                   />
                 </View>
               )}
@@ -363,9 +363,9 @@ const styles = StyleSheet.create({
   qrContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 20,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
   },
   secretContainer: {
     flexDirection: 'row',

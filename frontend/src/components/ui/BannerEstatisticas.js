@@ -1,9 +1,15 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextoTematizado } from '../commons';
-import theme from '../../config/theme';
+import { getTheme } from '../../config/theme';
+import { useThemeContext } from '../../context/ThemeContext';
 
 export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 0 }) {
+  const { isHighContrast } = useThemeContext();
+  const t = getTheme(isHighContrast);
+  const corTextoDestaque = isHighContrast ? 'textOnAccent' : 'textOnPrimary';
+  const styles = criarEstilos(t);
+
   const formatNumber = (num) => {
     if (num >= 1000) {
       return (num / 1000).toFixed(1) + 'k';
@@ -13,28 +19,28 @@ export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 
 
   return (
     <View style={styles.Recipiente}>
-      <TextoTematizado variant="h1" color="textOnPrimary" weight="bold" align="center">
+      <TextoTematizado variant="h1" color={corTextoDestaque} weight="bold" align="center">
         Descubra Locais Acessíveis
       </TextoTematizado>
-      <TextoTematizado color="textOnPrimary" align="center" style={styles.subtitle}>
+      <TextoTematizado color={corTextoDestaque} align="center" style={styles.subtitle}>
         Juntos construindo um mundo mais inclusivo para todos
       </TextoTematizado>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <TextoTematizado variant="h1" color="textOnPrimary" weight="bold">
+          <TextoTematizado variant="h1" color={corTextoDestaque} weight="bold">
             {formatNumber(totalLocais)}
           </TextoTematizado>
-          <TextoTematizado color="textOnPrimary" weight="medium">
+          <TextoTematizado color={corTextoDestaque} weight="medium">
             Locais Cadastrados
           </TextoTematizado>
         </View>
 
         <View style={styles.statCard}>
-          <TextoTematizado variant="h1" color="textOnPrimary" weight="bold">
+          <TextoTematizado variant="h1" color={corTextoDestaque} weight="bold">
             {formatNumber(totalAvaliacoes)}
           </TextoTematizado>
-          <TextoTematizado color="textOnPrimary" weight="medium">
+          <TextoTematizado color={corTextoDestaque} weight="medium">
             Avaliações
           </TextoTematizado>
         </View>
@@ -43,27 +49,29 @@ export default function BannerEstatisticas({ totalLocais = 0, totalAvaliacoes = 
   );
 }
 
-const styles = StyleSheet.create({
-  Recipiente: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius?.lg || 16,
-    padding: theme.spacing?.xl || 24,
-    width: '100%',
-    alignSelf: 'stretch',
-    marginTop: 10,
-    marginBottom: 16,
-  },
-  subtitle: {
-    marginTop: theme.spacing?.sm || 8,
-    marginBottom: theme.spacing?.xl || 24,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: theme.spacing?.lg || 16,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-  },
-});
+function criarEstilos(t) {
+  return StyleSheet.create({
+    Recipiente: {
+      backgroundColor: t.colors.primary,
+      borderRadius: t.borderRadius?.lg || 16,
+      padding: t.spacing?.xl || 24,
+      width: '100%',
+      alignSelf: 'stretch',
+      marginTop: 10,
+      marginBottom: 16,
+    },
+    subtitle: {
+      marginTop: t.spacing?.sm || 8,
+      marginBottom: t.spacing?.xl || 24,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      gap: t.spacing?.lg || 16,
+    },
+    statCard: {
+      flex: 1,
+      alignItems: 'center',
+    },
+  });
+}

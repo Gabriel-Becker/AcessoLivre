@@ -8,17 +8,19 @@ export default function CartaoMetricas({
   titulo,
   metricas = [],
   corFundo,
-  corTexto = 'textOnPrimary',
+  corTexto,
   altoContraste,
   style,
 }) {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(altoContraste ?? isHighContrast);
+  const contrasteAtivo = altoContraste ?? isHighContrast;
+  const t = getTheme(contrasteAtivo);
   const estilos = useMemo(() => criarEstilos(t), [t]);
+  const corTextoEfetiva = corTexto || (contrasteAtivo ? 'textOnAccent' : 'textOnPrimary');
 
   return (
     <View style={[estilos.Recipiente, { backgroundColor: corFundo || t.colors.primary }, style]}>
-      <TextoTematizado color={corTexto} weight="semibold" align="center">
+      <TextoTematizado color={corTextoEfetiva} weight="semibold" align="center">
         {titulo}
       </TextoTematizado>
 
@@ -26,10 +28,10 @@ export default function CartaoMetricas({
 
       {metricas.map((metrica) => (
         <View key={metrica.legenda} style={estilos.item}>
-          <TextoTematizado variant="h1" color={corTexto} weight="bold" align="center">
+          <TextoTematizado variant="h1" color={corTextoEfetiva} weight="bold" align="center">
             {metrica.valor}
           </TextoTematizado>
-          <TextoTematizado color={corTexto} align="center">
+          <TextoTematizado color={corTextoEfetiva} align="center">
             {metrica.legenda}
           </TextoTematizado>
           <Espacador size="md" />

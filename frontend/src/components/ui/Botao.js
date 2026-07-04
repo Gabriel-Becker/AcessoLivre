@@ -40,7 +40,7 @@ export default function Botao({
             backgroundColor: isDisabled ? t.colors.textTertiary : t.colors.primary,
             borderWidth: 0,
           },
-          text: { color: t.colors.textOnPrimary },
+          text: { color: t.colors.textOnAccent || t.colors.textOnPrimary },
         };
       case 'secondary':
         return {

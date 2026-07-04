@@ -59,7 +59,7 @@ export default function LayoutMobile({
 
         <View style={styles.brandContainer}>
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
-            <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
+            <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnAccent || t.colors.textOnPrimary} />
           </View>
         </View>
 

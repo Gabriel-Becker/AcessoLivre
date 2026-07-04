@@ -2,6 +2,7 @@ import api from './axios';
 import ServicoAutenticacao from '../services/ServicoAutenticacao';
 import { triggerLogout } from '../utils/GerenciadorSessao';
 import { resetToAuth } from '../navigation/navigationRef';
+import { limparCacheBaseUrl, resolverBaseUrlApi } from '../config/apiConfig';
 
 let reautenticacaoEmAndamento = null;
 
@@ -60,6 +61,12 @@ const ehEndpointReauth = (url = '') => {
 api.interceptors.request.use(
   async (config) => {
     try {
+      const baseUrlResolvida = await resolverBaseUrlApi();
+      if (baseUrlResolvida) {
+        config.baseURL = baseUrlResolvida;
+        api.defaults.baseURL = baseUrlResolvida;
+      }
+
       if (ehRotaPublicaDeLeitura(config)) {
         return config;
       }
@@ -77,7 +84,7 @@ api.interceptors.request.use(
         }
       }
       return config;
-    } catch (error) {
+    } catch (_error) {
       return config;
     }
   },
@@ -93,7 +100,7 @@ api.interceptors.response.use(
       if (newToken) {
         await ServicoAutenticacao.setToken(newToken);
       }
-    } catch (error) {
+    } catch (_error) {
     }
     return response;
   },
@@ -162,6 +169,7 @@ api.interceptors.response.use(
 
             // attempt to reauthenticate once (single-flight para evitar tempestade de requests)
             if (!reautenticacaoEmAndamento) {
+              // eslint-disable-next-line import/no-named-as-default-member
               reautenticacaoEmAndamento = ServicoAutenticacao.reautenticar(userId).finally(() => {
                 reautenticacaoEmAndamento = null;
               });
@@ -181,7 +189,7 @@ api.interceptors.response.use(
               }
               return api(originalRequest);
             }
-          } catch (reauthErr) {
+          } catch (_reauthErr) {
             // fallthrough to logout below
           }
         }
@@ -191,7 +199,20 @@ api.interceptors.response.use(
         await ServicoAutenticacao.setUserData(null);
         await triggerLogout();
         resetToAuth();
-      } catch (asyncError) {
+      } catch (_asyncError) {
+      }
+    }
+
+    if (!status && error.code && String(error.code).toUpperCase().includes('NETWORK')) {
+      try {
+        await limparCacheBaseUrl();
+        const novaBaseUrl = await resolverBaseUrlApi({ forcarAtualizacao: true });
+        if (novaBaseUrl && !requestConfig._retryNetwork) {
+          requestConfig._retryNetwork = true;
+          requestConfig.baseURL = novaBaseUrl;
+          return api(requestConfig);
+        }
+      } catch {
       }
     }
     

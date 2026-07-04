@@ -34,7 +34,7 @@ export default function CartaoSelecao({
     >
       <View style={[estilos.checkbox, selecionado && estilos.checkboxSelecionado]}>
         {selecionado ? (
-          <Ionicons name="checkmark" size={14} color={t.colors.textOnPrimary} />
+          <Ionicons name="checkmark" size={14} color={t.colors.textOnAccent || t.colors.textOnPrimary} />
         ) : null}
       </View>
 

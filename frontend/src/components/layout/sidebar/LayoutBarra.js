@@ -69,7 +69,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
       >
         <View style={[styles.Cabecalho, modoExpandido ? styles.headerExpandido : null]}>
           <View style={[styles.logoCircle, { backgroundColor: t.colors.primary }]}> 
-            <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnPrimary} />
+            <Ionicons name="accessibility-outline" size={18} color={t.colors.textOnAccent || t.colors.textOnPrimary} />
           </View>
           <TextoTematizado
             variant="h3"
@@ -125,7 +125,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
         <View style={[styles.modalOverlay, { backgroundColor: t.colors.overlay }]}> 
           <View style={[styles.modalCard, { backgroundColor: t.colors.surface, borderColor: t.colors.borderLight }]}> 
             <View style={[styles.modalIcon, { backgroundColor: t.colors.primary }]}> 
-              <Ionicons name="settings-outline" size={26} color={t.colors.textOnPrimary} />
+              <Ionicons name="settings-outline" size={26} color={t.colors.textOnAccent || t.colors.textOnPrimary} />
             </View>
 
             <Espacador size="sm" />
@@ -182,7 +182,7 @@ export default function LayoutBarra({ current = 'Inicio', onNavigate, altoContra
                       </View>
 
                       <View style={[styles.badgeNivelAtual, { backgroundColor: t.colors.primary }]}> 
-                        <TextoTematizado weight="bold" color="textOnPrimary" align="center" altoContraste={altoContraste}>
+                          <TextoTematizado weight="bold" color={contrasteAtivo ? 'textOnAccent' : 'textOnPrimary'} align="center" altoContraste={altoContraste}>
                           {nivelAtual.subtitulo}
                         </TextoTematizado>
                       </View>

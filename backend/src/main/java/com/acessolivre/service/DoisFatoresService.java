@@ -1,11 +1,16 @@
 package com.acessolivre.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.EnumMap;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -17,12 +22,14 @@ import com.acessolivre.model.Usuario;
 import com.acessolivre.repository.CodigoRecuperacaoDoisFatoresRepository;
 import com.acessolivre.repository.UsuarioRepository;
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
-import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +42,9 @@ public class DoisFatoresService {
     private static final int RECOVERY_CODES_QUANTIDADE = 8;
     private static final int RECOVERY_CODE_EXPIRATION_DAYS = 365;
     private static final String ISSUER = "AcessoLivre";
+    private static final int QR_CODE_LARGURA = 640;
+    private static final int QR_CODE_ALTURA = 640;
+    private static final int QR_CODE_MARGEM = 8;
 
     private final UsuarioRepository usuarioRepository;
     private final CodigoRecuperacaoDoisFatoresRepository twoFactorRecoveryCodeRepository;
@@ -57,7 +67,7 @@ public class DoisFatoresService {
         GoogleAuthenticatorKey key = googleAuthenticator.createCredentials();
         String secretKey = key.getKey();
         String accountName = usuario.getEmail();
-        String otpAuthUrl = GoogleAuthenticatorQRGenerator.getOtpAuthURL(ISSUER, accountName, key);
+        String otpAuthUrl = gerarOtpAuthUrl(accountName, secretKey);
         String qrCode = gerarQrCodeBase64(otpAuthUrl);
 
         usuario.setTwoFactorSecret(secretKey);
@@ -190,14 +200,37 @@ public class DoisFatoresService {
 
     private String gerarQrCodeBase64(String otpAuthUrl) {
         try {
-            BitMatrix bitMatrix = new QRCodeWriter().encode(otpAuthUrl, BarcodeFormat.QR_CODE, 320, 320);
+            Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+            hints.put(EncodeHintType.MARGIN, QR_CODE_MARGEM);
+
+            BitMatrix bitMatrix = new QRCodeWriter().encode(
+                otpAuthUrl,
+                BarcodeFormat.QR_CODE,
+                QR_CODE_LARGURA,
+                QR_CODE_ALTURA,
+                hints
+            );
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
                 return "data:image/png;base64," + Base64.getEncoder().encodeToString(outputStream.toByteArray());
             }
-        } catch (Exception e) {
+        } catch (WriterException | IOException e) {
             throw new RuntimeException("Erro ao gerar QR Code do 2FA", e);
         }
+    }
+
+    private String gerarOtpAuthUrl(String accountName, String secretKey) {
+        String issuerCodificado = URLEncoder.encode(ISSUER, StandardCharsets.UTF_8).replace("+", "%20");
+        String contaCodificada = URLEncoder.encode(accountName, StandardCharsets.UTF_8).replace("+", "%20");
+
+        return String.format(
+            "otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
+            issuerCodificado,
+            contaCodificada,
+            secretKey,
+            issuerCodificado
+        );
     }
 
     @Transactional
