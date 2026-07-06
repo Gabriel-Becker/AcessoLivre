@@ -9,7 +9,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 
 const MOTIVOS = [
-  { value: 'CONTEUDO_IMPROPRIO', label: 'Conteúdo impráprio' },
+  { value: 'CONTEUDO_IMPROPRIO', label: 'Conteúdo impróprio' },
   { value: 'SPAM', label: 'Spam' },
   { value: 'OFENSIVO', label: 'Conteúdo ofensivo' },
   { value: 'FAKE_NEWS', label: 'Informação falsa' },

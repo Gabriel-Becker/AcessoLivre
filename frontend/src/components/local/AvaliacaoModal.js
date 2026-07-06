@@ -99,7 +99,13 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const renderStars = (nota, setNota, hover, setHover, label, disabled = false) => {
     const stars = [];
-    const displayNota = hover || nota;
+    const displayNota = Number(hover || nota || 0);
+
+    const getStarIconName = (indiceEstrela, valorNota) => {
+      if (valorNota >= indiceEstrela) return 'star';
+      if (valorNota >= indiceEstrela - 0.5) return 'star-half';
+      return 'star-outline';
+    };
     
     for (let i = 1; i <= 5; i++) {
       stars.push(
@@ -115,9 +121,9 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
           accessibilityHint={`Nota ${i} para ${label.toLowerCase()}`}
         >
           <Ionicons
-            name={i <= displayNota ? 'star' : 'star-outline'}
+            name={getStarIconName(i, displayNota)}
             size={tamanhoEstrela}
-            color={i <= displayNota ? corEstrelaAtiva : corEstrelaInativa}
+            color={displayNota >= i - 0.5 ? corEstrelaAtiva : corEstrelaInativa}
           />
         </TouchableOpacity>
       );
