@@ -25,7 +25,6 @@ export const filtrosDenuncias = (
     opcoes: [
       { value: 'todos', label: 'Todos' },
       { value: 'LOCAL', label: 'Locais' },
-      { value: 'COMENTARIO', label: 'Comentários' },
       { value: 'AVALIACAO', label: 'Avaliações' },
     ],
   },
