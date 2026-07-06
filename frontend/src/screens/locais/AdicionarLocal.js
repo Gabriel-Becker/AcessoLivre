@@ -33,6 +33,7 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import ServicoLocal from '../../services/ServicoLocal';
 import ServicoBusca from '../../services/ServicoBusca';
+import ServicoSobre from '../../services/ServicoSobre';
 import api from '../../api/axios';
 import { formatCEP } from '../../utils/formatters';
 import toastHelper from '../../utils/toastHelper';
@@ -1034,6 +1035,9 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
 
       if (typeof ServicoBusca.invalidateCache === 'function') {
         ServicoBusca.invalidateCache();
+      }
+      if (typeof ServicoSobre.invalidateCacheMetricas === 'function') {
+        ServicoSobre.invalidateCacheMetricas();
       }
 
       if (onNavigate) {

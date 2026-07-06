@@ -30,6 +30,8 @@ import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import ServicoHome from '../../services/ServicoHome';
 import ServicoAvaliacao from '../../services/ServicoAvaliacao';
+import ServicoBusca from '../../services/ServicoBusca';
+import ServicoSobre from '../../services/ServicoSobre';
 import toastHelper from '../../utils/toastHelper';
 import { breakpoints } from '../../config/theme';
 
@@ -91,7 +93,7 @@ const formatarDataRelativa = (dataOriginal, agoraTimestamp) => {
 };
 
 // Componente de Avaliação com Menu de Reportar
-const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
+const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now, corEstrelaAtiva, corEstrelaInativa }) => {
   const renderStars = (nota = 0) => {
     const stars = [];
     const fullStars = Math.floor(nota);
@@ -99,11 +101,11 @@ const AvaliacaoItem = ({ avaliacao, theme, estilosDinamicos, now }) => {
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={14} color={corEstrelaAtiva} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={14} color={theme.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={14} color={corEstrelaAtiva} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={14} color={theme.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={14} color={corEstrelaInativa} />);
       }
     }
     return stars;
@@ -183,6 +185,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const zoomAtivo = fontSizeMultiplier >= 1.5;
   const layoutEmpilhado = width < 1280 || fontSizeMultiplier >= 1.5;
   const corFundoPagina = isHighContrast ? t.colors.background : t.colors.backgroundSecondary;
+  const corEstrelaAtiva = isHighContrast ? t.colors.primary : t.colors.warning;
+  const corEstrelaInativa = isHighContrast ? t.colors.textSecondary : t.colors.textTertiary;
   
   // Estados
   const [modalAvaliacaoVisible, setModalAvaliacaoVisible] = useState(false);
@@ -194,6 +198,7 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const [descricaoExpandida, setDescricaoExpandida] = useState(false);
   const [mostrarTodasAvaliacoes, setMostrarTodasAvaliacoes] = useState(false);
   const [showReportarLocalModal, setShowReportarLocalModal] = useState(false);
+  const [precisaAtualizarOrigem, setPrecisaAtualizarOrigem] = useState(false);
   
   const estilosZoom = useMemo(
     () =>
@@ -329,8 +334,13 @@ export default function LocalDetalhes({ onNavigate, route }) {
   const handleRefresh = () => carregar(true);
 
   const handleVoltar = useCallback(() => {
+    if (precisaAtualizarOrigem) {
+      onNavigate?.(previousScreen || 'Inicio', { refreshKey: Date.now(), forceRefresh: true });
+      return;
+    }
+
     onNavigate?.(previousScreen || 'Inicio');
-  }, [onNavigate, previousScreen]);
+  }, [onNavigate, previousScreen, precisaAtualizarOrigem]);
 
   const handleAvaliar = () => {
     if (!isAuthenticated) {
@@ -368,15 +378,28 @@ export default function LocalDetalhes({ onNavigate, route }) {
       const result = await ServicoAvaliacao.criarAvaliacao(avaliacaoData);
       
       if (result.success) {
+        if (typeof ServicoBusca.invalidateCache === 'function') {
+          ServicoBusca.invalidateCache();
+        }
+        if (typeof ServicoSobre.invalidateCacheMetricas === 'function') {
+          ServicoSobre.invalidateCacheMetricas();
+        }
+
         toastHelper.showSuccess('Avaliação enviada com sucesso!');
         setModalAvaliacaoVisible(false);
+        setPrecisaAtualizarOrigem(true);
         await carregar(true);
-      } else {
-        toastHelper.showError(result.message || 'Erro ao enviar avaliação');
+        return result;
       }
+
+      return result;
     } catch (error) {
       console.error('Erro ao enviar avaliação:', error);
-      toastHelper.showError('Erro ao enviar avaliação');
+      return {
+        success: false,
+        code: 'ERRO_AVALIACAO',
+        message: 'Erro ao enviar avaliação. Tente novamente.'
+      };
     }
   };
 
@@ -387,11 +410,11 @@ export default function LocalDetalhes({ onNavigate, route }) {
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={16} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={16} color={corEstrelaAtiva} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={16} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={16} color={corEstrelaAtiva} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={16} color={t.colors.textSecondary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={16} color={corEstrelaInativa} />);
       }
     }
     return stars;
@@ -548,6 +571,8 @@ export default function LocalDetalhes({ onNavigate, route }) {
               theme={t} 
               estilosDinamicos={estilosZoom} 
               now={now}
+              corEstrelaAtiva={corEstrelaAtiva}
+              corEstrelaInativa={corEstrelaInativa}
             />
             {index < avaliacoesVisiveis.length - 1 && (
               <View style={[styles.divisor, { backgroundColor: t.colors.borderLight || '#E0E0E0' }]} />

@@ -362,18 +362,20 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
   const renderStars = useCallback((nota) => {
     const stars = [];
     const starSize = Math.round((isDesktop ? 16 : 20) * escalaFiltro);
+    const corEstrelaAtiva = isHighContrast ? theme.colors.primary : theme.colors.warning;
+    const corEstrelaInativa = isHighContrast ? theme.colors.textSecondary : theme.colors.textTertiary;
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Ionicons 
           key={i} 
           name={i <= nota ? 'star' : 'star-outline'} 
           size={starSize} 
-          color={i <= nota ? theme.colors.warning : theme.colors.textTertiary} 
+          color={i <= nota ? corEstrelaAtiva : corEstrelaInativa}
         />
       );
     }
     return stars;
-  }, [theme.colors.warning, theme.colors.textTertiary, isDesktop, escalaFiltro]);
+  }, [isHighContrast, theme.colors.primary, theme.colors.warning, theme.colors.textSecondary, theme.colors.textTertiary, isDesktop, escalaFiltro]);
 
   const anunciarNota = useCallback(() => {
     if (!voiceEnabled) return;
@@ -399,7 +401,11 @@ const FiltroNota = React.memo(({ notaMinima, onNotaChange, theme, isDesktop, voi
         accessibilityLabel="Filtro por nota mínima"
         accessibilityRole="button"
       >
-        <Ionicons name="star-outline" size={Math.round(20 * escalaFiltro)} color={theme.colors.warning} />
+        <Ionicons
+          name="star-outline"
+          size={Math.round(20 * escalaFiltro)}
+          color={isHighContrast ? theme.colors.primary : theme.colors.warning}
+        />
         <TextoTematizado weight="semibold" style={[styles.filtroTitulo, { fontSize: Math.round(15 * escalaFiltro) }]}>Nota Mínima</TextoTematizado>
         {voiceEnabled && (
           <Ionicons name="volume-medium-outline" size={Math.round(16 * escalaFiltro)} color={theme.colors.primary} style={styles.voiceIcon} />
@@ -613,7 +619,7 @@ const FiltrosCard = React.memo(({
 
 FiltrosCard.displayName = 'FiltrosCard';
 
-export default function Buscar({ onNavigate }) {
+export default function Buscar({ onNavigate, routeParams }) {
   const { isHighContrast, fontSizeMultiplier } = useThemeContext();
   const { enabled: voiceEnabled } = useContext(AccessibilityContext);
   const { width } = useWindowDimensions();
@@ -647,6 +653,10 @@ export default function Buscar({ onNavigate }) {
   const [voiceFeedbackGiven, setVoiceFeedbackGiven] = useState(false);
   const [filtrosVisiveis, setFiltrosVisiveis] = useState(true);
   const searchTimeoutRef = useRef(null);
+  const processedRefreshKey = useRef(null);
+
+  const refreshKey = routeParams?.refreshKey;
+  const forceRefresh = routeParams?.forceRefresh;
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -787,6 +797,24 @@ export default function Buscar({ onNavigate }) {
     }
   }, [realizarBusca]);
 
+  const recarregarDadosPorNavegacao = useCallback(async (forcarRecarga = false) => {
+    setLoading(true);
+    try {
+      if (forcarRecarga && typeof ServicoBusca.invalidateCache === 'function') {
+        ServicoBusca.invalidateCache();
+      }
+
+      await ServicoBusca.carregarTodosLocais(forcarRecarga);
+      await realizarBusca();
+    } catch (error) {
+      console.error('Erro ao recarregar dados da busca:', error);
+      toastHelper.showError('Erro ao atualizar busca');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [realizarBusca]);
+
   const anunciarBusca = useCallback(() => {
     if (!voiceEnabled) return;
     
@@ -863,6 +891,21 @@ export default function Buscar({ onNavigate }) {
   useEffect(() => {
     carregarDadosIniciais();
   }, [carregarDadosIniciais]);
+
+  useEffect(() => {
+    const precisaForcar = forceRefresh === true;
+
+    if (!refreshKey && !precisaForcar) {
+      return;
+    }
+
+    if (refreshKey && processedRefreshKey.current === refreshKey) {
+      return;
+    }
+
+    processedRefreshKey.current = refreshKey || null;
+    recarregarDadosPorNavegacao(precisaForcar);
+  }, [refreshKey, forceRefresh, recarregarDadosPorNavegacao]);
 
   useEffect(() => {
     if (!carregandoInicial && !loading && voiceEnabled && !voiceFeedbackGiven) {

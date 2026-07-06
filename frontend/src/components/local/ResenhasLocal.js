@@ -8,7 +8,10 @@ import { getTheme } from '../../config/theme';
 
 const ReviewItem = ({ review, altoContraste }) => {
   const { isHighContrast } = useThemeContext();
-  const t = getTheme(altoContraste ?? isHighContrast);
+  const contrasteAtivo = altoContraste ?? isHighContrast;
+  const t = getTheme(contrasteAtivo);
+  const corEstrelaAtiva = contrasteAtivo ? t.colors.primary : t.colors.warning;
+  const corEstrelaInativa = contrasteAtivo ? t.colors.textSecondary : t.colors.textTertiary;
 
   const renderStars = (rating) => {
     const stars = [];
@@ -18,7 +21,7 @@ const ReviewItem = ({ review, altoContraste }) => {
           key={i} 
           name={i < rating ? 'star' : 'star-outline'} 
           size={14} 
-          color={t.colors.warning} 
+          color={i < rating ? corEstrelaAtiva : corEstrelaInativa}
         />
       );
     }

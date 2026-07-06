@@ -42,15 +42,24 @@ function MainApp({ navigation, route }) {
 
   const navegarInternamente = (screen, params = {}) => {
     const telasPublicas = ['Inicio', 'Buscar', 'Sobre', 'SobreNos', 'SobreNosScreen'];
+    const vindoDoMenuLateral = currentScreen === 'MenuLateral';
 
     if (telasPublicas.includes(screen)) {
+      const telaNormalizada = screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen;
+      const paramsNavegacao = { ...params };
+
+      if (vindoDoMenuLateral && ['Inicio', 'Buscar', 'Sobre'].includes(telaNormalizada)) {
+        paramsNavegacao.refreshKey = Date.now();
+        paramsNavegacao.forceRefresh = true;
+      }
+
       navigation?.setParams({
         ...route?.params,
-        screen: screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen,
-        ...params,
+        screen: telaNormalizada,
+        ...paramsNavegacao,
       });
 
-      setCurrentScreen(screen === 'SobreNos' || screen === 'SobreNosScreen' ? 'Sobre' : screen);
+      setCurrentScreen(telaNormalizada);
       return;
     }
 
@@ -125,7 +134,7 @@ function MainApp({ navigation, route }) {
       case 'Inicio':
         return <Inicio onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'Buscar':
-        return <Buscar onNavigate={handleNavigate} />;
+        return <Buscar onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'Adicionar':
         return <AdicionarLocal onNavigate={handleNavigate} routeParams={route?.params} />;
       case 'LocalDetalhes':

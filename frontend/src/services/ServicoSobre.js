@@ -1,21 +1,49 @@
 import api from '../api/axios';
 
 class ServicoSobre {
-  static async obterMetricasImpacto() {
-    const [resumoLocaisResult, avaliacoesResult] = await Promise.allSettled([
-      this.obterResumoLocaisPublico(),
+  static metricasCache = null;
+  static metricasCacheTimestamp = null;
+  static CACHE_DURATION = 30 * 1000;
+
+  static invalidateCacheMetricas() {
+    this.metricasCache = null;
+    this.metricasCacheTimestamp = null;
+  }
+
+  static async obterMetricasImpacto(forceRefresh = false) {
+    const agora = Date.now();
+    const cacheValido =
+      !forceRefresh &&
+      this.metricasCache &&
+      this.metricasCacheTimestamp &&
+      (agora - this.metricasCacheTimestamp) < this.CACHE_DURATION;
+
+    if (cacheValido) {
+      return this.metricasCache;
+    }
+
+    const [locaisResult, avaliacoesResult, usuariosResult] = await Promise.allSettled([
+      api.get('/locais/todos', { params: { page: 0, size: 1, sort: 'dataCriacao', direction: 'desc' } }),
       api.get('/avaliacoes', { params: { page: 0, size: 1 } }),
+      api.get('/usuarios', { params: { page: 0, size: 1 } }),
     ]);
 
-    const resumoLocais = resumoLocaisResult.status === 'fulfilled'
-      ? resumoLocaisResult.value
-      : { totalLocais: 0, totalUsuariosAtivos: 0 };
+    const totalLocais = this.extrairTotalDaResposta(locaisResult, 'totalElements');
+    const totalAvaliacoes = this.extrairTotalDaResposta(avaliacoesResult, 'totalElements');
+    const totalUsuariosAtivosApi = this.extrairTotalDaResposta(usuariosResult, 'totalElements');
 
-    return {
-      totalLocais: Number.isFinite(resumoLocais.totalLocais) ? resumoLocais.totalLocais : 0,
-      totalAvaliacoes: this.extrairTotalDaResposta(avaliacoesResult, 'totalElements'),
-      totalUsuariosAtivos: Number.isFinite(resumoLocais.totalUsuariosAtivos) ? resumoLocais.totalUsuariosAtivos : 0,
+    const fallbackUsuariosPorLocais = this.extrairUsuariosDaPrimeiraPagina(locaisResult);
+
+    this.metricasCache = {
+      totalLocais: Number.isFinite(totalLocais) ? totalLocais : 0,
+      totalAvaliacoes: Number.isFinite(totalAvaliacoes) ? totalAvaliacoes : 0,
+      totalUsuariosAtivos: Number.isFinite(totalUsuariosAtivosApi) && totalUsuariosAtivosApi > 0
+        ? totalUsuariosAtivosApi
+        : fallbackUsuariosPorLocais,
     };
+    this.metricasCacheTimestamp = agora;
+
+    return this.metricasCache;
   }
 
   static extrairTotalDaResposta(result, campoTotal) {
@@ -34,6 +62,28 @@ class ServicoSobre {
     }
 
     return Number.isFinite(result.value) ? result.value : 0;
+  }
+
+  static extrairUsuariosDaPrimeiraPagina(result) {
+    if (result?.status !== 'fulfilled') {
+      return 0;
+    }
+
+    const locais = Array.isArray(result.value?.data?.content) ? result.value.data.content : [];
+    if (locais.length === 0) {
+      return 0;
+    }
+
+    const usuariosUnicos = new Set();
+
+    locais.forEach((local) => {
+      const idUsuario = local?.idUsuario ?? local?.usuario?.idUsuario ?? local?.usuario?.id;
+      if (idUsuario !== undefined && idUsuario !== null) {
+        usuariosUnicos.add(String(idUsuario));
+      }
+    });
+
+    return usuariosUnicos.size;
   }
 
   static async obterTotalUsuariosAtivosPublico() {
@@ -59,6 +109,14 @@ class ServicoSobre {
     locaisSemId += resumoPrimeiraPagina.locaisSemId;
 
     const totalPages = Number(primeiraResposta.data?.totalPages) || 1;
+
+    const totalElements = Number(primeiraResposta.data?.totalElements);
+    if (Number.isFinite(totalElements) && totalElements >= 0) {
+      return {
+        totalLocais: totalElements,
+        totalUsuariosAtivos: usuariosUnicos.size,
+      };
+    }
 
     if (totalPages <= 1) {
       return {

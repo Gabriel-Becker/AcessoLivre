@@ -145,9 +145,9 @@ export default function Inicio({ onNavigate, routeParams }) {
     return false;
   }, [locaisDestaque, onNavigate]);
 
-  const carregarEstatisticas = useCallback(async () => {
+  const carregarEstatisticas = useCallback(async (forcarRecarga = false) => {
     try {
-      const metricas = await ServicoSobre.obterMetricasImpacto();
+      const metricas = await ServicoSobre.obterMetricasImpacto(forcarRecarga);
       if (mountedRef.current) {
         setEstatisticas({
           totalLocais: metricas.totalLocais || 0,
@@ -173,7 +173,7 @@ export default function Inicio({ onNavigate, routeParams }) {
         ServicoBusca.invalidateCache();
       }
       
-      await carregarEstatisticas();
+      await carregarEstatisticas(forcarRecarga);
 
       const locais = await ServicoBusca.obterLocaisEmDestaque(12);
 

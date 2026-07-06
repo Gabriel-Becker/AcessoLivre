@@ -51,6 +51,8 @@ export default function CartaoLocal({ local, onPress, altoContraste = false, com
   
   const contrasteAtivo = typeof altoContraste === 'boolean' ? altoContraste : isHighContrast;
   const t = getTheme(contrasteAtivo, fontSizeMultiplier);
+  const corEstrelaAtiva = contrasteAtivo ? t.colors.primary : t.colors.warning;
+  const corEstrelaInativa = contrasteAtivo ? t.colors.textSecondary : t.colors.textTertiary;
 
   const isTablet = width >= BREAKPOINTS.MOBILE && width < BREAKPOINTS.TABLET;
   const isDesktop = width >= BREAKPOINTS.TABLET;
@@ -109,11 +111,11 @@ export default function CartaoLocal({ local, onPress, altoContraste = false, com
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={starSize} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star" size={starSize} color={corEstrelaAtiva} />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={starSize} color={t.colors.warning} />);
+        stars.push(<Ionicons key={i} name="star-half" size={starSize} color={corEstrelaAtiva} />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color={t.colors.textTertiary} />);
+        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color={corEstrelaInativa} />);
       }
     }
     return stars;

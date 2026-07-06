@@ -8,6 +8,69 @@ const eh401EmLeituraPublicaDeAvaliacoes = (error) => {
   return status === 401 && metodo === 'get' && caminho.startsWith('/avaliacoes/local/');
 };
 
+const extrairMensagemErro = (error) => {
+  const data = error?.response?.data;
+
+  if (typeof data === 'string' && data.trim()) {
+    return data.trim();
+  }
+
+  const candidatos = [
+    data?.message,
+    data?.mensagem,
+    data?.error,
+    data?.erro,
+    data?.detail,
+    data?.details,
+  ];
+
+  for (const valor of candidatos) {
+    if (typeof valor === 'string' && valor.trim()) {
+      return valor.trim();
+    }
+  }
+
+  if (Array.isArray(data?.errors) && data.errors.length > 0) {
+    const primeira = data.errors[0];
+    if (typeof primeira === 'string' && primeira.trim()) {
+      return primeira.trim();
+    }
+    if (typeof primeira?.message === 'string' && primeira.message.trim()) {
+      return primeira.message.trim();
+    }
+  }
+
+  return '';
+};
+
+const ehAvaliacaoDuplicada = (error) => {
+  const status = Number(error?.response?.status);
+  if (![400, 409, 422].includes(status)) {
+    return false;
+  }
+
+  const mensagem = extrairMensagemErro(error)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (!mensagem) {
+    return false;
+  }
+
+  const sinaisDuplicidade = [
+    'ja avaliou',
+    'ja avaliada',
+    'avaliacao ja existe',
+    'avaliacao duplicada',
+    'duplicate',
+    'constraint',
+    'unique',
+  ];
+
+  return sinaisDuplicidade.some((sinal) => mensagem.includes(sinal));
+};
+
 class ServicoAvaliacao {
   static async buscarAvaliacoesPorLocal(idLocal) {
     try {
@@ -123,25 +186,35 @@ class ServicoAvaliacao {
 
     } catch (error) {
       console.error('Erro ao criar avaliação:', error);
+
+      if (ehAvaliacaoDuplicada(error)) {
+        return {
+          success: false,
+          code: 'AVALIACAO_DUPLICADA',
+          message: 'Você já avaliou este local. Cada usuário pode enviar apenas uma avaliação por local.'
+        };
+      }
       
       let errorMessage = 'Erro ao enviar avaliação';
+      let errorCode = 'ERRO_AVALIACAO';
       
       if (error.response) {
         if (error.response.status === 400) {
-          errorMessage = error.response.data?.message || 'Dados inválidos';
-          if (errorMessage.includes('já avaliou')) {
-            errorMessage = 'Você já avaliou este local anteriormente';
-          }
+          errorMessage = extrairMensagemErro(error) || 'Dados inválidos';
+          errorCode = 'DADOS_INVALIDOS';
         } else if (error.response.status === 401) {
           errorMessage = 'Você precisa estar logado para avaliar';
+          errorCode = 'NAO_AUTENTICADO';
         } else if (error.response.status === 404) {
           errorMessage = 'Local ou usuário não encontrado';
+          errorCode = 'NAO_ENCONTRADO';
         }
       } else if (error.request) {
         errorMessage = 'Servidor não está respondendo';
+        errorCode = 'SERVIDOR_INDISPONIVEL';
       }
       
-      return { success: false, message: errorMessage };
+      return { success: false, code: errorCode, message: errorMessage };
     }
   }
 

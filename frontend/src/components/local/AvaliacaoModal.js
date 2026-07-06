@@ -40,6 +40,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const isMobile = SCREEN_WIDTH < 768;
   const tamanhoEstrela = Math.round(isMobile ? 24 : 26 * Math.min(escalaZoom, 1.1));
+  const escalaErro = Math.min(escalaZoom, 1.6);
+  const tamanhoIconeErro = Math.round((isMobile ? 14 : 16) * escalaErro);
+  const corEstrelaAtiva = isHighContrast ? theme.colors.primary : theme.colors.warning;
+  const corEstrelaInativa = isHighContrast ? theme.colors.textSecondary : theme.colors.textTertiary;
 
   const estilosDinamicos = {
     criterioContainer: {
@@ -54,6 +58,14 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       borderWidth: isHighContrast ? 2 : 0,
       borderColor: theme.colors.border,
       paddingVertical: isMobile ? 8 : 10,
+    },
+    erroContainer: {
+      backgroundColor: isHighContrast ? theme.colors.background : `${theme.colors.error}20`,
+      borderWidth: isHighContrast ? 2 : 1,
+      borderColor: isHighContrast ? theme.colors.error : `${theme.colors.error}50`,
+      borderRadius: Math.round(8 * Math.min(escalaErro, 1.4)),
+      paddingVertical: Math.round((isMobile ? 8 : 10) * escalaErro),
+      paddingHorizontal: Math.round((isMobile ? 10 : 12) * escalaErro),
     },
   };
 
@@ -79,6 +91,10 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
       fontSize: Math.round(isMobile ? 13 : 14 * escalaZoom),
       lineHeight: Math.round(isMobile ? 18 : 20 * escalaZoom),
     },
+    erroTexto: {
+      fontSize: Math.round((isMobile ? 12 : 13) * escalaErro),
+      lineHeight: Math.round((isMobile ? 18 : 20) * escalaErro),
+    },
   };
 
   const renderStars = (nota, setNota, hover, setHover, label, disabled = false) => {
@@ -101,7 +117,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
           <Ionicons
             name={i <= displayNota ? 'star' : 'star-outline'}
             size={tamanhoEstrela}
-            color={i <= displayNota ? theme.colors.warning : theme.colors.textTertiary}
+            color={i <= displayNota ? corEstrelaAtiva : corEstrelaInativa}
           />
         </TouchableOpacity>
       );
@@ -150,7 +166,13 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
         comentario: comentario.trim() || null
       };
       
-      await onSubmit(avaliacaoData);
+      const resultado = await onSubmit(avaliacaoData);
+
+      if (!resultado?.success) {
+        setErro(resultado?.message || 'Não foi possível enviar sua avaliação');
+        return;
+      }
+
       resetForm();
       onClose();
     } catch (error) {
@@ -351,9 +373,13 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
                   {erro ? (
                     <>
-                      <View style={[styles.erroContainer, { backgroundColor: theme.colors.error + '20' }]}>
-                        <Ionicons name="alert-circle" size={14} color={theme.colors.error} />
-                        <TextoTematizado color="error" style={styles.erroTexto}>
+                      <View
+                        style={[styles.erroContainer, estilosDinamicos.erroContainer]}
+                        accessibilityRole="alert"
+                        accessibilityLiveRegion="polite"
+                      >
+                        <Ionicons name="alert-circle" size={tamanhoIconeErro} color={theme.colors.error} />
+                        <TextoTematizado color="error" style={[styles.erroTexto, estilosZoom.erroTexto]}>
                           {erro}
                         </TextoTematizado>
                       </View>
@@ -519,14 +545,13 @@ const styles = StyleSheet.create({
   },
   erroContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    borderRadius: 6,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    gap: 6,
   },
   erroTexto: {
     fontSize: 12,
+    flex: 1,
   },
   botoesContainer: {
     flexDirection: 'row',
