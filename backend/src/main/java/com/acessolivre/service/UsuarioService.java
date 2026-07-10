@@ -59,19 +59,17 @@ public class UsuarioService {
     @Transactional
     public Usuario atualizar(Usuario usuario) {
         usuario.setNome(ValidadorNome.normalizar(usuario.getNome()));
-        usuario.setEmail(normalizarEmail(usuario.getEmail()));
         log.info("Atualizando usuário ID: {}", usuario.getIdUsuario());
         
-        // Verifica se o usuário existe
-        if (usuarioRepository.findByIdUsuarioAndAtivoTrue(usuario.getIdUsuario()).isEmpty()) {
+        // Verifica se o usuário existe e preserva o email original neste fluxo.
+        Optional<Usuario> usuarioExistenteOpt = usuarioRepository.findByIdUsuarioAndAtivoTrue(usuario.getIdUsuario());
+        if (usuarioExistenteOpt.isEmpty()) {
             log.warn("Tentativa de atualização de usuário inexistente. ID: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + usuario.getIdUsuario());
         }
 
-        Optional<Usuario> usuarioComMesmoEmail = usuarioRepository.findByEmailIgnoreCase(usuario.getEmail());
-        if (usuarioComMesmoEmail.isPresent() && !usuarioComMesmoEmail.get().getIdUsuario().equals(usuario.getIdUsuario())) {
-            throw new IllegalArgumentException("Email já cadastrado: " + usuario.getEmail());
-        }
+        Usuario usuarioExistente = usuarioExistenteOpt.get();
+        usuario.setEmail(usuarioExistente.getEmail());
         
         Usuario usuarioAtualizado = usuarioRepository.save(usuario);
         log.info("Usuário atualizado com sucesso. ID: {}", usuarioAtualizado.getIdUsuario());

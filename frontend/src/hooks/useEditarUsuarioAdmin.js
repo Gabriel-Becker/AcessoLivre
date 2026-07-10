@@ -35,7 +35,6 @@ export default function useEditarUsuarioAdmin() {
       const dados = await ServicoAdmin.buscarUsuario(usuarioBase.idUsuario);
       return {
         nome: dados?.nome || usuarioBase?.nome || '',
-        email: dados?.email || usuarioBase?.email || '',
         role: normalizarRole(dados?.role || usuarioBase?.role),
         imagemPerfil: dados?.imagemPerfil,
       };
@@ -43,7 +42,6 @@ export default function useEditarUsuarioAdmin() {
       toastHelper.showError('Não foi possível carregar todos os dados do usuário');
       return {
         nome: usuarioBase?.nome || '',
-        email: usuarioBase?.email || '',
         role: normalizarRole(usuarioBase?.role),
         imagemPerfil: usuarioBase?.imagemPerfil,
       };
@@ -66,7 +64,6 @@ export default function useEditarUsuarioAdmin() {
     try {
       const payload = {
         nome: values.nome,
-        email: values.email,
         role: normalizarRole(roleOriginal),
       };
 

@@ -1,6 +1,7 @@
 package com.acessolivre.mapper;
 
 import com.acessolivre.dto.request.UsuarioRequestDTO;
+import com.acessolivre.dto.request.UsuarioAtualizacaoRequestDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
 import com.acessolivre.enums.Role;
 import com.acessolivre.model.Usuario;
@@ -36,13 +37,12 @@ public class UsuarioMapper {
                 .build();
     }
 
-    public static Usuario updateEntity(Usuario entity, UsuarioRequestDTO dto) {
+    public static Usuario updateEntity(Usuario entity, UsuarioAtualizacaoRequestDTO dto) {
         if (entity == null || dto == null) {
             return entity;
         }
         
         entity.setNome(dto.getNome());
-        entity.setEmail(dto.getEmail());
         entity.setRole(parseRole(dto.getRole()));
         entity.setImagemPerfil(dto.getImagemPerfil());
         
