@@ -25,7 +25,7 @@ public class ServicoDetalhesUsuario implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UsuarioAutenticar ua = repository.findByUsuario_Email(email)
+        UsuarioAutenticar ua = repository.findByUsuario_EmailIgnoreCase(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Não encontramos nenhum usuário com o e-mail informado: " + email));
 
         if (ua.getUsuario() == null || !Boolean.TRUE.equals(ua.getUsuario().getAtivo())) {

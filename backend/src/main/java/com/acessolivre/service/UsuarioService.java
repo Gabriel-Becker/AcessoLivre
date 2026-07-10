@@ -20,6 +20,13 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
+    private String normalizarEmail(String email) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email é obrigatório");
+        }
+        return email.trim().toLowerCase();
+    }
+
     public List<Usuario> listarTodos() {
         log.info("Listando todos os usuários");
         return usuarioRepository.findAllByAtivoTrue();
@@ -34,10 +41,11 @@ public class UsuarioService {
     @Transactional
     public Usuario salvar(Usuario usuario) {
         usuario.setNome(ValidadorNome.normalizar(usuario.getNome()));
+        usuario.setEmail(normalizarEmail(usuario.getEmail()));
         log.info("Salvando novo usuário: {}", usuario.getEmail());
         
         // Verifica se email já existe
-        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
+        if (usuarioRepository.existsByEmailIgnoreCase(usuario.getEmail())) {
             log.warn("Tentativa de cadastro com email já existente: {}", usuario.getEmail());
             throw new IllegalArgumentException("Email já cadastrado: " + usuario.getEmail());
         }
@@ -51,12 +59,18 @@ public class UsuarioService {
     @Transactional
     public Usuario atualizar(Usuario usuario) {
         usuario.setNome(ValidadorNome.normalizar(usuario.getNome()));
+        usuario.setEmail(normalizarEmail(usuario.getEmail()));
         log.info("Atualizando usuário ID: {}", usuario.getIdUsuario());
         
         // Verifica se o usuário existe
         if (usuarioRepository.findByIdUsuarioAndAtivoTrue(usuario.getIdUsuario()).isEmpty()) {
             log.warn("Tentativa de atualização de usuário inexistente. ID: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("Usuário não encontrado com ID: " + usuario.getIdUsuario());
+        }
+
+        Optional<Usuario> usuarioComMesmoEmail = usuarioRepository.findByEmailIgnoreCase(usuario.getEmail());
+        if (usuarioComMesmoEmail.isPresent() && !usuarioComMesmoEmail.get().getIdUsuario().equals(usuario.getIdUsuario())) {
+            throw new IllegalArgumentException("Email já cadastrado: " + usuario.getEmail());
         }
         
         Usuario usuarioAtualizado = usuarioRepository.save(usuario);
