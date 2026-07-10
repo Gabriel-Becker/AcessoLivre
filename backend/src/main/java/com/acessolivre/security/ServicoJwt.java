@@ -60,7 +60,7 @@ public class ServicoJwt {
         String email = authentication.getName();
         Long userId = null;
         try {
-            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
             if (usuario != null) userId = usuario.getIdUsuario();
         } catch (Exception ignored) {}
 
@@ -131,7 +131,7 @@ public class ServicoJwt {
             return false;
         }
 
-        Usuario usuario = usuarioRepository.findByEmail(username).orElse(null);
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(username).orElse(null);
         if (usuario == null || !Boolean.TRUE.equals(usuario.getAtivo())) {
             log.warn("JWT rejeitado porque o usuário está inativo ou inexistente");
             return false;

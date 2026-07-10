@@ -133,12 +133,21 @@ export default function Perfil() {
   }
 
   async function executarLogout() {
+    let ocultarToastProcessamento;
+
     try {
       setCarregandoLogout(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Encerrando sua sessão com segurança...', 'Saindo');
       if (voiceEnabled) ServicoVoz.speak('Saindo da sua conta');
       await logout();
+      ocultarToastProcessamento?.();
+      toastHelper.showSuccess('Sessão encerrada com sucesso.', 'Logout realizado');
       resetToHome();
+    } catch (erro) {
+      ocultarToastProcessamento?.();
+      toastHelper.showError('Não foi possível encerrar sua sessão.', 'Falha ao sair');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoLogout(false);
     }
   }
@@ -237,8 +246,11 @@ export default function Perfil() {
   const handleConfirmarExcluirLocal = async () => {
     if (!localParaExcluir?.idLocal) return;
 
+    let ocultarToastProcessamento;
+
     try {
       setCarregandoExclusao(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Excluindo o local selecionado...', 'Excluindo local');
 
       if (voiceEnabled) {
         ServicoVoz.speak(`Excluindo ${localParaExcluir.nome}`);
@@ -246,10 +258,12 @@ export default function Perfil() {
 
       const sucesso = await handleExcluirLocal(localParaExcluir.idLocal);
       if (sucesso) {
+        ocultarToastProcessamento?.();
         setModalExcluirVisivel(false);
         setLocalParaExcluir(null);
       }
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoExclusao(false);
     }
   };

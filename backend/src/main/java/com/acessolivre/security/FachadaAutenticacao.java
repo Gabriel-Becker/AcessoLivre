@@ -33,7 +33,7 @@ public class FachadaAutenticacao {
         String email = extractEmailFromAuthentication(authentication);
         log.info("📧 Email extraído: {}", email);
         
-        Usuario usuario = usuarioRepository.findByEmail(email)
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> {
                     log.error("❌ Usuário não encontrado no banco: {}", email);
                     return new ExcecaoAutenticacao("Usuário não encontrado: " + email);

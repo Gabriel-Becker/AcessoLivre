@@ -188,7 +188,7 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
 
   const validarFormulario = () => {
     if (!formulario.nome.trim()) {
-      setErro('Nome do local á obrigatário.');
+      setErro('Nome do local é obrigatório.');
       return false;
     }
 
@@ -237,7 +237,10 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
     setSubmitting(true);
     setErro('');
 
+    let ocultarToastProcessamento;
+
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Salvando as alterações do local...', 'Atualizando local');
       const payload = {
         nome: formulario.nome.trim(),
         descricao: formulario.descricao.trim(),
@@ -259,14 +262,17 @@ export default function EditarLocalModal({ visible, onClose, local, onSucesso, a
       };
 
       await ServicoLocal.atualizarLocal(local.idLocal, payload);
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Local atualizado com sucesso.');
       onSucesso?.();
       onClose?.();
     } catch (error) {
+      ocultarToastProcessamento?.();
       const mensagem = error?.response?.data?.message || 'Não foi possível salvar as alterações do local.';
       setErro(mensagem);
       toastHelper.showError(mensagem, 'Falha ao atualizar local');
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };

@@ -13,7 +13,7 @@ const ServicoHome = {
       const totalLocais = response.data?.totalElements || 0;
       return { totalLocais, totalAvaliacoes: 0, totalUsuarios: 0 };
     } catch (erro) {
-      console.error('Erro ao buscar estatásticas:', erro);
+      console.error('Erro ao buscar estatísticas:', erro);
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },
@@ -51,7 +51,7 @@ const ServicoHome = {
 
       return { totalLocais, totalAvaliacoes, totalUsuarios };
     } catch (erro) {
-      console.error('Erro ao buscar estatásticas reais:', erro);
+      console.error('Erro ao buscar estatísticas reais:', erro);
       return { totalLocais: 0, totalAvaliacoes: 0, totalUsuarios: 0 };
     }
   },

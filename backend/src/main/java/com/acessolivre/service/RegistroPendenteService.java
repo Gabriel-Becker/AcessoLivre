@@ -28,9 +28,18 @@ public class RegistroPendenteService {
     private final UsuarioAutenticarRepository usuarioAutenticarRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private String normalizarEmail(String email) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email é obrigatório");
+        }
+        return email.trim().toLowerCase();
+    }
+
     @Transactional
     public UsuarioResponseDTO registrarUsuarioDireto(String nome, String email, String senha) {
-        if (usuarioRepository.findByEmail(email).isPresent()) {
+        String emailNormalizado = normalizarEmail(email);
+
+        if (usuarioRepository.existsByEmailIgnoreCase(emailNormalizado)) {
             throw new IllegalArgumentException("Email já cadastrado");
         }
 
@@ -38,7 +47,7 @@ public class RegistroPendenteService {
 
         Usuario usuario = Usuario.builder()
             .nome(ValidadorNome.normalizar(nome))
-            .email(email)
+            .email(emailNormalizado)
             .role(isPrimeiroUsuario ? Role.ROLE_ADMIN : Role.ROLE_USER)
             .emailVerified(true)
             .twoFactorEnabled(false)
@@ -52,7 +61,7 @@ public class RegistroPendenteService {
             .build();
         usuarioAutenticarRepository.save(cred);
 
-        log.info("Usuário criado diretamente no cadastro: id={}, email={}", salvo.getIdUsuario(), email);
+        log.info("Usuário criado diretamente no cadastro: id={}, email={}", salvo.getIdUsuario(), emailNormalizado);
         return UsuarioMapper.toResponse(salvo);
     }
 

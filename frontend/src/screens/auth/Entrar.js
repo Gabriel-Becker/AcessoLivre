@@ -189,8 +189,11 @@ export default function Entrar({ navigation }) {
   );
 
   const handleSubmitLogin = async (values) => {
+    let ocultarToastProcessamento;
+
     try {
       setSubmitting(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Validando suas credenciais e preparando o acesso...', 'Entrando');
       const credenciaisBase =
         showTwoFactor && pendingCredentials
           ? pendingCredentials
@@ -211,6 +214,7 @@ export default function Entrar({ navigation }) {
       if (!result?.sucesso) {
         // Se 2FA for requerido
         if (requerTwoFactor) {
+          ocultarToastProcessamento?.();
           setValue('twoFactorCode', '');
           setShowTwoFactor(true);
           setPendingCredentials({
@@ -225,6 +229,7 @@ export default function Entrar({ navigation }) {
         const erroContaInativa = textoErro.includes('inativo') || textoErro.includes('desativ');
 
         if (erroContaInativa) {
+          ocultarToastProcessamento?.();
           setShowAccountDisabled(true);
           return;
         }
@@ -237,6 +242,7 @@ export default function Entrar({ navigation }) {
           textoErro.includes('código de autenticação');
 
         if (erroIndicaTwoFactor) {
+          ocultarToastProcessamento?.();
           setValue('twoFactorCode', '');
           setShowTwoFactor(true);
           setPendingCredentials({
@@ -247,10 +253,12 @@ export default function Entrar({ navigation }) {
           return;
         }
 
+        ocultarToastProcessamento?.();
         toastHelper.showError(formatarErroLogin(result?.erro || authMessages.loginErrors.loginFailed), 'Não foi possível entrar');
         return;
       }
 
+      ocultarToastProcessamento?.();
       clearErrors();
       setValue('twoFactorCode', '');
       setShowTwoFactor(false);
@@ -258,6 +266,7 @@ export default function Entrar({ navigation }) {
       toastHelper.showSuccess('Você entrou na sua conta com sucesso.', 'Login realizado');
       redirecionarAposLogin();
     } catch (erro) {
+      ocultarToastProcessamento?.();
       const mensagem = formatarErroLogin(erro?.message || authMessages.loginErrors.serverError);
       const mensagemNormalizada = String(mensagem || '').toLowerCase();
       if (mensagemNormalizada.includes('inativo') || mensagemNormalizada.includes('desativ')) {
@@ -266,6 +275,7 @@ export default function Entrar({ navigation }) {
         toastHelper.showError(mensagem, 'Não foi possível entrar');
       }
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };
@@ -507,7 +517,7 @@ export default function Entrar({ navigation }) {
             </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color={isHighContrast ? 'textOnPrimary' : 'textSecondary'} align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
-              Sua conta foi desativada, Contate um administrador para mais informações
+              Sua conta foi desativada. Contate um administrador para mais informações.
             </TextoTematizado>
 
             <Espacador size="md" />

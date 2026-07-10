@@ -115,7 +115,7 @@ public class AuthController {
                 request.getRememberMe(),
                 request.getTwoFactorCode()
             );
-            Optional<Usuario> u = usuarioRepository.findByEmailAndAtivoTrue(request.getEmail());
+            Optional<Usuario> u = usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(request.getEmail());
 
             if (u.isEmpty()) {
                 log.warn("Usuário não encontrado após autenticação: {}", request.getEmail());

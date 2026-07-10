@@ -105,22 +105,28 @@ export default function RedefinirSenha({ navigation, route }) {
       return;
     }
 
+    let ocultarToastProcessamento;
+
     try {
       setSubmitting(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Atualizando sua senha com segurança...', 'Redefinindo senha');
       await ServicoAutenticacao.resetPassword({
         email,
         code: values.code,
         novaSenha: values.novaSenha,
       });
 
+      ocultarToastProcessamento?.();
       setSenhaAtualizada(true);
       toastHelper.showSuccess('Sua senha foi atualizada. Agora você já pode entrar com a nova senha.', 'Senha redefinida com sucesso');
     } catch (erro) {
+      ocultarToastProcessamento?.();
       toastHelper.showError(
         formatarErroRedefinirSenha(erro?.message || 'Erro ao redefinir senha'),
         'Não foi possível redefinir a senha'
       );
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };

@@ -40,7 +40,6 @@ const REQUISITOS_SENHA = [
 
 const schema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  email: z.string().email('Email inválido'),
   role: z.enum(['ROLE_ADMIN', 'ROLE_USER'], {
     errorMap: () => ({ message: 'Selecione uma role válida' }),
   }),
@@ -63,7 +62,6 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
   const [roleOriginal, setRoleOriginal] = useState('ROLE_USER');
   const [dadosOriginais, setDadosOriginais] = useState({
     nome: '',
-    email: '',
     role: 'ROLE_USER',
   });
   const { carregandoDados, submitting, carregarDadosUsuario, salvarEdicaoUsuario } = useEditarUsuarioAdmin();
@@ -82,7 +80,6 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     reValidateMode: 'onChange',
     defaultValues: {
       nome: usuario?.nome || '',
-      email: usuario?.email || '',
       role: usuario?.role || 'ROLE_USER',
       senha: '',
     },
@@ -90,13 +87,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
 
   const senha = watch('senha') || '';
   const nomeAtual = (watch('nome') || '').trim();
-  const emailAtual = (watch('email') || '').trim().toLowerCase();
   const roleAtual = String(watch('role') || 'ROLE_USER').trim().toUpperCase();
   const senhaFoiDigitada = senha.length > 0;
   const requisitosPendentesSenha = REQUISITOS_SENHA.filter((requisito) => !requisito.validar(senha));
   const houveMudancaBasica =
     nomeAtual !== dadosOriginais.nome ||
-    emailAtual !== dadosOriginais.email ||
     roleAtual !== dadosOriginais.role;
   const houveMudancaSenha = String(senha || '').trim().length > 0;
   const podeSalvar = (houveMudancaBasica || houveMudancaSenha) && !(submitting || carregandoDados);
@@ -110,13 +105,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
 
       reset({
         nome: dados.nome,
-        email: dados.email,
         role: dados.role,
         senha: '',
       });
       setDadosOriginais({
         nome: String(dados.nome || '').trim(),
-        email: String(dados.email || '').trim().toLowerCase(),
         role: String(dados.role || 'ROLE_USER').trim().toUpperCase(),
       });
       setRoleOriginal(dados.role);
@@ -136,7 +129,6 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
       return;
     }
 
-    clearErrors('email');
     const resultado = await salvarEdicaoUsuario({
       usuarioId: usuario?.idUsuario,
       values,
@@ -151,25 +143,11 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
       return;
     }
 
-    const mensagemErro = String(resultado?.mensagem || '').toLowerCase();
-    const erroEmailDuplicado =
-      mensagemErro.includes('email já') ||
-      mensagemErro.includes('e-mail já') ||
-      mensagemErro.includes('already exists') ||
-      mensagemErro.includes('duplicado');
-
-    if (erroEmailDuplicado) {
-      setError('email', {
-        type: 'server',
-        message: 'Este e-mail já está em uso. Informe outro e-mail.',
-      });
-    } else {
-      const mensagem = resultado?.mensagem || 'Não foi possível atualizar o usuário.';
-      setError('root', {
-        type: 'server',
-        message: mensagem,
-      });
-    }
+    const mensagem = resultado?.mensagem || 'Não foi possível atualizar o usuário.';
+    setError('root', {
+      type: 'server',
+      message: mensagem,
+    });
   };
 
   const handleClose = () => {
@@ -177,7 +155,6 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
     clearErrors();
     setDadosOriginais({
       nome: '',
-      email: '',
       role: 'ROLE_USER',
     });
     setRoleOriginal('ROLE_USER');
@@ -225,23 +202,6 @@ export default function EditarUsuarioModal({ visible, onClose, usuario, onSucess
                   onBlur={onBlur}
                   leftIcon="person-outline"
                   error={touchedFields.nome ? errors.nome?.message : undefined}
-                  altoContraste={contrasteAtivo}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Entrada
-                  label="Email"
-                  placeholder="Digite o email do usuário"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  leftIcon="mail-outline"
-                  error={errors.email?.message}
                   altoContraste={contrasteAtivo}
                 />
               )}

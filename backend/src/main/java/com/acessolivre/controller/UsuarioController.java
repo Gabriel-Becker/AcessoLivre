@@ -1,6 +1,7 @@
 package com.acessolivre.controller;
 
 import com.acessolivre.dto.request.UsuarioRequestDTO;
+import com.acessolivre.dto.request.UsuarioAtualizacaoRequestDTO;
 import com.acessolivre.dto.response.UsuarioResponseDTO;
 import com.acessolivre.mapper.UsuarioMapper;
 import com.acessolivre.model.Usuario;
@@ -89,7 +90,7 @@ public class UsuarioController {
      * @return ResponseEntity com usuário atualizado ou 404 se não encontrado
      */
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody UsuarioRequestDTO requestDTO) {
+    public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody UsuarioAtualizacaoRequestDTO requestDTO) {
         try {
             log.info("Endpoint PUT /api/usuarios/{} - Atualizando usuário", id);
             Optional<Usuario> usuarioExistente = usuarioService.buscarPorId(id);

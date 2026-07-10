@@ -28,16 +28,24 @@ public class ServicoAutenticacao {
     private final ServicoTentativasLogin loginAttemptService;
     private final DoisFatoresService twoFactorService;
 
+    private String normalizarEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
+    }
+
     public String login(String email, String senha, Boolean rememberMe, String twoFactorCode) {
+        String emailNormalizado = normalizarEmail(email);
         try {
-            Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmailIgnoreCase(emailNormalizado).orElse(null);
 
             if (usuario != null && !Boolean.TRUE.equals(usuario.getAtivo())) {
                 throw new UsuarioException.UsuarioInativoException();
             }
 
-            if (loginAttemptService.estaBloqueado(email)) {
-                LocalDateTime bloqueioExpira = loginAttemptService.obterExpiracaoBloqueio(email);
+            if (loginAttemptService.estaBloqueado(emailNormalizado)) {
+                LocalDateTime bloqueioExpira = loginAttemptService.obterExpiracaoBloqueio(emailNormalizado);
                 throw new RuntimeException(
                     String.format("Conta temporariamente bloqueada. Tente novamente após %s", bloqueioExpira)
                 );
@@ -52,15 +60,15 @@ public class ServicoAutenticacao {
             }
             
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, senha)
+                    new UsernamePasswordAuthenticationToken(emailNormalizado, senha)
             );
 
-            if (twoFactorService.duasFatoresAtivadosPorEmail(email)) {
+            if (twoFactorService.duasFatoresAtivadosPorEmail(emailNormalizado)) {
                 if (twoFactorCode == null) {
                     throw new ExcecaoDoisFatoresObrigatorio("Código de autenticação obrigatório");
                 }
 
-                boolean codigoValido = twoFactorService.validarCodigoAutenticador(email, twoFactorCode);
+                boolean codigoValido = twoFactorService.validarCodigoAutenticador(emailNormalizado, twoFactorCode);
                 if (!codigoValido) {
                     throw new ExcecaoCodigoAutenticacaoInvalido("Código de autenticação inválido");
                 }
@@ -69,12 +77,12 @@ public class ServicoAutenticacao {
             String token = jwtService.gerarToken(authentication, rememberMe);
             usuario.setTokenAtual(token);
             usuarioRepository.save(usuario);
-            loginAttemptService.loginSucesso(email);
+            loginAttemptService.loginSucesso(emailNormalizado);
             return token;
         } catch (ExcecaoDoisFatoresObrigatorio | ExcecaoEmailNaoVerificado e) {
             throw e;
         } catch (Exception e) {
-            loginAttemptService.loginFalhou(email);
+            loginAttemptService.loginFalhou(emailNormalizado);
             throw e;
         }
     }
@@ -95,7 +103,7 @@ public class ServicoAutenticacao {
             if (usuario == null) {
                 String email = jwtService.extrairNomeUsuario(token);
                 if (email != null) {
-                    usuario = usuarioRepository.findByEmail(email).orElse(null);
+                    usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
                 }
             }
 
@@ -138,7 +146,7 @@ public class ServicoAutenticacao {
                 return false;
             }
             
-            Usuario usuario = usuarioRepository.findByEmailAndAtivoTrue(username).orElse(null);
+            Usuario usuario = usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(username).orElse(null);
             if (usuario == null || !Boolean.TRUE.equals(usuario.getAtivo())) {
                 return false;
             }

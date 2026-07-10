@@ -91,16 +91,20 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
   const styles = useMemo(() => criarEstilos(t, fontSizeMultiplier, height), [t, fontSizeMultiplier, height]);
 
   const handleTrocarSenha = async (values) => {
+    let ocultarToastProcessamento;
+
     try {
       setSubmitting(true);
       setTentouTrocarSenha(true);
       setErroSenhaAtual('');
+      ocultarToastProcessamento = toastHelper.showLoading('Atualizando sua senha...', 'Alterando senha');
       const resultado = await ServicoAutenticacao.trocarSenha({
         senhaAtual: values.senhaAtual,
         novaSenha: values.novaSenha,
       });
 
       if (resultado?.sucesso) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess(resultado?.mensagem || 'Senha alterada com sucesso');
         setTentouTrocarSenha(false);
         setErroSenhaAtual('');
@@ -115,12 +119,15 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
         mensagemNormalizada.includes('senha atual') && mensagemNormalizada.includes('incorreta');
 
       if (senhaAtualIncorreta) {
+        ocultarToastProcessamento?.();
         setErroSenhaAtual('A senha atual informada está incorreta.');
         return;
       }
 
+      ocultarToastProcessamento?.();
       toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
     } catch (erro) {
+      ocultarToastProcessamento?.();
       const mensagemErro = formatarErroTrocarSenha(erro?.message || 'Erro ao trocar senha');
       const mensagemNormalizada = mensagemErro.toLowerCase();
       const senhaAtualIncorreta =
@@ -134,6 +141,7 @@ export default function TrocarSenhaModal({ visible, onClose, altoContraste = fal
 
       toastHelper.showError(mensagemErro, 'Não foi possível trocar a senha');
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };

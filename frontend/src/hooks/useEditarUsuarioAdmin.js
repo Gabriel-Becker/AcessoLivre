@@ -35,7 +35,6 @@ export default function useEditarUsuarioAdmin() {
       const dados = await ServicoAdmin.buscarUsuario(usuarioBase.idUsuario);
       return {
         nome: dados?.nome || usuarioBase?.nome || '',
-        email: dados?.email || usuarioBase?.email || '',
         role: normalizarRole(dados?.role || usuarioBase?.role),
         imagemPerfil: dados?.imagemPerfil,
       };
@@ -43,7 +42,6 @@ export default function useEditarUsuarioAdmin() {
       toastHelper.showError('Não foi possível carregar todos os dados do usuário');
       return {
         nome: usuarioBase?.nome || '',
-        email: usuarioBase?.email || '',
         role: normalizarRole(usuarioBase?.role),
         imagemPerfil: usuarioBase?.imagemPerfil,
       };
@@ -58,15 +56,17 @@ export default function useEditarUsuarioAdmin() {
     roleOriginal,
     imagemPerfil,
   }) => {
+    let ocultarToastProcessamento;
+
     if (!usuarioId) {
       return { sucesso: false, mensagem: 'Usuário inválido para edição.' };
     }
 
     setSubmitting(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Salvando as alterações do usuário...', 'Atualizando usuário');
       const payload = {
         nome: values.nome,
-        email: values.email,
         role: normalizarRole(roleOriginal),
       };
 
@@ -88,12 +88,15 @@ export default function useEditarUsuarioAdmin() {
         await ServicoAdmin.alterarSenhaUsuario(usuarioId, novaSenha);
       }
 
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Usuário atualizado com sucesso');
       return { sucesso: true };
     } catch (erro) {
+      ocultarToastProcessamento?.();
       const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuário');
       return { sucesso: false, mensagem };
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   }, []);

@@ -22,4 +22,6 @@ public interface UsuarioAutenticarRepository extends JpaRepository<UsuarioAutent
      * @return Optional contendo os dados de autenticação se encontrados
      */
     Optional<UsuarioAutenticar> findByUsuario_Email(String email);
+
+    Optional<UsuarioAutenticar> findByUsuario_EmailIgnoreCase(String email);
 }

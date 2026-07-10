@@ -17,7 +17,7 @@ export default function SettingsScreen() {
       </View>
       {enabled && (
         <Text style={styles.hint}>
-          Toque no boto ?? para usar comandos de voz
+          Toque no botão para usar comandos de voz
         </Text>
       )}
     </View>

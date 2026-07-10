@@ -109,7 +109,7 @@ const ServicoLocal = {
   },
 
   /**
-   * Envia máltiplas imagens com controle de progresso
+   * Envia múltiplas imagens com controle de progresso
    */
   async enviarMultiplasImagens(idLocal, imagens, onProgress) {
     const resultados = [];
@@ -128,7 +128,7 @@ const ServicoLocal = {
       } catch (erro) {
         console.error(`? Erro na imagem ${i + 1}:`, erro);
         imagensComErro++;
-        // Continua com as práximas imagens
+        // Continua com as próximas imagens
       }
     }
 
@@ -157,7 +157,7 @@ const ServicoLocal = {
   },
 
   /**
-   * Obtám URL completa da imagem
+   * Obtém URL completa da imagem
    */
   getImagemUrl(url) {
     return normalizarUrlImagem(url);
@@ -189,7 +189,7 @@ const ServicoLocal = {
   },
 
   /**
-   * Busca estatásticas gerais
+   * Busca estatísticas gerais
    */
   async obterEstatisticas() {
     try {

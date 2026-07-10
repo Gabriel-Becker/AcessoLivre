@@ -58,8 +58,11 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
       return;
     }
 
+    let ocultarToastProcessamento;
+
     setCarregando(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Enviando sua denúncia para análise...', 'Enviando denúncia');
       const payload = {
         tipo: tipo === 'COMENTARIO' ? 'AVALIACAO' : tipo,
         targetId: targetId,
@@ -72,17 +75,21 @@ export default function ModalReportar({ visible, onClose, tipo, targetId, target
       const result = await ServicoReportar.create(payload);
       
       if (result.success) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('Denúncia enviada com sucesso');
         onClose();
         setSelectedMotivo(null);
         setDescricao('');
       } else {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.message || 'Erro ao enviar denúncia');
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       console.error('Erro ao denunciar:', error);
       toastHelper.showError('Erro ao enviar denúncia');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregando(false);
     }
   };

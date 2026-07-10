@@ -126,23 +126,30 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
   const carregarSetup = async () => {
     const requestId = Date.now();
     ultimaRequisicaoSetupRef.current = requestId;
+    let ocultarToastProcessamento;
+
     try {
       setCarregandoSetup(true);
       setErroModal('');
+      ocultarToastProcessamento = toastHelper.showLoading('Carregando a configuração da autenticação em dois fatores...', 'Preparando 2FA');
       const resultado = await ServicoAutenticacao.setup2FA();
       if (ultimaRequisicaoSetupRef.current !== requestId) return;
 
       if (!resultado?.sucesso) {
+        ocultarToastProcessamento?.();
         setSetupDados(null);
         setErroModal(resultado?.mensagem || 'Erro ao carregar configuração do 2FA');
         return;
       }
 
+      ocultarToastProcessamento?.();
       setSetupDados(resultado?.dados || null);
     } catch (erro) {
+      ocultarToastProcessamento?.();
       if (ultimaRequisicaoSetupRef.current !== requestId) return;
       setErroModal(erro?.message || 'Erro ao carregar configuração do 2FA');
     } finally {
+      ocultarToastProcessamento?.();
       if (ultimaRequisicaoSetupRef.current === requestId) {
         setCarregandoSetup(false);
       }
@@ -161,11 +168,15 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
       return;
     }
 
+    let ocultarToastProcessamento;
+
     try {
       setCarregandoAcao(true);
       setErroModal('');
+      ocultarToastProcessamento = toastHelper.showLoading('Validando o código e ativando a proteção da conta...', 'Ativando 2FA');
       const resultado = await ServicoAutenticacao.enable2FA(codigo);
       if (resultado?.sucesso) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('2FA habilitado com sucesso');
         setCodigo('');
         onSuccess?.();
@@ -173,10 +184,13 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
         return;
       }
 
+      ocultarToastProcessamento?.();
       setErroModal(resultado?.mensagem || 'Erro ao habilitar 2FA');
     } catch (erro) {
+      ocultarToastProcessamento?.();
       setErroModal(erro?.message || 'Erro ao habilitar 2FA');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoAcao(false);
     }
   };
@@ -187,11 +201,15 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
       return;
     }
 
+    let ocultarToastProcessamento;
+
     try {
       setCarregandoAcao(true);
       setErroModal('');
+      ocultarToastProcessamento = toastHelper.showLoading('Validando o código e removendo a autenticação em dois fatores...', 'Desativando 2FA');
       const resultado = await ServicoAutenticacao.disable2FA(codigo);
       if (resultado?.sucesso) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('2FA desabilitado com sucesso');
         setCodigo('');
         onSuccess?.();
@@ -199,10 +217,13 @@ export default function ModalDoisFatores({ visible, enabled = false, onClose, on
         return;
       }
 
+      ocultarToastProcessamento?.();
       setErroModal(resultado?.mensagem || 'Erro ao desabilitar 2FA');
     } catch (erro) {
+      ocultarToastProcessamento?.();
       setErroModal(erro?.message || 'Erro ao desabilitar 2FA');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoAcao(false);
     }
   };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import theme from '../../../config/theme';
 import { Espacador, Divisor } from '../../commons';
@@ -6,6 +6,7 @@ import { Botao } from '../../ui';
 import { useAuth } from '../../../context/ContextoAutenticacao';
 import { useThemeContext } from '../../../context/ThemeContext';
 import { resetToHome } from '../../../navigation/navigationRef';
+import toastHelper from '../../../utils/toastHelper';
 import ItemBarra from './ItemBarra';
 
 export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, altoContraste }) {
@@ -15,10 +16,25 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
   const roleUsuario = String(usuario?.role || '').toUpperCase();
   const isAdmin = roleUsuario === 'ROLE_ADMIN' || roleUsuario === 'ADMIN';
   const corTextoSecundario = contrasteAtivo ? t.colors.textOnPrimary : t.colors.textSecondary;
+  const [carregandoLogout, setCarregandoLogout] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    resetToHome();
+    let ocultarToastProcessamento;
+
+    try {
+      setCarregandoLogout(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Encerrando sua sessão com segurança...', 'Saindo');
+      await logout();
+      ocultarToastProcessamento?.();
+      toastHelper.showSuccess('Sessão encerrada com sucesso.', 'Logout realizado');
+      resetToHome();
+    } catch {
+      ocultarToastProcessamento?.();
+      toastHelper.showError('Não foi possível encerrar sua sessão.', 'Falha ao sair');
+    } finally {
+      ocultarToastProcessamento?.();
+      setCarregandoLogout(false);
+    }
   };
 
   return (
@@ -88,7 +104,7 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
             altoContraste={contrasteAtivo}
           />
           <Espacador size="xs" />
-          <Botao variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline" altoContraste={contrasteAtivo}>
+          <Botao variant="danger" size="large" fullWidth onPress={handleLogout} align="left" iconLeft="exit-outline" altoContraste={contrasteAtivo} loading={carregandoLogout} disabled={carregandoLogout}>
             Sair
           </Botao>
         </>

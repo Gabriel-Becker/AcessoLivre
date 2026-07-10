@@ -95,11 +95,15 @@ export default function EsqueciSenha({ navigation }) {
   );
 
   const onSubmit = async (values) => {
+    let ocultarToastProcessamento;
+
     try {
       setSubmitting(true);
       const emailNormalizado = values.email.trim().toLowerCase();
+      ocultarToastProcessamento = toastHelper.showLoading('Enviando o código de recuperação para o seu e-mail...', 'Enviando código');
       await ServicoAutenticacao.forgotPassword(emailNormalizado);
 
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess(
         `Enviamos um código para ${emailNormalizado}. Verifique sua caixa de entrada e spam.`,
         'Código enviado'
@@ -117,14 +121,17 @@ export default function EsqueciSenha({ navigation }) {
       const isAccountDisabled = String(raw).toLowerCase().includes('inativo') || String(raw).toLowerCase().includes('desativ');
 
       if (isAccountDisabled) {
+        ocultarToastProcessamento?.();
         setShowAccountDisabled(true);
       } else {
+        ocultarToastProcessamento?.();
         toastHelper.showError(
           formatarErroEsqueciSenha(erro),
           'Não foi possível enviar o código'
         );
       }
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };
@@ -221,7 +228,7 @@ export default function EsqueciSenha({ navigation }) {
             </TextoTematizado>
             <Espacador size="xs" />
             <TextoTematizado color="textSecondary" align="center" altoContraste={isHighContrast} style={styles.modalTexto}>
-              Sua conta foi desativada, Contate um administrador para mais informações
+              Sua conta foi desativada. Contate um administrador para mais informações.
             </TextoTematizado>
 
             <Espacador size="md" />

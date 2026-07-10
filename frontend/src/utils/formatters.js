@@ -1,10 +1,10 @@
 /**
- * Utilitarios de formatacao e validacao
- * Utilitarios de validacao e formatacao do AcessoLivre
+ * Utilitários de formatação e validação
+ * Utilitários de validação e formatação do AcessoLivre
  */
 
 /**
- * Formata CEP com hifen
+ * Formata CEP com hífen
  * @param {string} value
  * @returns {string}
  */
@@ -71,7 +71,7 @@ export const validatePhone = (phone) => {
 };
 
 /**
- * Retorna mensagem de erro de validacao de telefone
+ * Retorna mensagem de erro de validação de telefone
  */
 export const getPhoneValidationMessage = (phone) => {
   if (!phone || String(phone).trim() === '') return null;
@@ -82,17 +82,17 @@ export const getPhoneValidationMessage = (phone) => {
 
   if (numbers.length === 10) {
     if (!/^[1-9][2-5]/.test(numbers)) {
-      return 'Numero de telefone fixo invalido';
+      return 'Número de telefone fixo inválido';
     }
   } else if (numbers.length === 11) {
     if (numbers.charAt(2) !== '9') {
-      return 'Numero de celular deve comecar com 9';
+      return 'Número de celular deve começar com 9';
     }
   } else {
-    return 'Telefone com numero incorreto de digitos';
+    return 'Telefone com número incorreto de dígitos';
   }
 
-  if (!validatePhone(phone)) return 'Telefone invalido';
+  if (!validatePhone(phone)) return 'Telefone inválido';
   return null;
 };
 
@@ -118,7 +118,7 @@ export const validateBirthDate = (birthDate) => {
 };
 
 /**
- * Valida nome (minimo 2 caracteres, sem espacos extras)
+ * Valida nome (mínimo 2 caracteres, sem espaços extras)
  */
 export const validateFirstName = (firstName) => {
   if (!firstName) return false;
@@ -145,7 +145,7 @@ export const validateFirstName = (firstName) => {
 };
 
 /**
- * Valida sobrenome (minimo 2 caracteres)
+ * Valida sobrenome (mínimo 2 caracteres)
  */
 export const validateSurname = (surname) => {
   if (!surname) return false;
@@ -161,7 +161,7 @@ export const validateFullNameLength = (firstName, surname) => {
 };
 
 /**
- * Valida senha (minimo 8 caracteres, maiuscula, numero e especial)
+ * Valida senha (mínimo 8 caracteres, maiúscula, número e especial)
  */
 export const validatePassword = (password) => {
   const senha = String(password || '');
@@ -173,7 +173,7 @@ export const validatePassword = (password) => {
 };
 
 export const getPasswordRequirements = () =>
-  'A senha deve ter no minimo 8 caracteres, uma letra maiuscula, um numero e um caractere especial';
+  'A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, um número e um caractere especial';
 
 /**
  * Valida CEP (formato e comprimento)
@@ -184,6 +184,6 @@ export const validateCEP = (cep) => {
 };
 
 /**
- * Remove formatacao de string (deixa apenas numeros)
+ * Remove formatação de string (deixa apenas números)
  */
 export const removeFormatting = (value) => String(value || '').replace(/\D/g, '');

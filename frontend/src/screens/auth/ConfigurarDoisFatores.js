@@ -35,42 +35,56 @@ export default function ConfigurarDoisFatores({ navigation }) {
   }, []);
 
   const handleSetup = async () => {
+    let ocultarToastProcessamento;
+
     setLoading(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Gerando o QR Code e os códigos de recuperação...', 'Preparando 2FA');
       const result = await setup2FA();
       if (result.sucesso) {
+        ocultarToastProcessamento?.();
         setQrData(result.dados);
         toastHelper.showSuccess('QR Code gerado! Escaneie com seu app autenticador');
       } else {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.mensagem);
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       toastHelper.showError('Erro ao gerar QR Code');
     } finally {
+      ocultarToastProcessamento?.();
       setLoading(false);
     }
   };
 
   const handleEnable = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
-      toastHelper.showError('Digite o código de 6 dágitos');
+      toastHelper.showError('Digite o código de 6 dígitos');
       return;
     }
 
+    let ocultarToastProcessamento;
+
     setProcessingEnable(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Validando o código e ativando a autenticação em dois fatores...', 'Ativando 2FA');
       const result = await enable2FA(parseInt(verificationCode, 10));
       if (result.sucesso) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('2FA habilitado com sucesso!');
         setIsEnabled(true);
         setQrData(null);
         setVerificationCode('');
       } else {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.mensagem);
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       toastHelper.showError('Erro ao habilitar 2FA');
     } finally {
+      ocultarToastProcessamento?.();
       setProcessingEnable(false);
     }
   };
@@ -85,25 +99,32 @@ export default function ConfigurarDoisFatores({ navigation }) {
           text: 'Desabilitar',
           style: 'destructive',
           onPress: async () => {
+            let ocultarToastProcessamento;
+
             if (!verificationCode || verificationCode.length !== 6) {
-              toastHelper.showError('Digite o código de 6 dágitos para confirmar');
+              toastHelper.showError('Digite o código de 6 dígitos para confirmar');
               return;
             }
 
             setProcessingDisable(true);
             try {
+              ocultarToastProcessamento = toastHelper.showLoading('Validando o código e desativando a autenticação em dois fatores...', 'Desativando 2FA');
               const result = await disable2FA(parseInt(verificationCode, 10));
               if (result.sucesso) {
+                ocultarToastProcessamento?.();
                 toastHelper.showSuccess('2FA desabilitado');
                 setIsEnabled(false);
                 setQrData(null);
                 setVerificationCode('');
               } else {
+                ocultarToastProcessamento?.();
                 toastHelper.showError(result.mensagem);
               }
             } catch (error) {
+              ocultarToastProcessamento?.();
               toastHelper.showError('Erro ao desabilitar 2FA');
             } finally {
+              ocultarToastProcessamento?.();
               setProcessingDisable(false);
             }
           },
@@ -114,7 +135,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
 
   const copyToClipboard = async (text) => {
     await Clipboard.setStringAsync(text);
-    toastHelper.showSuccess('Copiado para área de transferáncia');
+    toastHelper.showSuccess('Copiado para a área de transferência');
   };
 
   const shareRecoveryCodes = async () => {
@@ -151,7 +172,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
           </TextoTematizado>
           <Espacador size="xs" />
           <TextoTematizado color="textSecondary" align="center">
-            Adicione uma camada extra de segurança á sua conta
+            Adicione uma camada extra de segurança à sua conta
           </TextoTematizado>
         </View>
 
@@ -160,7 +181,7 @@ export default function ConfigurarDoisFatores({ navigation }) {
         {!isEnabled && !qrData && (
           <Card style={styles.card}>
             <TextoTematizado weight="semibold" size="lg">
-              O que á 2FA?
+              O que é 2FA?
             </TextoTematizado>
             <Espacador size="sm" />
             <TextoTematizado color="textSecondary">

@@ -15,7 +15,7 @@ export const REPORTAR_MOTIVOS = {
   ],
   COMENTARIO: [
     { id: 'PRECONCEITO', label: 'Preconceito', description: 'Comentário com conteúdo preconceituoso' },
-    { id: 'DISCURSO_ODIO', label: 'Discurso de ódio', description: 'Incitamento ao ódio ou violência' },
+    { id: 'DISCURSO_ODIO', label: 'Discurso de ódio', description: 'Incitação ao ódio ou violência' },
     { id: 'CONTEUDO_OFENSIVO', label: 'Conteúdo ofensivo', description: 'Linguagem ofensiva ou agressiva' },
     { id: 'ASSEDIO', label: 'Assédio', description: 'Comportamento de assédio' },
     { id: 'SPAM', label: 'Spam', description: 'Conteúdo promocional ou repetitivo' },
