@@ -423,8 +423,11 @@ export default function Admin() {
   };
 
   const exportarRelatorio = async (formato) => {
+    let ocultarToastProcessamento;
+
     setExportandoRelatorio(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Gerando o relatório para download...', 'Exportando relatório');
       const params = {
         dataInicio: payloadRelatorio.dataInicio || undefined,
         dataFim: payloadRelatorio.dataFim || undefined,
@@ -444,10 +447,13 @@ export default function Admin() {
       const fallback = `relatorio-${tipoRelatorioExportacao}.${formato}`;
       const nomeArquivo = extrairNomeArquivo(resposta?.headers, fallback);
       await baixarArquivoRelatorio(resposta?.data, nomeArquivo);
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess(`Download iniciado: ${nomeArquivo}`, 'Relatório exportado');
     } catch (e) {
+      ocultarToastProcessamento?.();
       toastHelper.showError('Não foi possível exportar o relatório.', 'Erro na exportação');
     } finally {
+      ocultarToastProcessamento?.();
       setExportandoRelatorio(false);
     }
   };
@@ -502,10 +508,14 @@ export default function Admin() {
   };
 
   const apagarUsuario = async (usuarioItem) => {
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     setErro('');
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Removendo o usuário selecionado...', 'Excluindo usuário');
       await ServicoAdmin.deletarUsuario(usuarioItem.idUsuario);
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Usuário removido com sucesso.', 'Exclusão concluída');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
@@ -514,19 +524,25 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
+      ocultarToastProcessamento?.();
       const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o usuário.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao excluir usuário');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoAcao(false);
     }
   };
 
   const reativarUsuario = async (usuarioItem) => {
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     setErro('');
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Reativando o usuário selecionado...', 'Reativando usuário');
       await ServicoAdmin.reativarUsuario(usuarioItem.idUsuario);
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Usuário reativado com sucesso.', 'Reativação concluída');
 
       if (usuarios.length === 1 && paginaUsuarios > 0) {
@@ -535,10 +551,12 @@ export default function Admin() {
         await carregarUsuarios();
       }
     } catch (e) {
+      ocultarToastProcessamento?.();
       const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível reativar o usuário.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao reativar usuário');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoAcao(false);
     }
   };
@@ -549,11 +567,15 @@ export default function Admin() {
   };
 
   const apagarLocal = async (localItem) => {
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     setErro('');
 
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Removendo o local selecionado...', 'Excluindo local');
       await ServicoLocal.removerLocal(localItem.idLocal);
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Local removido com sucesso.', 'Exclusão concluída');
 
       if (locais.length === 1 && paginaLocais > 0) {
@@ -562,10 +584,12 @@ export default function Admin() {
         await carregarLocais();
       }
     } catch (e) {
+      ocultarToastProcessamento?.();
       const mensagemErro = e?.response?.data?.mensagem || e?.response?.data?.message || 'Não foi possível apagar o local.';
       setErro(mensagemErro);
       toastHelper.showError(mensagemErro, 'Falha ao excluir local');
     } finally {
+      ocultarToastProcessamento?.();
       setCarregandoAcao(false);
     }
   };

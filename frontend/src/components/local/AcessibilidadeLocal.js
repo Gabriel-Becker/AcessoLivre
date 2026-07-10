@@ -12,12 +12,12 @@ const ACCESSIBILITY_CONFIG = {
   ELEVADOR: { icon: 'arrow-up-outline', label: 'Elevador' },
   BANHEIRO_ADAPTADO: { icon: 'body-outline', label: 'Banheiro adaptado' },
   ESTACIONAMENTO: { icon: 'car-outline', label: 'Estacionamento' },
-  PISO_TATIL: { icon: 'eye-outline', label: 'Piso Tátil' },
-  ATENDIMENTO_ESPECIALIZADO: { icon: 'hand-left-outline', label: 'Atendimento Especializado' },
-  RECURSOS_AUDIOVISUAIS: { icon: 'mic-outline', label: 'Recursos Audiovisuais' },
+  PISO_TATIL: { icon: 'eye-outline', label: 'Piso tátil' },
+  ATENDIMENTO_ESPECIALIZADO: { icon: 'hand-left-outline', label: 'Atendimento especializado' },
+  RECURSOS_AUDIOVISUAIS: { icon: 'mic-outline', label: 'Recursos audiovisuais' },
   SINALIZACAO_BRAILLE: { icon: 'braille-outline', label: 'Sinalização em Braille' },
-  ESPACO_AMPLO: { icon: 'resize-outline', label: 'Espaço Amplo' },
-  MOBILIARIO_ADAPTADO: { icon: 'grid-outline', label: 'Mobiliário Adaptado' },
+  ESPACO_AMPLO: { icon: 'resize-outline', label: 'Espaço amplo' },
+  MOBILIARIO_ADAPTADO: { icon: 'grid-outline', label: 'Mobiliário adaptado' },
 };
 
 export default function AcessibilidadeLocal({ tiposAcessibilidade = [], altoContraste }) {

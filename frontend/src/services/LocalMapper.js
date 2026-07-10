@@ -71,7 +71,7 @@ class LocalMapper {
       // ===== ACESSIBILIDADE =====
       tiposAcessibilidade: local.tiposAcessibilidade || [],
 
-      // ===== USUáRIO =====
+      // ===== USUÁRIO =====
       idUsuario: local.idUsuario || local.usuario?.idUsuario || null,
       nomeUsuario: local.nomeUsuario || local.usuario?.nome || null,
 

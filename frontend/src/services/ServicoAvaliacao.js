@@ -148,7 +148,7 @@ class ServicoAvaliacao {
   static async deletarAvaliacao(id) {
     try {
       await api.delete(`/avaliacoes/${id}`);
-      return { success: true, message: 'Avaliação excluáda com sucesso' };
+      return { success: true, message: 'Avaliação excluída com sucesso' };
     } catch (error) {
       console.error('Erro ao deletar avaliação:', error);
       return { success: false, message: error.response?.data?.message || 'Erro ao excluir avaliação' };

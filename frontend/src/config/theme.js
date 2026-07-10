@@ -54,7 +54,7 @@ export const defaultTheme = {
       banheiro: '#3498DB',
       estacionamento: '#E67E22',
       audiovisual: '#16A085',
-      braile: '#8E44AD',
+      braille: '#8E44AD',
     },
   },
   
@@ -215,7 +215,7 @@ export const highContrastTheme = {
       banheiro: '#00BFFF',
       estacionamento: '#FF8C00',
       audiovisual: '#20B2AA',
-      braile: '#DA70D6',
+      braille: '#DA70D6',
     },
   },
   

@@ -82,19 +82,26 @@ const ReportItem = ({ report, onDelete, onRefresh, theme, isDesktop, isHighContr
           text: 'Excluir',
           style: 'destructive',
           onPress: async () => {
+            let ocultarToastProcessamento;
+
             setDeleting(true);
             try {
+              ocultarToastProcessamento = toastHelper.showLoading('Excluindo a denúncia selecionada...', 'Excluindo denúncia');
               const result = await ServicoReportar.delete(report.id);
               if (result.success) {
+                ocultarToastProcessamento?.();
                 toastHelper.showSuccess('Denúncia excluída com sucesso');
                 onRefresh();
               } else {
+                ocultarToastProcessamento?.();
                 toastHelper.showError(result.message || 'Erro ao excluir denúncia');
               }
             } catch (error) {
+              ocultarToastProcessamento?.();
               console.error('Erro ao excluir:', error);
               toastHelper.showError('Erro ao excluir denúncia');
             } finally {
+              ocultarToastProcessamento?.();
               setDeleting(false);
               onDelete?.();
             }

@@ -105,7 +105,7 @@ export const formatarErroRedefinirSenha = (erro) => {
   }
 
   if (contem(texto, ['código inválido', 'código expirado', 'invalid code', 'expired'])) {
-    return 'O código informado á inválido ou expirou. Solicite um novo código e tente novamente.';
+    return 'O código informado é inválido ou expirou. Solicite um novo código e tente novamente.';
   }
 
   if (contem(texto, ['senha', 'password'])) {

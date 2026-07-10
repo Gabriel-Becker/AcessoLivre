@@ -127,12 +127,16 @@ export default function Denuncias() {
   const handleConfirmarStatus = async (novoStatus) => {
     if (!denunciaSelecionada) return;
     
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     const statusAntigo = denunciaSelecionada.status;
     
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Atualizando o status da denúncia...', 'Processando denúncia');
       const result = await ServicoDenuncia.updateStatus(denunciaSelecionada.id, novoStatus);
       if (result.success && mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('Status da denúncia atualizado com sucesso');
         
         setDenuncias(prev => prev.map(item =>
@@ -145,14 +149,17 @@ export default function Denuncias() {
         setModalStatusVisivel(false);
         await carregarEstatisticas();
       } else if (mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.message || 'Erro ao atualizar status');
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       console.error('Erro ao atualizar status:', error);
       if (mountedRef.current) {
         toastHelper.showError('Erro ao atualizar status');
       }
     } finally {
+      ocultarToastProcessamento?.();
       if (mountedRef.current) setCarregandoAcao(false);
       setDenunciaSelecionada(null);
     }
@@ -161,13 +168,17 @@ export default function Denuncias() {
   const handleResolverDenuncia = async (denuncia) => {
     if (!denuncia) return;
     
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     const statusAntigo = denuncia.status;
     
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Removendo o conteúdo denunciado e concluindo a análise...', 'Resolvendo denúncia');
       const result = await ServicoDenuncia.resolver(denuncia.id);
       
       if (result.success && mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('Conteúdo removido e denúncia resolvida com sucesso');
         
         setDenuncias(prev => prev.map(item =>
@@ -186,19 +197,23 @@ export default function Denuncias() {
         await carregarEstatisticas();
         
       } else if (result.alreadyResolved && mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showInfo('Esta denúncia já foi processada anteriormente');
         await carregarDenuncias();
         await carregarEstatisticas();
         setModalStatusVisivel(false);
       } else if (mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.message || 'Erro ao resolver denúncia');
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       console.error('Erro ao resolver denúncia:', error);
       if (mountedRef.current) {
         toastHelper.showError('Erro ao resolver denúncia. Tente novamente.');
       }
     } finally {
+      ocultarToastProcessamento?.();
       if (mountedRef.current) {
         setCarregandoAcao(false);
         setDenunciaSelecionada(null);
@@ -215,23 +230,30 @@ export default function Denuncias() {
   const handleConfirmarExcluir = async () => {
     if (!denunciaParaExcluir) return;
     
+    let ocultarToastProcessamento;
+
     setCarregandoAcao(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Excluindo a denúncia selecionada...', 'Excluindo denúncia');
       const result = await ServicoDenuncia.delete(denunciaParaExcluir.id);
       if (result.success && mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('Denúncia excluída com sucesso');
         setDenuncias(prev => prev.filter(item => item.id !== denunciaParaExcluir.id));
         await carregarEstatisticas();
         setModalExcluirVisivel(false);
       } else if (mountedRef.current) {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.message || 'Erro ao excluir denúncia');
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       console.error('Erro ao excluir denúncia:', error);
       if (mountedRef.current) {
         toastHelper.showError('Erro ao excluir denúncia');
       }
     } finally {
+      ocultarToastProcessamento?.();
       if (mountedRef.current) setCarregandoAcao(false);
       setDenunciaParaExcluir(null);
     }

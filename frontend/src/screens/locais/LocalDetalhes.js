@@ -364,19 +364,27 @@ export default function LocalDetalhes({ onNavigate, route }) {
   }, [onNavigate]);
 
   const handleEnviarAvaliacao = async (avaliacaoData) => {
+    let ocultarToastProcessamento;
+
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Enviando sua avaliação e atualizando os dados do local...', 'Enviando avaliação');
       const result = await ServicoAvaliacao.criarAvaliacao(avaliacaoData);
       
       if (result.success) {
+        ocultarToastProcessamento?.();
         toastHelper.showSuccess('Avaliação enviada com sucesso!');
         setModalAvaliacaoVisible(false);
         await carregar(true);
       } else {
+        ocultarToastProcessamento?.();
         toastHelper.showError(result.message || 'Erro ao enviar avaliação');
       }
     } catch (error) {
+      ocultarToastProcessamento?.();
       console.error('Erro ao enviar avaliação:', error);
       toastHelper.showError('Erro ao enviar avaliação');
+    } finally {
+      ocultarToastProcessamento?.();
     }
   };
 

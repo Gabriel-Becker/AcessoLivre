@@ -18,6 +18,7 @@ import { Botao, Entrada } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { useAuth } from '../../context/ContextoAutenticacao';
 import { getTheme } from '../../config/theme';
+import toastHelper from '../../utils/toastHelper';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -121,14 +122,14 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const handleEnviar = async () => {
     if (!isAuthenticated) {
-      Alert.alert('Login necessário', 'Faça login para avaliar um local');
+      toastHelper.showInfo('Faça login para avaliar um local.', 'Login necessário');
       onClose();
       return;
     }
 
     const userId = getUsuarioId();
     if (!userId) {
-      Alert.alert('Erro', 'Usuário não identificado. Faça login novamente.');
+      toastHelper.showError('Usuário não identificado. Faça login novamente.', 'Sessão inválida');
       return;
     }
 

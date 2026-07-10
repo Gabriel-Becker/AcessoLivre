@@ -22,7 +22,7 @@ export const RECURSOS_ACESSIBILIDADE = [
   { id: 'banheiro', titulo: 'Banheiro adaptado', descricao: 'Banheiro com acessibilidade para pessoa com deficiência', icon: 'man-outline', cor: 'banheiro', enumValue: 'BANHEIRO_ADAPTADO' },
   { id: 'elevador', titulo: 'Elevador acessível', descricao: 'Elevador funcionando com botões em Braille', icon: 'business-outline', cor: 'elevador', enumValue: 'ELEVADOR' },
   { id: 'piso', titulo: 'Piso tátil', descricao: 'Piso com textura para orientação', icon: 'trail-sign-outline', cor: 'audiovisual', enumValue: 'PISO_TATIL' },
-  { id: 'braille', titulo: 'Sinalização em Braille', descricao: 'Placas e informações em Braille', icon: 'eye-outline', cor: 'braile', enumValue: 'SINALIZACAO_BRAILLE' },
+  { id: 'braille', titulo: 'Sinalização em Braille', descricao: 'Placas e informações em Braille', icon: 'eye-outline', cor: 'braille', enumValue: 'SINALIZACAO_BRAILLE' },
   { id: 'estacionamento', titulo: 'Estacionamento acessível', descricao: 'Vagas reservadas para pessoa com deficiência', icon: 'car-outline', cor: 'estacionamento', enumValue: 'ESTACIONAMENTO' },
   { id: 'espaco', titulo: 'Espaço amplo', descricao: 'Corredores largos para circulação', icon: 'resize-outline', cor: 'secondary', enumValue: 'ESPACO_AMPLO' },
   { id: 'audiovisual', titulo: 'Recursos audiovisuais', descricao: 'Sistemas de som e sinalização visual', icon: 'volume-high-outline', cor: 'audiovisual', enumValue: 'RECURSOS_AUDIOVISUAIS' },

@@ -23,6 +23,10 @@ export const showToast = (type, title, message, options = {}) => {
   });
 };
 
+const hideToast = () => {
+  Toast.hide();
+};
+
 /**
  * Exibe toast de sucesso
  * @param {string} message - Mensagem de sucesso
@@ -59,11 +63,32 @@ const showWarning = (message, title = 'Atenção') => {
   showToast('warning', title, message);
 };
 
+/**
+ * Exibe toast persistente para operações em andamento.
+ * Retorna uma função para encerrar o feedback ao final da operação.
+ * @param {string} message - Mensagem de processamento
+ * @param {string} title - Título (opcional)
+ * @param {object} options - Opções adicionais
+ * @returns {Function}
+ */
+const showLoading = (message, title = 'Processando', options = {}) => {
+  hideToast();
+  showToast('loading', title, message, {
+    autoHide: false,
+    swipeable: false,
+    ...options,
+  });
+
+  return hideToast;
+};
+
 const toastHelper = {
   showSuccess,
   showError,
   showInfo,
   showWarning,
+  showLoading,
+  hideToast,
   showToast,
 };
 

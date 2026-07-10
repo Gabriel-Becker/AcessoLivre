@@ -200,8 +200,11 @@ export default function Cadastro({ navigation }) {
   );
 
   const onSubmit = async (values) => {
+    let ocultarToastProcessamento;
+
     try {
       setSubmitting(true);
+      ocultarToastProcessamento = toastHelper.showLoading('Criando sua conta e validando os dados informados...', 'Cadastrando');
       const nomeFormatado = String(values.nome || '')
         .trim()
         .replace(/\s+/g, ' ')
@@ -222,6 +225,7 @@ export default function Cadastro({ navigation }) {
         });
         
         if (loginResult?.sucesso) {
+          ocultarToastProcessamento?.();
           toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
 
           if (typeof navigation?.replace === 'function') {
@@ -232,6 +236,7 @@ export default function Cadastro({ navigation }) {
           navigation?.navigate?.('AcessoLivre');
           return;
         } else {
+          ocultarToastProcessamento?.();
           toastHelper.showInfo(
             `Cadastro concluído. Faça login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
             'Conta criada'
@@ -241,8 +246,10 @@ export default function Cadastro({ navigation }) {
         return;
       }
 
+      ocultarToastProcessamento?.();
       toastHelper.showError(formatarErroCadastro(resultado?.erro || authMessages.registerErrors.serverError), 'Não foi possível concluir o cadastro');
     } catch (erro) {
+      ocultarToastProcessamento?.();
       const mensagemErro = erro?.message || authMessages.registerErrors.serverError;
       const mensagemTratada =
         mensagemErro === authMessages.loginErrors.serverError
@@ -250,6 +257,7 @@ export default function Cadastro({ navigation }) {
           : formatarErroCadastro(mensagemErro);
       toastHelper.showError(mensagemTratada, 'Não foi possível concluir o cadastro');
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   };

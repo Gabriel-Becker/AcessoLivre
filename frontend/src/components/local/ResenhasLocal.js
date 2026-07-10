@@ -114,7 +114,7 @@ export default function ResenhasLocal({
           style={styles.verMaisButton}
           altoContraste={altoContraste ?? isHighContrast}
         >
-          Ver todas as {avaliacoes.length} avaliações ?
+          Ver todas as {avaliacoes.length} avaliações?
         </Botao>
       )}
     </CardSecao>

@@ -56,12 +56,15 @@ export default function useEditarUsuarioAdmin() {
     roleOriginal,
     imagemPerfil,
   }) => {
+    let ocultarToastProcessamento;
+
     if (!usuarioId) {
       return { sucesso: false, mensagem: 'Usuário inválido para edição.' };
     }
 
     setSubmitting(true);
     try {
+      ocultarToastProcessamento = toastHelper.showLoading('Salvando as alterações do usuário...', 'Atualizando usuário');
       const payload = {
         nome: values.nome,
         role: normalizarRole(roleOriginal),
@@ -85,12 +88,15 @@ export default function useEditarUsuarioAdmin() {
         await ServicoAdmin.alterarSenhaUsuario(usuarioId, novaSenha);
       }
 
+      ocultarToastProcessamento?.();
       toastHelper.showSuccess('Usuário atualizado com sucesso');
       return { sucesso: true };
     } catch (erro) {
+      ocultarToastProcessamento?.();
       const mensagem = resolverMensagemErro(erro, 'Erro ao atualizar usuário');
       return { sucesso: false, mensagem };
     } finally {
+      ocultarToastProcessamento?.();
       setSubmitting(false);
     }
   }, []);
