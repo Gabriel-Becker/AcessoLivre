@@ -155,7 +155,7 @@ export default function Inicio({ onNavigate, routeParams }) {
         });
       }
     } catch (error) {
-      console.error('Erro ao carregar estatásticas:', error);
+      console.error('Erro ao carregar estatísticas:', error);
       if (mountedRef.current) {
         setEstatisticas({ totalLocais: 0, totalAvaliacoes: 0 });
       }

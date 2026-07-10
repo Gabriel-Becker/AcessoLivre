@@ -6,11 +6,11 @@ import { CardSecao } from '../ui';
 import { useThemeContext } from '../../context/ThemeContext';
 import { getTheme } from '../../config/theme';
 
-// Mapeamento de ícones e labels
+// Mapeamento de ícones e rótulos
 const ACCESSIBILITY_CONFIG = {
   RAMPA: { icon: 'walk-outline', label: 'Rampa' },
   ELEVADOR: { icon: 'arrow-up-outline', label: 'Elevador' },
-  BANHEIRO_ADAPTADO: { icon: 'body-outline', label: 'Sanitário Adaptado' },
+  BANHEIRO_ADAPTADO: { icon: 'body-outline', label: 'Banheiro adaptado' },
   ESTACIONAMENTO: { icon: 'car-outline', label: 'Estacionamento' },
   PISO_TATIL: { icon: 'eye-outline', label: 'Piso Tátil' },
   ATENDIMENTO_ESPECIALIZADO: { icon: 'hand-left-outline', label: 'Atendimento Especializado' },

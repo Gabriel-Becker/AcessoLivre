@@ -117,7 +117,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Nunca tentar reautenticar quando a propria reautenticacao falhou.
+    // Nunca tentar reautenticar quando a própria reautenticação falhou.
     if (status === 401 && isReauthEndpoint) {
       try {
         await ServicoAutenticacao.removeToken();
@@ -127,7 +127,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Para outros endpoints de auth (exceto /auth/me), evitar ciclo de renovacao.
+    // Para outros endpoints de auth (exceto /auth/me), evitar ciclo de renovação.
     if (status === 401 && isAuthEndpoint && !String(requestUrl).includes('/auth/me')) {
       return Promise.reject(error);
     }
@@ -148,7 +148,7 @@ api.interceptors.response.use(
         const tokenAtual = await ServicoAutenticacao.getToken();
         const temTokenValido = typeof tokenAtual === 'string' && tokenAtual.trim().length > 0;
 
-        // Visitante (sem token) nao deve ser redirecionado para login.
+        // Visitante (sem token) não deve ser redirecionado para login.
         if (!temTokenValido) {
           return Promise.reject(error);
         }

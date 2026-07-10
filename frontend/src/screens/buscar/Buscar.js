@@ -106,7 +106,7 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
 
   const anunciarPlaceholder = useCallback(() => {
     if (voiceEnabled && !hasAnnounced.current) {
-      ServicoVoz.speak('Campo de busca. Digite nome, endereco ou categoria do local.');
+      ServicoVoz.speak('Campo de busca. Digite nome, endereço ou categoria do local.');
       hasAnnounced.current = true;
     }
   }, [voiceEnabled]);
@@ -145,7 +145,7 @@ const SearchInput = React.memo(({ value = '', onSearch, theme, voiceEnabled, esc
             borderColor: 'transparent',
           }
         ]}
-        placeholder="Buscar locais por nome, endereco ou categoria"
+        placeholder="Buscar locais por nome, endereço ou categoria"
         placeholderTextColor={theme.colors.textTertiary}
         value={localValue}
         onChangeText={handleChange}
