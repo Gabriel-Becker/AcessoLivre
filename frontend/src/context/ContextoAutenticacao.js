@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import Toast from 'react-native-toast-message';
 import ServicoAutenticacao from '../services/ServicoAutenticacao';
 import { setLogoutHandler } from '../utils/GerenciadorSessao';
 import { resetToAuth } from '../navigation/navigationRef';
 import useMonitorToken from '../hooks/useMonitorToken';
+import toastHelper from '../utils/toastHelper';
 
 const ContextoAutenticacao = createContext({});
 
@@ -74,12 +74,10 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     try {
       await ServicoAutenticacao.logout();
-      Toast.show({
-        type: 'warning',
-        text1: 'Sessão expirada',
-        text2: 'Faça login novamente',
+      toastHelper.showError('Faça login novamente', 'Sessão expirada');
+      toastHelper.runAfterToast(() => {
+        resetToAuth();
       });
-      resetToAuth();
     } catch (error) {
       console.error('[AuthContext] Erro ao fazer logout após token inválido:', error);
     }
@@ -91,11 +89,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const newToken = await ServicoAutenticacao.reautenticar(usuario.idUsuario);
       setToken(newToken);
-      Toast.show({
-        type: 'info',
-        text1: 'Sessão renovada',
-        text2: 'Sua sessão foi atualizada automaticamente',
-      });
+      toastHelper.showSuccess('Sua sessão foi atualizada automaticamente', 'Sessão renovada');
     } catch (error) {
       console.error('[AuthContext] Erro ao renovar token:', error);
       await handleTokenInvalid();
@@ -244,13 +238,6 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUsuario(null);
       setIsAuthenticated(false);
-      
-      Toast.show({
-        type: 'info',
-        text1: 'Logout realizado',
-        text2: 'Até breve!',
-      });
-      resetToAuth();
     } catch (erro) {
       console.error('[AuthContext] Erro ao fazer logout:', erro);
       setToken(null);

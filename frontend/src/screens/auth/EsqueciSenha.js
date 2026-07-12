@@ -108,7 +108,9 @@ export default function EsqueciSenha({ navigation }) {
         `Enviamos um código para ${emailNormalizado}. Verifique sua caixa de entrada e spam.`,
         'Código enviado'
       );
-      navigation?.navigate?.('RedefinirSenha', { email: emailNormalizado });
+      toastHelper.runAfterToast(() => {
+        navigation?.navigate?.('RedefinirSenha', { email: emailNormalizado });
+      });
     } catch (erro) {
       const raw =
         erro?.response?.data?.mensagem ||

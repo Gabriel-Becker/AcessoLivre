@@ -1,5 +1,4 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Toast, { BaseToast } from 'react-native-toast-message';
@@ -24,18 +23,6 @@ const linking = {
 };
 
 const toastConfig = {
-  loading: (props) => (
-    <View style={styles.loadingToastContainer}>
-      <ActivityIndicator size="small" color="#2563EB" style={styles.loadingIndicator} />
-      <BaseToast
-        {...props}
-        style={styles.loadingToast}
-        contentContainerStyle={styles.toastContent}
-        text1Style={styles.toastTitle}
-        text2Style={styles.toastMessage}
-      />
-    </View>
-  ),
   warning: (props) => (
     <BaseToast
       {...props}
@@ -46,37 +33,6 @@ const toastConfig = {
     />
   ),
 };
-
-const styles = StyleSheet.create({
-  loadingToastContainer: {
-    width: '92%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingLeft: 14,
-  },
-  loadingIndicator: {
-    marginRight: 8,
-  },
-  loadingToast: {
-    flex: 1,
-    minHeight: 64,
-    backgroundColor: '#FFFFFF',
-    borderLeftWidth: 4,
-    borderLeftColor: '#2563EB',
-  },
-  toastContent: {
-    paddingHorizontal: 15,
-  },
-  toastTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  toastMessage: {
-    fontSize: 13,
-  },
-});
 
 export default function App() {
   const handleStateChange = () => {

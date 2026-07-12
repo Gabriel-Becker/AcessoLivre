@@ -144,7 +144,7 @@ export default function AvaliacaoModal({ visible, onClose, local, onSubmit }) {
 
   const handleEnviar = async () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para avaliar um local.', 'Login necessário');
+      toastHelper.showError('Faça login para avaliar um local.', 'Login necessário');
       onClose();
       return;
     }

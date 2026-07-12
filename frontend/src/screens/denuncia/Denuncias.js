@@ -198,7 +198,7 @@ export default function Denuncias() {
         
       } else if (result.alreadyResolved && mountedRef.current) {
         ocultarToastProcessamento?.();
-        toastHelper.showInfo('Esta denúncia já foi processada anteriormente');
+        toastHelper.showError('Esta denúncia já foi processada anteriormente', 'Ação não permitida');
         await carregarDenuncias();
         await carregarEstatisticas();
         setModalStatusVisivel(false);

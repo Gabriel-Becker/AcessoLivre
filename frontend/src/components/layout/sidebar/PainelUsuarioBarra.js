@@ -27,7 +27,9 @@ export default function PainelUsuarioBarra({ current = 'Inicio', onNavigate, alt
       await logout();
       ocultarToastProcessamento?.();
       toastHelper.showSuccess('Sessão encerrada com sucesso.', 'Logout realizado');
-      resetToHome();
+      toastHelper.runAfterToast(() => {
+        resetToHome();
+      });
     } catch {
       ocultarToastProcessamento?.();
       toastHelper.showError('Não foi possível encerrar sua sessão.', 'Falha ao sair');

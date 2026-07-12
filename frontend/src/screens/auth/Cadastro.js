@@ -228,20 +228,24 @@ export default function Cadastro({ navigation }) {
           ocultarToastProcessamento?.();
           toastHelper.showSuccess('Cadastro concluído e login realizado automaticamente.', 'Conta criada com sucesso');
 
-          if (typeof navigation?.replace === 'function') {
-            navigation.replace('AcessoLivre');
-            return;
-          }
+          toastHelper.runAfterToast(() => {
+            if (typeof navigation?.replace === 'function') {
+              navigation.replace('AcessoLivre');
+              return;
+            }
 
-          navigation?.navigate?.('AcessoLivre');
+            navigation?.navigate?.('AcessoLivre');
+          });
           return;
         } else {
           ocultarToastProcessamento?.();
-          toastHelper.showInfo(
+          toastHelper.showSuccess(
             `Cadastro concluído. Faça login com o e-mail ${values.email.trim().toLowerCase()} e sua senha.`,
             'Conta criada'
           );
-          navigation?.navigate?.('Entrar');
+          toastHelper.runAfterToast(() => {
+            navigation?.navigate?.('Entrar');
+          });
         }
         return;
       }

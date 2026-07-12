@@ -184,7 +184,7 @@ const ImageUploadArea = ({ images, onAddImages, onRemoveImage, isHighContrast, t
     if (Platform.OS !== 'web') {
       handleTakePhotoMobile();
     } else {
-      toastHelper.showInfo('Câmera disponível apenas no aplicativo mobile');
+      toastHelper.showError('Câmera disponível apenas no aplicativo mobile', 'Ação indisponível');
     }
   };
 
@@ -1030,7 +1030,7 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         }
 
         if (imagensComErro > 0) {
-          toastHelper.showWarning(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`);
+          toastHelper.showError(`${imagensEnviadas} imagem(ns) enviadas, ${imagensComErro} falha(s)`, 'Envio parcial');
         } else if (imagensEnviadas > 0) {
           toastHelper.showSuccess(`${imagensEnviadas} imagem(ns) enviadas com sucesso!`);
         }
@@ -1047,19 +1047,21 @@ export default function AdicionarLocal({ onNavigate, navigation, routeParams }) 
         ServicoSobre.invalidateCacheMetricas();
       }
 
-      if (onNavigate) {
-        onNavigate('Inicio', { refreshKey: Date.now(), forceRefresh: true });
-      } else if (navigation && typeof navigation.goBack === 'function') {
-        try {
-          navigation.goBack();
-        } catch (_erroNavegacao) {
+      toastHelper.runAfterToast(() => {
+        if (onNavigate) {
+          onNavigate('Inicio', { refreshKey: Date.now(), forceRefresh: true });
+        } else if (navigation && typeof navigation.goBack === 'function') {
           try {
-            navigation.navigate?.('AcessoLivre', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
-          } catch (_erroFallback) {
-            console.error('[AdicionarLocal] Falha na navegação de retorno:', _erroFallback);
+            navigation.goBack();
+          } catch (_erroNavegacao) {
+            try {
+              navigation.navigate?.('AcessoLivre', { screen: 'Inicio', refreshKey: Date.now(), forceRefresh: true });
+            } catch (_erroFallback) {
+              console.error('[AdicionarLocal] Falha na navegação de retorno:', _erroFallback);
+            }
           }
         }
-      }
+      });
     } catch (erro) {
       ocultarToastProcessamento?.();
       console.error('Erro ao cadastrar local:', erro);

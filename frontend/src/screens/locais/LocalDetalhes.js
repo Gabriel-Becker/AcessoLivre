@@ -334,8 +334,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleAvaliar = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para avaliar este local');
-      onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
+      toastHelper.showError('Faça login para avaliar este local', 'Login necessário');
+      toastHelper.runAfterToast(() => {
+        onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
+      });
       return;
     }
     setModalAvaliacaoVisible(true);
@@ -347,8 +349,10 @@ export default function LocalDetalhes({ onNavigate, route }) {
 
   const handleReportarLocal = () => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para reportar este local');
-      onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
+      toastHelper.showError('Faça login para reportar este local', 'Login necessário');
+      toastHelper.runAfterToast(() => {
+        onNavigate?.('Entrar', { redirect: `LocalDetalhes?id=${id}` });
+      });
       return;
     }
     setShowReportarLocalModal(true);

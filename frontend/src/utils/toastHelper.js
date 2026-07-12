@@ -4,6 +4,8 @@
  */
 import Toast from 'react-native-toast-message';
 
+const TOAST_NAVIGATION_DELAY = 1400;
+
 /**
  * Exibe toast genérico
  * @param {string} type - Tipo do toast (success, error, info, warning)
@@ -25,6 +27,11 @@ export const showToast = (type, title, message, options = {}) => {
 
 const hideToast = () => {
   Toast.hide();
+};
+
+const runAfterToast = (callback, delay = TOAST_NAVIGATION_DELAY) => {
+  if (typeof callback !== 'function') return;
+  setTimeout(callback, Math.max(0, Number(delay) || 0));
 };
 
 /**
@@ -51,7 +58,7 @@ const showError = (message, title = 'Erro') => {
  * @param {string} title - Título (opcional)
  */
 const showInfo = (message, title = 'Informação') => {
-  showToast('info', title, message);
+  showToast('error', title, message);
 };
 
 /**
@@ -60,7 +67,7 @@ const showInfo = (message, title = 'Informação') => {
  * @param {string} title - Título (opcional)
  */
 const showWarning = (message, title = 'Atenção') => {
-  showToast('warning', title, message);
+  showToast('error', title, message);
 };
 
 /**
@@ -71,15 +78,8 @@ const showWarning = (message, title = 'Atenção') => {
  * @param {object} options - Opções adicionais
  * @returns {Function}
  */
-const showLoading = (message, title = 'Processando', options = {}) => {
-  hideToast();
-  showToast('loading', title, message, {
-    autoHide: false,
-    swipeable: false,
-    ...options,
-  });
-
-  return hideToast;
+const showLoading = (_message, _title = 'Processando', _options = {}) => {
+  return () => {};
 };
 
 const toastHelper = {
@@ -88,6 +88,7 @@ const toastHelper = {
   showInfo,
   showWarning,
   showLoading,
+  runAfterToast,
   hideToast,
   showToast,
 };

@@ -401,7 +401,7 @@ export default function Admin() {
 
   const baixarArquivoRelatorio = async (blob, nomeArquivo) => {
     if (Platform.OS !== 'web') {
-      toastHelper.showInfo('No momento, o download de relatório está disponível no painel web.', 'Download indisponível no app');
+      toastHelper.showError('No momento, o download de relatório está disponível no painel web.', 'Download indisponível no app');
       return;
     }
 

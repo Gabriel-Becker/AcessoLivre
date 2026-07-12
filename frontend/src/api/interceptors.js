@@ -3,8 +3,10 @@ import ServicoAutenticacao from '../services/ServicoAutenticacao';
 import { triggerLogout } from '../utils/GerenciadorSessao';
 import { resetToAuth } from '../navigation/navigationRef';
 import { limparCacheBaseUrl, resolverBaseUrlApi } from '../config/apiConfig';
+import toastHelper from '../utils/toastHelper';
 
 let reautenticacaoEmAndamento = null;
+let avisoSessaoExpiradaAtivo = false;
 
 const normalizarCaminho = (url = '') => {
   const bruto = String(url || '').split('?')[0];
@@ -56,6 +58,17 @@ const ehEndpointAuth = (url = '') => {
 const ehEndpointReauth = (url = '') => {
   const caminho = normalizarCaminho(url);
   return caminho.startsWith('/auth/reauth/');
+};
+
+const notificarSessaoExpirada = () => {
+  if (avisoSessaoExpiradaAtivo) return;
+
+  avisoSessaoExpiradaAtivo = true;
+  toastHelper.showError('Faça login novamente para continuar.', 'Sessão expirada');
+  toastHelper.runAfterToast(() => {
+    resetToAuth();
+    avisoSessaoExpiradaAtivo = false;
+  });
 };
 
 api.interceptors.request.use(
@@ -198,7 +211,7 @@ api.interceptors.response.use(
         await ServicoAutenticacao.removeToken();
         await ServicoAutenticacao.setUserData(null);
         await triggerLogout();
-        resetToAuth();
+        notificarSessaoExpirada();
       } catch (_asyncError) {
       }
     }

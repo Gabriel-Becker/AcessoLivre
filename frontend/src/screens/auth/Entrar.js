@@ -264,7 +264,9 @@ export default function Entrar({ navigation }) {
       setShowTwoFactor(false);
       setPendingCredentials(null);
       toastHelper.showSuccess('Você entrou na sua conta com sucesso.', 'Login realizado');
-      redirecionarAposLogin();
+      toastHelper.runAfterToast(() => {
+        redirecionarAposLogin();
+      });
     } catch (erro) {
       ocultarToastProcessamento?.();
       const mensagem = formatarErroLogin(erro?.message || authMessages.loginErrors.serverError);

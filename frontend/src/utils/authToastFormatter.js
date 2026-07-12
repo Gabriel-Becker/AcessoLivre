@@ -64,7 +64,21 @@ export const formatarErroCadastro = (erro) => {
     return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
   }
 
-  if (contem(texto, ['email já', 'e-mail já', 'já cadastrado', 'duplicate', 'duplicado', 'already exists'])) {
+  if (
+    contem(texto, [
+      'email já',
+      'e-mail já',
+      'já cadastrado',
+      'já existe',
+      'em uso',
+      'duplicate',
+      'duplicado',
+      'already exists',
+      'already registered',
+      'already in use',
+      'unique constraint',
+    ])
+  ) {
     return 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.';
   }
 

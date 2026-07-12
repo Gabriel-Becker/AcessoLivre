@@ -26,7 +26,7 @@ const ComentarioMenu = ({ comentario, autorNome, showReportar = true }) => {
     setMenuVisible(false);
     
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para reportar este comentário');
+      toastHelper.showError('Faça login para reportar este comentário', 'Login necessário');
       return;
     }
     

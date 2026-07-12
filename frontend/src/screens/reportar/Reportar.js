@@ -313,14 +313,18 @@ export default function Reportar({ onNavigate }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      toastHelper.showInfo('Faça login para acessar esta página');
-      onNavigate?.('Entrar');
+      toastHelper.showError('Faça login para acessar esta página', 'Login necessário');
+      toastHelper.runAfterToast(() => {
+        onNavigate?.('Entrar');
+      });
       return;
     }
 
     if (!isAdmin) {
       toastHelper.showError('Acesso negado. Área restrita para administradores');
-      onNavigate?.('Inicio');
+      toastHelper.runAfterToast(() => {
+        onNavigate?.('Inicio');
+      });
       return;
     }
 

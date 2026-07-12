@@ -142,7 +142,9 @@ export default function Perfil() {
       await logout();
       ocultarToastProcessamento?.();
       toastHelper.showSuccess('Sessão encerrada com sucesso.', 'Logout realizado');
-      resetToHome();
+      toastHelper.runAfterToast(() => {
+        resetToHome();
+      });
     } catch (erro) {
       ocultarToastProcessamento?.();
       toastHelper.showError('Não foi possível encerrar sua sessão.', 'Falha ao sair');
